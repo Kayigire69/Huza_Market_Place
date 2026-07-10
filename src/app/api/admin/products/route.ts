@@ -15,17 +15,29 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  const existing = await prisma.product.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const product = await prisma.product.update({
     where: { id },
     data: {
       reviewStatus: action === "approve" ? "APPROVED" : "REJECTED",
       reviewNote: note || null,
       reviewedAt: new Date(),
-      isActive: action === "approve",
-      // Show accepted farmer products on the customer home "Fresh today" strip
-      ...(action === "approve" ? { isNewArrival: true } : { isActive: false }),
+      ...(action === "approve"
+        ? {
+            isActive: true,
+            isNewArrival: true,
+            isFeatured: true,
+            // Ensure it can appear on home (needs stock > 0)
+            stockQty: existing.stockQty > 0 ? existing.stockQty : 1,
+          }
+        : {
+            isActive: false,
+            isFeatured: false,
+          }),
     },
-    include: { supplier: true },
+    include: { supplier: true, images: true },
   });
 
   await prisma.notification.create({

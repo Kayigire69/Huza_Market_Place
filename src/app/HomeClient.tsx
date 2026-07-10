@@ -52,6 +52,8 @@ type Testimonial = {
 };
 
 export function HomePage({
+  heroProducts,
+  shopProducts,
   featured,
   bestSellers,
   freshToday,
@@ -60,6 +62,8 @@ export function HomePage({
   testimonials,
   isOpen,
 }: {
+  heroProducts: ProductCardData[];
+  shopProducts: ProductCardData[];
   featured: ProductCardData[];
   bestSellers: ProductCardData[];
   freshToday: ProductCardData[];
@@ -137,28 +141,32 @@ export function HomePage({
           <div className="relative animate-rise-delay hidden sm:block">
             <div className="animate-float rounded-[2rem] overflow-hidden border border-white/20 shadow-2xl bg-white/10 backdrop-blur-sm p-4">
               <div className="grid grid-cols-2 gap-3">
-                {featured.slice(0, 4).map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/products/${p.id}`}
-                    className="rounded-xl overflow-hidden bg-white/95 text-[var(--huza-ink)]"
-                  >
-                    <div className="relative aspect-square">
-                      <Image
-                        src={p.images[0]?.url ?? "/logo.svg"}
-                        alt={p.nameEn}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="p-2.5">
-                      <p className="text-xs font-semibold truncate">{p.nameEn}</p>
-                      <p className="text-sm font-bold text-[var(--huza-green-dark)]">
-                        {formatRwf(p.price)}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                {(heroProducts.length ? heroProducts : featured).slice(0, 4).map((p) => {
+                  const img = p.images[0]?.url ?? "/logo.svg";
+                  return (
+                    <Link
+                      key={p.id}
+                      href={`/products/${p.id}`}
+                      className="rounded-xl overflow-hidden bg-white/95 text-[var(--huza-ink)]"
+                    >
+                      <div className="relative aspect-square">
+                        <Image
+                          src={img}
+                          alt={p.nameEn}
+                          fill
+                          className="object-cover"
+                          unoptimized={img.startsWith("/uploads/")}
+                        />
+                      </div>
+                      <div className="p-2.5">
+                        <p className="text-xs font-semibold truncate">{p.nameEn}</p>
+                        <p className="text-sm font-bold text-[var(--huza-green-dark)]">
+                          {formatRwf(p.price)}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -181,6 +189,25 @@ export function HomePage({
             >
               {categoryName(c, locale)}
             </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <h2 className="section-title">{t("products")}</h2>
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">
+              Photos of produce approved by Youth Huza — what customers buy on HUZA FRESH
+            </p>
+          </div>
+          <Link href="/products" className="text-sm font-semibold text-[var(--huza-green)]">
+            {t("viewAll")}
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {shopProducts.map((p) => (
+            <ProductCard key={p.id} product={p} />
           ))}
         </div>
       </section>
