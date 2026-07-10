@@ -3,11 +3,11 @@ export default function PrivacyPage() {
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 prose-like">
       <h1 className="section-title">Privacy Policy</h1>
       <p className="mt-2 text-sm text-[var(--huza-muted)] mb-8">
-        HUZA MARKETPLACE · Powered by Youth Huza · Last updated July 2026
+        HUZA FRESH · Powered by Youth Huza · Last updated July 2026
       </p>
       <div className="space-y-5 text-sm text-[var(--huza-muted)] leading-relaxed">
         <p>
-          Youth Huza (“we”) operates HUZA MARKETPLACE. We collect information you provide when you
+          Youth Huza (“we”) operates HUZA FRESH. We collect information you provide when you
           register, place orders, contact support, or apply as a supplier — such as name, phone,
           address, and payment phone numbers.
         </p>

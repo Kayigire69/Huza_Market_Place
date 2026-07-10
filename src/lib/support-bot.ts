@@ -20,9 +20,9 @@ function detectLocale(text: string, preferred?: string): Locale {
 
 const replies: Record<string, Record<Locale, string>> = {
   greeting: {
-    en: "Hello! Welcome to HUZA MARKETPLACE by Youth Huza. Ask about products, orders, delivery, payments, tracking, returns, or your account.",
-    fr: "Bonjour ! Bienvenue sur HUZA MARKETPLACE par Youth Huza. Posez vos questions sur les produits, commandes, livraison, paiements, suivi, retours ou votre compte.",
-    rw: "Muraho! Murakaza neza kuri HUZA MARKETPLACE ya Youth Huza. Baza ibibazo ku bicuruzwa, ibicuruzwa byatumijwe, gutanga, kwishyura, gukurikirana, gusubiza cyangwa konti yawe.",
+    en: "Hello! Welcome to HUZA FRESH by Youth Huza. Ask about products, orders, delivery, payments, tracking, returns, or your account.",
+    fr: "Bonjour ! Bienvenue sur HUZA FRESH par Youth Huza. Posez vos questions sur les produits, commandes, livraison, paiements, suivi, retours ou votre compte.",
+    rw: "Muraho! Murakaza neza kuri HUZA FRESH ya Youth Huza. Baza ibibazo ku bicuruzwa, ibicuruzwa byatumijwe, gutanga, kwishyura, gukurikirana, gusubiza cyangwa konti yawe.",
   },
   track: {
     en: "To track an order: open Track Order, enter your order number (e.g. HUZA-…) and the phone used at checkout. You see the order number on the payment success screen and in My Account → Orders. Save it to track anytime.",
@@ -35,9 +35,9 @@ const replies: Record<string, Record<Locale, string>> = {
     rw: "Wishyura Youth Huza ukoresheje MTN MoMo, Airtel Money cyangwa amafaranga iyo bagutegereje. Nyuma yo gutumiza, emera ubutumire bwa MoMo/Airtel kuri telefoni yawe.",
   },
   delivery: {
-    en: "Youth Huza delivers directly: Kigali 2,000 RWF (~45 min), Kamonyi/Ruyenzi 3,000 RWF, Bugesera/Nyamata 3,000 RWF. At checkout choose Today, Tomorrow, or Scheduled delivery and share your live location or typed address.",
-    fr: "Youth Huza livre directement : Kigali 2 000 RWF (~45 min), Kamonyi/Ruyenzi 3 000 RWF, Bugesera/Nyamata 3 000 RWF. Choisissez Aujourd’hui, Demain ou Planifié et partagez votre position ou adresse.",
-    rw: "Youth Huza itanga ubwayo: Kigali 2,000 RWF (~iminota 45), Kamonyi/Ruyenzi 3,000 RWF, Bugesera/Nyamata 3,000 RWF. Hitamo Uyu munsi, Ejo cyangwa Iteganyijwe hanyuma ushyire aho uri cyangwa aderesi.",
+    en: "Youth Huza delivers to Kigali, Kamonyi (Ruyenzi), and Bugesera (Nyamata) for a flat 5,000 RWF fee. At checkout choose Today, Tomorrow, or Scheduled delivery and share your live location or typed address.",
+    fr: "Youth Huza livre à Kigali, Kamonyi (Ruyenzi) et Bugesera (Nyamata) pour un tarif unique de 5 000 RWF. Choisissez Aujourd’hui, Demain ou Planifié et partagez votre position ou adresse.",
+    rw: "Youth Huza itanga i Kigali, Kamonyi (Ruyenzi), na Bugesera (Nyamata) ku giciro kimwe cya 5,000 RWF. Hitamo Uyu munsi, Ejo cyangwa Iteganyijwe hanyuma ushyire aho uri cyangwa aderesi.",
   },
   products: {
     en: "Browse Products or Categories (fruits, vegetables, dairy, meat, and more). Prices are set by Youth Huza. Use search for name, category, price, stock, new arrivals, or best sellers.",
@@ -60,9 +60,9 @@ const replies: Record<string, Record<Locale, string>> = {
     rw: "Iyandikishe cyangwa winjire urebe Ibicuruzwa, Wishlist, Aderesi, Amakuru n'Invoices. Abashyitsi barashobora gutumiza no gukurikirana bakoresheje numero n'telefone.",
   },
   supplier: {
-    en: "Farms sell produce to Youth Huza via the Supplier Procurement Portal (/supplier)—not to customers. Customers only buy from HUZA MARKETPLACE.",
-    fr: "Les fermes vendent à Youth Huza via le Portail d’approvisionnement (/supplier)—pas aux clients. Les clients achètent uniquement sur HUZA MARKETPLACE.",
-    rw: "Abahinzi bagurisha kuri Youth Huza binyuze ku Supplier Portal (/supplier)—si ku bakiriya. Abakiriya bagura gusa kuri HUZA MARKETPLACE.",
+    en: "Farms sell produce to Youth Huza via the Farmers Portal (/farmer)—not to customers. Customers only buy from HUZA FRESH.",
+    fr: "Les fermes vendent à Youth Huza via le Portail agriculteurs (/farmer)—pas aux clients. Les clients achètent uniquement sur HUZA FRESH.",
+    rw: "Abahinzi bagurisha kuri Youth Huza binyuze ku Farmers Portal (/farmer)—si ku bakiriya. Abakiriya bagura gusa kuri HUZA FRESH.",
   },
   contact: {
     en: "Contact Youth Huza: +250 788 000 000 · hello@youthhuza.rw · WhatsApp available from the footer. Or keep chatting here.",

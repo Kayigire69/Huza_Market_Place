@@ -523,9 +523,9 @@ async function main() {
       {
         name: "Uwase Grace",
         role: "Home cook, Kigali",
-        commentEn: "Huza Market Place brings farm-fresh food to my door. No middlemen, just quality.",
-        commentFr: "Huza Market Place apporte des produits frais à ma porte. Pas d'intermédiaires, juste de la qualité.",
-        commentRw: "Huza Market Place inzaniye ibiribwa bishya ku muryango. Nta muntu wo hagati, ubuziranenge gusa.",
+        commentEn: "HUZA FRESH brings farm-fresh food to my door. No middlemen, just quality.",
+        commentFr: "HUZA FRESH apporte des produits frais à ma porte. Pas d'intermédiaires, juste de la qualité.",
+        commentRw: "HUZA FRESH inzaniye ibiribwa bishya ku muryango. Nta muntu wo hagati, ubuziranenge gusa.",
         rating: 5,
       },
       {
@@ -602,7 +602,7 @@ async function main() {
       userId: customer.id,
       deliveryAddress: "KN 5 Ave, Kacyiru, Kigali",
       deliveryZone: DeliveryZone.KIGALI,
-      deliveryFee: 2000,
+      deliveryFee: 5000,
       subtotal: 5000,
       total: 7000,
       status: OrderStatus.DELIVERED,
@@ -651,7 +651,7 @@ async function main() {
       type: "ORDER_CONFIRMATION",
       channel: "IN_APP",
       title: "Order delivered",
-      body: `Your order ${sampleOrder.orderNumber} was delivered. Thank you for shopping with Huza Market Place!`,
+      body: `Your order ${sampleOrder.orderNumber} was delivered. Thank you for shopping with HUZA FRESH!`,
       isRead: false,
     },
   });
@@ -693,7 +693,7 @@ async function main() {
       actorName: "System",
       action: "seed.complete",
       entity: "Platform",
-      details: "Initial HUZA MARKETPLACE seed by Youth Huza",
+      details: "Initial HUZA FRESH seed by Youth Huza",
     },
   });
 

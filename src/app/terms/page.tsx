@@ -3,16 +3,16 @@ export default function TermsPage() {
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12">
       <h1 className="section-title">Terms &amp; Conditions</h1>
       <p className="mt-2 text-sm text-[var(--huza-muted)] mb-8">
-        HUZA MARKETPLACE · Powered by Youth Huza · Last updated July 2026
+        HUZA FRESH · Powered by Youth Huza · Last updated July 2026
       </p>
       <div className="space-y-5 text-sm text-[var(--huza-muted)] leading-relaxed">
         <p>
-          By using HUZA MARKETPLACE you agree to these terms. The platform is operated by Youth Huza
+          By using HUZA FRESH you agree to these terms. The platform is operated by Youth Huza
           as an agricultural retailer selling and delivering fresh products in Rwanda.
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Orders &amp; payment.</strong> You buy from
-          Youth Huza on HUZA MARKETPLACE. Orders are confirmed after mobile money approval paid to
+          Youth Huza on HUZA FRESH. Orders are confirmed after mobile money approval paid to
           Youth Huza. Prices are in RWF. Delivery fees apply by zone.
         </p>
         <p>

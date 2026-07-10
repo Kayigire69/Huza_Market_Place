@@ -16,7 +16,7 @@ export function Footer() {
             <Image src="/logo.svg" alt="Youth Huza" width={48} height={48} />
             <div>
               <p className="font-[family-name:var(--font-display)] text-xl font-bold">
-                HUZA MARKETPLACE
+                HUZA FRESH
               </p>
               <p className="text-xs uppercase tracking-[0.16em] text-[var(--huza-gold)]">
                 Powered by Youth Huza
@@ -72,10 +72,16 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/supplier" className="hover:text-white">
+              <Link href="/farmer" className="hover:text-white">
                 {t("supplierPortal")}
               </Link>
-              <p className="mt-1 text-[11px] text-[#8FBF9F]">For farms selling produce to Huza</p>
+              <p className="mt-1 text-[11px] text-[#8FBF9F]">Farmers Portal — sell produce to Huza</p>
+            </li>
+            <li>
+              <Link href="/admin" className="hover:text-white">
+                Admin portal
+              </Link>
+              <p className="mt-1 text-[11px] text-[#8FBF9F]">Staff only — farmer approval &amp; ops</p>
             </li>
           </ul>
         </div>
@@ -129,7 +135,7 @@ export function Footer() {
       </div>
       <div className="border-t border-white/10 py-5 text-center">
         <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-wide">
-          HUZA MARKETPLACE
+          HUZA FRESH
         </p>
         <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--huza-gold)]">
           Powered by Youth Huza

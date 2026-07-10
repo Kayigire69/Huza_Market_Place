@@ -64,7 +64,7 @@ export default async function WarehousePage() {
       </p>
       <h1 className="section-title mt-1">Warehouse</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Receive goods, pack orders, and track stock movements for HUZA MARKETPLACE.
+        Receive goods, pack orders, and track stock movements for HUZA FRESH.
       </p>
       <WarehouseClient
         lowStock={lowStock}

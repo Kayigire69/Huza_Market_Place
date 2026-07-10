@@ -54,7 +54,7 @@ export async function GET(
 <body>
   <div class="brand">
     <div>
-      <h1>HUZA MARKETPLACE</h1>
+      <h1>HUZA FRESH</h1>
       <div class="sub">Powered by Youth Huza</div>
     </div>
   </div>
@@ -78,7 +78,7 @@ export async function GET(
     <div><span>Payment</span><span>${order.payment?.method || "—"} · ${order.payment?.status || "—"}</span></div>
   </div>
   <p style="margin-top:32px;font-size:12px;color:#5a7264">
-    Direct delivery by Youth Huza — no middlemen. Thank you for shopping HUZA MARKETPLACE.
+    Direct delivery by Youth Huza — no middlemen. Thank you for shopping HUZA FRESH.
   </p>
   <button onclick="window.print()" style="margin-top:20px;padding:10px 16px;background:#0b5c34;color:white;border:0;border-radius:8px;cursor:pointer">
     Print / Save as PDF

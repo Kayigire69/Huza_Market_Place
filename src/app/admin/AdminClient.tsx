@@ -206,7 +206,7 @@ export function AdminClient(props: {
               tab === t ? "bg-[var(--huza-green)] text-white" : "bg-white border border-[var(--huza-line)]"
             }`}
           >
-            {t === "suppliers" ? "Verification" : t === "procurement" ? "Procurement" : t}
+            {t === "suppliers" ? "Farmer Approval" : t === "procurement" ? "Procurement" : t}
           </button>
         ))}
       </div>
@@ -375,9 +375,10 @@ export function AdminClient(props: {
       {tab === "suppliers" && (
         <div className="space-y-6">
           <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-1">Supplier Verification &amp; Approval</h2>
+            <h2 className="font-semibold mb-1">Farmer Approval (Module 10)</h2>
             <p className="text-sm text-[var(--huza-muted)] mb-4">
-              Review documents, request more info, schedule farm inspection, then approve or reject.
+              Review farmer applications and documents, request more info, schedule farm inspection,
+              then approve, reject, suspend, or remove.
             </p>
             {props.pendingSuppliers.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No pending requests.</p>
@@ -469,7 +470,7 @@ export function AdminClient(props: {
             )}
           </section>
           <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-4">All suppliers</h2>
+            <h2 className="font-semibold mb-4">All farmers</h2>
             <div className="space-y-2">
               {props.allSuppliers.map((s) => (
                 <div

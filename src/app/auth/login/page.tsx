@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 import { portalPathForRole } from "@/lib/auth-redirect";
+import { DemoCredentials } from "@/components/portals/DemoCredentials";
 
 export default function LoginPage() {
   const { t } = useLocale();
@@ -43,9 +44,14 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">{t("login")}</h1>
-      <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
+      <form
+        onSubmit={onSubmit}
+        className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6"
+      >
         <div>
-          <label className="label">{t("email")} / {t("phone")}</label>
+          <label className="label">
+            {t("email")} / {t("phone")}
+          </label>
           <input
             name="phoneOrEmail"
             required
@@ -75,6 +81,45 @@ export default function LoginPage() {
           {t("register")}
         </Link>
       </p>
+      <p className="mt-2 text-center text-xs text-[var(--huza-muted)]">
+        Portals:{" "}
+        <Link href="/farmer" className="font-semibold text-[var(--huza-green)]">
+          Farmers
+        </Link>
+        {" · "}
+        <Link href="/admin" className="font-semibold text-[var(--huza-green)]">
+          Admin
+        </Link>
+        {" · "}
+        <Link href="/" className="hover:underline">
+          Customer shop
+        </Link>
+      </p>
+      <DemoCredentials
+        title="Demo portal credentials"
+        credentials={[
+          {
+            label: "Admin portal",
+            email: "admin@youthhuza.rw",
+            password: "password123",
+          },
+          {
+            label: "Farmers portal (approved)",
+            email: "greenvalley@farm.rw",
+            password: "password123",
+          },
+          {
+            label: "Farmers portal (pending approval)",
+            email: "newfarm@example.rw",
+            password: "password123",
+          },
+          {
+            label: "Customer shop",
+            email: "customer@example.com",
+            password: "password123",
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -44,7 +44,7 @@ export default function RegisterPage() {
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">{t("register")}</h1>
       <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
-        Create a customer account to shop HUZA MARKETPLACE
+        Create a customer account to shop HUZA FRESH
       </p>
       <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
         <div>
@@ -75,9 +75,9 @@ export default function RegisterPage() {
         </Link>
       </p>
       <p className="mt-6 text-center text-xs text-[var(--huza-muted)]">
-        Farm or supplier? Use the{" "}
-        <Link href="/supplier" className="font-semibold text-[var(--huza-green)]">
-          Supplier Procurement Portal
+        Are you a farmer? Use the{" "}
+        <Link href="/farmer" className="font-semibold text-[var(--huza-green)]">
+          Farmers Portal
         </Link>{" "}
         to register and sell produce to Youth Huza.
       </p>

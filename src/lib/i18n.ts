@@ -17,7 +17,7 @@ export const localeFlags: Record<Locale, string> = {
 type Dict = Record<string, string>;
 
 const en: Dict = {
-  brand: "HUZA MARKETPLACE",
+  brand: "HUZA FRESH",
   company: "Youth Huza",
   tagline: "Farm-fresh food sold and delivered by Youth Huza.",
   heroCta: "Start shopping",
@@ -70,13 +70,13 @@ const en: Dict = {
   favorites: "Favorites",
   logout: "Log out",
   footerAbout:
-    "Youth Huza buys fresh produce from verified farms, then sells and delivers it to you on HUZA MARKETPLACE.",
+    "Youth Huza buys fresh produce from verified farms, then sells and delivers it to you on HUZA FRESH.",
   contact: "Contact",
   hours: "Open daily 6:00 AM – 9:00 PM",
   deliveryZones: "Delivery zones",
-  kigali: "Kigali — 2,000 RWF",
-  kamonyi: "Kamonyi (Ruyenzi) — 3,000 RWF",
-  bugesera: "Bugesera (Nyamata) — 3,000 RWF",
+  kigali: "Kigali — 5,000 RWF",
+  kamonyi: "Kamonyi (Ruyenzi) — 5,000 RWF",
+  bugesera: "Bugesera (Nyamata) — 5,000 RWF",
   filters: "Filters",
   allCategories: "All categories",
   minPrice: "Min price",
@@ -90,7 +90,7 @@ const en: Dict = {
   home: "Home",
   products: "Products",
   admin: "Admin",
-  supplierPortal: "Supplier procurement portal",
+  supplierPortal: "Farmers Portal",
   save: "Save",
   cancel: "Cancel",
   pending: "Pending",
@@ -142,7 +142,7 @@ const en: Dict = {
 
 const fr: Dict = {
   ...en,
-  brand: "Huza Market Place",
+  brand: "HUZA FRESH",
   company: "Youth Huza",
   tagline: "Produits frais vendus et livrés par Youth Huza.",
   heroCta: "Commencer les achats",
@@ -195,13 +195,13 @@ const fr: Dict = {
   favorites: "Favoris",
   logout: "Déconnexion",
   footerAbout:
-    "Youth Huza achète auprès de fermes vérifiées, puis vend et livre sur HUZA MARKETPLACE.",
+    "Youth Huza achète auprès de fermes vérifiées, puis vend et livre sur HUZA FRESH.",
   contact: "Contact",
   hours: "Ouvert tous les jours 6h00 – 21h00",
   deliveryZones: "Zones de livraison",
-  kigali: "Kigali — 2 000 RWF",
-  kamonyi: "Kamonyi (Ruyenzi) — 3 000 RWF",
-  bugesera: "Bugesera (Nyamata) — 3 000 RWF",
+  kigali: "Kigali — 5 000 RWF",
+  kamonyi: "Kamonyi (Ruyenzi) — 5 000 RWF",
+  bugesera: "Bugesera (Nyamata) — 5 000 RWF",
   filters: "Filtres",
   allCategories: "Toutes les catégories",
   applyFilters: "Appliquer",
@@ -210,7 +210,7 @@ const fr: Dict = {
   home: "Accueil",
   products: "Produits",
   admin: "Admin",
-  supplierPortal: "Portail d'approvisionnement",
+  supplierPortal: "Portail agriculteurs",
   language: "Langue",
   shopNow: "Acheter",
   fromFarm: "Produits contrôlés, vendus par Youth Huza",
@@ -219,7 +219,7 @@ const fr: Dict = {
 
 const rw: Dict = {
   ...en,
-  brand: "Huza Market Place",
+  brand: "HUZA FRESH",
   company: "Youth Huza",
   tagline: "Ibiribwa bishya bigurishwa kandi bitangwa na Youth Huza.",
   heroCta: "Tangira gugura",
@@ -270,7 +270,7 @@ const rw: Dict = {
   favorites: "Byakunzwe",
   logout: "Sohoka",
   footerAbout:
-    "Youth Huza igura ibihingwa ku bahinzi bemewe, noneho igurisha no gutanga kuri HUZA MARKETPLACE.",
+    "Youth Huza igura ibihingwa ku bahinzi bemewe, noneho igurisha no gutanga kuri HUZA FRESH.",
   contact: "Twandikire",
   hours: "Dufungura buri munsi saa 12 – saa 3 z'ijoro",
   deliveryZones: "Uturere two gutanga",
@@ -285,7 +285,7 @@ const rw: Dict = {
   shopNow: "Gura nonaha",
   fromFarm: "Ibicuruzwa byagenzuwe, bigurishwa na Youth Huza",
   items: "ibintu",
-  supplierPortal: "Urubuga rw'ibicuruzwa",
+  supplierPortal: "Urubuga rw'abahinzi",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, fr, rw };

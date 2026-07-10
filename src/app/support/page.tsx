@@ -23,7 +23,7 @@ export default async function SupportPage() {
       </p>
       <h1 className="section-title mt-1">Customer Support Center</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Open a ticket, browse the FAQ, or reach us on WhatsApp — we are here for HUZA MARKETPLACE
+        Open a ticket, browse the FAQ, or reach us on WhatsApp — we are here for HUZA FRESH
         customers.
       </p>
       <SupportCenterClient userName={session?.user?.name} userPhone={userPhone} />

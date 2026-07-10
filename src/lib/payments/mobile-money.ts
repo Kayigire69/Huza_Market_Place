@@ -147,7 +147,7 @@ async function requestMtnCollection(input: {
       currency: input.currency,
       externalId: input.orderNumber,
       payer: { partyIdType: "MSISDN", partyId: input.payerPhone },
-      payerMessage: `Huza Market Place order ${input.orderNumber}`,
+      payerMessage: `HUZA FRESH order ${input.orderNumber}`,
       payeeNote: `Pay ${input.payeeName}`,
     }),
   });
