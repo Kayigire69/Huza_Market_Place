@@ -84,7 +84,7 @@ export async function getSmartRecommendations(opts: {
   return [...sameCategory, ...more];
 }
 
-/** Lightweight “AI” search suggestions from products, categories, suppliers */
+/** Lightweight search suggestions from products and categories (no supplier names for shoppers) */
 export async function getSearchSuggestions(q: string, take = 8) {
   const query = q.trim();
   if (query.length < 1) {
@@ -101,7 +101,7 @@ export async function getSearchSuggestions(q: string, take = 8) {
     }));
   }
 
-  const [products, categories, suppliers] = await Promise.all([
+  const [products, categories] = await Promise.all([
     prisma.product.findMany({
       where: {
         isActive: true,
@@ -125,14 +125,6 @@ export async function getSearchSuggestions(q: string, take = 8) {
       select: { slug: true, nameEn: true },
       take: 3,
     }),
-    prisma.supplier.findMany({
-      where: {
-        status: "APPROVED",
-        businessName: { contains: query, mode: "insensitive" },
-      },
-      select: { id: true, businessName: true },
-      take: 3,
-    }),
   ]);
 
   return [
@@ -147,12 +139,6 @@ export async function getSearchSuggestions(q: string, take = 8) {
       id: c.slug,
       label: c.nameEn,
       href: `/products?category=${c.slug}`,
-    })),
-    ...suppliers.map((s) => ({
-      type: "supplier" as const,
-      id: s.id,
-      label: s.businessName,
-      href: `/products?supplier=${encodeURIComponent(s.businessName)}`,
     })),
   ].slice(0, take);
 }

@@ -125,7 +125,27 @@ model Supplier {
   description        String?
   location           String
   district           String
+  sector             String?
   phone              String
+  email              String?
+  nationalId         String?
+  companyRegNo       String?
+  tin                String?
+  farmSize           String?
+  productionCapacity String?
+  productCategories  String?
+  paymentMomo        String?
+  bankAccount        String?
+  bankName           String?
+  /// Document / media URLs (paths or external links)
+  nationalIdUrl      String?
+  businessCertUrl    String?
+  tinDocUrl          String?
+  foodSafetyUrl      String?
+  organicCertUrl     String?
+  permitUrl          String?
+  farmPhotoUrls      String[]           @default([])
+  productPhotoUrls   String[]           @default([])
   documentsUrl       String?
   status             SupplierStatus     @default(PENDING)
   availability       AvailabilityStatus @default(CLOSED)
@@ -134,17 +154,20 @@ model Supplier {
   ratingAvg          Float              @default(0)
   ratingCount        Int                @default(0)
   rejectionReason    String?
+  adminNotes         String?
+  inspectionScheduledAt DateTime?
   approvedAt         DateTime?
   isVerified         Boolean            @default(false)
   verificationBadge  String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
-  reviews  Review[]
-  orders   OrderItem[]
-  offers   SupplierOffer[]
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products       Product[]
+  reviews        Review[]
+  orders         OrderItem[]
+  offers         SupplierOffer[]
+  purchaseOrders PurchaseOrder[]
 }
 
 model Category {
@@ -483,7 +506,55 @@ model SupplierOffer {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id])
+  supplier       Supplier        @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  category       Category?       @relation(fields: [categoryId], references: [id])
+  purchaseOrders PurchaseOrder[]
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  RECEIVED
+  INSPECTED
+  ACCEPTED
+  REJECTED
+  PAID
+  CANCELLED
+}
+
+/// Youth Huza purchase from an approved supplier (procurement).
+model PurchaseOrder {
+  id               String              @id @default(cuid())
+  poNumber         String              @unique
+  supplierId       String
+  offerId          String?
+  status           PurchaseOrderStatus @default(DRAFT)
+  productName      String
+  category         String?
+  unit             UnitType            @default(KG)
+  quantity         Float
+  negotiatedPrice  Int
+  totalAmount      Int
+  retailPrice      Int?
+  qualityNotes     String?
+  rejectionReason  String?
+  paymentRef       String?
+  paymentMethod    String?
+  paidAt           DateTime?
+  orderedAt        DateTime?
+  receivedAt       DateTime?
+  inspectedAt      DateTime?
+  notes            String?
+  productId        String?
+  createdById      String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  supplier Supplier       @relation(fields: [supplierId], references: [id])
+  offer    SupplierOffer? @relation(fields: [offerId], references: [id])
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([poNumber])
 }
 

@@ -20,18 +20,46 @@ type Offer = {
   category: { nameEn: string } | null;
 };
 
+type PurchaseOrder = {
+  id: string;
+  poNumber: string;
+  status: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  negotiatedPrice: number;
+  totalAmount: number;
+  paymentRef: string | null;
+};
+
 type Supplier = {
   id: string;
   businessName: string;
   description: string | null;
   location: string;
   district: string;
+  sector: string | null;
   phone: string;
+  email: string | null;
+  nationalId: string | null;
+  companyRegNo: string | null;
+  tin: string | null;
+  farmSize: string | null;
+  productionCapacity: string | null;
+  productCategories: string | null;
+  paymentMomo: string | null;
+  bankAccount: string | null;
+  bankName: string | null;
+  nationalIdUrl: string | null;
+  businessCertUrl: string | null;
+  foodSafetyUrl: string | null;
+  organicCertUrl: string | null;
   availability: string;
   openHour: number;
   closeHour: number;
   status: string;
   offers: Offer[];
+  purchaseOrders?: PurchaseOrder[];
 };
 
 export function SupplierPortalClient({
@@ -42,7 +70,7 @@ export function SupplierPortalClient({
   categories: Category[];
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<"offers" | "profile">("offers");
+  const [tab, setTab] = useState<"offers" | "orders" | "profile">("offers");
   const [msg, setMsg] = useState("");
 
   const refresh = () => router.refresh();
@@ -84,7 +112,22 @@ export function SupplierPortalClient({
         description: form.get("description"),
         location: form.get("location"),
         district: form.get("district"),
+        sector: form.get("sector"),
         phone: form.get("phone"),
+        email: form.get("email"),
+        nationalId: form.get("nationalId"),
+        companyRegNo: form.get("companyRegNo"),
+        tin: form.get("tin"),
+        farmSize: form.get("farmSize"),
+        productionCapacity: form.get("productionCapacity"),
+        productCategories: form.get("productCategories"),
+        paymentMomo: form.get("paymentMomo"),
+        bankAccount: form.get("bankAccount"),
+        bankName: form.get("bankName"),
+        nationalIdUrl: form.get("nationalIdUrl"),
+        businessCertUrl: form.get("businessCertUrl"),
+        foodSafetyUrl: form.get("foodSafetyUrl"),
+        organicCertUrl: form.get("organicCertUrl"),
         availability: form.get("availability"),
         openHour: Number(form.get("openHour")),
         closeHour: Number(form.get("closeHour")),
@@ -96,16 +139,22 @@ export function SupplierPortalClient({
 
   return (
     <div>
-      <div className="flex gap-2 mb-6">
-        {(["offers", "profile"] as const).map((t) => (
+      <div className="flex flex-wrap gap-2 mb-6">
+        {(
+          [
+            ["offers", "My offers to Huza"],
+            ["orders", "Purchase orders"],
+            ["profile", "Verification profile"],
+          ] as const
+        ).map(([key, label]) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold capitalize ${
-              tab === t ? "bg-[var(--huza-green)] text-white" : "bg-white border border-[var(--huza-line)]"
+            key={key}
+            onClick={() => setTab(key)}
+            className={`rounded-full px-4 py-2 text-sm font-semibold ${
+              tab === key ? "bg-[var(--huza-green)] text-white" : "bg-white border border-[var(--huza-line)]"
             }`}
           >
-            {t === "offers" ? "My offers to Huza" : "Profile"}
+            {label}
           </button>
         ))}
       </div>
@@ -119,7 +168,7 @@ export function SupplierPortalClient({
           >
             <h2 className="font-semibold">Offer produce for Huza to buy</h2>
             <p className="text-xs text-[var(--huza-muted)]">
-              Ask price = what Youth Huza pays you. Suggested retail = optional price Huza may sell at.
+              Ask price = what Youth Huza pays you (wholesale). Huza sets the retail price for customers.
             </p>
             <input name="title" placeholder="Product name (e.g. Fresh Avocados)" className="input-field" required />
             <textarea name="description" placeholder="Quality, harvest date, notes..." className="input-field min-h-16" />
@@ -167,7 +216,7 @@ export function SupplierPortalClient({
               Submit offer to Youth Huza
             </Button>
             {supplier.status !== "APPROVED" && (
-              <p className="text-xs text-[var(--huza-muted)]">Offers unlock after partner approval.</p>
+              <p className="text-xs text-[var(--huza-muted)]">Offers unlock after verification &amp; approval.</p>
             )}
           </form>
 
@@ -206,21 +255,79 @@ export function SupplierPortalClient({
         </div>
       )}
 
+      {tab === "orders" && (
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+          <h2 className="font-semibold mb-4">Purchase orders from Youth Huza</h2>
+          {(supplier.purchaseOrders || []).length === 0 ? (
+            <p className="text-sm text-[var(--huza-muted)]">No purchase orders yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {(supplier.purchaseOrders || []).map((po) => (
+                <div key={po.id} className="rounded-xl border border-[var(--huza-line)] p-3">
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <p className="font-medium">
+                      {po.poNumber} · {po.productName}
+                    </p>
+                    <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
+                      {po.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--huza-muted)] mt-1">
+                    {po.quantity} {formatUnit(po.unit)} · {formatRwf(po.negotiatedPrice)}/
+                    {formatUnit(po.unit)} · Total {formatRwf(po.totalAmount)}
+                  </p>
+                  {po.paymentRef && (
+                    <p className="text-xs text-[var(--huza-green-dark)] mt-1">Payment: {po.paymentRef}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {tab === "profile" && (
         <form
           onSubmit={updateProfile}
-          className="max-w-xl rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3"
+          className="max-w-3xl rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3"
         >
-          <h2 className="font-semibold">Farm partner profile</h2>
-          <input name="businessName" defaultValue={supplier.businessName} className="input-field" required />
+          <h2 className="font-semibold">Verification &amp; farm profile</h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <input name="businessName" defaultValue={supplier.businessName} className="input-field" required />
+            <input name="phone" defaultValue={supplier.phone} className="input-field" required />
+            <input name="email" defaultValue={supplier.email ?? ""} className="input-field" placeholder="Email" />
+            <input name="nationalId" defaultValue={supplier.nationalId ?? ""} className="input-field" placeholder="National ID" />
+            <input name="location" defaultValue={supplier.location} className="input-field" required />
+            <input name="district" defaultValue={supplier.district} className="input-field" required />
+            <input name="sector" defaultValue={supplier.sector ?? ""} className="input-field" placeholder="Sector" />
+            <input
+              name="productCategories"
+              defaultValue={supplier.productCategories ?? ""}
+              className="input-field"
+              placeholder="Product categories"
+            />
+            <input name="farmSize" defaultValue={supplier.farmSize ?? ""} className="input-field" placeholder="Farm size" />
+            <input
+              name="productionCapacity"
+              defaultValue={supplier.productionCapacity ?? ""}
+              className="input-field"
+              placeholder="Production capacity"
+            />
+            <input name="paymentMomo" defaultValue={supplier.paymentMomo ?? ""} className="input-field" placeholder="MoMo number" />
+            <input name="bankAccount" defaultValue={supplier.bankAccount ?? ""} className="input-field" placeholder="Bank account" />
+            <input name="bankName" defaultValue={supplier.bankName ?? ""} className="input-field" placeholder="Bank name" />
+            <input name="tin" defaultValue={supplier.tin ?? ""} className="input-field" placeholder="TIN" />
+            <input name="companyRegNo" defaultValue={supplier.companyRegNo ?? ""} className="input-field" placeholder="Company reg. no." />
+            <input name="nationalIdUrl" defaultValue={supplier.nationalIdUrl ?? ""} className="input-field" placeholder="National ID doc URL" />
+            <input name="businessCertUrl" defaultValue={supplier.businessCertUrl ?? ""} className="input-field" placeholder="Business cert URL" />
+            <input name="foodSafetyUrl" defaultValue={supplier.foodSafetyUrl ?? ""} className="input-field" placeholder="Food safety cert URL" />
+            <input name="organicCertUrl" defaultValue={supplier.organicCertUrl ?? ""} className="input-field" placeholder="Organic cert URL" />
+          </div>
           <textarea
             name="description"
             defaultValue={supplier.description ?? ""}
             className="input-field min-h-20"
           />
-          <input name="location" defaultValue={supplier.location} className="input-field" required />
-          <input name="district" defaultValue={supplier.district} className="input-field" required />
-          <input name="phone" defaultValue={supplier.phone} className="input-field" required />
           <select name="availability" defaultValue={supplier.availability} className="input-field">
             <option value="OPEN">Open / available</option>
             <option value="BUSY">Busy</option>
@@ -250,7 +357,7 @@ export function SupplierPortalClient({
               />
             </div>
           </div>
-          <Button type="submit">Save profile</Button>
+          <Button type="submit">Save verification profile</Button>
         </form>
       )}
     </div>

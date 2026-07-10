@@ -14,20 +14,13 @@ type Category = {
   nameRw: string;
 };
 
-export function ProductFilters({
-  categories,
-  suppliers,
-}: {
-  categories: Category[];
-  suppliers: { id: string; businessName: string }[];
-}) {
+export function ProductFilters({ categories }: { categories: Category[] }) {
   const { t, locale } = useLocale();
   const router = useRouter();
   const sp = useSearchParams();
   const [form, setForm] = useState({
     q: sp.get("q") ?? "",
     category: sp.get("category") ?? "",
-    supplier: sp.get("supplier") ?? "",
     location: sp.get("location") ?? "",
     district: sp.get("district") ?? "",
     minPrice: sp.get("minPrice") ?? "",
@@ -72,21 +65,6 @@ export function ProductFilters({
           {categories.map((c) => (
             <option key={c.id} value={c.slug}>
               {categoryName(c, locale)}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="label">{t("supplier")}</label>
-        <select
-          className="input-field"
-          value={form.supplier}
-          onChange={(e) => setForm({ ...form, supplier: e.target.value })}
-        >
-          <option value="">All</option>
-          {suppliers.map((s) => (
-            <option key={s.id} value={s.businessName}>
-              {s.businessName}
             </option>
           ))}
         </select>

@@ -107,6 +107,12 @@ export default async function AdminPage() {
     take: 50,
   });
 
+  const purchaseOrders = await prisma.purchaseOrder.findMany({
+    include: { supplier: true, offer: true },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
   const stats = {
     customers,
     suppliers,
@@ -120,13 +126,13 @@ export default async function AdminPage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <h1 className="section-title">Administration dashboard</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-4">
-        Manage HUZA MARKETPLACE activities — suppliers, orders, delivery, payments, inventory, and more.
+        Manage HUZA MARKETPLACE — retailer storefront, supplier verification, and procurement.
       </p>
 
       <div className="mb-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { href: "/admin#suppliers", title: "Approve partners", desc: "Verify farms that sell to Huza" },
-          { href: "/admin#procurement", title: "Buy from farms", desc: "Purchase supplier offers into stock" },
+          { href: "/admin#suppliers", title: "Supplier Verification & Approval", desc: "Verify farms that sell to Huza" },
+          { href: "/admin#procurement", title: "Procurement Management", desc: "POs, receive, inspect, pay suppliers" },
           { href: "/admin#orders", title: "Customer orders", desc: "Orders sold by Youth Huza" },
           { href: "/admin#payments", title: "Payments to Huza", desc: "Confirm MoMo / Airtel to Huza" },
         ].map((a) => (
@@ -175,6 +181,7 @@ export default async function AdminPage() {
         deliveryPeople={deliveryPeople}
         auditLogs={auditLogs}
         procurementOffers={procurementOffers}
+        purchaseOrders={purchaseOrders}
       />
     </div>
   );

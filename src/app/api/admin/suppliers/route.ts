@@ -14,7 +14,63 @@ async function requireAdmin() {
 export async function PATCH(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  const { id, action, reason } = await req.json();
+  const { id, action, reason, adminNotes, inspectionScheduledAt } = await req.json();
+
+  if (action === "request_info") {
+    const supplier = await prisma.supplier.update({
+      where: { id },
+      data: {
+        adminNotes: adminNotes || reason || "Please provide additional documents",
+      },
+    });
+    await prisma.notification.create({
+      data: {
+        userId: supplier.userId,
+        type: "SUPPLIER_STATUS",
+        channel: "IN_APP",
+        title: "Additional information requested",
+        body: adminNotes || reason || "Please update your verification documents.",
+      },
+    });
+    await writeAuditLog({
+      actorId: session.user.id,
+      actorName: session.user.name,
+      action: "supplier.request_info",
+      entity: "Supplier",
+      entityId: id,
+      details: adminNotes || reason,
+    });
+    return NextResponse.json(supplier);
+  }
+
+  if (action === "schedule_inspection") {
+    const when = inspectionScheduledAt ? new Date(inspectionScheduledAt) : new Date();
+    const supplier = await prisma.supplier.update({
+      where: { id },
+      data: {
+        inspectionScheduledAt: when,
+        adminNotes: adminNotes || `Inspection scheduled for ${when.toISOString()}`,
+      },
+    });
+    await prisma.notification.create({
+      data: {
+        userId: supplier.userId,
+        type: "SUPPLIER_STATUS",
+        channel: "IN_APP",
+        title: "Farm inspection scheduled",
+        body: `Youth Huza scheduled an inspection for ${when.toLocaleString()}.`,
+      },
+    });
+    await writeAuditLog({
+      actorId: session.user.id,
+      actorName: session.user.name,
+      action: "supplier.schedule_inspection",
+      entity: "Supplier",
+      entityId: id,
+      details: when.toISOString(),
+    });
+    return NextResponse.json(supplier);
+  }
 
   const map: Record<string, SupplierStatus> = {
     approve: SupplierStatus.APPROVED,
@@ -35,6 +91,7 @@ export async function PATCH(req: Request) {
       availability: action === "approve" ? "OPEN" : "CLOSED",
       isVerified: action === "approve",
       verificationBadge: action === "approve" ? "Youth Huza Verified" : null,
+      adminNotes: adminNotes || undefined,
     },
   });
 
@@ -44,7 +101,10 @@ export async function PATCH(req: Request) {
       type: "SUPPLIER_STATUS",
       channel: "IN_APP",
       title: `Supplier ${action}`,
-      body: `Your supplier account is now ${status}.`,
+      body:
+        action === "reject"
+          ? `Your application was rejected: ${reason || "See admin notes"}`
+          : `Your supplier account is now ${status}.`,
     },
   });
 
