@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     if (action === "start") {
       const firstMessage =
         (typeof body.body === "string" && body.body.trim()) ||
-        (locale === "fr" ? "Bonjour" : locale === "rw" ? "Muraho" : "Hello");
+        (locale === "fr" ? "Bonjour" : locale === "rw" ? "Muraho" : locale === "sw" ? "Habari" : "Hello");
       const welcome = supportAutoReply(firstMessage, locale);
 
       const thread = await prisma.supportThread.create({

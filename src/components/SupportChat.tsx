@@ -71,7 +71,7 @@ export function SupportChat() {
           guestName: name,
           guestPhone: phone,
           locale,
-          body: text || (locale === "fr" ? "Bonjour" : locale === "rw" ? "Muraho" : "Hello"),
+          body: text || (locale === "fr" ? "Bonjour" : locale === "rw" ? "Muraho" : locale === "sw" ? "Habari" : "Hello"),
         }),
       });
       const data = await readJson(res);
@@ -143,7 +143,7 @@ export function SupportChat() {
           <div className="bg-[var(--huza-green-dark)] px-4 py-3 text-white flex items-start justify-between gap-2">
             <div>
               <p className="font-semibold">Youth Huza Support</p>
-              <p className="text-xs text-[#C8E8D4]">EN · FR · RW — products, orders, delivery, payments</p>
+              <p className="text-xs text-[#C8E8D4]">EN · FR · RW · SW — products, orders, delivery, payments</p>
             </div>
             {started && (
               <button
@@ -159,7 +159,7 @@ export function SupportChat() {
           {!started ? (
             <form onSubmit={startChat} className="flex flex-1 flex-col gap-3 p-4">
               <p className="text-sm text-[var(--huza-muted)]">
-                Ask in English, French, or Kinyarwanda about orders, delivery, payments, or products.
+                Ask in English, French, Kinyarwanda, or Kiswahili about orders, delivery, payments, or products.
               </p>
               <input
                 className="input-field"

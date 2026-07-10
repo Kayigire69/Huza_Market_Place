@@ -17,7 +17,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("huza-locale") as Locale | null;
-    if (saved && ["en", "fr", "rw"].includes(saved)) setLocaleState(saved);
+  if (saved && ["en", "fr", "rw", "sw"].includes(saved)) setLocaleState(saved);
   }, []);
 
   const setLocale = (next: Locale) => {
