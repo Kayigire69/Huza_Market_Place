@@ -8,7 +8,7 @@ export default function TermsPage() {
       <div className="space-y-5 text-sm text-[var(--huza-muted)] leading-relaxed">
         <p>
           By using HUZA MARKETPLACE you agree to these terms. The platform is operated by Youth Huza
-          for the sale and direct delivery of fresh products from approved suppliers in Rwanda.
+          as an agricultural retailer selling and delivering fresh products in Rwanda.
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Orders &amp; payment.</strong> You buy from
@@ -20,9 +20,9 @@ export default function TermsPage() {
           sell. Availability may depend on district and business hours (default 6:00 AM – 9:00 PM).
         </p>
         <p>
-          <strong className="text-[var(--huza-ink)]">Farm partners.</strong> Approved farms may offer
-          produce for Youth Huza to purchase. Selling on this site to customers is done by Huza only —
-          partners do not sell directly to shoppers here.
+          <strong className="text-[var(--huza-ink)]">Supplier procurement.</strong> Verified farms may
+          offer produce for Youth Huza to purchase through the Supplier Procurement Portal. Partners
+          do not sell directly to shoppers on this site — Huza is the seller to customers.
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Liability.</strong> Fresh produce quality can

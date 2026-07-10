@@ -26,7 +26,6 @@ export async function GET(
       (i) => `
       <tr>
         <td>${i.product.nameEn}</td>
-        <td>${i.supplier.businessName}</td>
         <td>${i.quantity} ${formatUnit(i.product.unit)}</td>
         <td>${formatRwf(i.unitPrice)}</td>
         <td>${formatRwf(i.lineTotal)}</td>
@@ -66,7 +65,7 @@ export async function GET(
   </p>
   <table>
     <thead>
-      <tr><th>Product</th><th>Seller</th><th>Qty</th><th>Unit</th><th>Total</th></tr>
+      <tr><th>Product</th><th>Qty</th><th>Unit</th><th>Total</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table>

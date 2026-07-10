@@ -6,7 +6,7 @@ import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { Heart, BadgeCheck } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 
@@ -22,9 +22,10 @@ export type ProductCardData = {
   ratingAvg: number;
   availableDistricts?: string[];
   images: { url: string }[];
-  supplier: {
+  /** Internal procurement link — never shown to customers */
+  supplier?: {
     id: string;
-    businessName: string;
+    businessName?: string;
     status?: string;
     isVerified?: boolean;
   };
@@ -40,8 +41,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     locale === "fr" ? product.nameFr : locale === "rw" ? product.nameRw : product.nameEn;
   const image = product.images[0]?.url ?? "/logo.svg";
   const available = product.stockQty > 0;
-  const verified =
-    product.supplier.isVerified || product.supplier.status === "APPROVED";
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -85,20 +84,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </button>
       </Link>
       <div className="pt-3 flex flex-col flex-1">
-        <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)] flex items-center gap-1">
-          Sold by Youth Huza
-          {verified && product.supplier.businessName && (
-            <span title="Sourced from verified farm" className="inline-flex text-[var(--huza-green)]">
-              <BadgeCheck className="size-3.5" />
-            </span>
-          )}
-        </p>
-        <p className="text-[10px] text-[var(--huza-muted)]">
-          Sourced from {product.supplier.businessName}
-        </p>
         <Link
           href={`/products/${product.id}`}
-          className="mt-1 font-semibold text-[var(--huza-ink)] hover:text-[var(--huza-green)]"
+          className="font-semibold text-[var(--huza-ink)] hover:text-[var(--huza-green)]"
         >
           {name}
         </Link>
@@ -133,8 +121,8 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               price: product.price,
               unit: product.unit,
               imageUrl: image,
-              supplierId: product.supplier.id,
-              supplierName: product.supplier.businessName,
+              supplierId: product.supplier?.id ?? "",
+              supplierName: "Youth Huza",
               stockQty: product.stockQty,
             })
           }

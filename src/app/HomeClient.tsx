@@ -18,16 +18,6 @@ type Category = {
   nameRw: string;
 };
 
-type Supplier = {
-  id: string;
-  businessName: string;
-  location: string;
-  ratingAvg: number;
-  description: string | null;
-  isVerified?: boolean;
-  status?: string;
-};
-
 type Promo = {
   id: string;
   titleEn: string;
@@ -56,7 +46,6 @@ export function HomePage({
   featured,
   bestSellers,
   categories,
-  suppliers,
   promotions,
   testimonials,
   isOpen,
@@ -64,7 +53,6 @@ export function HomePage({
   featured: ProductCardData[];
   bestSellers: ProductCardData[];
   categories: Category[];
-  suppliers: Supplier[];
   promotions: Promo[];
   testimonials: Testimonial[];
   isOpen: boolean;
@@ -122,15 +110,6 @@ export function HomePage({
                   {t("heroCta")} <ArrowRight className="size-4" />
                 </Button>
               </Link>
-              <Link href="/supplier">
-                <Button
-                  size="lg"
-                  variant="ghost"
-                  className="text-white hover:bg-white/15 border border-white/30"
-                >
-                  {t("heroSecondary")}
-                </Button>
-              </Link>
             </div>
           </div>
 
@@ -169,7 +148,7 @@ export function HomePage({
         <div className="grid sm:grid-cols-3 gap-3">
           {[
             { icon: Truck, title: t("noMiddleman"), body: t("fromFarm") },
-            { icon: Leaf, title: t("organic"), body: "Fresh stock purchased by Youth Huza from approved farms" },
+            { icon: Leaf, title: t("organic"), body: "Quality-checked fresh stock from Youth Huza" },
             { icon: ShieldCheck, title: "MTN & Airtel", body: "Pay Youth Huza securely with Mobile Money" },
           ].map((item) => (
             <div
@@ -263,40 +242,6 @@ export function HomePage({
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {bestSellers.map((p) => (
             <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <h2 className="section-title mb-6">{t("suppliers")}</h2>
-        <div className="grid md:grid-cols-3 gap-5">
-          {suppliers.map((s) => (
-            <div
-              key={s.id}
-              className="rounded-2xl border border-[var(--huza-line)] bg-white/80 p-5"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--huza-mint)] text-[var(--huza-green-dark)] font-bold">
-                  {s.businessName.slice(0, 1)}
-                </div>
-                <div>
-                  <p className="font-semibold">
-                    {s.businessName}
-                    {(s.isVerified || s.status === "APPROVED") && (
-                      <span className="ml-2 text-[10px] uppercase tracking-wide text-[var(--huza-green)] font-bold">
-                        ✓ Verified
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-[var(--huza-muted)]">
-                    {s.location} · ★ {s.ratingAvg.toFixed(1)}
-                  </p>
-                </div>
-              </div>
-              <p className="mt-3 text-sm text-[var(--huza-muted)] line-clamp-2">
-                {s.description}
-              </p>
-            </div>
           ))}
         </div>
       </section>

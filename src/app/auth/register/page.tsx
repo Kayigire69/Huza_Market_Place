@@ -12,7 +12,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState<"CUSTOMER" | "SUPPLIER">("CUSTOMER");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,7 +22,7 @@ export default function RegisterPage() {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, role }),
+      body: JSON.stringify({ ...payload, role: "CUSTOMER" }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -37,34 +36,17 @@ export default function RegisterPage() {
       redirect: false,
     });
     setLoading(false);
-    router.push(role === "SUPPLIER" ? "/supplier" : "/account");
+    router.push("/account");
     router.refresh();
   };
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">{t("register")}</h1>
+      <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
+        Create a customer account to shop HUZA MARKETPLACE
+      </p>
       <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setRole("CUSTOMER")}
-            className={`flex-1 rounded-lg py-2 text-sm font-semibold ${
-              role === "CUSTOMER" ? "bg-[var(--huza-green)] text-white" : "bg-[var(--huza-mint)]"
-            }`}
-          >
-            Customer
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole("SUPPLIER")}
-            className={`flex-1 rounded-lg py-2 text-sm font-semibold ${
-              role === "SUPPLIER" ? "bg-[var(--huza-green)] text-white" : "bg-[var(--huza-mint)]"
-            }`}
-          >
-            Sell to Huza (farm)
-          </button>
-        </div>
         <div>
           <label className="label">{t("fullName")}</label>
           <input name="fullName" required className="input-field" />
@@ -81,26 +63,6 @@ export default function RegisterPage() {
           <label className="label">{t("password")}</label>
           <input name="password" type="password" required minLength={6} className="input-field" />
         </div>
-        {role === "SUPPLIER" && (
-          <>
-            <div>
-              <label className="label">Business name</label>
-              <input name="businessName" required className="input-field" />
-            </div>
-            <div>
-              <label className="label">{t("location")}</label>
-              <input name="location" required className="input-field" />
-            </div>
-            <div>
-              <label className="label">District</label>
-              <input name="district" required className="input-field" />
-            </div>
-            <div>
-              <label className="label">{t("description")}</label>
-              <textarea name="description" className="input-field min-h-16" />
-            </div>
-          </>
-        )}
         {error && <p className="text-sm text-red-700">{error}</p>}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "..." : t("register")}
@@ -111,6 +73,13 @@ export default function RegisterPage() {
         <Link href="/auth/login" className="text-[var(--huza-green)] font-semibold">
           {t("login")}
         </Link>
+      </p>
+      <p className="mt-6 text-center text-xs text-[var(--huza-muted)]">
+        Farm or supplier? Use the{" "}
+        <Link href="/supplier" className="font-semibold text-[var(--huza-green)]">
+          Supplier Procurement Portal
+        </Link>{" "}
+        to register and sell produce to Youth Huza.
       </p>
     </div>
   );

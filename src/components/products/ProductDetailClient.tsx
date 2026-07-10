@@ -7,7 +7,7 @@ import { useCart } from "@/lib/cart-store";
 import { formatRwf, formatUnit } from "@/lib/utils";
 import { productDescription, productName, categoryName } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
-import { MessageCircle, Minus, Plus, Share2, BadgeCheck } from "lucide-react";
+import { MessageCircle, Minus, Plus, Share2 } from "lucide-react";
 import { pushRecentlyViewed } from "@/lib/recently-viewed";
 
 type Product = {
@@ -27,15 +27,10 @@ type Product = {
   location: string | null;
   availableDistricts?: string[];
   images: { id: string; url: string; alt: string | null }[];
-  supplier: {
+  /** Internal only — not displayed on storefront */
+  supplier?: {
     id: string;
-    businessName: string;
-    location: string;
-    ratingAvg: number;
-    description: string | null;
-    availability: string;
-    status?: string;
-    isVerified?: boolean;
+    businessName?: string;
   };
   category: { nameEn: string; nameFr: string; nameRw: string; slug: string };
 };
@@ -48,7 +43,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const name = productName(product, locale);
   const description = productDescription(product, locale);
   const image = product.images[active]?.url ?? "/logo.svg";
-  const verified = product.supplier.isVerified || product.supplier.status === "APPROVED";
 
   useEffect(() => {
     pushRecentlyViewed({
@@ -118,32 +112,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
           </p>
         )}
 
-        <div className="mt-6 rounded-2xl border border-[var(--huza-line)] bg-white p-4 space-y-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Sold by</p>
-            <p className="font-semibold flex items-center gap-1.5">
-              Youth Huza — HUZA MARKETPLACE
-              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--huza-mint)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--huza-green-dark)]">
-                <BadgeCheck className="size-3.5" /> Official store
-              </span>
-            </p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("supplier")}</p>
-            <p className="font-medium text-sm">
-              {product.supplier.businessName}
-              {verified && (
-                <span className="ml-2 text-[10px] font-bold uppercase text-[var(--huza-green)]">
-                  Verified farm
-                </span>
-              )}
-            </p>
-            <p className="text-sm text-[var(--huza-muted)]">
-              {product.supplier.location} · ★ {product.supplier.ratingAvg.toFixed(1)}
-            </p>
-          </div>
-        </div>
-
         <div className="mt-6">
           <p className="label">{t("quantity")}</p>
           <div className="flex items-center gap-3">
@@ -177,8 +145,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 price: product.price,
                 unit: product.unit,
                 imageUrl: product.images[0]?.url ?? "/logo.svg",
-                supplierId: product.supplier.id,
-                supplierName: product.supplier.businessName,
+                supplierId: product.supplier?.id ?? "",
+                supplierName: "Youth Huza",
                 stockQty: product.stockQty,
               },
               qty

@@ -75,6 +75,7 @@ export function Footer() {
               <Link href="/supplier" className="hover:text-white">
                 {t("supplierPortal")}
               </Link>
+              <p className="mt-1 text-[11px] text-[#8FBF9F]">For farms selling produce to Huza</p>
             </li>
           </ul>
         </div>

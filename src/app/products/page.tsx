@@ -12,7 +12,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : "";
   const category = typeof sp.category === "string" ? sp.category : "";
-  const supplier = typeof sp.supplier === "string" ? sp.supplier : "";
   const location = typeof sp.location === "string" ? sp.location : "";
   const district = typeof sp.district === "string" ? sp.district : "";
   const minPrice = typeof sp.minPrice === "string" ? Number(sp.minPrice) : undefined;
@@ -30,12 +29,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
             { nameEn: { contains: q, mode: "insensitive" } },
             { nameFr: { contains: q, mode: "insensitive" } },
             { nameRw: { contains: q, mode: "insensitive" } },
-            { supplier: { businessName: { contains: q, mode: "insensitive" } } },
           ],
         }
       : {}),
     ...(category ? { category: { slug: category } } : {}),
-    ...(supplier ? { supplier: { businessName: { contains: supplier, mode: "insensitive" } } } : {}),
     ...(location ? { location: { contains: location, mode: "insensitive" } } : {}),
     ...(district ? { availableDistricts: { has: district } } : {}),
     ...(minPrice !== undefined && !Number.isNaN(minPrice) ? { price: { gte: minPrice } } : {}),
@@ -48,17 +45,13 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     ...(newArrivals ? { isNewArrival: true } : {}),
   };
 
-  const [products, categories, suppliers] = await Promise.all([
+  const [products, categories] = await Promise.all([
     prisma.product.findMany({
       where,
       include: { images: true, supplier: true, category: true },
       orderBy: [{ isFeatured: "desc" }, { ratingAvg: "desc" }],
     }),
     prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.supplier.findMany({
-      where: { status: "APPROVED" },
-      select: { id: true, businessName: true },
-    }),
   ]);
 
   return (
@@ -66,12 +59,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       <div className="mb-8">
         <h1 className="section-title">Products</h1>
         <p className="mt-2 text-[var(--huza-muted)]">
-          Browse fresh products from approved Youth Huza suppliers
+          Fresh products sold and delivered by Youth Huza
         </p>
       </div>
       <div className="grid lg:grid-cols-[260px_1fr] gap-8">
         <Suspense fallback={<div className="rounded-2xl border p-4">Loading filters...</div>}>
-          <ProductFilters categories={categories} suppliers={suppliers} />
+          <ProductFilters categories={categories} />
         </Suspense>
         <div>
           <p className="mb-4 text-sm text-[var(--huza-muted)]">

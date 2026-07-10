@@ -36,6 +36,7 @@ export function AdminClient(props: {
   deliveryPeople: { id: string; fullName: string; phone: string }[];
   auditLogs: AnyObj[];
   procurementOffers: AnyObj[];
+  purchaseOrders: AnyObj[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("procurement");
@@ -66,11 +67,16 @@ export function AdminClient(props: {
     window.history.replaceState(null, "", `#${t}`);
   };
 
-  const supplierAction = async (id: string, action: string, reason?: string) => {
+  const supplierAction = async (
+    id: string,
+    action: string,
+    reason?: string,
+    extra?: { adminNotes?: string; inspectionScheduledAt?: string }
+  ) => {
     const res = await fetch("/api/admin/suppliers", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, action, reason }),
+      body: JSON.stringify({ id, action, reason, ...extra }),
     });
     setMsg(res.ok ? `Supplier ${action}` : "Action failed");
     refresh();
@@ -79,7 +85,12 @@ export function AdminClient(props: {
   const offerAction = async (
     offerId: string,
     action: "accept" | "reject" | "purchase",
-    extra?: { retailPrice?: number; purchasedQty?: number; adminNote?: string }
+    extra?: {
+      retailPrice?: number;
+      purchasedQty?: number;
+      negotiatedPrice?: number;
+      adminNote?: string;
+    }
   ) => {
     const res = await fetch("/api/admin/procurement", {
       method: "PATCH",
@@ -88,6 +99,17 @@ export function AdminClient(props: {
     });
     const data = await res.json();
     setMsg(res.ok ? `Offer ${action} OK` : data.error || "Failed");
+    refresh();
+  };
+
+  const poAction = async (poId: string, poAction: string, extra?: Record<string, string>) => {
+    const res = await fetch("/api/admin/procurement", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ poId, poAction, ...extra }),
+    });
+    const data = await res.json();
+    setMsg(res.ok ? `PO ${poAction} OK` : data.error || "Failed");
     refresh();
   };
 
@@ -184,104 +206,261 @@ export function AdminClient(props: {
               tab === t ? "bg-[var(--huza-green)] text-white" : "bg-white border border-[var(--huza-line)]"
             }`}
           >
-            {t}
+            {t === "suppliers" ? "Verification" : t === "procurement" ? "Procurement" : t}
           </button>
         ))}
       </div>
       {msg && <p className="mb-4 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
 
       {tab === "procurement" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-          <h2 className="font-semibold mb-1">Buy from farm partners</h2>
-          <p className="text-sm text-[var(--huza-muted)] mb-4">
-            Youth Huza purchases these offers into HUZA MARKETPLACE inventory. Customers then buy from
-            Huza — not from the farm directly.
-          </p>
-          {(props.procurementOffers || []).length === 0 ? (
-            <p className="text-sm text-[var(--huza-muted)]">No offers yet.</p>
-          ) : (
-            props.procurementOffers.map((o) => {
-              const supplier = o.supplier as { businessName?: string };
-              return (
-                <div key={String(o.id)} className="rounded-xl border border-[var(--huza-line)] p-4">
-                  <div className="flex flex-wrap justify-between gap-2">
-                    <div>
-                      <p className="font-semibold">{String(o.title)}</p>
-                      <p className="text-sm text-[var(--huza-muted)]">
-                        {supplier?.businessName} · {String(o.quantityOffered)} {String(o.unit)} · Ask{" "}
-                        {formatRwf(Number(o.askPrice))}/{String(o.unit).toLowerCase()}
-                        {o.suggestedRetail
-                          ? ` · Suggested retail ${formatRwf(Number(o.suggestedRetail))}`
-                          : ""}
-                      </p>
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+            <h2 className="font-semibold mb-1">Procurement Management</h2>
+            <p className="text-sm text-[var(--huza-muted)] mb-4">
+              Review farm offers, negotiate wholesale price, purchase into Huza stock, then manage
+              purchase orders (receive, inspect, pay).
+            </p>
+            {(props.procurementOffers || []).length === 0 ? (
+              <p className="text-sm text-[var(--huza-muted)]">No offers yet.</p>
+            ) : (
+              props.procurementOffers.map((o) => {
+                const supplier = o.supplier as { businessName?: string };
+                return (
+                  <div key={String(o.id)} className="rounded-xl border border-[var(--huza-line)] p-4">
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <div>
+                        <p className="font-semibold">{String(o.title)}</p>
+                        <p className="text-sm text-[var(--huza-muted)]">
+                          {supplier?.businessName} · {String(o.quantityOffered)} {String(o.unit)} · Ask{" "}
+                          {formatRwf(Number(o.askPrice))}/{String(o.unit).toLowerCase()}
+                          {o.suggestedRetail
+                            ? ` · Suggested retail ${formatRwf(Number(o.suggestedRetail))}`
+                            : ""}
+                        </p>
+                      </div>
+                      <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
+                        {String(o.status)}
+                      </span>
                     </div>
-                    <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
-                      {String(o.status)}
-                    </span>
+                    {o.description ? (
+                      <p className="text-sm text-[var(--huza-muted)] mt-2">{String(o.description)}</p>
+                    ) : null}
+                    {(o.status === "PENDING" || o.status === "ACCEPTED") && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {o.status === "PENDING" && (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => offerAction(String(o.id), "accept")}>
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() =>
+                                offerAction(String(o.id), "reject", { adminNote: "Not needed now" })
+                              }
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const wholesale = window.prompt(
+                              "Negotiated wholesale price (RWF per unit)",
+                              String(o.askPrice)
+                            );
+                            if (!wholesale) return;
+                            const retail = window.prompt(
+                              "Huza retail price (RWF per unit)",
+                              String(o.suggestedRetail || Math.round(Number(wholesale) * 1.25))
+                            );
+                            if (!retail) return;
+                            offerAction(String(o.id), "purchase", {
+                              negotiatedPrice: Number(wholesale),
+                              retailPrice: Number(retail),
+                              purchasedQty: Number(o.quantityOffered),
+                            });
+                          }}
+                        >
+                          Create PO &amp; stock
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {o.description ? (
-                    <p className="text-sm text-[var(--huza-muted)] mt-2">{String(o.description)}</p>
-                  ) : null}
-                  {(o.status === "PENDING" || o.status === "ACCEPTED") && (
+                );
+              })
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+            <h2 className="font-semibold mb-1">Purchase orders</h2>
+            <p className="text-sm text-[var(--huza-muted)] mb-4">
+              Record receipt, quality inspection, and supplier payment.
+            </p>
+            {(props.purchaseOrders || []).length === 0 ? (
+              <p className="text-sm text-[var(--huza-muted)]">No purchase orders yet.</p>
+            ) : (
+              props.purchaseOrders.map((po) => {
+                const supplier = po.supplier as { businessName?: string };
+                return (
+                  <div key={String(po.id)} className="rounded-xl border border-[var(--huza-line)] p-4">
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <div>
+                        <p className="font-semibold">
+                          {String(po.poNumber)} · {String(po.productName)}
+                        </p>
+                        <p className="text-sm text-[var(--huza-muted)]">
+                          {supplier?.businessName} · {String(po.quantity)} {String(po.unit)} ·{" "}
+                          {formatRwf(Number(po.negotiatedPrice))}/unit · Total{" "}
+                          {formatRwf(Number(po.totalAmount))}
+                        </p>
+                      </div>
+                      <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
+                        {String(po.status)}
+                      </span>
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {o.status === "PENDING" && (
+                      {po.status !== "PAID" && po.status !== "CANCELLED" && po.status !== "REJECTED" && (
                         <>
-                          <Button size="sm" variant="ghost" onClick={() => offerAction(String(o.id), "accept")}>
-                            Accept
+                          <Button size="sm" variant="ghost" onClick={() => poAction(String(po.id), "receive")}>
+                            Mark received
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() =>
+                              poAction(String(po.id), "inspect_accept", {
+                                qualityNotes: "Passed inspection",
+                              })
+                            }
+                          >
+                            Inspect OK
                           </Button>
                           <Button
                             size="sm"
                             variant="danger"
-                            onClick={() => offerAction(String(o.id), "reject", { adminNote: "Not needed now" })}
+                            onClick={() => {
+                              const reason = window.prompt("Rejection reason", "Quality below standard");
+                              if (!reason) return;
+                              poAction(String(po.id), "inspect_reject", { rejectionReason: reason });
+                            }}
                           >
-                            Reject
+                            Reject delivery
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const ref = window.prompt("Payment reference", `PAY-${String(po.poNumber)}`);
+                              if (!ref) return;
+                              poAction(String(po.id), "pay", {
+                                paymentRef: ref,
+                                paymentMethod: "MTN_MOMO",
+                              });
+                            }}
+                          >
+                            Record payment
                           </Button>
                         </>
                       )}
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          const retail = window.prompt(
-                            "Huza retail price (RWF per unit)",
-                            String(o.suggestedRetail || Math.round(Number(o.askPrice) * 1.25))
-                          );
-                          if (!retail) return;
-                          offerAction(String(o.id), "purchase", {
-                            retailPrice: Number(retail),
-                            purchasedQty: Number(o.quantityOffered),
-                          });
-                        }}
-                      >
-                        Purchase into Huza stock
-                      </Button>
                     </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
       {tab === "suppliers" && (
         <div className="space-y-6">
           <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-4">Pending supplier applications</h2>
+            <h2 className="font-semibold mb-1">Supplier Verification &amp; Approval</h2>
+            <p className="text-sm text-[var(--huza-muted)] mb-4">
+              Review documents, request more info, schedule farm inspection, then approve or reject.
+            </p>
             {props.pendingSuppliers.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No pending requests.</p>
             ) : (
               props.pendingSuppliers.map((s) => (
-                <div key={String(s.id)} className="border-b border-[var(--huza-line)] py-3">
+                <div key={String(s.id)} className="border-b border-[var(--huza-line)] py-4 space-y-2">
                   <p className="font-medium">{String(s.businessName)}</p>
                   <p className="text-sm text-[var(--huza-muted)]">
-                    {(s.user as { fullName?: string })?.fullName} · {String(s.location)} ·{" "}
-                    {String(s.phone)}
+                    {(s.user as { fullName?: string })?.fullName} · {String(s.location)}
+                    {s.sector ? `, ${String(s.sector)}` : ""} · {String(s.district)} · {String(s.phone)}
                   </p>
-                  <div className="mt-2 flex gap-2">
+                  <p className="text-xs text-[var(--huza-muted)]">
+                    ID: {String(s.nationalId || "—")} · Categories: {String(s.productCategories || "—")} ·
+                    MoMo: {String(s.paymentMomo || "—")}
+                  </p>
+                  <div className="flex flex-wrap gap-3 text-xs">
+                    {s.nationalIdUrl ? (
+                      <a href={String(s.nationalIdUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
+                        National ID
+                      </a>
+                    ) : null}
+                    {s.businessCertUrl ? (
+                      <a href={String(s.businessCertUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
+                        Business cert
+                      </a>
+                    ) : null}
+                    {s.foodSafetyUrl ? (
+                      <a href={String(s.foodSafetyUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
+                        Food safety
+                      </a>
+                    ) : null}
+                    {s.organicCertUrl ? (
+                      <a href={String(s.organicCertUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
+                        Organic cert
+                      </a>
+                    ) : null}
+                  </div>
+                  {s.adminNotes ? (
+                    <p className="text-xs text-[var(--huza-muted)]">Admin notes: {String(s.adminNotes)}</p>
+                  ) : null}
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <Button size="sm" onClick={() => supplierAction(String(s.id), "approve")}>
                       Approve
                     </Button>
-                    <Button size="sm" variant="danger" onClick={() => supplierAction(String(s.id), "reject", "Documents incomplete")}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const note = window.prompt(
+                          "What additional info do you need?",
+                          "Please upload National ID and farm photos"
+                        );
+                        if (!note) return;
+                        supplierAction(String(s.id), "request_info", note, { adminNotes: note });
+                      }}
+                    >
+                      Request info
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const when = window.prompt(
+                          "Inspection date/time (ISO or local)",
+                          new Date(Date.now() + 86400000).toISOString().slice(0, 16)
+                        );
+                        if (!when) return;
+                        supplierAction(String(s.id), "schedule_inspection", undefined, {
+                          inspectionScheduledAt: new Date(when).toISOString(),
+                        });
+                      }}
+                    >
+                      Schedule inspection
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => {
+                        const reason = window.prompt("Rejection reason", "Documents incomplete");
+                        if (!reason) return;
+                        supplierAction(String(s.id), "reject", reason);
+                      }}
+                    >
                       Reject
                     </Button>
                   </div>
@@ -293,11 +472,24 @@ export function AdminClient(props: {
             <h2 className="font-semibold mb-4">All suppliers</h2>
             <div className="space-y-2">
               {props.allSuppliers.map((s) => (
-                <div key={String(s.id)} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--huza-line)] p-3">
+                <div
+                  key={String(s.id)}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--huza-line)] p-3"
+                >
                   <div>
-                    <p className="font-medium">{String(s.businessName)}</p>
+                    <p className="font-medium">
+                      {String(s.businessName)}
+                      {s.isVerified ? (
+                        <span className="ml-2 text-[10px] uppercase text-[var(--huza-green)] font-bold">
+                          Verified
+                        </span>
+                      ) : null}
+                    </p>
                     <p className="text-xs text-[var(--huza-muted)]">
                       {String(s.status)} · {(s._count as { products?: number })?.products ?? 0} products
+                      {s.inspectionScheduledAt
+                        ? ` · Inspection ${new Date(String(s.inspectionScheduledAt)).toLocaleDateString()}`
+                        : ""}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -440,8 +632,7 @@ export function AdminClient(props: {
             <h2 className="font-semibold mb-3">Low-stock products</h2>
             {props.lowStock.map((p) => (
               <p key={String(p.id)} className="text-sm border-b border-[var(--huza-line)] py-2">
-                {String(p.nameEn)} — {String(p.stockQty)} left (
-                {(p.supplier as { businessName?: string })?.businessName})
+                {String(p.nameEn)} — {String(p.stockQty)} left
               </p>
             ))}
           </div>

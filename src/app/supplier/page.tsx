@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatRwf } from "@/lib/utils";
 import { SupplierPortalClient } from "./SupplierPortalClient";
+import { SupplierRegisterForm } from "./SupplierRegisterForm";
 
 export const dynamic = "force-dynamic";
 
@@ -13,27 +14,19 @@ export default async function SupplierPage() {
 
   if (!session?.user) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <h1 className="section-title">Sell produce to Youth Huza</h1>
-        <p className="mt-4 text-[var(--huza-muted)] leading-relaxed">
-          Farmers and producers offer stock here so <strong>Youth Huza</strong> can buy it, then sell
-          and deliver on <strong>HUZA MARKETPLACE</strong>. You do not sell directly to customers on
-          this site — Huza is the buyer and the store.
-        </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link
-            href="/auth/register"
-            className="rounded-lg bg-[var(--huza-green)] px-5 py-2.5 text-sm font-semibold text-white"
-          >
-            Register as farm partner
-          </Link>
-          <Link
-            href="/auth/login"
-            className="rounded-lg border border-[var(--huza-line)] px-5 py-2.5 text-sm font-semibold"
-          >
-            Log in
-          </Link>
+      <div className="mx-auto max-w-3xl px-4 py-16">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)]">
+            Youth Huza procurement
+          </p>
+          <h1 className="section-title mt-2">Supplier Procurement Portal</h1>
+          <p className="mt-4 text-[var(--huza-muted)] leading-relaxed max-w-2xl mx-auto">
+            Register here if you want Youth Huza to buy your produce. After verification, you submit
+            offers; Huza inspects, purchases, and lists stock on <strong>HUZA MARKETPLACE</strong>.
+            Customers buy from Huza — not from you directly.
+          </p>
         </div>
+        <SupplierRegisterForm />
       </div>
     );
   }
@@ -52,18 +45,22 @@ export default async function SupplierPage() {
         include: { category: true },
         orderBy: { createdAt: "desc" },
       },
+      purchaseOrders: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
     },
   });
 
   if (!supplier) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="section-title">Become a farm partner</h1>
+        <h1 className="section-title">Become a verified supplier</h1>
         <p className="mt-4 text-[var(--huza-muted)]">
-          Register so Youth Huza can review your farm and buy your produce.
+          Register so Youth Huza can verify your farm and buy your produce.
         </p>
-        <Link href="/auth/register" className="inline-block mt-6 text-[var(--huza-green)] font-semibold">
-          Register →
+        <Link href="/supplier" className="inline-block mt-6 text-[var(--huza-green)] font-semibold">
+          Apply →
         </Link>
       </div>
     );
@@ -80,28 +77,39 @@ export default async function SupplierPage() {
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="section-title">{supplier.businessName}</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--huza-green)]">
+            Supplier Procurement Portal
+          </p>
+          <h1 className="section-title mt-1">{supplier.businessName}</h1>
           <p className="text-sm text-[var(--huza-muted)] mt-1">
             Status: {supplier.status}
-            {supplier.isVerified ? " · Verified partner" : ""} · Offer produce for Youth Huza to buy
+            {supplier.isVerified ? " · Verified" : ""} · Sell produce to Youth Huza
           </p>
+          {supplier.rejectionReason && (
+            <p className="text-sm text-red-700 mt-1">Reason: {supplier.rejectionReason}</p>
+          )}
+          {supplier.inspectionScheduledAt && (
+            <p className="text-sm text-[var(--huza-muted)] mt-1">
+              Farm inspection scheduled: {supplier.inspectionScheduledAt.toLocaleString()}
+            </p>
+          )}
         </div>
         <div className="rounded-xl bg-[var(--huza-mint)] px-4 py-3 text-sm">
-          <p className="text-[var(--huza-muted)]">Purchases by Huza (ask price)</p>
+          <p className="text-[var(--huza-muted)]">Purchases by Huza</p>
           <p className="text-xl font-bold text-[var(--huza-green-dark)]">{formatRwf(earnings)}</p>
         </div>
       </div>
 
       <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white p-4 text-sm text-[var(--huza-muted)]">
-        <strong className="text-[var(--huza-ink)]">How it works:</strong> Submit an offer → Huza
-        reviews → if accepted, Huza buys your stock and lists it on HUZA MARKETPLACE under Youth Huza.
-        Customers pay Huza; Huza pays you for purchased offers.
+        <strong className="text-[var(--huza-ink)]">How it works:</strong> Get verified → submit an
+        offer → Huza reviews quality &amp; price → purchase order → delivery to Huza warehouse →
+        products listed on HUZA MARKETPLACE under Youth Huza.
       </div>
 
       {supplier.status !== "APPROVED" && (
         <div className="mb-6 rounded-xl border border-[var(--huza-gold)] bg-[#FFF8E6] p-4 text-sm">
-          Your partner application is <strong>{supplier.status}</strong>. You can prepare offers while
-          waiting for Youth Huza approval.
+          Your application is <strong>{supplier.status}</strong>. Complete your profile and documents
+          while Youth Huza verifies your farm.
         </div>
       )}
 

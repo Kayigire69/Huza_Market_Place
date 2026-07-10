@@ -8,7 +8,7 @@ export default function PrivacyPage() {
       <div className="space-y-5 text-sm text-[var(--huza-muted)] leading-relaxed">
         <p>
           Youth Huza (“we”) operates HUZA MARKETPLACE. We collect information you provide when you
-          register, place orders, contact support, or use supplier tools — such as name, phone,
+          register, place orders, contact support, or apply as a supplier — such as name, phone,
           address, and payment phone numbers.
         </p>
         <p>
@@ -18,7 +18,8 @@ export default function PrivacyPage() {
         </p>
         <p>
           We do not sell your personal data. We may share order details with assigned delivery staff
-          and the relevant approved supplier fulfilling your items.
+          so Youth Huza can fulfill your order. Supplier verification documents are used only for
+          procurement approval and are not shown to customers.
         </p>
         <p>
           You may request access, correction, or deletion of your account data by contacting

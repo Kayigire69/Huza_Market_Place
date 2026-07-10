@@ -43,7 +43,6 @@ export default function CartPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{item.name}</p>
-                <p className="text-xs text-[var(--huza-muted)]">{item.supplierName}</p>
                 <p className="mt-1 font-bold text-[var(--huza-green-dark)]">
                   {formatRwf(item.price)} / {formatUnit(item.unit)}
                 </p>
