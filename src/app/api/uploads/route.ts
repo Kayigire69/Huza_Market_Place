@@ -6,8 +6,14 @@ import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-const MAX_BYTES = 5 * 1024 * 1024;
+const ALLOWED = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+]);
+const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -19,15 +25,19 @@ export async function POST(req: Request) {
   }
 
   const form = await req.formData();
+  const folder = String(form.get("folder") || "products");
+  const safeFolder = ["products", "profiles", "documents"].includes(folder)
+    ? folder
+    : "products";
   const files = form.getAll("files").filter((f): f is File => f instanceof File);
   if (files.length === 0) {
     return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
   }
   if (files.length > 8) {
-    return NextResponse.json({ error: "Maximum 8 photos per upload" }, { status: 400 });
+    return NextResponse.json({ error: "Maximum 8 files per upload" }, { status: 400 });
   }
 
-  const dir = path.join(process.cwd(), "public", "uploads", "products");
+  const dir = path.join(process.cwd(), "public", "uploads", safeFolder);
   await mkdir(dir, { recursive: true });
 
   const urls: string[] = [];
@@ -39,20 +49,22 @@ export async function POST(req: Request) {
       );
     }
     if (file.size > MAX_BYTES) {
-      return NextResponse.json({ error: `${file.name} is larger than 5MB` }, { status: 400 });
+      return NextResponse.json({ error: `${file.name} is larger than 8MB` }, { status: 400 });
     }
     const ext =
-      file.type === "image/png"
-        ? "png"
-        : file.type === "image/webp"
-          ? "webp"
-          : file.type === "image/gif"
-            ? "gif"
-            : "jpg";
+      file.type === "application/pdf"
+        ? "pdf"
+        : file.type === "image/png"
+          ? "png"
+          : file.type === "image/webp"
+            ? "webp"
+            : file.type === "image/gif"
+              ? "gif"
+              : "jpg";
     const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(path.join(dir, name), buffer);
-    urls.push(`/uploads/products/${name}`);
+    urls.push(`/uploads/${safeFolder}/${name}`);
   }
 
   return NextResponse.json({ urls });

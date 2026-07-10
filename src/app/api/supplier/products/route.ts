@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UnitType } from "@prisma/client";
+import { pickProductCropFields } from "@/lib/farmer-dossier";
 
 async function getSupplierId(userId: string, role?: string) {
   const supplier = await prisma.supplier.findUnique({ where: { userId } });
@@ -69,6 +70,13 @@ export async function POST(req: Request) {
     );
   }
 
+  const crop = pickProductCropFields(body);
+  const price =
+    Number(body.price) ||
+    Number(crop.pricePerUnit) ||
+    Number(crop.farmGatePrice) ||
+    0;
+
   const product = await prisma.product.create({
     data: {
       supplierId,
@@ -76,17 +84,42 @@ export async function POST(req: Request) {
       nameEn: body.nameEn,
       nameFr: body.nameFr || body.nameEn,
       nameRw: body.nameRw || body.nameEn,
-      descriptionEn: body.descriptionEn || "",
-      descriptionFr: body.descriptionFr || body.descriptionEn || "",
-      descriptionRw: body.descriptionRw || body.descriptionEn || "",
-      price: Number(body.price),
+      descriptionEn: body.descriptionEn || body.farmerComments || "",
+      descriptionFr: body.descriptionFr || body.descriptionEn || body.farmerComments || "",
+      descriptionRw: body.descriptionRw || body.descriptionEn || body.farmerComments || "",
+      price,
       unit: (body.unit as UnitType) || UnitType.KG,
-      stockQty: Number(body.stockQty) || 0,
+      stockQty: Number(body.stockQty) || Number(body.totalQuantityHarvested) || 0,
       isOrganic: Boolean(body.isOrganic),
       isNewArrival: true,
       isActive: false,
+      reviewStatus: "PENDING",
       location: supplier?.location,
       originDistrict: body.originDistrict || supplier?.district || null,
+      fieldType: crop.fieldType as string | undefined,
+      fieldSize: crop.fieldSize as string | undefined,
+      pastCropsSeason1: crop.pastCropsSeason1 as string | undefined,
+      pastCropsSeason2: crop.pastCropsSeason2 as string | undefined,
+      pastCropsSeason3: crop.pastCropsSeason3 as string | undefined,
+      currentCrop: crop.currentCrop as string | undefined,
+      chemicalsPerWeek: crop.chemicalsPerWeek as string | undefined,
+      chemicalsWhy: crop.chemicalsWhy as string | undefined,
+      chemicalsDosage: crop.chemicalsDosage as string | undefined,
+      fertilizerPerWeek: crop.fertilizerPerWeek as string | undefined,
+      irrigationMethod: crop.irrigationMethod as string | undefined,
+      diseasesIdentified: crop.diseasesIdentified as string | undefined,
+      pestsIdentified: crop.pestsIdentified as string | undefined,
+      totalQuantityHarvested: crop.totalQuantityHarvested as string | undefined,
+      qualityGeneral: crop.qualityGeneral as string | undefined,
+      priceUnit: crop.priceUnit as string | undefined,
+      pricePerUnit: crop.pricePerUnit as number | undefined,
+      totalKgsBoughtByHuza: (crop.totalKgsBoughtByHuza as number) || 0,
+      paymentOption: crop.paymentOption as string | undefined,
+      farmGatePrice: crop.farmGatePrice as number | undefined,
+      priceUponDelivery: crop.priceUponDelivery as number | undefined,
+      priceAfterSale: crop.priceAfterSale as number | undefined,
+      proofOfPaymentUrl: crop.proofOfPaymentUrl as string | undefined,
+      farmerComments: crop.farmerComments as string | undefined,
       images: {
         create: imageUrls.map((url, i) => ({
           url,
@@ -95,7 +128,10 @@ export async function POST(req: Request) {
         })),
       },
       stockLogs: {
-        create: { change: Number(body.stockQty) || 0, reason: "Initial upload by farmer" },
+        create: {
+          change: Number(body.stockQty) || Number(body.totalQuantityHarvested) || 0,
+          reason: "Initial upload by farmer",
+        },
       },
     },
     include: { images: true, category: true },

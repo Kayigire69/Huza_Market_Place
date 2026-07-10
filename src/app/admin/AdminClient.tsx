@@ -9,6 +9,7 @@ type AnyObj = Record<string, unknown>;
 
 type Tab =
   | "suppliers"
+  | "products"
   | "procurement"
   | "orders"
   | "delivery"
@@ -23,6 +24,7 @@ type Tab =
 export function AdminClient(props: {
   pendingSuppliers: AnyObj[];
   allSuppliers: AnyObj[];
+  pendingFarmerProducts?: AnyObj[];
   orders: AnyObj[];
   deliveries: AnyObj[];
   payments: AnyObj[];
@@ -39,13 +41,14 @@ export function AdminClient(props: {
   purchaseOrders: AnyObj[];
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("procurement");
+  const [tab, setTab] = useState<Tab>("suppliers");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "") as Tab;
     const valid: Tab[] = [
       "suppliers",
+      "products",
       "procurement",
       "orders",
       "delivery",
@@ -78,7 +81,22 @@ export function AdminClient(props: {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, action, reason, ...extra }),
     });
-    setMsg(res.ok ? `Supplier ${action}` : "Action failed");
+    setMsg(res.ok ? `Farmer ${action}` : "Action failed");
+    refresh();
+  };
+
+  const productReview = async (id: string, action: "approve" | "reject") => {
+    const note =
+      action === "reject"
+        ? window.prompt("Rejection reason", "Quality / field information incomplete") || undefined
+        : undefined;
+    if (action === "reject" && !note) return;
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, action, note }),
+    });
+    setMsg(res.ok ? `Product ${action}d` : "Product review failed");
     refresh();
   };
 
@@ -181,8 +199,9 @@ export function AdminClient(props: {
   };
 
   const tabs = [
-    "procurement",
     "suppliers",
+    "products",
+    "procurement",
     "orders",
     "delivery",
     "payments",
@@ -206,7 +225,13 @@ export function AdminClient(props: {
               tab === t ? "bg-[var(--huza-green)] text-white" : "bg-white border border-[var(--huza-line)]"
             }`}
           >
-            {t === "suppliers" ? "Farmer Approval" : t === "procurement" ? "Procurement" : t}
+            {t === "suppliers"
+              ? "Farmer Approval"
+              : t === "products"
+                ? "Product review"
+                : t === "procurement"
+                  ? "Procurement"
+                  : t}
           </button>
         ))}
       </div>
@@ -377,51 +402,143 @@ export function AdminClient(props: {
           <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-1">Farmer Approval (Module 10)</h2>
             <p className="text-sm text-[var(--huza-muted)] mb-4">
-              Review farmer applications and documents, request more info, schedule farm inspection,
-              then approve, reject, suspend, or remove.
+              Review the full farmer dossier (personal, field, production, sales, payment, comments)
+              before approving or rejecting.
             </p>
             {props.pendingSuppliers.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No pending requests.</p>
             ) : (
               props.pendingSuppliers.map((s) => (
-                <div key={String(s.id)} className="border-b border-[var(--huza-line)] py-4 space-y-2">
-                  <p className="font-medium">{String(s.businessName)}</p>
-                  <p className="text-sm text-[var(--huza-muted)]">
-                    {(s.user as { fullName?: string })?.fullName} · {String(s.location)}
-                    {s.sector ? `, ${String(s.sector)}` : ""} · {String(s.district)} · {String(s.phone)}
-                  </p>
-                  <p className="text-xs text-[var(--huza-muted)]">
-                    ID: {String(s.nationalId || "—")} · Categories: {String(s.productCategories || "—")} ·
-                    MoMo: {String(s.paymentMomo || "—")}
-                  </p>
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    {s.nationalIdUrl ? (
-                      <a href={String(s.nationalIdUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
-                        National ID
-                      </a>
-                    ) : null}
-                    {s.businessCertUrl ? (
-                      <a href={String(s.businessCertUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
-                        Business cert
-                      </a>
-                    ) : null}
-                    {s.foodSafetyUrl ? (
-                      <a href={String(s.foodSafetyUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
-                        Food safety
-                      </a>
-                    ) : null}
-                    {s.organicCertUrl ? (
-                      <a href={String(s.organicCertUrl)} target="_blank" rel="noreferrer" className="text-[var(--huza-green)] underline">
-                        Organic cert
-                      </a>
-                    ) : null}
+                <div key={String(s.id)} className="border-b border-[var(--huza-line)] py-5 space-y-3">
+                  <div className="flex flex-wrap gap-4 items-start">
+                    {s.profilePhotoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={String(s.profilePhotoUrl)}
+                        alt=""
+                        className="h-20 w-20 rounded-full object-cover border border-[var(--huza-line)]"
+                      />
+                    ) : (
+                      <div className="h-20 w-20 rounded-full bg-[var(--huza-mint)]" />
+                    )}
+                    <div>
+                      <p className="font-medium text-lg">{String(s.businessName)}</p>
+                      <p className="text-sm text-[var(--huza-muted)]">
+                        {(s.user as { fullName?: string })?.fullName} · {String(s.phone)}
+                      </p>
+                    </div>
                   </div>
+
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-[var(--huza-muted)]">
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">ID:</strong> {String(s.nationalId || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Gender:</strong> {String(s.gender || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Age:</strong> {String(s.ageRange || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Province:</strong> {String(s.province || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">District:</strong> {String(s.district || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Sector:</strong> {String(s.sector || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Cell:</strong> {String(s.cell || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Village:</strong> {String(s.village || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Field:</strong> {String(s.fieldType || "—")} ·{" "}
+                      {String(s.farmSize || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Current crop:</strong>{" "}
+                      {String(s.currentCrop || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Past crops:</strong>{" "}
+                      {[s.pastCropsSeason1, s.pastCropsSeason2, s.pastCropsSeason3]
+                        .filter(Boolean)
+                        .map(String)
+                        .join(" / ") || "—"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Chemicals/week:</strong>{" "}
+                      {String(s.chemicalsPerWeek || "—")} ({String(s.chemicalsWhy || "—")}) · Dosage{" "}
+                      {String(s.chemicalsDosage || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Fertilizer/week:</strong>{" "}
+                      {String(s.fertilizerPerWeek || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Irrigation:</strong>{" "}
+                      {String(s.irrigationMethod || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Diseases:</strong>{" "}
+                      {String(s.diseasesIdentified || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Pests:</strong>{" "}
+                      {String(s.pestsIdentified || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Harvested:</strong>{" "}
+                      {String(s.totalQuantityHarvested || "—")} · Quality{" "}
+                      {String(s.qualityGeneral || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Price:</strong>{" "}
+                      {s.pricePerUnit != null
+                        ? `${formatRwf(Number(s.pricePerUnit))}/${String(s.priceUnit || "unit")}`
+                        : "—"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Kgs bought by Huza:</strong>{" "}
+                      {String(s.totalKgsBoughtByHuza ?? 0)}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Payment option:</strong>{" "}
+                      {String(s.paymentOption || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Farm gate / delivery / after sale:</strong>{" "}
+                      {[s.farmGatePrice, s.priceUponDelivery, s.priceAfterSale]
+                        .map((v) => (v != null ? formatRwf(Number(v)) : "—"))
+                        .join(" / ")}
+                    </p>
+                  </div>
+
+                  {s.farmerComments ? (
+                    <p className="text-sm">
+                      <strong>Comments:</strong> {String(s.farmerComments)}
+                    </p>
+                  ) : null}
+                  {s.proofOfPaymentUrl ? (
+                    <a
+                      href={String(s.proofOfPaymentUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-[var(--huza-green)] underline"
+                    >
+                      View proof of payment
+                    </a>
+                  ) : null}
                   {s.adminNotes ? (
                     <p className="text-xs text-[var(--huza-muted)]">Admin notes: {String(s.adminNotes)}</p>
                   ) : null}
+
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Button size="sm" onClick={() => supplierAction(String(s.id), "approve")}>
-                      Approve
+                      Approve farmer
                     </Button>
                     <Button
                       size="sm"
@@ -429,7 +546,7 @@ export function AdminClient(props: {
                       onClick={() => {
                         const note = window.prompt(
                           "What additional info do you need?",
-                          "Please upload National ID and farm photos"
+                          "Please complete farmer dossier fields"
                         );
                         if (!note) return;
                         supplierAction(String(s.id), "request_info", note, { adminNotes: note });
@@ -442,7 +559,7 @@ export function AdminClient(props: {
                       variant="ghost"
                       onClick={() => {
                         const when = window.prompt(
-                          "Inspection date/time (ISO or local)",
+                          "Agent visit date/time",
                           new Date(Date.now() + 86400000).toISOString().slice(0, 16)
                         );
                         if (!when) return;
@@ -451,13 +568,13 @@ export function AdminClient(props: {
                         });
                       }}
                     >
-                      Schedule inspection
+                      Schedule agent visit
                     </Button>
                     <Button
                       size="sm"
                       variant="danger"
                       onClick={() => {
-                        const reason = window.prompt("Rejection reason", "Documents incomplete");
+                        const reason = window.prompt("Rejection reason", "Dossier incomplete");
                         if (!reason) return;
                         supplierAction(String(s.id), "reject", reason);
                       }}
@@ -488,9 +605,8 @@ export function AdminClient(props: {
                     </p>
                     <p className="text-xs text-[var(--huza-muted)]">
                       {String(s.status)} · {(s._count as { products?: number })?.products ?? 0} products
-                      {s.inspectionScheduledAt
-                        ? ` · Inspection ${new Date(String(s.inspectionScheduledAt)).toLocaleDateString()}`
-                        : ""}
+                      {s.currentCrop ? ` · Crop: ${String(s.currentCrop)}` : ""}
+                      {s.qualityGeneral ? ` · Quality: ${String(s.qualityGeneral)}` : ""}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -505,6 +621,117 @@ export function AdminClient(props: {
               ))}
             </div>
           </section>
+        </div>
+      )}
+
+      {tab === "products" && (
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
+          <h2 className="font-semibold mb-1">Product review</h2>
+          <p className="text-sm text-[var(--huza-muted)] mb-4">
+            Accept or reject farmer product submissions using photos and field/production/sales
+            details.
+          </p>
+          {(props.pendingFarmerProducts || []).length === 0 ? (
+            <p className="text-sm text-[var(--huza-muted)]">No products waiting for review.</p>
+          ) : (
+            (props.pendingFarmerProducts || []).map((p) => {
+              const supplier = p.supplier as AnyObj | undefined;
+              const images = (p.images as { url?: string }[]) || [];
+              return (
+                <div key={String(p.id)} className="rounded-xl border border-[var(--huza-line)] p-4 space-y-3">
+                  <div className="flex flex-wrap gap-3">
+                    {images.slice(0, 4).map((img) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={String(img.url)}
+                        src={String(img.url)}
+                        alt=""
+                        className="h-16 w-16 rounded-lg object-cover border border-[var(--huza-line)]"
+                      />
+                    ))}
+                    <div>
+                      <p className="font-semibold">{String(p.nameEn)}</p>
+                      <p className="text-sm text-[var(--huza-muted)]">
+                        {String(supplier?.businessName || "Farmer")} ·{" "}
+                        {formatRwf(Number(p.pricePerUnit || p.price || 0))}/
+                        {String(p.priceUnit || p.unit || "unit")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-[var(--huza-muted)]">
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Field:</strong> {String(p.fieldType || "—")} ·{" "}
+                      {String(p.fieldSize || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Current crop:</strong>{" "}
+                      {String(p.currentCrop || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Past crops:</strong>{" "}
+                      {[p.pastCropsSeason1, p.pastCropsSeason2, p.pastCropsSeason3]
+                        .filter(Boolean)
+                        .map(String)
+                        .join(" / ") || "—"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Chemicals:</strong>{" "}
+                      {String(p.chemicalsPerWeek || "—")} / {String(p.chemicalsWhy || "—")} /{" "}
+                      {String(p.chemicalsDosage || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Fertilizer:</strong>{" "}
+                      {String(p.fertilizerPerWeek || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Irrigation:</strong>{" "}
+                      {String(p.irrigationMethod || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Diseases / pests:</strong>{" "}
+                      {String(p.diseasesIdentified || "—")} / {String(p.pestsIdentified || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Harvested / quality:</strong>{" "}
+                      {String(p.totalQuantityHarvested || "—")} / {String(p.qualityGeneral || "—")}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Payment:</strong>{" "}
+                      {String(p.paymentOption || "—")} · gate{" "}
+                      {p.farmGatePrice != null ? formatRwf(Number(p.farmGatePrice)) : "—"}
+                    </p>
+                    <p>
+                      <strong className="text-[var(--huza-ink)]">Kgs bought by Huza:</strong>{" "}
+                      {String(p.totalKgsBoughtByHuza ?? 0)}
+                    </p>
+                  </div>
+                  {p.farmerComments ? (
+                    <p className="text-sm">
+                      <strong>Comments:</strong> {String(p.farmerComments)}
+                    </p>
+                  ) : null}
+                  {p.proofOfPaymentUrl ? (
+                    <a
+                      href={String(p.proofOfPaymentUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-[var(--huza-green)] underline"
+                    >
+                      Proof of payment
+                    </a>
+                  ) : null}
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => productReview(String(p.id), "approve")}>
+                      Accept product
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => productReview(String(p.id), "reject")}>
+                      Reject product
+                    </Button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 

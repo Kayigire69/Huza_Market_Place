@@ -108,6 +108,17 @@ export default async function AdminPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const pendingFarmerProducts = await prisma.product.findMany({
+    where: { reviewStatus: "PENDING" },
+    include: {
+      supplier: { include: { user: true } },
+      category: true,
+      images: { orderBy: { sortOrder: "asc" }, take: 4 },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
   const allOrders = await prisma.order.findMany({
     include: { payment: true, delivery: true, items: true },
     orderBy: { createdAt: "desc" },
@@ -154,14 +165,14 @@ export default async function AdminPage() {
 
       <div className="mb-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { href: "/admin#suppliers", title: "Farmer Approval", desc: "Review, verify, approve or suspend farmers" },
+          { href: "/admin#suppliers", title: "Farmer Approval", desc: "Review farmer dossiers & approve" },
+          { href: "/admin#products", title: "Product review", desc: "Accept or reject farmer products" },
           { href: "/admin#procurement", title: "Procurement", desc: "POs, receive, inspect, pay" },
           { href: "/warehouse", title: "Warehouse", desc: "Receive goods, pack orders" },
           { href: "/procurement", title: "Procurement officer", desc: "Offers, POs, messages" },
           { href: "/delivery-portal", title: "Delivery portal", desc: "Assign & track drivers" },
           { href: "/admin#orders", title: "Customer orders", desc: "Orders sold by Youth Huza" },
           { href: "/admin#payments", title: "Payments", desc: "Customer & farmer payments" },
-          { href: "/support", title: "Support center", desc: "Tickets, returns, complaints" },
         ].map((a) => (
           <a
             key={a.title}
@@ -199,6 +210,7 @@ export default async function AdminPage() {
       <AdminClient
         pendingSuppliers={pendingSuppliers}
         allSuppliers={allSuppliers}
+        pendingFarmerProducts={pendingFarmerProducts}
         orders={allOrders}
         deliveries={deliveries}
         payments={payments}
