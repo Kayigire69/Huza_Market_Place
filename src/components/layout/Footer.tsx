@@ -77,12 +77,6 @@ export function Footer() {
               </Link>
               <p className="mt-1 text-[11px] text-[#8FBF9F]">Farmers Portal — sell produce to Huza</p>
             </li>
-            <li>
-              <Link href="/admin" className="hover:text-white">
-                Admin portal
-              </Link>
-              <p className="mt-1 text-[11px] text-[#8FBF9F]">Staff only — farmer approval &amp; ops</p>
-            </li>
           </ul>
         </div>
 

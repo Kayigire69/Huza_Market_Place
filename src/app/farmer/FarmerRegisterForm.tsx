@@ -45,8 +45,9 @@ export function FarmerRegisterForm() {
     >
       <h2 className="font-semibold text-lg">Farmer registration</h2>
       <p className="text-xs text-[var(--huza-muted)]">
-        Apply so Youth Huza can buy your produce. An admin reviews your documents before you can
-        upload products and receive purchase orders.
+        Apply so Youth Huza can buy your produce. A Huza field agent may visit your farm to help you
+        register and verify documents. After approval you list products with photos — Huza does not
+        place online orders in this portal.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-3">

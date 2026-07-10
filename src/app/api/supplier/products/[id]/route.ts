@@ -3,6 +3,21 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function parseImageUrls(body: Record<string, unknown>): string[] {
+  const raw = body.imageUrls;
+  if (Array.isArray(raw)) {
+    return raw.map(String).map((u) => u.trim()).filter(Boolean).slice(0, 8);
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return raw
+      .split(/[\n,]+/)
+      .map((u) => u.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+  return [];
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,24 +36,53 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const stockQty = Number(body.stockQty);
-  const change = stockQty - product.stockQty;
+  const stockQty =
+    body.stockQty !== undefined && body.stockQty !== null
+      ? Number(body.stockQty)
+      : undefined;
+  const change = stockQty !== undefined ? stockQty - product.stockQty : 0;
 
-  const updated = await prisma.product.update({
-    where: { id },
-    data: {
-      ...(body.nameEn ? { nameEn: body.nameEn } : {}),
-      ...(body.price !== undefined ? { price: Number(body.price) } : {}),
-      ...(body.stockQty !== undefined ? { stockQty } : {}),
-      ...(body.isActive !== undefined ? { isActive: Boolean(body.isActive) } : {}),
-    },
-  });
+  const imageUrls = parseImageUrls(body);
 
-  if (body.stockQty !== undefined && change !== 0) {
-    await prisma.stockHistory.create({
-      data: { productId: id, change, reason: "Manual inventory update" },
+  const updated = await prisma.$transaction(async (tx) => {
+    if (imageUrls.length > 0) {
+      await tx.productImage.deleteMany({ where: { productId: id } });
+      await tx.productImage.createMany({
+        data: imageUrls.map((url, i) => ({
+          productId: id,
+          url,
+          alt: `${body.nameEn || product.nameEn} photo ${i + 1}`,
+          sortOrder: i,
+        })),
+      });
+    }
+
+    const row = await tx.product.update({
+      where: { id },
+      data: {
+        ...(body.nameEn ? { nameEn: body.nameEn, nameFr: body.nameEn, nameRw: body.nameEn } : {}),
+        ...(body.descriptionEn !== undefined
+          ? {
+              descriptionEn: String(body.descriptionEn),
+              descriptionFr: String(body.descriptionEn),
+              descriptionRw: String(body.descriptionEn),
+            }
+          : {}),
+        ...(body.price !== undefined ? { price: Number(body.price) } : {}),
+        ...(stockQty !== undefined ? { stockQty } : {}),
+        ...(body.isOrganic !== undefined ? { isOrganic: Boolean(body.isOrganic) } : {}),
+      },
+      include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
     });
-  }
+
+    if (stockQty !== undefined && change !== 0) {
+      await tx.stockHistory.create({
+        data: { productId: id, change, reason: "Manual inventory update" },
+      });
+    }
+
+    return row;
+  });
 
   return NextResponse.json(updated);
 }

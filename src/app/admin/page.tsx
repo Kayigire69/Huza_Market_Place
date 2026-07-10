@@ -1,54 +1,19 @@
 import { getServerSession } from "next-auth";
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatRwf } from "@/lib/utils";
 import { AdminClient } from "./AdminClient";
-import { DemoCredentials } from "@/components/portals/DemoCredentials";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)]">
-          Module 10 · Separate from customer shop
-        </p>
-        <h1 className="section-title mt-2">Admin Portal</h1>
-        <p className="mt-4 text-[var(--huza-muted)] leading-relaxed">
-          Manage HUZA FRESH: farmer approval, procurement, orders, warehouse, and delivery. This
-          portal is for Youth Huza staff only — not customers.
-        </p>
-        <p className="mt-3 text-sm">
-          <Link href="/" className="text-[var(--huza-muted)] hover:underline">
-            ← Customer storefront
-          </Link>
-          {" · "}
-          <Link href="/farmer" className="font-semibold text-[var(--huza-green)]">
-            Farmers Portal
-          </Link>
-        </p>
-        <DemoCredentials
-          title="Demo admin login"
-          credentials={[
-            {
-              label: "System administrator",
-              email: "admin@youthhuza.rw",
-              password: "password123",
-              note: "Full access — farmer approval, procurement, orders",
-            },
-          ]}
-        />
-        <Link
-          href="/auth/login"
-          className="mt-6 inline-flex rounded-full bg-[var(--huza-green)] px-5 py-2.5 text-sm font-semibold text-white"
-        >
-          Log in to Admin Portal
-        </Link>
-      </div>
-    );
+  if (!session?.user) {
+    redirect("/auth/login");
+  }
+  if (session.user.role !== "ADMIN") {
+    redirect("/");
   }
 
   const [
@@ -196,7 +161,7 @@ export default async function AdminPage() {
           { href: "/delivery-portal", title: "Delivery portal", desc: "Assign & track drivers" },
           { href: "/admin#orders", title: "Customer orders", desc: "Orders sold by Youth Huza" },
           { href: "/admin#payments", title: "Payments", desc: "Customer & farmer payments" },
-          { href: "/farmer", title: "Farmers Portal", desc: "Open the farmer-facing portal" },
+          { href: "/support", title: "Support center", desc: "Tickets, returns, complaints" },
         ].map((a) => (
           <a
             key={a.title}

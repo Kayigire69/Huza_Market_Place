@@ -14,6 +14,21 @@ async function getSupplierId(userId: string, role?: string) {
   return null;
 }
 
+function parseImageUrls(body: Record<string, unknown>): string[] {
+  const raw = body.imageUrls;
+  if (Array.isArray(raw)) {
+    return raw.map(String).map((u) => u.trim()).filter(Boolean).slice(0, 8);
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return raw
+      .split(/[\n,]+/)
+      .map((u) => u.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+  return [];
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,7 +38,7 @@ export async function GET() {
 
   const products = await prisma.product.findMany({
     where: { supplierId },
-    include: { category: true },
+    include: { category: true, images: { orderBy: { sortOrder: "asc" } } },
     orderBy: { updatedAt: "desc" },
   });
   return NextResponse.json(products);
@@ -46,6 +61,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Name and category are required" }, { status: 400 });
   }
 
+  const imageUrls = parseImageUrls(body);
+  if (imageUrls.length === 0) {
+    return NextResponse.json(
+      { error: "Add at least one product photo so Huza agents can review it" },
+      { status: 400 }
+    );
+  }
+
   const product = await prisma.product.create({
     data: {
       supplierId,
@@ -65,12 +88,17 @@ export async function POST(req: Request) {
       location: supplier?.location,
       originDistrict: body.originDistrict || supplier?.district || null,
       images: {
-        create: [{ url: "/images/products/mushroom.svg", alt: body.nameEn }],
+        create: imageUrls.map((url, i) => ({
+          url,
+          alt: `${body.nameEn} photo ${i + 1}`,
+          sortOrder: i,
+        })),
       },
       stockLogs: {
         create: { change: Number(body.stockQty) || 0, reason: "Initial upload by farmer" },
       },
     },
+    include: { images: true, category: true },
   });
 
   return NextResponse.json(product);
