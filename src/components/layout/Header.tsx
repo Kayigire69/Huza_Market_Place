@@ -2,66 +2,51 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { ShoppingCart, User, Menu, X, Heart, MapPinned } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { localeFlags, locales, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { SmartSearch } from "@/components/layout/SmartSearch";
 
 export function Header() {
   const { t, locale, setLocale } = useLocale();
   const items = useCart((s) => s.items);
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
   const { data: session } = useSession();
-  const router = useRouter();
   const pathname = usePathname();
-  const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
-
-  const onSearch = (e: FormEvent) => {
-    e.preventDefault();
-    const query = q.trim();
-    router.push(query ? `/products?q=${encodeURIComponent(query)}` : "/products");
-    setOpen(false);
-  };
 
   const nav = [
     { href: "/", label: t("home") },
     { href: "/products", label: t("products") },
     { href: "/categories", label: t("categories") },
-    { href: "/supplier", label: t("supplierPortal") },
+    { href: "/track", label: "Track order" },
+    { href: "/about", label: "About" },
   ];
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--huza-line)] bg-[rgba(247,251,248,0.92)] backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex h-16 items-center gap-3 sm:gap-6">
-          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Youth Huza">
+          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="HUZA MARKETPLACE">
             <Image src="/logo.svg" alt="Youth Huza" width={40} height={40} priority />
             <div className="hidden sm:block leading-tight">
               <p className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)] tracking-tight">
-                YOUTH HUZA
+                HUZA MARKETPLACE
               </p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)]">
-                Huza Market Place
+                Powered by Youth Huza
               </p>
             </div>
           </Link>
 
-          <form onSubmit={onSearch} className="hidden md:flex flex-1 max-w-xl mx-auto">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--huza-muted)]" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                className="w-full rounded-full border border-[var(--huza-line)] bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--huza-green)]"
-              />
-            </div>
-          </form>
+          <div className="hidden md:flex flex-1 max-w-xl mx-auto">
+            <SmartSearch />
+          </div>
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <label className="sr-only" htmlFor="lang">
@@ -79,6 +64,22 @@ export function Header() {
                 </option>
               ))}
             </select>
+
+            <Link
+              href="/wishlist"
+              className="relative inline-flex items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)]"
+              aria-label="Wishlist"
+            >
+              <Heart className="size-5" />
+            </Link>
+
+            <Link
+              href="/track"
+              className="hidden sm:inline-flex items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)]"
+              aria-label="Track order"
+            >
+              <MapPinned className="size-5" />
+            </Link>
 
             <Link
               href="/cart"
@@ -108,6 +109,9 @@ export function Header() {
                   <Link href="/account" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
                     {t("account")}
                   </Link>
+                  <Link href="/wishlist" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
+                    Wishlist
+                  </Link>
                   {session.user.role === "ADMIN" && (
                     <Link href="/admin" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
                       {t("admin")}
@@ -135,11 +139,7 @@ export function Header() {
               </Link>
             )}
 
-            <button
-              className="md:hidden p-2"
-              onClick={() => setOpen((v) => !v)}
-              aria-label="Menu"
-            >
+            <button className="md:hidden p-2" onClick={() => setOpen((v) => !v)} aria-label="Menu">
               {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
           </div>
@@ -162,14 +162,7 @@ export function Header() {
 
         {open && (
           <div className="md:hidden pb-4 space-y-3">
-            <form onSubmit={onSearch}>
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                className="w-full rounded-lg border border-[var(--huza-line)] bg-white px-3 py-2 text-sm"
-              />
-            </form>
+            <SmartSearch />
             {nav.map((item) => (
               <Link
                 key={item.href}

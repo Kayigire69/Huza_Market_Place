@@ -16,9 +16,9 @@ const body = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Huza Market Place by Youth Huza",
+  title: "HUZA MARKETPLACE | Powered by Youth Huza",
   description:
-    "Farm-fresh marketplace in Rwanda. Fruits, vegetables, dairy and more — delivered directly by Youth Huza with no middlemen.",
+    "Farm-fresh marketplace in Rwanda by Youth Huza. Fruits, vegetables, dairy and more — delivered directly with no middlemen.",
   icons: { icon: "/logo.svg" },
 };
 

@@ -14,6 +14,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const category = typeof sp.category === "string" ? sp.category : "";
   const supplier = typeof sp.supplier === "string" ? sp.supplier : "";
   const location = typeof sp.location === "string" ? sp.location : "";
+  const district = typeof sp.district === "string" ? sp.district : "";
   const minPrice = typeof sp.minPrice === "string" ? Number(sp.minPrice) : undefined;
   const maxPrice = typeof sp.maxPrice === "string" ? Number(sp.maxPrice) : undefined;
   const organic = sp.organic === "1";
@@ -36,6 +37,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     ...(category ? { category: { slug: category } } : {}),
     ...(supplier ? { supplier: { businessName: { contains: supplier, mode: "insensitive" } } } : {}),
     ...(location ? { location: { contains: location, mode: "insensitive" } } : {}),
+    ...(district ? { availableDistricts: { has: district } } : {}),
     ...(minPrice !== undefined && !Number.isNaN(minPrice) ? { price: { gte: minPrice } } : {}),
     ...(maxPrice !== undefined && !Number.isNaN(maxPrice)
       ? { price: { ...(minPrice !== undefined ? { gte: minPrice } : {}), lte: maxPrice } }

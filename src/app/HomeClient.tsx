@@ -8,6 +8,7 @@ import { ProductCard, type ProductCardData } from "@/components/products/Product
 import { categoryName } from "@/lib/i18n";
 import { formatRwf } from "@/lib/utils";
 import { ArrowRight, Leaf, Truck, ShieldCheck } from "lucide-react";
+import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 
 type Category = {
   id: string;
@@ -23,6 +24,8 @@ type Supplier = {
   location: string;
   ratingAvg: number;
   description: string | null;
+  isVerified?: boolean;
+  status?: string;
 };
 
 type Promo = {
@@ -95,10 +98,10 @@ export function HomePage({
               priority
             />
             <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight max-w-xl">
-              HUZA MARKET PLACE
+              HUZA MARKETPLACE
             </h1>
             <p className="mt-2 text-lg sm:text-xl text-[var(--huza-gold)] font-semibold tracking-wide">
-              BY YOUTH HUZA
+              Powered by Youth Huza
             </p>
             <p className="mt-5 max-w-lg text-base sm:text-lg text-[#D7F0E1] leading-relaxed">
               {t("tagline")}
@@ -267,7 +270,14 @@ export function HomePage({
                   {s.businessName.slice(0, 1)}
                 </div>
                 <div>
-                  <p className="font-semibold">{s.businessName}</p>
+                  <p className="font-semibold">
+                    {s.businessName}
+                    {(s.isVerified || s.status === "APPROVED") && (
+                      <span className="ml-2 text-[10px] uppercase tracking-wide text-[var(--huza-green)] font-bold">
+                        ✓ Verified
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-[var(--huza-muted)]">
                     {s.location} · ★ {s.ratingAvg.toFixed(1)}
                   </p>
@@ -299,6 +309,8 @@ export function HomePage({
           ))}
         </div>
       </section>
+
+      <RecentlyViewedSection />
     </div>
   );
 }

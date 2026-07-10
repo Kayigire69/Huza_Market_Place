@@ -21,10 +21,20 @@ export function AdminClient(props: {
   holidays: AnyObj[];
   emergency: AnyObj[];
   deliveryPeople: { id: string; fullName: string; phone: string }[];
+  auditLogs: AnyObj[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<
-    "suppliers" | "orders" | "delivery" | "payments" | "reviews" | "inventory" | "hours" | "promos" | "reports"
+    | "suppliers"
+    | "orders"
+    | "delivery"
+    | "payments"
+    | "reviews"
+    | "inventory"
+    | "hours"
+    | "promos"
+    | "reports"
+    | "audit"
   >("suppliers");
   const [msg, setMsg] = useState("");
 
@@ -117,6 +127,7 @@ export function AdminClient(props: {
     "hours",
     "promos",
     "reports",
+    "audit",
   ] as const;
 
   return (
@@ -396,6 +407,33 @@ export function AdminClient(props: {
             <li>Deliveries tracked: {props.deliveries.length}</li>
             <li>Payments recorded: {props.payments.length}</li>
           </ul>
+        </div>
+      )}
+
+      {tab === "audit" && (
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+          <h2 className="font-semibold mb-2">Admin audit logs</h2>
+          <p className="text-sm text-[var(--huza-muted)] mb-3">
+            Track who approved suppliers, changed orders, and other admin actions.
+          </p>
+          {(props.auditLogs || []).length === 0 ? (
+            <p className="text-sm text-[var(--huza-muted)]">No audit events yet.</p>
+          ) : (
+            props.auditLogs.map((log) => (
+              <div key={String(log.id)} className="rounded-xl border border-[var(--huza-line)] p-3 text-sm">
+                <p className="font-medium">
+                  {String(log.action)} · {String(log.entity)}
+                  {log.entityId ? ` #${String(log.entityId).slice(0, 8)}` : ""}
+                </p>
+                <p className="text-[var(--huza-muted)]">
+                  {String(log.actorName || "System")} — {String(log.details || "")}
+                </p>
+                <p className="text-xs text-[var(--huza-muted)] mt-1">
+                  {new Date(String(log.createdAt)).toLocaleString()}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
