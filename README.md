@@ -60,25 +60,66 @@ Use these on the website, packaging, and supplier materials.
 
 ### 1. Prerequisites
 
-- Node.js 20+
+- Node.js 20+ ([nodejs.org](https://nodejs.org))
 - PostgreSQL 14+
+- Git
 - VS Code
 
-### 2. Clone & install
+### 2. Get the project code (important)
+
+Do **not** run `npm install` in an empty Desktop folder. Clone the GitHub repo first so `package.json` exists.
+
+**Windows (Command Prompt or PowerShell):**
+
+```bat
+cd %USERPROFILE%\Desktop
+git clone https://github.com/Kayigire69/Huza_Market_Place.git
+cd Huza_Market_Place
+git checkout cursor/huza-marketplace-platform-5604
+```
+
+If you already created an empty `Huza Market Place` folder, delete it or clone into a new folder name.
+
+**macOS / Linux:**
 
 ```bash
+cd ~/Desktop
+git clone https://github.com/Kayigire69/Huza_Market_Place.git
+cd Huza_Market_Place
+git checkout cursor/huza-marketplace-platform-5604
+```
+
+Confirm you see `package.json` in the folder before continuing.
+
+### 3. Install dependencies
+
+```bat
 npm install
+```
+
+### 4. Create `.env`
+
+**Windows Command Prompt:**
+
+```bat
+copy .env.example .env
+```
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**macOS / Linux:**
+
+```bash
 cp .env.example .env
 ```
 
-### 3. Configure Postgres
+### 5. Configure Postgres
 
-Create a database and update `DATABASE_URL` in `.env`:
-
-```bash
-# example
-createdb huza_marketplace
-```
+Create a database and edit `.env` (open it in VS Code):
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/huza_marketplace?schema=public"
@@ -86,16 +127,22 @@ NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="generate-a-long-secret"
 ```
 
-### 4. Migrate & seed
+On Windows, create the DB with pgAdmin or:
 
-```bash
+```bat
+psql -U postgres -c "CREATE DATABASE huza_marketplace;"
+```
+
+### 6. Migrate & seed
+
+```bat
 npx prisma migrate dev
 npm run db:seed
 ```
 
-### 5. Run
+### 7. Run
 
-```bash
+```bat
 npm run dev
 ```
 
