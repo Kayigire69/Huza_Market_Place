@@ -144,6 +144,7 @@ model Supplier {
   products Product[]
   reviews  Review[]
   orders   OrderItem[]
+  offers   SupplierOffer[]
 }
 
 model Category {
@@ -156,6 +157,7 @@ model Category {
   imageUrl    String?
   sortOrder   Int       @default(0)
   products    Product[]
+  offers      SupplierOffer[]
 }
 
 model Product {
@@ -450,5 +452,38 @@ model FaqItem {
   answerRw   String
   sortOrder  Int @default(0)
   isPublished Boolean @default(true)
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  PURCHASED
+}
+
+/// Supplier offers produce for Youth Huza to buy (procurement), not for direct customer sales.
+model SupplierOffer {
+  id              String      @id @default(cuid())
+  supplierId      String
+  categoryId      String?
+  title           String
+  description     String?
+  unit            UnitType    @default(KG)
+  quantityOffered Float
+  /// Price Youth Huza would pay the supplier (RWF per unit)
+  askPrice        Int
+  /// Optional suggested retail price for Huza to sell at
+  suggestedRetail Int?
+  availableDistricts String[]  @default([])
+  status          OfferStatus @default(PENDING)
+  adminNote       String?
+  purchasedQty    Float?
+  /// Huza product created when offer is purchased
+  productId       String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
 }
 

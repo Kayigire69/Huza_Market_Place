@@ -53,7 +53,7 @@ async function confirmPayment(paymentId: string) {
         type: "PAYMENT_CONFIRMATION",
         channel: "SMS",
         title: "Payment confirmed",
-        body: `Payment of ${payment.amount} RWF for ${payment.order.orderNumber} confirmed. Sent to ${payment.payeeName || "seller"}.`,
+        body: `Payment of ${payment.amount} RWF for ${payment.order.orderNumber} confirmed. Paid to Youth Huza.`,
       },
     });
   }
@@ -175,7 +175,7 @@ export async function POST(req: Request) {
     const payment = await confirmPayment(order.payment.id);
     return NextResponse.json({
       paymentStatus: payment?.status,
-      message: "Payment approved. Money sent to the seller.",
+      message: "Payment approved. Paid to Youth Huza.",
     });
   }
 

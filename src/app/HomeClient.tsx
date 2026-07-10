@@ -169,8 +169,8 @@ export function HomePage({
         <div className="grid sm:grid-cols-3 gap-3">
           {[
             { icon: Truck, title: t("noMiddleman"), body: t("fromFarm") },
-            { icon: Leaf, title: t("organic"), body: "Fresh produce from approved Rwandan farms" },
-            { icon: ShieldCheck, title: "MTN & Airtel", body: "Pay securely with Mobile Money" },
+            { icon: Leaf, title: t("organic"), body: "Fresh stock purchased by Youth Huza from approved farms" },
+            { icon: ShieldCheck, title: "MTN & Airtel", body: "Pay Youth Huza securely with Mobile Money" },
           ].map((item) => (
             <div
               key={item.title}

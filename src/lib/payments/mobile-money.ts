@@ -249,7 +249,7 @@ export async function disburseToSeller(input: {
 
   return {
     ok: true,
-    message: `Payment of ${input.amount} RWF credited to seller ${formatDisplayPhone(payee)}`,
+    message: `Payment of ${input.amount} RWF credited to Youth Huza (${formatDisplayPhone(payee)})`,
   };
 }
 

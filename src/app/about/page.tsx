@@ -7,22 +7,22 @@ export default function AboutPage() {
       <h1 className="section-title mt-2">About HUZA MARKETPLACE</h1>
       <div className="mt-8 space-y-5 text-[var(--huza-muted)] leading-relaxed">
         <p>
-          <strong className="text-[var(--huza-ink)]">HUZA MARKETPLACE</strong> is the digital market
-          built by <strong className="text-[var(--huza-ink)]">Youth Huza</strong> to connect Rwandan
-          farmers and families — with fresh food delivered directly, and no middlemen.
+          <strong className="text-[var(--huza-ink)]">HUZA MARKETPLACE</strong> is the store of{" "}
+          <strong className="text-[var(--huza-ink)]">Youth Huza</strong>. We buy fresh produce from
+          trusted farms, then <strong>we sell and deliver</strong> it to customers.
         </p>
         <p>
-          “Huza” means to join or connect. We join approved suppliers with customers across Kigali,
-          Kamonyi (Ruyenzi), and Bugesera (Nyamata), and we handle delivery ourselves so quality and
-          trust stay close to the farm.
+          Customers shop with Youth Huza — not with individual suppliers on a commission marketplace.
+          That way quality, pricing, payment, and delivery stay under Huza.
         </p>
         <p>
-          Pay with MTN MoMo or Airtel Money. Browse in Kinyarwanda, English, or French. Shop fruits,
-          vegetables, dairy, meat, fish, honey, and more from verified Youth Huza partners.
+          <strong className="text-[var(--huza-ink)]">Farm partners</strong> use the “Sell to Huza”
+          portal when they want Youth Huza to purchase their stock. After Huza buys an offer, those
+          products can appear in our store for customers.
         </p>
         <p>
-          Youth Huza is a youth-led company focused on practical commerce that strengthens local
-          producers and makes everyday shopping simpler for households and businesses.
+          Pay with MTN MoMo or Airtel Money (to Youth Huza). Browse in Kinyarwanda, English, or French.
+          Delivery across Kigali, Kamonyi (Ruyenzi), and Bugesera (Nyamata).
         </p>
       </div>
     </div>
