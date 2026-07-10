@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+:root {
+  --huza-green: #1fa65a;
+  --huza-green-dark: #0b5c34;
+  --huza-mint: #e7f6ec;
+  --huza-gold: #f5c542;
+  --huza-ink: #14261c;
+  --huza-muted: #5a7264;
+  --huza-line: #cfe6d7;
+  --huza-cream: #f7fbf8;
+  --background: #f7fbf8;
+  --foreground: #14261c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(31, 166, 90, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(245, 197, 66, 0.16), transparent 50%),
+    linear-gradient(180deg, #f7fbf8 0%, #eef7f1 40%, #f7fbf8 100%);
+  color: var(--huza-ink);
+  font-family: var(--font-body), "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-rise {
+  animation: rise-in 0.7s ease-out both;
+}
+
+.animate-rise-delay {
+  animation: rise-in 0.8s ease-out 0.15s both;
+}
+
+.animate-float {
+  animation: float-soft 5s ease-in-out infinite;
+}
+
+.hero-wash {
+  background:
+    linear-gradient(120deg, rgba(11, 92, 52, 0.92) 0%, rgba(31, 166, 90, 0.78) 45%, rgba(11, 92, 52, 0.55) 100%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+    #0b5c34;
+}
+
+.section-title {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: var(--huza-green-dark);
+  letter-spacing: -0.02em;
+}
+
+.input-field {
+  width: 100%;
+  border: 1px solid var(--huza-line);
+  border-radius: 0.75rem;
+  background: white;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--huza-green);
+  box-shadow: 0 0 0 3px rgba(31, 166, 90, 0.15);
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--huza-ink);
+}
