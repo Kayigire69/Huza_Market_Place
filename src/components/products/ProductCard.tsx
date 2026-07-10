@@ -84,6 +84,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               fill
               className="object-cover transition duration-500 group-hover:scale-105"
               sizes="(max-width:768px) 50vw, 25vw"
+              unoptimized={image.startsWith("/uploads/")}
             />
           </div>
         </Link>
