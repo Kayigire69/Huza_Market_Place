@@ -1,17 +1,19 @@
-export type Locale = "en" | "fr" | "rw";
+export type Locale = "en" | "fr" | "rw" | "sw";
 
-export const locales: Locale[] = ["en", "fr", "rw"];
+export const locales: Locale[] = ["en", "fr", "rw", "sw"];
 
 export const localeLabels: Record<Locale, string> = {
   en: "English",
   fr: "Français",
   rw: "Ikinyarwanda",
+  sw: "Kiswahili",
 };
 
 export const localeFlags: Record<Locale, string> = {
   en: "🇬🇧",
   fr: "🇫🇷",
   rw: "🇷🇼",
+  sw: "🇹🇿",
 };
 
 type Dict = Record<string, string>;
@@ -288,7 +290,88 @@ const rw: Dict = {
   supplierPortal: "Urubuga rw'abahinzi",
 };
 
-const dictionaries: Record<Locale, Dict> = { en, fr, rw };
+const sw: Dict = {
+  ...en,
+  brand: "HUZA FRESH",
+  company: "Youth Huza",
+  tagline: "Chakula safi cha shambani kinachouzwa na kuwasilishwa na Youth Huza.",
+  heroCta: "Anza kununua",
+  heroSecondary: "Tovuti ya wakulima",
+  searchPlaceholder: "Tafuta matunda, mboga, maziwa...",
+  cart: "Kikapu",
+  categories: "Kategoria",
+  featured: "Bidhaa maalum",
+  specialOffers: "Ofa maalum",
+  bestSellers: "Zinazouzwa zaidi",
+  suppliers: "Washirika wa shamba",
+  testimonials: "Wateja wanasema nini",
+  addToCart: "Weka kikapuni",
+  viewAll: "Tazama zote",
+  organic: "Asilia",
+  inStock: "Ipo",
+  outOfStock: "Imeisha",
+  lowStock: "Imebaki kidogo",
+  price: "Bei",
+  unit: "Kipimo",
+  supplier: "Msambazaji",
+  rating: "Ukadiriaji",
+  availability: "Upatikanaji",
+  quantity: "Kiasi",
+  related: "Bidhaa zinazofanana",
+  share: "Shiriki",
+  reviews: "Maoni",
+  description: "Maelezo",
+  continueShopping: "Endelea kununua",
+  checkout: "Lipia",
+  remove: "Ondoa",
+  subtotal: "Jumla ndogo",
+  deliveryFee: "Ada ya uwasilishaji",
+  total: "Jumla",
+  emptyCart: "Kikapu chako ni tupu",
+  guestCheckout: "Nunua bila akaunti",
+  fullName: "Jina kamili",
+  phone: "Nambari ya simu",
+  address: "Anwani ya uwasilishaji",
+  gpsOptional: "Mahali pa GPS (si lazima)",
+  instructions: "Maelekezo ya uwasilishaji",
+  paymentMethod: "Njia ya malipo",
+  mtn: "MTN Mobile Money",
+  airtel: "Airtel Money",
+  placeOrder: "Weka agizo",
+  login: "Ingia",
+  register: "Jisajili",
+  account: "Akaunti yangu",
+  orders: "Maagizo",
+  favorites: "Vipendwa",
+  logout: "Toka",
+  footerAbout:
+    "Youth Huza hununua mazao kutoka kwa mashamba yaliyothibitishwa, kisha huyauza na kuyawasilisha kwako kwenye HUZA FRESH.",
+  contact: "Wasiliana",
+  hours: "Tuko wazi kila siku saa 12 asubuhi – saa 3 usiku",
+  deliveryZones: "Maeneo ya uwasilishaji",
+  kigali: "Kigali — 5,000 RWF",
+  kamonyi: "Kamonyi (Ruyenzi) — 5,000 RWF",
+  bugesera: "Bugesera (Nyamata) — 5,000 RWF",
+  filters: "Vichujio",
+  allCategories: "Kategoria zote",
+  applyFilters: "Tumia vichujio",
+  closedNotice: "Kwa sasa tumefungwa. Unaweza kuvinjari na kupanga kwa siku inayofuata ya kazi.",
+  noMiddleman: "Inauzwa na kuwasilishwa na Youth Huza — duka moja, malipo moja, timu moja.",
+  home: "Nyumbani",
+  products: "Bidhaa",
+  admin: "Admin",
+  supplierPortal: "Tovuti ya Wakulima",
+  language: "Lugha",
+  shopNow: "Nunua sasa",
+  fromFarm: "Mazao yaliyokaguliwa, yanayouzwa na Youth Huza",
+  items: "vipengee",
+  save: "Hifadhi",
+  cancel: "Ghairi",
+  password: "Nenosiri",
+  email: "Barua pepe",
+};
+
+const dictionaries: Record<Locale, Dict> = { en, fr, rw, sw };
 
 export function t(locale: Locale, key: string): string {
   return dictionaries[locale][key] ?? dictionaries.en[key] ?? key;
