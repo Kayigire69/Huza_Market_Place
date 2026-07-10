@@ -268,6 +268,10 @@ model Payment {
   amount          Int
   status          PaymentStatus @default(PENDING)
   transactionRef  String?
+  externalId      String?       @unique
+  payeePhone      String?
+  payeeName       String?
+  providerMessage String?
   verifiedAt      DateTime?
   refundedAt      DateTime?
   refundReason    String?

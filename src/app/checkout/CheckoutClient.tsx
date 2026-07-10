@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -12,6 +12,21 @@ import {
 } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { Smartphone, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+
+type PaymentSuccess = {
+  orderNumber: string;
+  orderId: string;
+  total: number;
+  paymentMessage: string;
+  payerPhone: string;
+  payeeName: string;
+  payeePhone: string;
+  method: string;
+  paymentMode: "live" | "demo";
+};
+
+type PayPhase = "form" | "awaiting" | "paid" | "failed";
 
 export default function CheckoutClient() {
   const { t } = useLocale();
@@ -23,7 +38,8 @@ export default function CheckoutClient() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
+  const [phase, setPhase] = useState<PayPhase>("form");
+  const [payment, setPayment] = useState<PaymentSuccess | null>(null);
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -39,7 +55,27 @@ export default function CheckoutClient() {
   const cartSubtotal = subtotal();
   const total = useMemo(() => cartSubtotal + fee, [cartSubtotal, fee]);
 
-  if (items.length === 0 && !success) {
+  // Poll payment status while awaiting phone approval
+  useEffect(() => {
+    if (phase !== "awaiting" || !payment) return;
+
+    const tick = async () => {
+      const res = await fetch(`/api/payments/status?orderNumber=${payment.orderNumber}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.paymentStatus === "CONFIRMED" || data.paymentStatus === "VERIFIED") {
+        setPhase("paid");
+      } else if (data.paymentStatus === "FAILED") {
+        setPhase("failed");
+      }
+    };
+
+    tick();
+    const id = setInterval(tick, 3000);
+    return () => clearInterval(id);
+  }, [phase, payment]);
+
+  if (items.length === 0 && phase === "form") {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p>{t("emptyCart")}</p>
@@ -50,13 +86,89 @@ export default function CheckoutClient() {
     );
   }
 
-  if (success) {
+  if (phase === "awaiting" && payment) {
+    const network = payment.method === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money";
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--huza-mint)] animate-float">
+          <Smartphone className="size-10 text-[var(--huza-green-dark)]" />
+        </div>
+        <h1 className="section-title">Approve payment on your phone</h1>
+        <p className="mt-4 text-[var(--huza-muted)] leading-relaxed">
+          A <strong>{network}</strong> payment request was sent to{" "}
+          <strong>{payment.payerPhone}</strong>.
+        </p>
+        <div className="mt-6 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-left text-sm space-y-3">
+          <p className="flex items-start gap-2">
+            <Loader2 className="size-4 mt-0.5 animate-spin text-[var(--huza-green)] shrink-0" />
+            <span>
+              Open the pending approval on your phone and enter your PIN to confirm{" "}
+              <strong>{formatRwf(payment.total)}</strong>.
+            </span>
+          </p>
+          <p>
+            Money goes <strong>directly to the seller</strong>: {payment.payeeName} (
+            {payment.payeePhone}).
+          </p>
+          <p className="text-[var(--huza-muted)]">{payment.paymentMessage}</p>
+          <p className="text-xs text-[var(--huza-muted)]">
+            Order <strong>{payment.orderNumber}</strong>
+            {payment.paymentMode === "demo" ? " · Demo mode (no live MoMo API keys yet)" : ""}
+          </p>
+        </div>
+
+        {payment.paymentMode === "demo" && (
+          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={async () => {
+                await fetch("/api/payments/status", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    orderNumber: payment.orderNumber,
+                    action: "confirm",
+                  }),
+                });
+                setPhase("paid");
+              }}
+            >
+              I approved on my phone
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                await fetch("/api/payments/status", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    orderNumber: payment.orderNumber,
+                    action: "fail",
+                  }),
+                });
+                setPhase("failed");
+              }}
+            >
+              Decline / cancel
+            </Button>
+          </div>
+        )}
+
+        <p className="mt-6 text-xs text-[var(--huza-muted)]">
+          Waiting for confirmation… this page updates automatically.
+        </p>
+      </div>
+    );
+  }
+
+  if (phase === "paid" && payment) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <h1 className="section-title">Order placed!</h1>
+        <CheckCircle2 className="mx-auto size-14 text-[var(--huza-green)]" />
+        <h1 className="section-title mt-4">Payment confirmed!</h1>
         <p className="mt-4 text-[var(--huza-muted)]">
-          Your order <strong>{success.orderNumber}</strong> is confirmed. Youth Huza will deliver
-          directly — no middlemen.
+          Order <strong>{payment.orderNumber}</strong> is paid.{" "}
+          {formatRwf(payment.total)} was sent to <strong>{payment.payeeName}</strong>. Youth Huza
+          will deliver directly — no middlemen.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/products">
@@ -66,6 +178,22 @@ export default function CheckoutClient() {
             <Button variant="ghost">{t("account")}</Button>
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (phase === "failed" && payment) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-20 text-center">
+        <XCircle className="mx-auto size-14 text-red-600" />
+        <h1 className="section-title mt-4">Payment not completed</h1>
+        <p className="mt-4 text-[var(--huza-muted)]">
+          The approval on <strong>{payment.payerPhone}</strong> was declined or timed out. Order{" "}
+          {payment.orderNumber} was cancelled and stock restored.
+        </p>
+        <Button className="mt-6" onClick={() => { setPhase("form"); setPayment(null); }}>
+          Try again
+        </Button>
       </div>
     );
   }
@@ -90,7 +218,18 @@ export default function CheckoutClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Checkout failed");
       clear();
-      setSuccess({ orderNumber: data.orderNumber });
+      setPayment({
+        orderNumber: data.orderNumber,
+        orderId: data.id,
+        total: data.total,
+        paymentMessage: data.paymentMessage,
+        payerPhone: data.payerPhone,
+        payeeName: data.payeeName,
+        payeePhone: data.payeePhone,
+        method: data.method,
+        paymentMode: data.paymentMode,
+      });
+      setPhase("awaiting");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
@@ -102,11 +241,8 @@ export default function CheckoutClient() {
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
       <h1 className="section-title mb-2">{t("guestCheckout")}</h1>
       <p className="text-sm text-[var(--huza-muted)] mb-8">
-        No account required. Or{" "}
-        <Link href="/auth/login" className="text-[var(--huza-green)] font-semibold">
-          {t("login")}
-        </Link>{" "}
-        to save addresses and reorder.
+        After you place the order, you will get a <strong>payment approval prompt on your phone</strong>.
+        Money goes directly to the seller&apos;s MoMo / Airtel number.
       </p>
 
       <form
@@ -215,7 +351,7 @@ export default function CheckoutClient() {
           </div>
         </div>
         <div>
-          <label className="label">MoMo / Airtel phone number</label>
+          <label className="label">Phone that will receive the payment prompt</label>
           <input
             required
             className="input-field"
@@ -225,7 +361,8 @@ export default function CheckoutClient() {
             inputMode="tel"
           />
           <p className="mt-1 text-xs text-[var(--huza-muted)]">
-            Enter the phone number that will pay (not “MoMo” or “Airtel”).
+            This number gets the MoMo / Airtel “approve payment” message. Enter PIN on that phone to
+            pay the seller directly.
           </p>
         </div>
 
@@ -247,7 +384,7 @@ export default function CheckoutClient() {
         {error && <p className="text-sm text-red-700">{error}</p>}
 
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? "Processing..." : t("placeOrder")}
+          {loading ? "Sending payment request..." : t("placeOrder")}
         </Button>
       </form>
     </div>
