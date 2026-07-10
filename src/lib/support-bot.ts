@@ -60,9 +60,9 @@ const replies: Record<string, Record<Locale, string>> = {
     rw: "Iyandikishe cyangwa winjire urebe Ibicuruzwa, Wishlist, Aderesi, Amakuru n'Invoices. Abashyitsi barashobora gutumiza no gukurikirana bakoresheje numero n'telefone.",
   },
   supplier: {
-    en: "Farms sell produce to Youth Huza via the Farmers Portal (/farmer)—not to customers. Customers only buy from HUZA FRESH.",
-    fr: "Les fermes vendent à Youth Huza via le Portail agriculteurs (/farmer)—pas aux clients. Les clients achètent uniquement sur HUZA FRESH.",
-    rw: "Abahinzi bagurisha kuri Youth Huza binyuze ku Farmers Portal (/farmer)—si ku bakiriya. Abakiriya bagura gusa kuri HUZA FRESH.",
+    en: "Farms register on the Farmers Portal (/farmer). Huza field agents visit farms to help registration and review products with photos. Huza does not place online purchase orders to farmers — agents work with farms on the ground. Customers only buy from HUZA FRESH.",
+    fr: "Les fermes s’inscrivent sur le Portail agriculteurs (/farmer). Des agents Huza visitent les fermes pour aider à l’inscription et revoir les produits avec photos. Huza ne passe pas de commandes en ligne aux fermiers. Les clients achètent uniquement sur HUZA FRESH.",
+    rw: "Abahinzi biyandikisha kuri Farmers Portal (/farmer). Abakozi ba Huza basura abahinzi babafasha kwiyandikisha no kureba ibicuruzwa n'amafoto. Huza ntabwo itumiza online ku bahinzi. Abakiriya bagura gusa kuri HUZA FRESH.",
   },
   contact: {
     en: "Contact Youth Huza: +250 788 000 000 · hello@youthhuza.rw · WhatsApp available from the footer. Or keep chatting here.",

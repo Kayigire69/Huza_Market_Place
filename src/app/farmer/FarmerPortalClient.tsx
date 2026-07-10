@@ -1,44 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf, formatUnit } from "@/lib/utils";
 
 type Category = { id: string; nameEn: string; slug: string };
-type Offer = {
-  id: string;
-  title: string;
-  description: string | null;
-  unit: string;
-  quantityOffered: number;
-  askPrice: number;
-  suggestedRetail: number | null;
-  status: string;
-  adminNote: string | null;
-  purchasedQty: number | null;
-  category: { nameEn: string } | null;
-};
 
-type PurchaseOrder = {
-  id: string;
-  poNumber: string;
-  status: string;
-  productName: string;
-  quantity: number;
-  unit: string;
-  negotiatedPrice: number;
-  totalAmount: number;
-  paymentRef: string | null;
-  paymentMethod: string | null;
-  paidAt: string | Date | null;
-  notes: string | null;
-  orderedAt: string | Date | null;
-};
+type ProductImage = { id?: string; url: string; alt?: string | null };
 
 type ProductRow = {
   id: string;
   nameEn: string;
+  descriptionEn?: string;
   price: number;
   unit: string;
   stockQty: number;
@@ -46,6 +21,7 @@ type ProductRow = {
   isActive: boolean;
   isOrganic: boolean;
   category?: { nameEn: string } | null;
+  images?: ProductImage[];
 };
 
 type Farmer = {
@@ -74,20 +50,27 @@ type Farmer = {
   openHour: number;
   closeHour: number;
   status: string;
-  offers: Offer[];
-  purchaseOrders?: PurchaseOrder[];
   products?: ProductRow[];
 };
 
-type Tab = "products" | "inventory" | "orders" | "offers" | "profile";
+type Tab = "products" | "inventory" | "profile";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "products", label: "Products" },
+  { key: "products", label: "Products & photos" },
   { key: "inventory", label: "Inventory" },
-  { key: "orders", label: "Incoming orders" },
-  { key: "offers", label: "Wholesale offers" },
-  { key: "profile", label: "Profile" },
+  { key: "profile", label: "Farm profile" },
 ];
+
+async function uploadPhotos(files: FileList | File[]): Promise<string[]> {
+  const list = Array.from(files);
+  if (list.length === 0) return [];
+  const form = new FormData();
+  list.forEach((f) => form.append("files", f));
+  const res = await fetch("/api/uploads", { method: "POST", body: form });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Photo upload failed");
+  return Array.isArray(data.urls) ? data.urls : [];
+}
 
 export function FarmerPortalClient({
   farmer,
@@ -102,9 +85,9 @@ export function FarmerPortalClient({
   const [busy, setBusy] = useState(false);
   const [products, setProducts] = useState<ProductRow[]>(farmer.products || []);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
 
   const refresh = () => router.refresh();
-  const purchaseOrders = farmer.purchaseOrders || [];
   const approved = farmer.status === "APPROVED";
 
   useEffect(() => {
@@ -117,59 +100,94 @@ export function FarmerPortalClient({
     if (Array.isArray(data)) setProducts(data);
   };
 
+  const onPickPhotos = (files: FileList | null) => {
+    if (!files?.length) {
+      setPhotoPreviews([]);
+      return;
+    }
+    setPhotoPreviews(Array.from(files).map((f) => URL.createObjectURL(f)));
+  };
+
   const createProduct = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!approved) {
-      setMsg("Wait for admin approval before uploading products.");
+      setMsg("Wait for admin approval before listing products.");
       return;
     }
     setBusy(true);
-    const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/supplier/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nameEn: form.get("nameEn"),
-        descriptionEn: form.get("descriptionEn"),
-        categoryId: form.get("categoryId"),
-        price: Number(form.get("price")),
-        unit: form.get("unit"),
-        stockQty: Number(form.get("stockQty")),
-        isOrganic: form.get("isOrganic") === "on",
-        originDistrict: form.get("originDistrict") || farmer.district,
-      }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    setMsg(res.ok ? "Product uploaded" : data.error || "Upload failed");
-    if (res.ok) {
-      (e.target as HTMLFormElement).reset();
-      await loadProducts();
-      refresh();
+    setMsg("");
+    try {
+      const form = new FormData(e.currentTarget);
+      const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+      if (photos.length === 0) {
+        setMsg("Add at least one product photo.");
+        setBusy(false);
+        return;
+      }
+      const imageUrls = await uploadPhotos(photos);
+      const res = await fetch("/api/supplier/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nameEn: form.get("nameEn"),
+          descriptionEn: form.get("descriptionEn"),
+          categoryId: form.get("categoryId"),
+          price: Number(form.get("price")),
+          unit: form.get("unit"),
+          stockQty: Number(form.get("stockQty")),
+          isOrganic: form.get("isOrganic") === "on",
+          originDistrict: form.get("originDistrict") || farmer.district,
+          imageUrls,
+        }),
+      });
+      const data = await res.json();
+      setMsg(res.ok ? "Product listed with photos for Huza review" : data.error || "Upload failed");
+      if (res.ok) {
+        (e.target as HTMLFormElement).reset();
+        setPhotoPreviews([]);
+        await loadProducts();
+        refresh();
+      }
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setBusy(false);
     }
   };
 
   const saveProduct = async (e: FormEvent<HTMLFormElement>, id: string) => {
     e.preventDefault();
     setBusy(true);
-    const form = new FormData(e.currentTarget);
-    const res = await fetch(`/api/supplier/products/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    setMsg("");
+    try {
+      const form = new FormData(e.currentTarget);
+      const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+      const payload: Record<string, unknown> = {
         nameEn: form.get("nameEn"),
+        descriptionEn: form.get("descriptionEn"),
         price: Number(form.get("price")),
         stockQty: Number(form.get("stockQty")),
-        isActive: form.get("isActive") === "on",
-      }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    setMsg(res.ok ? "Product updated" : data.error || "Update failed");
-    if (res.ok) {
-      setEditingId(null);
-      await loadProducts();
-      refresh();
+        isOrganic: form.get("isOrganic") === "on",
+      };
+      if (photos.length > 0) {
+        payload.imageUrls = await uploadPhotos(photos);
+      }
+      const res = await fetch(`/api/supplier/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      setMsg(res.ok ? "Product updated" : data.error || "Update failed");
+      if (res.ok) {
+        setEditingId(null);
+        await loadProducts();
+        refresh();
+      }
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -187,45 +205,6 @@ export function FarmerPortalClient({
       await loadProducts();
       refresh();
     }
-  };
-
-  const submitOffer = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/supplier/offers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: form.get("title"),
-        description: form.get("description"),
-        categoryId: form.get("categoryId") || null,
-        unit: form.get("unit"),
-        quantityOffered: Number(form.get("quantityOffered")),
-        askPrice: Number(form.get("askPrice")),
-        suggestedRetail: form.get("suggestedRetail")
-          ? Number(form.get("suggestedRetail"))
-          : null,
-      }),
-    });
-    const data = await res.json();
-    setMsg(res.ok ? "Offer sent to Youth Huza" : data.error || "Failed");
-    if (res.ok) {
-      (e.target as HTMLFormElement).reset();
-      refresh();
-    }
-  };
-
-  const acceptPo = async (poId: string) => {
-    setBusy(true);
-    const res = await fetch("/api/supplier/pos", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ poId, action: "accept" }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    setMsg(res.ok ? "Purchase order accepted" : data.error || "Accept failed");
-    if (res.ok) refresh();
   };
 
   const updateProfile = async (e: FormEvent<HTMLFormElement>) => {
@@ -290,10 +269,10 @@ export function FarmerPortalClient({
             onSubmit={createProduct}
             className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3"
           >
-            <h2 className="font-semibold">Upload product</h2>
+            <h2 className="font-semibold">List a product for Huza</h2>
             <p className="text-xs text-[var(--huza-muted)]">
-              Add produce Youth Huza can buy from your farm. Customers never see your farm name —
-              Huza sells under HUZA FRESH.
+              Upload clear photos of each product. Huza field agents visit farms, help with
+              registration, and review what you list — Huza does not place online orders here.
             </p>
             <input name="nameEn" placeholder="Product name" className="input-field" required />
             <textarea
@@ -313,7 +292,7 @@ export function FarmerPortalClient({
               <input
                 name="price"
                 type="number"
-                placeholder="Wholesale ask (RWF)"
+                placeholder="Ask price (RWF)"
                 className="input-field"
                 required
               />
@@ -329,7 +308,7 @@ export function FarmerPortalClient({
               <input
                 name="stockQty"
                 type="number"
-                placeholder="Available stock"
+                placeholder="Available quantity"
                 className="input-field"
                 required
               />
@@ -340,24 +319,52 @@ export function FarmerPortalClient({
                 className="input-field"
               />
             </div>
+            <div>
+              <label className="label">Product photos (required)</label>
+              <input
+                name="photos"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                className="input-field"
+                required
+                onChange={(e) => onPickPhotos(e.target.files)}
+              />
+              <p className="mt-1 text-[11px] text-[var(--huza-muted)]">
+                Up to 8 photos · JPG/PNG/WebP · max 5MB each
+              </p>
+              {photoPreviews.length > 0 && (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {photoPreviews.map((src) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={src}
+                      src={src}
+                      alt="Preview"
+                      className="h-20 w-full rounded-lg object-cover border border-[var(--huza-line)]"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
             <label className="flex items-center gap-2 text-sm">
               <input name="isOrganic" type="checkbox" /> Organic
             </label>
             <Button type="submit" className="w-full" disabled={busy || !approved}>
-              Upload product
+              {busy ? "Uploading…" : "Save product with photos"}
             </Button>
             {!approved && (
               <p className="text-xs text-[var(--huza-muted)]">
-                Product upload unlocks after admin approval.
+                Listing unlocks after admin approval (often with a Huza agent visit).
               </p>
             )}
           </form>
 
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-4">Your products</h2>
-            <div className="space-y-3 max-h-[560px] overflow-y-auto">
+            <h2 className="font-semibold mb-4">Your listed products</h2>
+            <div className="space-y-4 max-h-[640px] overflow-y-auto">
               {products.length === 0 ? (
-                <p className="text-sm text-[var(--huza-muted)]">No products uploaded yet.</p>
+                <p className="text-sm text-[var(--huza-muted)]">No products listed yet.</p>
               ) : (
                 products.map((p) => (
                   <div key={p.id} className="rounded-xl border border-[var(--huza-line)] p-3">
@@ -368,6 +375,11 @@ export function FarmerPortalClient({
                           defaultValue={p.nameEn}
                           className="input-field"
                           required
+                        />
+                        <textarea
+                          name="descriptionEn"
+                          defaultValue={p.descriptionEn || ""}
+                          className="input-field min-h-16"
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <input
@@ -385,8 +397,23 @@ export function FarmerPortalClient({
                             required
                           />
                         </div>
+                        <div>
+                          <label className="label">Replace photos (optional)</label>
+                          <input
+                            name="photos"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            multiple
+                            className="input-field"
+                          />
+                        </div>
                         <label className="flex items-center gap-2 text-sm">
-                          <input name="isActive" type="checkbox" defaultChecked={p.isActive} /> Active
+                          <input
+                            name="isOrganic"
+                            type="checkbox"
+                            defaultChecked={p.isOrganic}
+                          />{" "}
+                          Organic
                         </label>
                         <div className="flex gap-2">
                           <Button type="submit" size="sm" disabled={busy}>
@@ -404,17 +431,53 @@ export function FarmerPortalClient({
                       </form>
                     ) : (
                       <>
-                        <div className="flex justify-between gap-2">
-                          <p className="font-medium">{p.nameEn}</p>
-                          <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
-                            {p.isActive ? "Active" : "Hidden"}
-                          </span>
+                        <div className="flex gap-3">
+                          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[var(--huza-mint)]">
+                            {p.images?.[0]?.url ? (
+                              <Image
+                                src={p.images[0].url}
+                                alt={p.nameEn}
+                                fill
+                                className="object-cover"
+                                unoptimized={p.images[0].url.startsWith("/uploads/")}
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-[10px] text-[var(--huza-muted)]">
+                                No photo
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium">{p.nameEn}</p>
+                            <p className="text-xs text-[var(--huza-muted)] mt-1">
+                              {formatRwf(p.price)}/{formatUnit(p.unit)} · Stock {p.stockQty}{" "}
+                              {formatUnit(p.unit)}
+                              {p.category ? ` · ${p.category.nameEn}` : ""}
+                            </p>
+                            <p className="text-[11px] text-[var(--huza-muted)] mt-1">
+                              {(p.images?.length || 0)} photo{(p.images?.length || 0) === 1 ? "" : "s"}{" "}
+                              · Listed for Huza agents
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-[var(--huza-muted)] mt-1">
-                          {formatRwf(p.price)}/{formatUnit(p.unit)} · Stock {p.stockQty}{" "}
-                          {formatUnit(p.unit)}
-                          {p.category ? ` · ${p.category.nameEn}` : ""}
-                        </p>
+                        {(p.images?.length || 0) > 1 && (
+                          <div className="mt-2 flex gap-1 overflow-x-auto">
+                            {p.images!.slice(0, 6).map((img) => (
+                              <div
+                                key={img.url}
+                                className="relative h-12 w-12 shrink-0 overflow-hidden rounded border border-[var(--huza-line)]"
+                              >
+                                <Image
+                                  src={img.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  unoptimized={img.url.startsWith("/uploads/")}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <Button
                           type="button"
                           size="sm"
@@ -422,7 +485,7 @@ export function FarmerPortalClient({
                           className="mt-2"
                           onClick={() => setEditingId(p.id)}
                         >
-                          Edit product
+                          Edit product / photos
                         </Button>
                       </>
                     )}
@@ -438,10 +501,10 @@ export function FarmerPortalClient({
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
           <h2 className="font-semibold mb-1">Inventory management</h2>
           <p className="text-xs text-[var(--huza-muted)] mb-4">
-            Update available stock for each product. Low-stock items are highlighted.
+            Keep available quantities up to date so Huza agents know what you can sell.
           </p>
           {products.length === 0 ? (
-            <p className="text-sm text-[var(--huza-muted)]">Upload products first.</p>
+            <p className="text-sm text-[var(--huza-muted)]">List products with photos first.</p>
           ) : (
             <div className="space-y-3">
               {products.map((p) => {
@@ -453,12 +516,25 @@ export function FarmerPortalClient({
                       low ? "border-[var(--huza-gold)] bg-[#FFF8E6]" : "border-[var(--huza-line)]"
                     }`}
                   >
-                    <div>
-                      <p className="font-medium">{p.nameEn}</p>
-                      <p className="text-xs text-[var(--huza-muted)]">
-                        Current: {p.stockQty} {formatUnit(p.unit)}
-                        {low ? " · Low stock" : ""}
-                      </p>
+                    <div className="flex gap-3 items-center">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[var(--huza-mint)]">
+                        {p.images?.[0]?.url ? (
+                          <Image
+                            src={p.images[0].url}
+                            alt={p.nameEn}
+                            fill
+                            className="object-cover"
+                            unoptimized={p.images[0].url.startsWith("/uploads/")}
+                          />
+                        ) : null}
+                      </div>
+                      <div>
+                        <p className="font-medium">{p.nameEn}</p>
+                        <p className="text-xs text-[var(--huza-muted)]">
+                          Current: {p.stockQty} {formatUnit(p.unit)}
+                          {low ? " · Low stock" : ""}
+                        </p>
+                      </div>
                     </div>
                     <form
                       className="flex items-end gap-2"
@@ -491,158 +567,16 @@ export function FarmerPortalClient({
         </div>
       )}
 
-      {tab === "orders" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-          <h2 className="font-semibold mb-1">Incoming orders from Youth Huza</h2>
-          <p className="text-xs text-[var(--huza-muted)] mb-4">
-            These are purchase orders when Huza buys from your farm — not customer storefront
-            orders.
-          </p>
-          {purchaseOrders.length === 0 ? (
-            <p className="text-sm text-[var(--huza-muted)]">No incoming orders yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {purchaseOrders.map((po) => (
-                <div key={po.id} className="rounded-xl border border-[var(--huza-line)] p-3">
-                  <div className="flex flex-wrap justify-between gap-2">
-                    <p className="font-medium">
-                      {po.poNumber} · {po.productName}
-                    </p>
-                    <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
-                      {po.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--huza-muted)] mt-1">
-                    {po.quantity} {formatUnit(po.unit)} · {formatRwf(po.negotiatedPrice)}/
-                    {formatUnit(po.unit)} · Total {formatRwf(po.totalAmount)}
-                  </p>
-                  {po.notes && (
-                    <p className="text-xs text-[var(--huza-muted)] mt-1 whitespace-pre-wrap">
-                      {po.notes}
-                    </p>
-                  )}
-                  {po.status === "DRAFT" && (
-                    <div className="mt-3">
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={busy}
-                        onClick={() => acceptPo(po.id)}
-                      >
-                        Accept order
-                      </Button>
-                    </div>
-                  )}
-                  {po.status === "PAID" && po.paymentRef && (
-                    <p className="text-sm text-[var(--huza-green-dark)] mt-2 font-medium">
-                      Paid · Ref: {po.paymentRef}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "offers" && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          <form
-            onSubmit={submitOffer}
-            className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3"
-          >
-            <h2 className="font-semibold">Submit wholesale offer</h2>
-            <p className="text-xs text-[var(--huza-muted)]">
-              Optional: offer a batch for Huza procurement to review and create a purchase order.
-            </p>
-            <input
-              name="title"
-              placeholder="Product name (e.g. Fresh Avocados)"
-              className="input-field"
-              required
-            />
-            <textarea
-              name="description"
-              placeholder="Quality, harvest date, notes..."
-              className="input-field min-h-16"
-            />
-            <select name="categoryId" className="input-field">
-              <option value="">Category (optional)</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nameEn}
-                </option>
-              ))}
-            </select>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                name="quantityOffered"
-                type="number"
-                step="0.1"
-                placeholder="Quantity"
-                className="input-field"
-                required
-              />
-              <select name="unit" className="input-field" defaultValue="KG">
-                {["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"].map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                name="askPrice"
-                type="number"
-                placeholder="Ask price (RWF / unit)"
-                className="input-field"
-                required
-              />
-              <input
-                name="suggestedRetail"
-                type="number"
-                placeholder="Suggested retail (optional)"
-                className="input-field"
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={!approved}>
-              Submit offer
-            </Button>
-          </form>
-
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-4">Offer status</h2>
-            <div className="space-y-3 max-h-[520px] overflow-y-auto">
-              {farmer.offers.length === 0 ? (
-                <p className="text-sm text-[var(--huza-muted)]">No offers yet.</p>
-              ) : (
-                farmer.offers.map((o) => (
-                  <div key={o.id} className="rounded-xl border border-[var(--huza-line)] p-3">
-                    <div className="flex justify-between gap-2">
-                      <p className="font-medium">{o.title}</p>
-                      <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
-                        {o.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[var(--huza-muted)] mt-1">
-                      {o.quantityOffered} {formatUnit(o.unit)} · Ask {formatRwf(o.askPrice)}/
-                      {formatUnit(o.unit)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {tab === "profile" && (
         <form
           onSubmit={updateProfile}
           className="max-w-3xl rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3"
         >
           <h2 className="font-semibold">Farm profile &amp; documents</h2>
+          <p className="text-xs text-[var(--huza-muted)]">
+            Keep this accurate for Huza agents who visit your farm to help you register and sell to
+            HUZA FRESH.
+          </p>
           <div className="grid sm:grid-cols-2 gap-3">
             <input
               name="businessName"
