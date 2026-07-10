@@ -6,15 +6,24 @@ import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit, DELIVERY_FEES, DELIVERY_ZONE_LABELS, type DeliveryZoneKey } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
+
+type DeliverySlot = "TODAY" | "TOMORROW" | "SCHEDULED";
 
 export default function CartPage() {
   const { t } = useLocale();
   const { items, updateQty, removeItem, subtotal } = useCart();
   const [zone, setZone] = useState<DeliveryZoneKey>("KIGALI");
+  const [slot, setSlot] = useState<DeliverySlot>("TODAY");
   const fee = DELIVERY_FEES[zone];
   const total = subtotal() + (items.length ? fee : 0);
+
+  const etaLabel = useMemo(() => {
+    if (slot === "TODAY") return "Today (within business hours)";
+    if (slot === "TOMORROW") return "Tomorrow";
+    return "Scheduled — pick a date at checkout";
+  }, [slot]);
 
   if (items.length === 0) {
     return (
@@ -90,6 +99,36 @@ export default function CartPage() {
               </option>
             ))}
           </select>
+
+          <label className="label">Estimated delivery</label>
+          <div className="mb-4 grid grid-cols-1 gap-2">
+            {(
+              [
+                ["TODAY", "Today"],
+                ["TOMORROW", "Tomorrow"],
+                ["SCHEDULED", "Scheduled delivery"],
+              ] as const
+            ).map(([value, label]) => (
+              <label
+                key={value}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer ${
+                  slot === value
+                    ? "border-[var(--huza-green)] bg-[var(--huza-mint)]"
+                    : "border-[var(--huza-line)]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="slot"
+                  checked={slot === value}
+                  onChange={() => setSlot(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          <p className="mb-4 text-xs text-[var(--huza-muted)]">ETA: {etaLabel}</p>
+
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>{t("subtotal")}</span>
@@ -105,7 +144,7 @@ export default function CartPage() {
             </div>
           </div>
           <p className="mt-3 text-xs text-[var(--huza-muted)]">{t("noMiddleman")}</p>
-          <Link href={`/checkout?zone=${zone}`} className="block mt-4">
+          <Link href={`/checkout?zone=${zone}&slot=${slot}`} className="block mt-4">
             <Button className="w-full">{t("checkout")}</Button>
           </Link>
         </aside>

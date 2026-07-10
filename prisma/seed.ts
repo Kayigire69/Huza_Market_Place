@@ -4,7 +4,18 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.procurementMessage.deleteMany();
+  await prisma.goodsReceiptItem.deleteMany();
+  await prisma.goodsReceipt.deleteMany();
+  await prisma.stockBatch.deleteMany();
+  await prisma.stockMovement.deleteMany();
+  await prisma.warehouseLocation.deleteMany();
+  await prisma.purchaseOrder.deleteMany();
   await prisma.supplierOffer.deleteMany();
+  await prisma.returnRequest.deleteMany();
+  await prisma.supportTicket.deleteMany();
+  await prisma.newsletterSubscriber.deleteMany();
+  await prisma.expense.deleteMany();
   await prisma.supportMessage.deleteMany();
   await prisma.supportThread.deleteMany();
   await prisma.contactMessage.deleteMany();
@@ -13,6 +24,7 @@ async function main() {
   await prisma.orderStatusLog.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.delivery.deleteMany();
+  await prisma.vehicle.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.review.deleteMany();
@@ -69,6 +81,38 @@ async function main() {
       fullName: "Niyonsenga Eric",
       role: Role.DELIVERY,
     },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "warehouse@youthhuza.rw",
+      phone: "0780000004",
+      passwordHash: password,
+      fullName: "Uwimana Claire",
+      role: Role.WAREHOUSE,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "procurement@youthhuza.rw",
+      phone: "0780000005",
+      passwordHash: password,
+      fullName: "Habimana Patrick",
+      role: Role.PROCUREMENT,
+    },
+  });
+
+  await prisma.vehicle.create({
+    data: { plateNumber: "RAD 123 A", label: "Huza Van 1", capacityKg: 800 },
+  });
+
+  await prisma.warehouseLocation.createMany({
+    data: [
+      { code: "A-01", name: "Cold room A", zone: "Cold" },
+      { code: "B-02", name: "Dry storage B", zone: "Dry" },
+      { code: "C-03", name: "Receiving dock", zone: "Dock" },
+    ],
   });
 
   const supplierUsers = await Promise.all([
@@ -188,9 +232,12 @@ async function main() {
       { slug: "poultry", nameEn: "Poultry", nameFr: "Volaille", nameRw: "Inkoko", sortOrder: 6 },
       { slug: "fish", nameEn: "Fish", nameFr: "Poisson", nameRw: "Amafi", sortOrder: 7 },
       { slug: "eggs", nameEn: "Eggs", nameFr: "Œufs", nameRw: "Amagi", sortOrder: 8 },
-      { slug: "spices", nameEn: "Spices", nameFr: "Épices", nameRw: "Ibishimishanyo", sortOrder: 9 },
-      { slug: "honey", nameEn: "Honey", nameFr: "Miel", nameRw: "Ubuki", sortOrder: 10 },
-      { slug: "other-fresh", nameEn: "Other Fresh Products", nameFr: "Autres produits frais", nameRw: "Ibindi bishya", sortOrder: 11 },
+      { slug: "honey", nameEn: "Honey", nameFr: "Miel", nameRw: "Ubuki", sortOrder: 9 },
+      { slug: "spices", nameEn: "Spices", nameFr: "Épices", nameRw: "Ibishimishanyo", sortOrder: 10 },
+      { slug: "bakery", nameEn: "Bakery", nameFr: "Boulangerie", nameRw: "Umugati", sortOrder: 11 },
+      { slug: "beverages", nameEn: "Beverages", nameFr: "Boissons", nameRw: "Ibinyobwa", sortOrder: 12 },
+      { slug: "frozen-foods", nameEn: "Frozen Foods", nameFr: "Surgelés", nameRw: "Ibicuruzwa byakonjeshejwe", sortOrder: 13 },
+      { slug: "household-essentials", nameEn: "Household Essentials", nameFr: "Essentiels maison", nameRw: "Ibikenewe mu rugo", sortOrder: 14 },
     ].map((c) => prisma.category.create({ data: c }))
   );
 
@@ -412,7 +459,7 @@ async function main() {
     },
     {
       supplierId: suppliers[1].id,
-      categoryId: cat["other-fresh"].id,
+      categoryId: cat.vegetables.id,
       nameEn: "Fresh Mushrooms",
       nameFr: "Champignons frais",
       nameRw: "Ibinyomoro",
@@ -433,6 +480,9 @@ async function main() {
     const product = await prisma.product.create({
       data: {
         ...data,
+        originDistrict: data.location,
+        nutritionalInfo:
+          "Per 100g (approx): Energy, vitamins, and minerals vary by produce. Store cool and consume fresh.",
         availableDistricts:
           data.location === "Musanze"
             ? ["Musanze", "Gasabo", "Kicukiro", "Nyarugenge"]
@@ -461,7 +511,7 @@ async function main() {
       data: {
         userId: customer.id,
         productId: product.id,
-        supplierId: data.supplierId,
+        type: "PRODUCT",
         rating: 5,
         comment: "Fresh quality and fast delivery from Youth Huza!",
       },

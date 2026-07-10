@@ -6,20 +6,20 @@ import { authOptions } from "@/lib/auth";
 import { getBusinessStatus } from "@/lib/business-hours";
 import { DELIVERY_FEES, generateOrderNumber } from "@/lib/utils";
 import { initiateMobileMoneyPayment, normalizeMsisdn } from "@/lib/payments/mobile-money";
-import { DeliveryZone, OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
+import { DeliverySlot, DeliveryZone, OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 
 const schema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   phone: z.string().min(8, "Enter a valid phone number (e.g. 078xxxxxxx)"),
   address: z.string().min(5, "Delivery address is required"),
   deliveryZone: z.enum(["KIGALI", "KAMONYI_RUYENZI", "BUGESERA_NYAMATA"]),
+  deliverySlot: z.enum(["TODAY", "TOMORROW", "SCHEDULED"]).optional(),
+  scheduledFor: z.string().optional(),
   gpsLat: z.string().optional(),
   gpsLng: z.string().optional(),
   instructions: z.string().optional(),
-  paymentMethod: z.enum(["MTN_MOMO", "AIRTEL_MONEY"]),
-  paymentPhone: z
-    .string()
-    .min(8, "Enter your MoMo / Airtel phone number (e.g. 078xxxxxxx), not the network name"),
+  paymentMethod: z.enum(["MTN_MOMO", "AIRTEL_MONEY", "CASH_ON_DELIVERY"]),
+  paymentPhone: z.string().optional(),
   items: z.array(z.object({ productId: z.string(), quantity: z.number().positive() })).min(1),
 });
 
@@ -39,14 +39,35 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const data = schema.parse(body);
+    if (data.paymentMethod !== "CASH_ON_DELIVERY") {
+      if (!data.paymentPhone || data.paymentPhone.length < 8) {
+        return NextResponse.json(
+          { error: "Enter your MoMo / Airtel phone number (e.g. 078xxxxxxx)" },
+          { status: 400 }
+        );
+      }
+    }
+
     const status = await getBusinessStatus();
+    const slot = (data.deliverySlot || "TODAY") as DeliverySlot;
 
     let scheduledFor: Date | null = null;
-    if (!status.canCheckout) {
+    let estimatedDelivery = "Today";
+    if (slot === "TOMORROW") {
       const next = new Date();
       next.setDate(next.getDate() + 1);
       next.setHours(status.openHour ?? 6, 0, 0, 0);
       scheduledFor = next;
+      estimatedDelivery = "Tomorrow";
+    } else if (slot === "SCHEDULED" && data.scheduledFor) {
+      scheduledFor = new Date(data.scheduledFor);
+      estimatedDelivery = scheduledFor.toLocaleString();
+    } else if (!status.canCheckout) {
+      const next = new Date();
+      next.setDate(next.getDate() + 1);
+      next.setHours(status.openHour ?? 6, 0, 0, 0);
+      scheduledFor = next;
+      estimatedDelivery = "Tomorrow (outside business hours)";
     }
 
     const session = await getServerSession(authOptions);
@@ -82,6 +103,8 @@ export async function POST(req: Request) {
     const deliveryFee = DELIVERY_FEES[data.deliveryZone as keyof typeof DELIVERY_FEES];
     const total = subtotal + deliveryFee;
     const orderNumber = generateOrderNumber();
+    const isCod = data.paymentMethod === "CASH_ON_DELIVERY";
+    const payPhone = isCod ? data.phone : data.paymentPhone!;
 
     const order = await prisma.$transaction(async (tx) => {
       for (const item of lineItems) {
@@ -93,6 +116,14 @@ export async function POST(req: Request) {
           data: {
             productId: item.productId,
             change: -item.quantity,
+            reason: `Order ${orderNumber}`,
+          },
+        });
+        await tx.stockMovement.create({
+          data: {
+            productId: item.productId,
+            type: "SALE",
+            quantity: -Math.floor(item.quantity),
             reason: `Order ${orderNumber}`,
           },
         });
@@ -120,20 +151,24 @@ export async function POST(req: Request) {
           gpsLat: data.gpsLat ? Number(data.gpsLat) : null,
           gpsLng: data.gpsLng ? Number(data.gpsLng) : null,
           deliveryInstructions: data.instructions || null,
+          deliverySlot: slot,
+          estimatedDelivery,
           subtotal,
           total,
-          status: OrderStatus.PENDING,
+          status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
           scheduledFor,
           items: { create: lineItems },
           payment: {
             create: {
               method: data.paymentMethod as PaymentMethod,
-              phoneNumber: normalizeMsisdn(data.paymentPhone),
+              phoneNumber: normalizeMsisdn(payPhone),
               amount: total,
-              status: PaymentStatus.PENDING,
-              payeePhone: normalizeMsisdn(merchant.phone),
+              status: isCod ? PaymentStatus.PENDING : PaymentStatus.PENDING,
+              payeePhone: isCod ? null : normalizeMsisdn(merchant.phone),
               payeeName: merchant.name,
-              providerMessage: "Initiating mobile money request to Youth Huza...",
+              providerMessage: isCod
+                ? "Cash on delivery — collect from customer"
+                : "Initiating mobile money request to Youth Huza...",
             },
           },
           delivery: {
@@ -145,8 +180,10 @@ export async function POST(req: Request) {
           statusLog: {
             create: [
               {
-                status: OrderStatus.PENDING,
-                note: "Order placed — awaiting payment to Youth Huza",
+                status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
+                note: isCod
+                  ? "Order placed — cash on delivery"
+                  : "Order placed — awaiting payment to Youth Huza",
               },
             ],
           },
@@ -155,11 +192,39 @@ export async function POST(req: Request) {
       });
     });
 
+    if (isCod) {
+      if (session?.user?.id) {
+        await prisma.notification.create({
+          data: {
+            userId: session.user.id,
+            type: "ORDER_CONFIRMATION",
+            channel: "IN_APP",
+            title: "Order confirmed",
+            body: `Order ${order.orderNumber} placed. Pay cash on delivery. ETA: ${estimatedDelivery}.`,
+          },
+        });
+      }
+      return NextResponse.json({
+        orderNumber: order.orderNumber,
+        id: order.id,
+        paymentId: order.payment?.id,
+        scheduledFor,
+        total,
+        paymentStatus: "PENDING",
+        paymentMode: "demo",
+        paymentMessage: "Cash on delivery confirmed. Youth Huza will deliver your order.",
+        payerPhone: data.phone,
+        payeeName: merchant.name,
+        payeePhone: merchant.phone,
+        method: data.paymentMethod,
+      });
+    }
+
     let paymentResult;
     try {
       paymentResult = await initiateMobileMoneyPayment({
-        method: data.paymentMethod as PaymentMethod,
-        payerPhone: data.paymentPhone,
+        method: data.paymentMethod as "MTN_MOMO" | "AIRTEL_MONEY",
+        payerPhone: data.paymentPhone!,
         payeePhone: merchant.phone,
         payeeName: merchant.name,
         amount: total,
@@ -193,7 +258,7 @@ export async function POST(req: Request) {
           type: "ORDER_CONFIRMATION",
           channel: "IN_APP",
           title: "Approve payment on your phone",
-          body: `Order ${order.orderNumber}: approve ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} on ${data.paymentPhone}. You are paying Youth Huza (HUZA MARKETPLACE).`,
+          body: `Order ${order.orderNumber}: approve ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} on ${data.paymentPhone}. You are paying Youth Huza (HUZA MARKETPLACE). ETA: ${estimatedDelivery}.`,
         },
       });
     }

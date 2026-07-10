@@ -9,10 +9,22 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id, action } = await req.json();
+  const { id, action, adminReply } = await req.json();
   if (action === "delete") {
     await prisma.review.delete({ where: { id } });
     return NextResponse.json({ ok: true });
+  }
+
+  if (action === "reply") {
+    const review = await prisma.review.update({
+      where: { id },
+      data: {
+        adminReply: adminReply || "",
+        repliedById: session.user.id,
+        repliedAt: new Date(),
+      },
+    });
+    return NextResponse.json(review);
   }
 
   const review = await prisma.review.update({

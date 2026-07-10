@@ -25,9 +25,11 @@ type TrackData = {
 
 const STEPS = [
   "PENDING",
+  "PAID",
   "CONFIRMED",
   "PREPARING",
-  "READY_FOR_PICKUP",
+  "PACKED",
+  "READY_FOR_DISPATCH",
   "OUT_FOR_DELIVERY",
   "DELIVERED",
 ];
