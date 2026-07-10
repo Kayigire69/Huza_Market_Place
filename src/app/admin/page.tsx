@@ -113,9 +113,27 @@ export default async function AdminPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <h1 className="section-title">Administration dashboard</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Full control of Huza Market Place by Youth Huza
+      <p className="mt-2 text-[var(--huza-muted)] mb-4">
+        Manage HUZA MARKETPLACE activities — suppliers, orders, delivery, payments, inventory, and more.
       </p>
+
+      <div className="mb-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { href: "/admin#suppliers", title: "Approve suppliers", desc: "Review & verify applications" },
+          { href: "/admin#orders", title: "Manage orders", desc: "Update order lifecycle status" },
+          { href: "/admin#delivery", title: "Assign delivery", desc: "Track Youth Huza drivers" },
+          { href: "/admin#payments", title: "Payments", desc: "Confirm MoMo / Airtel & refunds" },
+        ].map((a) => (
+          <a
+            key={a.title}
+            href={a.href}
+            className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 hover:border-[var(--huza-green)] transition"
+          >
+            <p className="font-semibold text-[var(--huza-green-dark)]">{a.title}</p>
+            <p className="text-xs text-[var(--huza-muted)] mt-1">{a.desc}</p>
+          </a>
+        ))}
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {[
