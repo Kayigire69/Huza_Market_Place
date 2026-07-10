@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="400" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7F6EC"/>
+      <stop offset="1" stop-color="#C8E8D4"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="200" cy="140" r="70" fill="#0B5C34" opacity="0.15"/>
+  <circle cx="200" cy="140" r="48" fill="#1FA65A"/>
+  <circle cx="185" cy="125" r="12" fill="#F7FBF8" opacity="0.35"/>
+  <text x="200" y="250" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#0B5C34">eggs</text>
+</svg>
