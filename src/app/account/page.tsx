@@ -46,7 +46,14 @@ export default async function AccountPage() {
                 {user.orders.map((o) => (
                   <div key={o.id} className="rounded-xl border border-[var(--huza-line)] p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-semibold">{o.orderNumber}</p>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-[var(--huza-muted)]">
+                          Order number
+                        </p>
+                        <p className="font-mono font-semibold text-[var(--huza-green-dark)]">
+                          {o.orderNumber}
+                        </p>
+                      </div>
                       <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1">
                         {o.status}
                       </span>
@@ -62,6 +69,21 @@ export default async function AccountPage() {
                         </li>
                       ))}
                     </ul>
+                    <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                      <Link
+                        href={`/track?orderNumber=${encodeURIComponent(o.orderNumber)}&phone=${encodeURIComponent(user.phone)}`}
+                        className="font-semibold text-[var(--huza-green)]"
+                      >
+                        Track order →
+                      </Link>
+                      <Link
+                        href={`/api/invoices/${o.orderNumber}`}
+                        className="font-semibold text-[var(--huza-green)]"
+                        target="_blank"
+                      >
+                        Invoice →
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>

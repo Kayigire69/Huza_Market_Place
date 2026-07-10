@@ -3,10 +3,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/lib/locale-context";
 
 type Msg = { id: string; sender: string; body: string; createdAt: string };
 
 export function SupportChat() {
+  const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -38,7 +40,8 @@ export function SupportChat() {
         action: "start",
         guestName: name,
         guestPhone: phone,
-        body: text || "Hello, I need help with Huza Market Place.",
+        locale,
+        body: text || (locale === "fr" ? "Bonjour" : locale === "rw" ? "Muraho" : "Hello"),
       }),
     });
     const data = await res.json();
@@ -57,7 +60,7 @@ export function SupportChat() {
     const res = await fetch("/api/support", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "message", threadId, body: text }),
+      body: JSON.stringify({ action: "message", threadId, body: text, locale }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -81,31 +84,33 @@ export function SupportChat() {
         <div className="fixed bottom-24 right-5 z-50 flex h-[420px] w-[min(100vw-2rem,360px)] flex-col overflow-hidden rounded-2xl border border-[var(--huza-line)] bg-white shadow-2xl">
           <div className="bg-[var(--huza-green-dark)] px-4 py-3 text-white">
             <p className="font-semibold">Youth Huza Support</p>
-            <p className="text-xs text-[#C8E8D4]">HUZA MARKETPLACE help chat</p>
+            <p className="text-xs text-[#C8E8D4]">
+              EN · FR · RW — products, orders, delivery, payments
+            </p>
           </div>
 
           {!started ? (
             <form onSubmit={startChat} className="flex flex-1 flex-col gap-3 p-4">
               <p className="text-sm text-[var(--huza-muted)]">
-                Ask about orders, delivery, or products. We usually reply quickly.
+                Ask in English, French, or Kinyarwanda about orders, delivery, payments, or products.
               </p>
               <input
                 className="input-field"
-                placeholder="Your name"
+                placeholder={t("fullName")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
               <input
                 className="input-field"
-                placeholder="Phone"
+                placeholder={t("phone")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
               />
               <textarea
                 className="input-field min-h-20"
-                placeholder="How can we help?"
+                placeholder="How can we help? / Comment pouvons-nous aider ? / Twagufasha gute?"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />

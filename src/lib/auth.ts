@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 
+export { portalPathForRole } from "./auth-redirect";
+
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: {
@@ -18,15 +20,23 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.phoneOrEmail || !credentials.password) return null;
         const identifier = credentials.phoneOrEmail.trim();
+        const password = credentials.password;
+
         const user = await prisma.user.findFirst({
           where: {
-            OR: [{ email: identifier }, { phone: identifier }],
+            OR: [
+              { email: { equals: identifier, mode: "insensitive" } },
+              { phone: identifier },
+              { phone: identifier.replace(/\s|-/g, "") },
+            ],
           },
           include: { supplier: true },
         });
         if (!user) return null;
-        const valid = await bcrypt.compare(credentials.password, user.passwordHash);
+
+        const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
+
         return {
           id: user.id,
           name: user.fullName,
@@ -66,4 +76,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  secret: process.env.NEXTAUTH_SECRET,
 };

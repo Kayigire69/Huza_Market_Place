@@ -1,11 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
+import { portalPathForRole } from "@/lib/auth-redirect";
 
 export default function LoginPage() {
   const { t } = useLocale();
@@ -18,34 +19,50 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     const form = new FormData(e.currentTarget);
+    const phoneOrEmail = String(form.get("phoneOrEmail") || "").trim();
+    const password = String(form.get("password") || "");
+
     const res = await signIn("credentials", {
-      phoneOrEmail: String(form.get("phoneOrEmail")),
-      password: String(form.get("password")),
+      phoneOrEmail,
+      password,
       redirect: false,
     });
-    setLoading(false);
     if (res?.error) {
-      setError("Invalid credentials");
+      setLoading(false);
+      setError("Invalid email/phone or password. Check your details and try again.");
       return;
     }
-    router.push("/account");
+
+    const session = await getSession();
+    const role = (session?.user as { role?: string } | undefined)?.role;
+    setLoading(false);
+    router.push(portalPathForRole(role));
     router.refresh();
   };
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">{t("login")}</h1>
-      <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
-        Demo: customer@example.com / password123
-      </p>
       <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
         <div>
           <label className="label">{t("email")} / {t("phone")}</label>
-          <input name="phoneOrEmail" required className="input-field" />
+          <input
+            name="phoneOrEmail"
+            required
+            className="input-field"
+            placeholder="email@example.com or 078xxxxxxx"
+            autoComplete="username"
+          />
         </div>
         <div>
           <label className="label">{t("password")}</label>
-          <input name="password" type="password" required className="input-field" />
+          <input
+            name="password"
+            type="password"
+            required
+            className="input-field"
+            autoComplete="current-password"
+          />
         </div>
         {error && <p className="text-sm text-red-700">{error}</p>}
         <Button type="submit" className="w-full" disabled={loading}>

@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf } from "@/lib/utils";
 
@@ -34,12 +35,20 @@ const STEPS = [
   "DELIVERED",
 ];
 
-export default function TrackOrderPage() {
-  const [orderNumber, setOrderNumber] = useState("");
-  const [phone, setPhone] = useState("");
+function TrackForm() {
+  const sp = useSearchParams();
+  const [orderNumber, setOrderNumber] = useState(sp.get("orderNumber") ?? "");
+  const [phone, setPhone] = useState(sp.get("phone") ?? "");
   const [data, setData] = useState<TrackData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const on = sp.get("orderNumber");
+    const ph = sp.get("phone");
+    if (on) setOrderNumber(on);
+    if (ph) setPhone(ph);
+  }, [sp]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -65,108 +74,107 @@ export default function TrackOrderPage() {
     : 0;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-      <h1 className="section-title">Track your order</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Enter your order number and phone to see live delivery status from Youth Huza.
-      </p>
-
+    <>
       <form
         onSubmit={onSubmit}
         className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3"
       >
-        <input
-          className="input-field"
-          placeholder="Order number (e.g. HUZA-123456)"
-          value={orderNumber}
-          onChange={(e) => setOrderNumber(e.target.value)}
-          required
-        />
-        <input
-          className="input-field"
-          placeholder="Phone used at checkout"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
+        <div>
+          <label className="label">Order number</label>
+          <input
+            className="input-field"
+            placeholder="e.g. HUZA-123456"
+            value={orderNumber}
+            onChange={(e) => setOrderNumber(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label className="label">Phone used at checkout</label>
+          <input
+            className="input-field"
+            placeholder="078xxxxxxx"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+          />
+        </div>
         {error && <p className="text-sm text-red-700">{error}</p>}
         <Button type="submit" disabled={loading}>
-          {loading ? "Searching…" : "Track order"}
+          {loading ? "Looking up…" : "Track order"}
         </Button>
       </form>
 
       {data && (
-        <div className="mt-8 space-y-6">
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <div className="flex flex-wrap justify-between gap-2">
-              <div>
-                <p className="font-bold text-lg">{data.orderNumber}</p>
-                <p className="text-sm text-[var(--huza-muted)]">
-                  {formatRwf(data.total)} · {data.deliveryZone}
-                </p>
-              </div>
-              <span className="rounded-full bg-[var(--huza-mint)] px-3 py-1 text-xs font-semibold h-fit">
-                {data.status}
+        <div className="mt-8 rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Order number</p>
+            <p className="font-mono text-xl font-bold text-[var(--huza-green-dark)]">{data.orderNumber}</p>
+            <p className="text-sm text-[var(--huza-muted)] mt-1">
+              Status: <strong>{data.status}</strong> · {formatRwf(data.total)}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {STEPS.map((s, i) => (
+              <span
+                key={s}
+                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                  stepIndex >= i
+                    ? "bg-[var(--huza-green)] text-white"
+                    : "bg-[var(--huza-mint)] text-[var(--huza-muted)]"
+                }`}
+              >
+                {s.replace(/_/g, " ")}
               </span>
-            </div>
-            <p className="mt-3 text-sm">{data.deliveryAddress}</p>
-
-            {data.status !== "CANCELLED" && (
-              <ol className="mt-6 space-y-2">
-                {STEPS.map((s, i) => (
-                  <li key={s} className="flex items-center gap-3 text-sm">
-                    <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                        i <= stepIndex
-                          ? "bg-[var(--huza-green)] text-white"
-                          : "bg-[var(--huza-line)] text-[var(--huza-muted)]"
-                      }`}
-                    >
-                      {i + 1}
-                    </span>
-                    <span className={i <= stepIndex ? "font-semibold" : "text-[var(--huza-muted)]"}>
-                      {s.replaceAll("_", " ")}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-
-            <ul className="mt-4 text-sm text-[var(--huza-muted)] space-y-1">
-              {data.items.map((i, idx) => (
-                <li key={idx}>
-                  {i.product.nameEn} × {i.quantity} — {formatRwf(i.lineTotal)}
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <a href={`/api/invoices/${data.orderNumber}`} target="_blank" rel="noreferrer">
-                <Button size="sm">Download invoice (PDF)</Button>
-              </a>
-              <Link href="/support">
-                <Button size="sm" variant="ghost">
-                  Need help?
-                </Button>
-              </Link>
-            </div>
+            ))}
           </div>
-
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-3">Status history</h2>
-            <ul className="space-y-2 text-sm">
-              {data.statusLog.map((l, i) => (
-                <li key={i} className="border-b border-[var(--huza-line)] pb-2">
-                  <strong>{l.status}</strong> — {l.note || ""}
-                  <span className="block text-xs text-[var(--huza-muted)]">
-                    {new Date(l.createdAt).toLocaleString()}
-                  </span>
-                </li>
-              ))}
-            </ul>
+          <p className="text-sm text-[var(--huza-muted)]">
+            Deliver to: {data.deliveryAddress} ({data.deliveryZone})
+          </p>
+          {data.delivery?.deliveryPerson && (
+            <p className="text-sm">
+              Driver: {data.delivery.deliveryPerson.fullName} · {data.delivery.deliveryPerson.phone}
+            </p>
+          )}
+          <ul className="text-sm space-y-1">
+            {data.items.map((i, idx) => (
+              <li key={idx}>
+                {i.product.nameEn} × {i.quantity} — {formatRwf(i.lineTotal)}
+              </li>
+            ))}
+          </ul>
+          <div className="border-t border-[var(--huza-line)] pt-3 space-y-1">
+            {data.statusLog.map((l, idx) => (
+              <p key={idx} className="text-xs text-[var(--huza-muted)]">
+                {new Date(l.createdAt).toLocaleString()} — {l.status}
+                {l.note ? `: ${l.note}` : ""}
+              </p>
+            ))}
           </div>
+          <Link
+            href={`/api/invoices/${data.orderNumber}`}
+            className="inline-block text-sm font-semibold text-[var(--huza-green)]"
+            target="_blank"
+          >
+            Download invoice →
+          </Link>
         </div>
       )}
+    </>
+  );
+}
+
+export default function TrackOrderPage() {
+  return (
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+      <h1 className="section-title">Track your order</h1>
+      <p className="mt-2 text-[var(--huza-muted)] mb-8">
+        Use the order number shown after checkout (and in My Account) plus the phone you used when
+        ordering.
+      </p>
+      <Suspense fallback={<p className="text-sm text-[var(--huza-muted)]">Loading…</p>}>
+        <TrackForm />
+      </Suspense>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { supportAutoReply } from "@/lib/support-bot";
 
 export async function GET(req: Request) {
   const threadId = new URL(req.url).searchParams.get("threadId");
@@ -15,8 +16,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const body = await req.json();
+  const locale = body.locale as string | undefined;
 
   if (body.action === "start") {
+    const welcome = supportAutoReply(body.body || "hello", locale);
     const thread = await prisma.supportThread.create({
       data: {
         guestName: body.guestName || "Guest",
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
             },
             {
               sender: "AGENT",
-              body: "Muraho! Welcome to HUZA MARKETPLACE by Youth Huza. How can we help with your order or products today?",
+              body: welcome,
             },
           ],
         },
@@ -48,20 +51,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // Simple auto-reply for common intents
-    const lower = String(body.body || "").toLowerCase();
-    let reply =
-      "Thanks for your message. A Youth Huza agent will follow up shortly. You can also track orders at /track or call +250 788 000 000.";
-    if (lower.includes("track") || lower.includes("order")) {
-      reply =
-        "To track an order, open Track Order and enter your order number (e.g. HUZA-…). Delivery updates appear there in real time.";
-    } else if (lower.includes("pay") || lower.includes("momo") || lower.includes("airtel")) {
-      reply =
-        "After placing an order, approve the MoMo/Airtel prompt on your phone. Money goes directly to the seller’s number.";
-    } else if (lower.includes("deliver")) {
-      reply =
-        "Youth Huza delivers directly (no middlemen): Kigali 2,000 RWF · Kamonyi/Ruyenzi 3,000 · Bugesera/Nyamata 3,000.";
-    }
+    const reply = supportAutoReply(String(body.body || ""), locale);
 
     await prisma.supportMessage.create({
       data: { threadId: body.threadId, sender: "AGENT", body: reply },
