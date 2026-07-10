@@ -21,9 +21,10 @@ export default async function SupplierPage() {
           </p>
           <h1 className="section-title mt-2">Supplier Procurement Portal</h1>
           <p className="mt-4 text-[var(--huza-muted)] leading-relaxed max-w-2xl mx-auto">
-            Register here if you want Youth Huza to buy your produce. After verification, you submit
-            offers; Huza inspects, purchases, and lists stock on <strong>HUZA MARKETPLACE</strong>.
-            Customers buy from Huza — not from you directly.
+            Register to sell produce <strong>to Youth Huza only</strong>. After verification you
+            submit wholesale offers; Huza inspects, issues purchase orders, and pays you. There are
+            no customer orders, no customer prices, and no customer delivery on this portal —
+            customers buy from <strong>HUZA MARKETPLACE</strong>, not from you.
           </p>
         </div>
         <SupplierRegisterForm />
@@ -47,7 +48,7 @@ export default async function SupplierPage() {
       },
       purchaseOrders: {
         orderBy: { createdAt: "desc" },
-        take: 20,
+        take: 50,
       },
     },
   });
@@ -57,7 +58,8 @@ export default async function SupplierPage() {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="section-title">Become a verified supplier</h1>
         <p className="mt-4 text-[var(--huza-muted)]">
-          Register so Youth Huza can verify your farm and buy your produce.
+          Register so Youth Huza can verify your farm and buy your produce. You sell to Huza only —
+          not to end customers.
         </p>
         <Link href="/supplier" className="inline-block mt-6 text-[var(--huza-green)] font-semibold">
           Apply →
@@ -78,12 +80,12 @@ export default async function SupplierPage() {
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--huza-green)]">
-            Supplier Procurement Portal
+            Supplier Management Portal
           </p>
           <h1 className="section-title mt-1">{supplier.businessName}</h1>
           <p className="text-sm text-[var(--huza-muted)] mt-1">
             Status: {supplier.status}
-            {supplier.isVerified ? " · Verified" : ""} · Sell produce to Youth Huza
+            {supplier.isVerified ? " · Verified" : ""} · Sell to Youth Huza only
           </p>
           {supplier.rejectionReason && (
             <p className="text-sm text-red-700 mt-1">Reason: {supplier.rejectionReason}</p>
@@ -101,9 +103,10 @@ export default async function SupplierPage() {
       </div>
 
       <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white p-4 text-sm text-[var(--huza-muted)]">
-        <strong className="text-[var(--huza-ink)]">How it works:</strong> Get verified → submit an
-        offer → Huza reviews quality &amp; price → purchase order → delivery to Huza warehouse →
-        products listed on HUZA MARKETPLACE under Youth Huza.
+        <strong className="text-[var(--huza-ink)]">B2B with Youth Huza only:</strong> Get verified
+        → submit a wholesale offer → Huza reviews → purchase order → deliver to Huza warehouse →
+        Huza pays you. No customer orders, no customer pricing, no customer delivery — Huza lists
+        stock on HUZA MARKETPLACE under Youth Huza.
       </div>
 
       {supplier.status !== "APPROVED" && (
