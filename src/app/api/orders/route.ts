@@ -8,15 +8,17 @@ import { DELIVERY_FEES, generateOrderNumber } from "@/lib/utils";
 import { DeliveryZone, OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 
 const schema = z.object({
-  fullName: z.string().min(2),
-  phone: z.string().min(8),
-  address: z.string().min(5),
+  fullName: z.string().min(2, "Full name is required"),
+  phone: z.string().min(8, "Enter a valid phone number (e.g. 078xxxxxxx)"),
+  address: z.string().min(5, "Delivery address is required"),
   deliveryZone: z.enum(["KIGALI", "KAMONYI_RUYENZI", "BUGESERA_NYAMATA"]),
   gpsLat: z.string().optional(),
   gpsLng: z.string().optional(),
   instructions: z.string().optional(),
   paymentMethod: z.enum(["MTN_MOMO", "AIRTEL_MONEY"]),
-  paymentPhone: z.string().min(8),
+  paymentPhone: z
+    .string()
+    .min(8, "Enter your MoMo / Airtel phone number (e.g. 078xxxxxxx), not the network name"),
   items: z.array(z.object({ productId: z.string(), quantity: z.number().positive() })).min(1),
 });
 
@@ -169,6 +171,10 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error(err);
+    if (err instanceof z.ZodError) {
+      const message = err.issues.map((i) => i.message).join(". ");
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     const message = err instanceof Error ? err.message : "Failed to place order";
     return NextResponse.json({ error: message }, { status: 400 });
   }

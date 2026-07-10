@@ -164,6 +164,8 @@ export default function CheckoutClient() {
               className="input-field"
               value={form.gpsLat}
               onChange={(e) => setForm({ ...form, gpsLat: e.target.value })}
+              placeholder="-1.9536"
+              inputMode="decimal"
             />
           </div>
           <div>
@@ -172,15 +174,21 @@ export default function CheckoutClient() {
               className="input-field"
               value={form.gpsLng}
               onChange={(e) => setForm({ ...form, gpsLng: e.target.value })}
+              placeholder="30.0605"
+              inputMode="decimal"
             />
           </div>
         </div>
+        <p className="text-xs text-[var(--huza-muted)] -mt-3">
+          Optional map coordinates only. Put landmarks like “Sonatube” in delivery instructions below.
+        </p>
         <div>
           <label className="label">{t("instructions")}</label>
           <textarea
             className="input-field min-h-16"
             value={form.instructions}
             onChange={(e) => setForm({ ...form, instructions: e.target.value })}
+            placeholder="e.g. Call me when you get to Sonatube"
           />
         </div>
         <div>
@@ -207,13 +215,18 @@ export default function CheckoutClient() {
           </div>
         </div>
         <div>
-          <label className="label">MoMo / Airtel phone</label>
+          <label className="label">MoMo / Airtel phone number</label>
           <input
             required
             className="input-field"
             value={form.paymentPhone}
             onChange={(e) => setForm({ ...form, paymentPhone: e.target.value })}
+            placeholder="078xxxxxxx"
+            inputMode="tel"
           />
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">
+            Enter the phone number that will pay (not “MoMo” or “Airtel”).
+          </p>
         </div>
 
         <div className="rounded-xl bg-[var(--huza-mint)] p-4 text-sm space-y-1">
