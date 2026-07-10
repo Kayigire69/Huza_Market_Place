@@ -86,12 +86,15 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       </Link>
       <div className="pt-3 flex flex-col flex-1">
         <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)] flex items-center gap-1">
-          {product.supplier.businessName}
-          {verified && (
-            <span title="Verified supplier" className="inline-flex text-[var(--huza-green)]">
+          Sold by Youth Huza
+          {verified && product.supplier.businessName && (
+            <span title="Sourced from verified farm" className="inline-flex text-[var(--huza-green)]">
               <BadgeCheck className="size-3.5" />
             </span>
           )}
+        </p>
+        <p className="text-[10px] text-[var(--huza-muted)]">
+          Sourced from {product.supplier.businessName}
         </p>
         <Link
           href={`/products/${product.id}`}

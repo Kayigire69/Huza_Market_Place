@@ -101,6 +101,12 @@ export default async function AdminPage() {
     select: { id: true, fullName: true, phone: true },
   });
 
+  const procurementOffers = await prisma.supplierOffer.findMany({
+    include: { supplier: true, category: true },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
   const stats = {
     customers,
     suppliers,
@@ -119,10 +125,10 @@ export default async function AdminPage() {
 
       <div className="mb-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { href: "/admin#suppliers", title: "Approve suppliers", desc: "Review & verify applications" },
-          { href: "/admin#orders", title: "Manage orders", desc: "Update order lifecycle status" },
-          { href: "/admin#delivery", title: "Assign delivery", desc: "Track Youth Huza drivers" },
-          { href: "/admin#payments", title: "Payments", desc: "Confirm MoMo / Airtel & refunds" },
+          { href: "/admin#suppliers", title: "Approve partners", desc: "Verify farms that sell to Huza" },
+          { href: "/admin#procurement", title: "Buy from farms", desc: "Purchase supplier offers into stock" },
+          { href: "/admin#orders", title: "Customer orders", desc: "Orders sold by Youth Huza" },
+          { href: "/admin#payments", title: "Payments to Huza", desc: "Confirm MoMo / Airtel to Huza" },
         ].map((a) => (
           <a
             key={a.title}
@@ -168,6 +174,7 @@ export default async function AdminPage() {
         emergency={emergency}
         deliveryPeople={deliveryPeople}
         auditLogs={auditLogs}
+        procurementOffers={procurementOffers}
       />
     </div>
   );

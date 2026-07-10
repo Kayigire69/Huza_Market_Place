@@ -11,18 +11,18 @@ export default function TermsPage() {
           for the sale and direct delivery of fresh products from approved suppliers in Rwanda.
         </p>
         <p>
-          <strong className="text-[var(--huza-ink)]">Orders &amp; payment.</strong> Orders are
-          confirmed after successful mobile money approval. Prices are in RWF. Delivery fees apply by
-          zone (Kigali, Kamonyi/Ruyenzi, Bugesera/Nyamata).
+          <strong className="text-[var(--huza-ink)]">Orders &amp; payment.</strong> You buy from
+          Youth Huza on HUZA MARKETPLACE. Orders are confirmed after mobile money approval paid to
+          Youth Huza. Prices are in RWF. Delivery fees apply by zone.
         </p>
         <p>
-          <strong className="text-[var(--huza-ink)]">Delivery.</strong> Youth Huza delivers directly;
-          there is no third-party middleman for deliveries. Availability may depend on district and
-          business hours (default 6:00 AM – 9:00 PM).
+          <strong className="text-[var(--huza-ink)]">Delivery.</strong> Youth Huza delivers orders we
+          sell. Availability may depend on district and business hours (default 6:00 AM – 9:00 PM).
         </p>
         <p>
-          <strong className="text-[var(--huza-ink)]">Suppliers.</strong> Only approved and verified
-          suppliers may sell. Youth Huza may suspend accounts that breach quality or trust standards.
+          <strong className="text-[var(--huza-ink)]">Farm partners.</strong> Approved farms may offer
+          produce for Youth Huza to purchase. Selling on this site to customers is done by Huza only —
+          partners do not sell directly to shoppers here.
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Liability.</strong> Fresh produce quality can

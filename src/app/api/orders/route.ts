@@ -23,6 +23,18 @@ const schema = z.object({
   items: z.array(z.object({ productId: z.string(), quantity: z.number().positive() })).min(1),
 });
 
+/** Youth Huza merchant number that receives customer payments */
+function huzaPayee() {
+  const phone =
+    process.env.HUZA_MERCHANT_PHONE ||
+    process.env.NEXT_PUBLIC_HUZA_MERCHANT_PHONE ||
+    "0788000000";
+  return {
+    phone,
+    name: process.env.HUZA_MERCHANT_NAME || "Youth Huza — HUZA MARKETPLACE",
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -66,17 +78,7 @@ export async function POST(req: Request) {
       };
     });
 
-    // Primary seller = supplier with the largest line total (money goes to their number)
-    const totalsBySupplier = new Map<string, number>();
-    for (const item of lineItems) {
-      totalsBySupplier.set(
-        item.supplierId,
-        (totalsBySupplier.get(item.supplierId) || 0) + item.lineTotal
-      );
-    }
-    const primarySupplierId = [...totalsBySupplier.entries()].sort((a, b) => b[1] - a[1])[0][0];
-    const primarySupplier = products.find((p) => p.supplierId === primarySupplierId)!.supplier;
-
+    const merchant = huzaPayee();
     const deliveryFee = DELIVERY_FEES[data.deliveryZone as keyof typeof DELIVERY_FEES];
     const total = subtotal + deliveryFee;
     const orderNumber = generateOrderNumber();
@@ -129,9 +131,9 @@ export async function POST(req: Request) {
               phoneNumber: normalizeMsisdn(data.paymentPhone),
               amount: total,
               status: PaymentStatus.PENDING,
-              payeePhone: normalizeMsisdn(primarySupplier.phone),
-              payeeName: primarySupplier.businessName,
-              providerMessage: "Initiating mobile money request...",
+              payeePhone: normalizeMsisdn(merchant.phone),
+              payeeName: merchant.name,
+              providerMessage: "Initiating mobile money request to Youth Huza...",
             },
           },
           delivery: {
@@ -141,7 +143,12 @@ export async function POST(req: Request) {
             },
           },
           statusLog: {
-            create: [{ status: OrderStatus.PENDING, note: "Order placed — awaiting mobile money approval" }],
+            create: [
+              {
+                status: OrderStatus.PENDING,
+                note: "Order placed — awaiting payment to Youth Huza",
+              },
+            ],
           },
         },
         include: { payment: true },
@@ -153,8 +160,8 @@ export async function POST(req: Request) {
       paymentResult = await initiateMobileMoneyPayment({
         method: data.paymentMethod as PaymentMethod,
         payerPhone: data.paymentPhone,
-        payeePhone: primarySupplier.phone,
-        payeeName: primarySupplier.businessName,
+        payeePhone: merchant.phone,
+        payeeName: merchant.name,
         amount: total,
         orderNumber,
       });
@@ -186,7 +193,7 @@ export async function POST(req: Request) {
           type: "ORDER_CONFIRMATION",
           channel: "IN_APP",
           title: "Approve payment on your phone",
-          body: `Order ${order.orderNumber}: check ${data.paymentPhone} for the ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} prompt and enter your PIN. Money goes to ${primarySupplier.businessName}.`,
+          body: `Order ${order.orderNumber}: approve ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} on ${data.paymentPhone}. You are paying Youth Huza (HUZA MARKETPLACE).`,
         },
       });
     }
@@ -201,8 +208,8 @@ export async function POST(req: Request) {
       paymentMode: paymentResult.mode,
       paymentMessage: paymentResult.message,
       payerPhone: data.paymentPhone,
-      payeeName: primarySupplier.businessName,
-      payeePhone: primarySupplier.phone,
+      payeeName: merchant.name,
+      payeePhone: merchant.phone,
       method: data.paymentMethod,
     });
   } catch (err) {

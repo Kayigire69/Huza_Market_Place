@@ -9,6 +9,7 @@ type AnyObj = Record<string, unknown>;
 
 type Tab =
   | "suppliers"
+  | "procurement"
   | "orders"
   | "delivery"
   | "payments"
@@ -34,15 +35,17 @@ export function AdminClient(props: {
   emergency: AnyObj[];
   deliveryPeople: { id: string; fullName: string; phone: string }[];
   auditLogs: AnyObj[];
+  procurementOffers: AnyObj[];
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("suppliers");
+  const [tab, setTab] = useState<Tab>("procurement");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "") as Tab;
     const valid: Tab[] = [
       "suppliers",
+      "procurement",
       "orders",
       "delivery",
       "payments",
@@ -70,6 +73,21 @@ export function AdminClient(props: {
       body: JSON.stringify({ id, action, reason }),
     });
     setMsg(res.ok ? `Supplier ${action}` : "Action failed");
+    refresh();
+  };
+
+  const offerAction = async (
+    offerId: string,
+    action: "accept" | "reject" | "purchase",
+    extra?: { retailPrice?: number; purchasedQty?: number; adminNote?: string }
+  ) => {
+    const res = await fetch("/api/admin/procurement", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ offerId, action, ...extra }),
+    });
+    const data = await res.json();
+    setMsg(res.ok ? `Offer ${action} OK` : data.error || "Failed");
     refresh();
   };
 
@@ -141,6 +159,7 @@ export function AdminClient(props: {
   };
 
   const tabs = [
+    "procurement",
     "suppliers",
     "orders",
     "delivery",
@@ -170,6 +189,79 @@ export function AdminClient(props: {
         ))}
       </div>
       {msg && <p className="mb-4 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
+
+      {tab === "procurement" && (
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+          <h2 className="font-semibold mb-1">Buy from farm partners</h2>
+          <p className="text-sm text-[var(--huza-muted)] mb-4">
+            Youth Huza purchases these offers into HUZA MARKETPLACE inventory. Customers then buy from
+            Huza — not from the farm directly.
+          </p>
+          {(props.procurementOffers || []).length === 0 ? (
+            <p className="text-sm text-[var(--huza-muted)]">No offers yet.</p>
+          ) : (
+            props.procurementOffers.map((o) => {
+              const supplier = o.supplier as { businessName?: string };
+              return (
+                <div key={String(o.id)} className="rounded-xl border border-[var(--huza-line)] p-4">
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <div>
+                      <p className="font-semibold">{String(o.title)}</p>
+                      <p className="text-sm text-[var(--huza-muted)]">
+                        {supplier?.businessName} · {String(o.quantityOffered)} {String(o.unit)} · Ask{" "}
+                        {formatRwf(Number(o.askPrice))}/{String(o.unit).toLowerCase()}
+                        {o.suggestedRetail
+                          ? ` · Suggested retail ${formatRwf(Number(o.suggestedRetail))}`
+                          : ""}
+                      </p>
+                    </div>
+                    <span className="text-xs rounded-full bg-[var(--huza-mint)] px-2 py-1 h-fit">
+                      {String(o.status)}
+                    </span>
+                  </div>
+                  {o.description ? (
+                    <p className="text-sm text-[var(--huza-muted)] mt-2">{String(o.description)}</p>
+                  ) : null}
+                  {(o.status === "PENDING" || o.status === "ACCEPTED") && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {o.status === "PENDING" && (
+                        <>
+                          <Button size="sm" variant="ghost" onClick={() => offerAction(String(o.id), "accept")}>
+                            Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => offerAction(String(o.id), "reject", { adminNote: "Not needed now" })}
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const retail = window.prompt(
+                            "Huza retail price (RWF per unit)",
+                            String(o.suggestedRetail || Math.round(Number(o.askPrice) * 1.25))
+                          );
+                          if (!retail) return;
+                          offerAction(String(o.id), "purchase", {
+                            retailPrice: Number(retail),
+                            purchasedQty: Number(o.quantityOffered),
+                          });
+                        }}
+                      >
+                        Purchase into Huza stock
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
       {tab === "suppliers" && (
         <div className="space-y-6">

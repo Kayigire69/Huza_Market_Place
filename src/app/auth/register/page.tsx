@@ -62,7 +62,7 @@ export default function RegisterPage() {
               role === "SUPPLIER" ? "bg-[var(--huza-green)] text-white" : "bg-[var(--huza-mint)]"
             }`}
           >
-            Supplier
+            Sell to Huza (farm)
           </button>
         </div>
         <div>

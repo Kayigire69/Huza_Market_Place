@@ -107,8 +107,8 @@ export default function CheckoutClient() {
             </span>
           </p>
           <p>
-            Money goes <strong>directly to the seller</strong>: {payment.payeeName} (
-            {payment.payeePhone}).
+            You are paying <strong>Youth Huza</strong> ({payment.payeeName}). Huza sells and delivers
+            your order.
           </p>
           <p className="text-[var(--huza-muted)]">{payment.paymentMessage}</p>
           <p className="text-xs text-[var(--huza-muted)]">
@@ -166,9 +166,8 @@ export default function CheckoutClient() {
         <CheckCircle2 className="mx-auto size-14 text-[var(--huza-green)]" />
         <h1 className="section-title mt-4">Payment confirmed!</h1>
         <p className="mt-4 text-[var(--huza-muted)]">
-          Order <strong>{payment.orderNumber}</strong> is paid.{" "}
-          {formatRwf(payment.total)} was sent to <strong>{payment.payeeName}</strong>. Youth Huza
-          will deliver directly — no middlemen.
+          Order <strong>{payment.orderNumber}</strong> is paid. {formatRwf(payment.total)} received by{" "}
+          <strong>Youth Huza</strong>. We will prepare and deliver your order.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/products">
@@ -241,8 +240,8 @@ export default function CheckoutClient() {
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
       <h1 className="section-title mb-2">{t("guestCheckout")}</h1>
       <p className="text-sm text-[var(--huza-muted)] mb-8">
-        After you place the order, you will get a <strong>payment approval prompt on your phone</strong>.
-        Money goes directly to the seller&apos;s MoMo / Airtel number.
+        After you place the order, approve payment on your phone. You pay{" "}
+        <strong>Youth Huza (HUZA MARKETPLACE)</strong> — we sell and deliver the products.
       </p>
 
       <form
@@ -361,8 +360,7 @@ export default function CheckoutClient() {
             inputMode="tel"
           />
           <p className="mt-1 text-xs text-[var(--huza-muted)]">
-            This number gets the MoMo / Airtel “approve payment” message. Enter PIN on that phone to
-            pay the seller directly.
+            Enter the phone that will approve MoMo/Airtel. Payment goes to Youth Huza.
           </p>
         </div>
 
