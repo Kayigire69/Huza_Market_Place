@@ -207,6 +207,46 @@ model Supplier {
   farmPhotoUrls      String[]           @default([])
   productPhotoUrls   String[]           @default([])
   documentsUrl       String?
+
+  /// Farmer personal dossier (Module 9)
+  profilePhotoUrl    String?
+  gender             String?
+  province           String?
+  cell               String?
+  village            String?
+  ageRange           String?
+
+  /// Field information (farm-level defaults)
+  fieldType          String?
+  pastCropsSeason1   String?
+  pastCropsSeason2   String?
+  pastCropsSeason3   String?
+  currentCrop        String?
+  chemicalsPerWeek   String?
+  chemicalsWhy       String?
+  chemicalsDosage    String?
+  fertilizerPerWeek  String?
+  irrigationMethod   String?
+  diseasesIdentified String?
+  pestsIdentified    String?
+
+  /// Production (farm-level summary)
+  totalQuantityHarvested String?
+  qualityGeneral         String?
+
+  /// Sales summary
+  priceUnit              String?
+  pricePerUnit           Int?
+  totalKgsBoughtByHuza   Float?            @default(0)
+
+  /// Payment options preferred by farmer
+  paymentOption          String?
+  farmGatePrice          Int?
+  priceUponDelivery      Int?
+  priceAfterSale         Int?
+  proofOfPaymentUrl      String?
+  farmerComments         String?
+
   status             SupplierStatus     @default(PENDING)
   availability       AvailabilityStatus @default(CLOSED)
   openHour           Int                @default(6)
@@ -269,6 +309,37 @@ model Product {
   isBestSeller  Boolean  @default(false)
   isNewArrival  Boolean  @default(false)
   isActive      Boolean  @default(true)
+  /// Huza review of farmer-listed product
+  reviewStatus  String   @default("PENDING")
+  reviewNote    String?
+  reviewedAt    DateTime?
+
+  /// Crop / field details for this listing (used in accept/reject)
+  fieldType          String?
+  fieldSize          String?
+  pastCropsSeason1   String?
+  pastCropsSeason2   String?
+  pastCropsSeason3   String?
+  currentCrop        String?
+  chemicalsPerWeek   String?
+  chemicalsWhy       String?
+  chemicalsDosage    String?
+  fertilizerPerWeek  String?
+  irrigationMethod   String?
+  diseasesIdentified String?
+  pestsIdentified    String?
+  totalQuantityHarvested String?
+  qualityGeneral         String?
+  priceUnit              String?
+  pricePerUnit           Int?
+  totalKgsBoughtByHuza   Float?  @default(0)
+  paymentOption          String?
+  farmGatePrice          Int?
+  priceUponDelivery      Int?
+  priceAfterSale         Int?
+  proofOfPaymentUrl      String?
+  farmerComments         String?
+
   ratingAvg     Float    @default(0)
   ratingCount   Int      @default(0)
   location      String?

@@ -67,6 +67,7 @@ export default async function FarmerPage() {
         ? { status: "APPROVED" }
         : { userId: session.user.id },
     include: {
+      user: { select: { fullName: true } },
       products: {
         include: {
           category: true,
@@ -125,20 +126,20 @@ export default async function FarmerPage() {
       </div>
 
       <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white p-4 text-sm text-[var(--huza-muted)]">
-        <strong className="text-[var(--huza-ink)]">How it works:</strong> A Huza agent helps you
-        register and get approved → you upload each product with photos and stock → Huza reviews and
-        buys through agents (not online orders in this portal) → stock is sold on HUZA FRESH under
-        Youth Huza.
+        <strong className="text-[var(--huza-ink)]">How it works:</strong> Fill in{" "}
+        <strong>Farmer information</strong> (personal, field, production, sales, payment, comments)
+        → after approval, submit each product with photos and crop details → Huza reviews that
+        dossier to accept or reject products → accepted stock is sold on HUZA FRESH under Youth Huza.
       </div>
 
       {farmer.status !== "APPROVED" && (
         <div className="mb-6 rounded-xl border border-[var(--huza-gold)] bg-[#FFF8E6] p-4 text-sm">
-          Your application is <strong>{farmer.status}</strong>. Complete your profile and documents.
-          A Huza agent may visit your farm. Product listing unlocks after approval.
+          Your application is <strong>{farmer.status}</strong>. Complete the Farmer information tab
+          first. A Huza agent may visit your farm. Product listing unlocks after approval.
         </div>
       )}
 
-      <FarmerPortalClient farmer={farmer} categories={categories} />
+      <FarmerPortalClient farmer={farmer as never} categories={categories} />
     </div>
   );
 }

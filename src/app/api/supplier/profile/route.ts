@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AvailabilityStatus } from "@prisma/client";
+import { pickFarmerDossier } from "@/lib/farmer-dossier";
 
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
@@ -15,34 +16,17 @@ export async function PATCH(req: Request) {
   }
 
   const id = supplier?.id ?? body.supplierId;
-  if (!id) return NextResponse.json({ error: "Supplier required" }, { status: 400 });
+  if (!id) return NextResponse.json({ error: "Farmer required" }, { status: 400 });
+
+  const dossier = pickFarmerDossier(body);
+  const cleaned = Object.fromEntries(
+    Object.entries(dossier).filter(([, v]) => v !== undefined && !(typeof v === "number" && Number.isNaN(v)))
+  );
 
   const updated = await prisma.supplier.update({
     where: { id },
     data: {
-      businessName: body.businessName ?? undefined,
-      description: body.description ?? undefined,
-      location: body.location ?? undefined,
-      district: body.district ?? undefined,
-      sector: body.sector ?? undefined,
-      phone: body.phone ?? undefined,
-      email: body.email ?? undefined,
-      nationalId: body.nationalId ?? undefined,
-      companyRegNo: body.companyRegNo ?? undefined,
-      tin: body.tin ?? undefined,
-      farmSize: body.farmSize ?? undefined,
-      productionCapacity: body.productionCapacity ?? undefined,
-      productCategories: body.productCategories ?? undefined,
-      paymentMomo: body.paymentMomo ?? undefined,
-      bankAccount: body.bankAccount ?? undefined,
-      bankName: body.bankName ?? undefined,
-      nationalIdUrl: body.nationalIdUrl ?? undefined,
-      businessCertUrl: body.businessCertUrl ?? undefined,
-      tinDocUrl: body.tinDocUrl ?? undefined,
-      foodSafetyUrl: body.foodSafetyUrl ?? undefined,
-      organicCertUrl: body.organicCertUrl ?? undefined,
-      permitUrl: body.permitUrl ?? undefined,
-      documentsUrl: body.documentsUrl ?? undefined,
+      ...cleaned,
       availability: body.availability
         ? (body.availability as AvailabilityStatus)
         : undefined,
@@ -50,6 +34,13 @@ export async function PATCH(req: Request) {
       closeHour: body.closeHour !== undefined ? Number(body.closeHour) : undefined,
     },
   });
+
+  if (body.fullName && supplier) {
+    await prisma.user.update({
+      where: { id: supplier.userId },
+      data: { fullName: String(body.fullName) },
+    });
+  }
 
   return NextResponse.json(updated);
 }
