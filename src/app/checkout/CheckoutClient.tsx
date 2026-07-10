@@ -60,6 +60,62 @@ export default function CheckoutClient() {
   const fee = DELIVERY_FEES[zone];
   const cartSubtotal = subtotal();
   const total = useMemo(() => cartSubtotal + fee, [cartSubtotal, fee]);
+  const [locStatus, setLocStatus] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const useLiveLocation = () => {
+    setLocStatus("Getting your location…");
+    if (!navigator.geolocation) {
+      setLocStatus("Location not supported on this device. Please type your address.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setForm((f) => ({ ...f, gpsLat: String(lat), gpsLng: String(lng) }));
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+            { headers: { Accept: "application/json" } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const label = data.display_name as string | undefined;
+            if (label) {
+              setForm((f) => ({
+                ...f,
+                gpsLat: String(lat),
+                gpsLng: String(lng),
+                address: f.address?.trim() ? f.address : label,
+              }));
+              setLocStatus("Live location captured. You can edit the address if needed.");
+              return;
+            }
+          }
+        } catch {
+          /* ignore reverse-geocode failures */
+        }
+        setLocStatus(
+          `Live location saved (${lat.toFixed(5)}, ${lng.toFixed(5)}). Please type your street / landmark in the address field.`
+        );
+      },
+      () => {
+        setLocStatus("Could not get location. Allow location access or type your address.");
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  };
+
+  const copyOrderNumber = async (orderNumber: string) => {
+    try {
+      await navigator.clipboard.writeText(orderNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
 
   // Poll payment status while awaiting phone approval
   useEffect(() => {
@@ -116,10 +172,28 @@ export default function CheckoutClient() {
             You are paying <strong>Youth Huza</strong> ({payment.payeeName}). Huza sells and delivers
             your order.
           </p>
+          <p className="text-xs text-[var(--huza-muted)]">
+            Save your order number to track delivery
+          </p>
+          <div className="rounded-xl bg-[var(--huza-mint)] px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-[var(--huza-muted)]">Order number</p>
+              <p className="font-mono text-lg font-bold text-[var(--huza-green-dark)]">
+                {payment.orderNumber}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="ghost" type="button" onClick={() => copyOrderNumber(payment.orderNumber)}>
+                {copied ? "Copied" : "Copy"}
+              </Button>
+              <Link href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}`}>
+                <Button size="sm">Track order</Button>
+              </Link>
+            </div>
+          </div>
           <p className="text-[var(--huza-muted)]">{payment.paymentMessage}</p>
           <p className="text-xs text-[var(--huza-muted)]">
-            Order <strong>{payment.orderNumber}</strong>
-            {payment.paymentMode === "demo" ? " · Demo mode (no live MoMo API keys yet)" : ""}
+            {payment.paymentMode === "demo" ? "Demo mode (no live MoMo API keys yet)" : ""}
           </p>
         </div>
 
@@ -170,10 +244,28 @@ export default function CheckoutClient() {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <CheckCircle2 className="mx-auto size-14 text-[var(--huza-green)]" />
-        <h1 className="section-title mt-4">Payment confirmed!</h1>
+        <h1 className="section-title mt-4">
+          {payment.method === "CASH_ON_DELIVERY" ? "Order confirmed!" : "Payment confirmed!"}
+        </h1>
+        <div className="mt-6 rounded-2xl border-2 border-[var(--huza-green)] bg-white p-5 text-left">
+          <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Your order number</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-[var(--huza-green-dark)] break-all">
+            {payment.orderNumber}
+          </p>
+          <p className="mt-2 text-sm text-[var(--huza-muted)]">
+            Save this number — use it with your phone on Track Order to follow delivery.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="ghost" onClick={() => copyOrderNumber(payment.orderNumber)}>
+              {copied ? "Copied!" : "Copy order number"}
+            </Button>
+            <Link href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(payment.payerPhone || "")}`}>
+              <Button size="sm">Track this order</Button>
+            </Link>
+          </div>
+        </div>
         <p className="mt-4 text-[var(--huza-muted)]">
-          Order <strong>{payment.orderNumber}</strong> is paid. {formatRwf(payment.total)} received by{" "}
-          <strong>Youth Huza</strong>. We will prepare and deliver your order.
+          {formatRwf(payment.total)} · Youth Huza will prepare and deliver your order.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/products">
@@ -279,13 +371,25 @@ export default function CheckoutClient() {
           </div>
         </div>
         <div>
-          <label className="label">{t("address")}</label>
+          <label className="label">Delivery location</label>
           <textarea
             required
             className="input-field min-h-20"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
+            placeholder="Street, sector, landmark (e.g. near Sonatube)"
           />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="ghost" onClick={useLiveLocation}>
+              Use my live location
+            </Button>
+            {form.gpsLat && form.gpsLng && (
+              <span className="text-xs text-[var(--huza-green-dark)]">
+                Location pinned ✓
+              </span>
+            )}
+          </div>
+          {locStatus && <p className="mt-1 text-xs text-[var(--huza-muted)]">{locStatus}</p>}
         </div>
         <div>
           <label className="label">{t("deliveryZones")}</label>
@@ -301,31 +405,6 @@ export default function CheckoutClient() {
             ))}
           </select>
         </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label">{t("gpsOptional")} (lat)</label>
-            <input
-              className="input-field"
-              value={form.gpsLat}
-              onChange={(e) => setForm({ ...form, gpsLat: e.target.value })}
-              placeholder="-1.9536"
-              inputMode="decimal"
-            />
-          </div>
-          <div>
-            <label className="label">{t("gpsOptional")} (lng)</label>
-            <input
-              className="input-field"
-              value={form.gpsLng}
-              onChange={(e) => setForm({ ...form, gpsLng: e.target.value })}
-              placeholder="30.0605"
-              inputMode="decimal"
-            />
-          </div>
-        </div>
-        <p className="text-xs text-[var(--huza-muted)] -mt-3">
-          Optional map coordinates only. Put landmarks like “Sonatube” in delivery instructions below.
-        </p>
         <div>
           <label className="label">Estimated delivery</label>
           <div className="flex flex-wrap gap-2 mb-2">
