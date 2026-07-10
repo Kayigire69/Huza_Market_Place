@@ -33,9 +33,14 @@ export default function CheckoutClient() {
   const { items, subtotal, clear } = useCart();
   const sp = useSearchParams();
   const initialZone = (sp.get("zone") as DeliveryZoneKey) || "KIGALI";
+  const initialSlot = (sp.get("slot") as "TODAY" | "TOMORROW" | "SCHEDULED") || "TODAY";
   const [zone, setZone] = useState<DeliveryZoneKey>(
     initialZone in DELIVERY_FEES ? initialZone : "KIGALI"
   );
+  const [slot, setSlot] = useState<"TODAY" | "TOMORROW" | "SCHEDULED">(
+    ["TODAY", "TOMORROW", "SCHEDULED"].includes(initialSlot) ? initialSlot : "TODAY"
+  );
+  const [scheduledDate, setScheduledDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phase, setPhase] = useState<PayPhase>("form");
@@ -51,13 +56,14 @@ export default function CheckoutClient() {
     paymentPhone: "",
   });
 
+  const isCod = form.paymentMethod === "CASH_ON_DELIVERY";
   const fee = DELIVERY_FEES[zone];
   const cartSubtotal = subtotal();
   const total = useMemo(() => cartSubtotal + fee, [cartSubtotal, fee]);
 
   // Poll payment status while awaiting phone approval
   useEffect(() => {
-    if (phase !== "awaiting" || !payment) return;
+    if (phase !== "awaiting" || !payment || isCod) return;
 
     const tick = async () => {
       const res = await fetch(`/api/payments/status?orderNumber=${payment.orderNumber}`);
@@ -73,7 +79,7 @@ export default function CheckoutClient() {
     tick();
     const id = setInterval(tick, 3000);
     return () => clearInterval(id);
-  }, [phase, payment]);
+  }, [phase, payment, isCod]);
 
   if (items.length === 0 && phase === "form") {
     return (
@@ -208,6 +214,9 @@ export default function CheckoutClient() {
         body: JSON.stringify({
           ...form,
           deliveryZone: zone,
+          deliverySlot: slot,
+          scheduledFor: slot === "SCHEDULED" && scheduledDate ? scheduledDate : undefined,
+          paymentPhone: isCod ? form.phone : form.paymentPhone,
           items: items.map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
@@ -228,7 +237,7 @@ export default function CheckoutClient() {
         method: data.method,
         paymentMode: data.paymentMode,
       });
-      setPhase("awaiting");
+      setPhase(data.method === "CASH_ON_DELIVERY" || data.paymentStatus === "CONFIRMED" ? "paid" : "awaiting");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
@@ -318,6 +327,39 @@ export default function CheckoutClient() {
           Optional map coordinates only. Put landmarks like “Sonatube” in delivery instructions below.
         </p>
         <div>
+          <label className="label">Estimated delivery</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {(
+              [
+                ["TODAY", "Today"],
+                ["TOMORROW", "Tomorrow"],
+                ["SCHEDULED", "Scheduled"],
+              ] as const
+            ).map(([value, label]) => (
+              <label
+                key={value}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer ${
+                  slot === value
+                    ? "border-[var(--huza-green)] bg-[var(--huza-mint)]"
+                    : "border-[var(--huza-line)]"
+                }`}
+              >
+                <input type="radio" checked={slot === value} onChange={() => setSlot(value)} />
+                {label}
+              </label>
+            ))}
+          </div>
+          {slot === "SCHEDULED" && (
+            <input
+              type="datetime-local"
+              className="input-field"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+              required
+            />
+          )}
+        </div>
+        <div>
           <label className="label">{t("instructions")}</label>
           <textarea
             className="input-field min-h-16"
@@ -347,22 +389,42 @@ export default function CheckoutClient() {
               />
               {t("airtel")}
             </label>
+            <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm">
+              <input
+                type="radio"
+                name="pay"
+                checked={form.paymentMethod === "CASH_ON_DELIVERY"}
+                onChange={() => setForm({ ...form, paymentMethod: "CASH_ON_DELIVERY" })}
+              />
+              Cash on delivery
+            </label>
+            <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm opacity-60">
+              <input type="radio" name="pay" disabled />
+              Card (coming soon)
+            </label>
           </div>
         </div>
-        <div>
-          <label className="label">Phone that will receive the payment prompt</label>
-          <input
-            required
-            className="input-field"
-            value={form.paymentPhone}
-            onChange={(e) => setForm({ ...form, paymentPhone: e.target.value })}
-            placeholder="078xxxxxxx"
-            inputMode="tel"
-          />
-          <p className="mt-1 text-xs text-[var(--huza-muted)]">
-            Enter the phone that will approve MoMo/Airtel. Payment goes to Youth Huza.
+        {!isCod && (
+          <div>
+            <label className="label">Phone that will receive the payment prompt</label>
+            <input
+              required
+              className="input-field"
+              value={form.paymentPhone}
+              onChange={(e) => setForm({ ...form, paymentPhone: e.target.value })}
+              placeholder="078xxxxxxx"
+              inputMode="tel"
+            />
+            <p className="mt-1 text-xs text-[var(--huza-muted)]">
+              Enter the phone that will approve MoMo/Airtel. Payment goes to Youth Huza.
+            </p>
+          </div>
+        )}
+        {isCod && (
+          <p className="text-sm text-[var(--huza-muted)] rounded-lg bg-[var(--huza-mint)] p-3">
+            You will pay the delivery rider in cash when your order arrives.
           </p>
-        </div>
+        )}
 
         <div className="rounded-xl bg-[var(--huza-mint)] p-4 text-sm space-y-1">
           <div className="flex justify-between">
@@ -382,7 +444,11 @@ export default function CheckoutClient() {
         {error && <p className="text-sm text-red-700">{error}</p>}
 
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? "Sending payment request..." : t("placeOrder")}
+          {loading
+            ? isCod
+              ? "Placing order..."
+              : "Sending payment request..."
+            : t("placeOrder")}
         </Button>
       </form>
     </div>

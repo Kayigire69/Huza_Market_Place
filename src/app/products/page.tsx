@@ -12,14 +12,13 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : "";
   const category = typeof sp.category === "string" ? sp.category : "";
-  const location = typeof sp.location === "string" ? sp.location : "";
-  const district = typeof sp.district === "string" ? sp.district : "";
   const minPrice = typeof sp.minPrice === "string" ? Number(sp.minPrice) : undefined;
   const maxPrice = typeof sp.maxPrice === "string" ? Number(sp.maxPrice) : undefined;
   const organic = sp.organic === "1";
   const best = sp.best === "1" || sp.bestRated === "1";
-  const featured = sp.featured === "1";
+  const featured = sp.featured === "1" || sp.promo === "1";
   const newArrivals = sp.new === "1" || sp.newArrivals === "1";
+  const inStock = sp.inStock === "1";
 
   const where: Prisma.ProductWhereInput = {
     isActive: true,
@@ -33,8 +32,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
         }
       : {}),
     ...(category ? { category: { slug: category } } : {}),
-    ...(location ? { location: { contains: location, mode: "insensitive" } } : {}),
-    ...(district ? { availableDistricts: { has: district } } : {}),
     ...(minPrice !== undefined && !Number.isNaN(minPrice) ? { price: { gte: minPrice } } : {}),
     ...(maxPrice !== undefined && !Number.isNaN(maxPrice)
       ? { price: { ...(minPrice !== undefined ? { gte: minPrice } : {}), lte: maxPrice } }
@@ -43,6 +40,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     ...(best ? { isBestSeller: true } : {}),
     ...(featured ? { isFeatured: true } : {}),
     ...(newArrivals ? { isNewArrival: true } : {}),
+    ...(inStock ? { stockQty: { gt: 0 } } : {}),
   };
 
   const [products, categories] = await Promise.all([

@@ -28,15 +28,19 @@ export default async function AdminPage() {
     businessHours,
     holidays,
     emergency,
+    purchaseOrderCount,
+    openPoValue,
+    expenseSum,
+    pendingDeliveries,
   ] = await Promise.all([
     prisma.user.count({ where: { role: "CUSTOMER" } }),
     prisma.supplier.count(),
     prisma.product.count(),
     prisma.order.count(),
-    prisma.order.count({ where: { status: { in: ["PENDING", "CONFIRMED"] } } }),
+    prisma.order.count({ where: { status: { in: ["PENDING", "CONFIRMED", "PAID"] } } }),
     prisma.order.aggregate({
       _sum: { total: true },
-      where: { status: { not: "CANCELLED" } },
+      where: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
     }),
     prisma.product.findMany({
       where: { stockQty: { lte: 5 }, isActive: true },
@@ -78,6 +82,15 @@ export default async function AdminPage() {
     prisma.businessHours.findMany({ orderBy: { dayOfWeek: "asc" } }),
     prisma.holiday.findMany({ orderBy: { date: "asc" } }),
     prisma.emergencyClosure.findMany({ where: { isActive: true } }),
+    prisma.purchaseOrder.count(),
+    prisma.purchaseOrder.aggregate({
+      _sum: { totalAmount: true },
+      where: { status: { notIn: ["CANCELLED", "REJECTED"] } },
+    }),
+    prisma.expense.aggregate({ _sum: { amount: true } }),
+    prisma.delivery.count({
+      where: { status: { in: ["READY_FOR_DISPATCH", "READY_FOR_PICKUP", "OUT_FOR_DELIVERY", "PACKED"] } },
+    }),
   ]);
 
   const auditLogs = await prisma.auditLog.findMany({
@@ -120,6 +133,11 @@ export default async function AdminPage() {
     orders,
     pendingOrders,
     revenue: revenueAgg._sum.total ?? 0,
+    purchaseOrders: purchaseOrderCount,
+    expenses: expenseSum._sum.amount ?? 0,
+    profit: (revenueAgg._sum.total ?? 0) - (expenseSum._sum.amount ?? 0) - (openPoValue._sum.totalAmount ?? 0),
+    pendingDeliveries,
+    lowStock: lowStock.length,
   };
 
   return (
@@ -131,10 +149,14 @@ export default async function AdminPage() {
 
       <div className="mb-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { href: "/admin#suppliers", title: "Supplier Verification & Approval", desc: "Verify farms that sell to Huza" },
-          { href: "/admin#procurement", title: "Procurement Management", desc: "POs, receive, inspect, pay suppliers" },
+          { href: "/admin#suppliers", title: "Supplier Verification", desc: "Verify farms that sell to Huza" },
+          { href: "/admin#procurement", title: "Procurement", desc: "POs, receive, inspect, pay" },
+          { href: "/warehouse", title: "Warehouse", desc: "Receive goods, pack orders" },
+          { href: "/procurement", title: "Procurement officer", desc: "Offers, POs, messages" },
+          { href: "/delivery-portal", title: "Delivery portal", desc: "Assign & track drivers" },
           { href: "/admin#orders", title: "Customer orders", desc: "Orders sold by Youth Huza" },
-          { href: "/admin#payments", title: "Payments to Huza", desc: "Confirm MoMo / Airtel to Huza" },
+          { href: "/admin#payments", title: "Payments", desc: "Customer & supplier payments" },
+          { href: "/support", title: "Support center", desc: "Tickets, returns, complaints" },
         ].map((a) => (
           <a
             key={a.title}
@@ -152,10 +174,14 @@ export default async function AdminPage() {
           { label: "Customers", value: stats.customers },
           { label: "Suppliers", value: stats.suppliers },
           { label: "Products", value: stats.products },
-          { label: "Orders", value: stats.orders },
+          { label: "Purchase orders", value: stats.purchaseOrders },
+          { label: "Customer orders", value: stats.orders },
           { label: "Pending orders", value: stats.pendingOrders },
+          { label: "Pending deliveries", value: stats.pendingDeliveries },
+          { label: "Low stock", value: stats.lowStock },
           { label: "Revenue", value: formatRwf(stats.revenue) },
-          { label: "Low stock", value: lowStock.length },
+          { label: "Expenses", value: formatRwf(stats.expenses) },
+          { label: "Profit (est.)", value: formatRwf(stats.profit) },
           { label: "New supplier requests", value: pendingSuppliers.length },
         ].map((s) => (
           <div key={s.label} className="rounded-2xl border border-[var(--huza-line)] bg-white p-4">

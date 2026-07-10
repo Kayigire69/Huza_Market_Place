@@ -25,6 +25,8 @@ type Product = {
   ratingAvg: number;
   ratingCount: number;
   location: string | null;
+  originDistrict?: string | null;
+  nutritionalInfo?: string | null;
   availableDistricts?: string[];
   images: { id: string; url: string; alt: string | null }[];
   /** Internal only — not displayed on storefront */
@@ -104,11 +106,16 @@ export function ProductDetailClient({ product }: { product: Product }) {
         </p>
         <p className="mt-2 text-sm">
           {t("availability")}: <strong>{availabilityLabel}</strong>
-          {product.location ? ` · ${product.location}` : ""}
+          {product.stockQty > 0 ? ` · ${product.stockQty} in stock` : ""}
         </p>
+        {product.originDistrict && (
+          <p className="mt-1 text-sm text-[var(--huza-muted)]">
+            Origin: <strong className="text-[var(--huza-ink)]">{product.originDistrict}</strong>
+          </p>
+        )}
         {product.availableDistricts && product.availableDistricts.length > 0 && (
           <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            Available in: {product.availableDistricts.join(", ")}
+            Delivery coverage: {product.availableDistricts.join(", ")}
           </p>
         )}
 
@@ -190,6 +197,14 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <h2 className="font-semibold text-lg">{t("description")}</h2>
           <p className="mt-2 text-[var(--huza-muted)] leading-relaxed">{description}</p>
         </div>
+        {product.nutritionalInfo && (
+          <div className="mt-6">
+            <h2 className="font-semibold text-lg">Nutritional information</h2>
+            <p className="mt-2 text-[var(--huza-muted)] leading-relaxed whitespace-pre-line">
+              {product.nutritionalInfo}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

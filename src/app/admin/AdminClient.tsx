@@ -140,11 +140,11 @@ export function AdminClient(props: {
     refresh();
   };
 
-  const reviewAction = async (id: string, action: string) => {
+  const reviewAction = async (id: string, action: string, adminReply?: string) => {
     await fetch("/api/admin/reviews", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, action }),
+      body: JSON.stringify({ id, action, adminReply }),
     });
     refresh();
   };
@@ -527,12 +527,17 @@ export function AdminClient(props: {
               >
                 {[
                   "PENDING",
+                  "PAID",
                   "CONFIRMED",
                   "PREPARING",
+                  "PACKED",
+                  "READY_FOR_DISPATCH",
                   "READY_FOR_PICKUP",
                   "OUT_FOR_DELIVERY",
                   "DELIVERED",
                   "CANCELLED",
+                  "RETURNED",
+                  "REFUNDED",
                 ].map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -616,6 +621,17 @@ export function AdminClient(props: {
               <div className="mt-2 flex gap-2">
                 <Button size="sm" variant="ghost" onClick={() => reviewAction(String(r.id), "hide")}>
                   Hide
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const reply = window.prompt("Admin reply", String(r.adminReply || ""));
+                    if (reply == null) return;
+                    reviewAction(String(r.id), "reply", reply);
+                  }}
+                >
+                  Reply
                 </Button>
                 <Button size="sm" variant="danger" onClick={() => reviewAction(String(r.id), "delete")}>
                   Delete

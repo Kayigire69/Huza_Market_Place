@@ -21,13 +21,13 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
   const [form, setForm] = useState({
     q: sp.get("q") ?? "",
     category: sp.get("category") ?? "",
-    location: sp.get("location") ?? "",
-    district: sp.get("district") ?? "",
     minPrice: sp.get("minPrice") ?? "",
     maxPrice: sp.get("maxPrice") ?? "",
     organic: sp.get("organic") === "1",
     bestRated: sp.get("bestRated") === "1" || sp.get("best") === "1",
     newArrivals: sp.get("new") === "1" || sp.get("newArrivals") === "1",
+    promotions: sp.get("promo") === "1",
+    inStock: sp.get("inStock") === "1",
   });
 
   const onSubmit = (e: FormEvent) => {
@@ -69,41 +69,6 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
           ))}
         </select>
       </div>
-      <div>
-        <label className="label">{t("location")}</label>
-        <input
-          className="input-field"
-          value={form.location}
-          onChange={(e) => setForm({ ...form, location: e.target.value })}
-          placeholder="Kigali, Musanze..."
-        />
-      </div>
-      <div>
-        <label className="label">District availability</label>
-        <select
-          className="input-field"
-          value={form.district}
-          onChange={(e) => setForm({ ...form, district: e.target.value })}
-        >
-          <option value="">All districts</option>
-          {[
-            "Gasabo",
-            "Kicukiro",
-            "Nyarugenge",
-            "Kamonyi",
-            "Bugesera",
-            "Musanze",
-            "Rwamagana",
-            "Huye",
-            "Rubavu",
-            "Kayonza",
-          ].map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-      </div>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="label">{t("minPrice")}</label>
@@ -127,6 +92,14 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
+          checked={form.inStock}
+          onChange={(e) => setForm({ ...form, inStock: e.target.checked })}
+        />
+        In stock only
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
           checked={form.organic}
           onChange={(e) => setForm({ ...form, organic: e.target.checked })}
         />
@@ -138,7 +111,7 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
           checked={form.bestRated}
           onChange={(e) => setForm({ ...form, bestRated: e.target.checked })}
         />
-        {t("bestRated")}
+        {t("bestRated")} / Best sellers
       </label>
       <label className="flex items-center gap-2 text-sm">
         <input
@@ -147,6 +120,14 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
           onChange={(e) => setForm({ ...form, newArrivals: e.target.checked })}
         />
         {t("newArrivals")}
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={form.promotions}
+          onChange={(e) => setForm({ ...form, promotions: e.target.checked })}
+        />
+        Promotions / featured
       </label>
       <Button type="submit" className="w-full">
         {t("applyFilters")}

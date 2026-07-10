@@ -2,10 +2,10 @@ import { randomUUID } from "crypto";
 import type { PaymentMethod } from "@prisma/client";
 
 export type PaymentRequestInput = {
-  method: PaymentMethod;
+  method: Extract<PaymentMethod, "MTN_MOMO" | "AIRTEL_MONEY">;
   /** Customer phone that will approve the payment on their handset */
   payerPhone: string;
-  /** Seller / supplier MoMo or Airtel number that receives the money */
+  /** Youth Huza merchant MoMo or Airtel number that receives the money */
   payeePhone: string;
   payeeName: string;
   amount: number;

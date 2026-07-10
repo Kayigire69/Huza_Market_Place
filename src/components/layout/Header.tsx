@@ -19,15 +19,23 @@ export function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const isAdmin = session?.user?.role === "ADMIN";
+  const role = session?.user?.role;
+  const isAdmin = role === "ADMIN";
+  const isWarehouse = role === "WAREHOUSE" || isAdmin;
+  const isDelivery = role === "DELIVERY" || isAdmin;
+  const isProcurement = role === "PROCUREMENT" || isAdmin;
 
   const nav = [
     { href: "/", label: t("home") },
     { href: "/products", label: t("products") },
     { href: "/categories", label: t("categories") },
     { href: "/track", label: "Track order" },
+    { href: "/support", label: "Support" },
     { href: "/about", label: "About" },
     ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+    ...(isWarehouse && !isAdmin ? [{ href: "/warehouse", label: "Warehouse" }] : []),
+    ...(isDelivery && !isAdmin ? [{ href: "/delivery-portal", label: "Deliveries" }] : []),
+    ...(isProcurement && !isAdmin ? [{ href: "/procurement", label: "Procurement" }] : []),
   ];
 
   return (
@@ -128,6 +136,21 @@ export function Header() {
                   {session.user.role === "ADMIN" && (
                     <Link href="/admin" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
                       {t("admin")}
+                    </Link>
+                  )}
+                  {(session.user.role === "WAREHOUSE" || session.user.role === "ADMIN") && (
+                    <Link href="/warehouse" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
+                      Warehouse
+                    </Link>
+                  )}
+                  {(session.user.role === "DELIVERY" || session.user.role === "ADMIN") && (
+                    <Link href="/delivery-portal" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
+                      Delivery portal
+                    </Link>
+                  )}
+                  {(session.user.role === "PROCUREMENT" || session.user.role === "ADMIN") && (
+                    <Link href="/procurement" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
+                      Procurement
                     </Link>
                   )}
                   {(session.user.role === "SUPPLIER" || session.user.role === "ADMIN") && (

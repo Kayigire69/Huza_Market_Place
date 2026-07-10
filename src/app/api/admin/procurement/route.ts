@@ -97,6 +97,7 @@ export async function PATCH(req: Request) {
         isNewArrival: true,
         isActive: true,
         location: offer.supplier.location,
+        originDistrict: offer.supplier.district,
         availableDistricts:
           offer.availableDistricts.length > 0
             ? offer.availableDistricts

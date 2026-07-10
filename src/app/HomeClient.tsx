@@ -2,12 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { FormEvent, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { Button } from "@/components/ui/Button";
 import { ProductCard, type ProductCardData } from "@/components/products/ProductCard";
 import { categoryName } from "@/lib/i18n";
 import { formatRwf } from "@/lib/utils";
-import { ArrowRight, Leaf, Truck, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Leaf,
+  Truck,
+  ShieldCheck,
+  BadgeCheck,
+  MapPin,
+  Clock,
+} from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 
 type Category = {
@@ -45,6 +54,7 @@ type Testimonial = {
 export function HomePage({
   featured,
   bestSellers,
+  freshToday,
   categories,
   promotions,
   testimonials,
@@ -52,12 +62,14 @@ export function HomePage({
 }: {
   featured: ProductCardData[];
   bestSellers: ProductCardData[];
+  freshToday: ProductCardData[];
   categories: Category[];
   promotions: Promo[];
   testimonials: Testimonial[];
   isOpen: boolean;
 }) {
   const { t, locale } = useLocale();
+  const [newsletterMsg, setNewsletterMsg] = useState("");
 
   const promoTitle = (p: Promo) =>
     locale === "fr" ? p.titleFr : locale === "rw" ? p.titleRw : p.titleEn;
@@ -65,6 +77,18 @@ export function HomePage({
     locale === "fr" ? p.descriptionFr : locale === "rw" ? p.descriptionRw : p.descriptionEn;
   const comment = (x: Testimonial) =>
     locale === "fr" ? x.commentFr : locale === "rw" ? x.commentRw : x.commentEn;
+
+  const subscribe = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const res = await fetch("/api/newsletter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: form.get("email"), phone: form.get("phone") }),
+    });
+    setNewsletterMsg(res.ok ? "Thanks — you’re subscribed!" : "Could not subscribe. Try again.");
+    if (res.ok) (e.target as HTMLFormElement).reset();
+  };
 
   return (
     <div>
@@ -144,27 +168,6 @@ export function HomePage({
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 -mt-8 relative z-10">
-        <div className="grid sm:grid-cols-3 gap-3">
-          {[
-            { icon: Truck, title: t("noMiddleman"), body: t("fromFarm") },
-            { icon: Leaf, title: t("organic"), body: "Quality-checked fresh stock from Youth Huza" },
-            { icon: ShieldCheck, title: "MTN & Airtel", body: "Pay Youth Huza securely with Mobile Money" },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="flex gap-3 items-start rounded-2xl bg-white/90 border border-[var(--huza-line)] p-4 shadow-sm"
-            >
-              <item.icon className="size-6 text-[var(--huza-green)] shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-sm">{item.title}</p>
-                <p className="text-xs text-[var(--huza-muted)] mt-1">{item.body}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
         <div className="flex items-end justify-between gap-4 mb-6">
           <h2 className="section-title">{t("categories")}</h2>
@@ -185,6 +188,50 @@ export function HomePage({
         </div>
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <h2 className="section-title">{t("featured")}</h2>
+          <Link href="/products?featured=1" className="text-sm font-semibold text-[var(--huza-green)]">
+            {t("viewAll")}
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {featured.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </section>
+
+      {freshToday.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
+          <div className="flex items-end justify-between gap-4 mb-6">
+            <h2 className="section-title">Fresh products today</h2>
+            <Link href="/products?new=1" className="text-sm font-semibold text-[var(--huza-green)]">
+              {t("viewAll")}
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {freshToday.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <h2 className="section-title">{t("bestSellers")}</h2>
+          <Link href="/products?best=1" className="text-sm font-semibold text-[var(--huza-green)]">
+            {t("viewAll")}
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {bestSellers.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </section>
+
       {promotions.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
           <h2 className="section-title mb-6">{t("specialOffers")}</h2>
@@ -198,7 +245,7 @@ export function HomePage({
               >
                 {p.isFlashSale && (
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--huza-gold)]">
-                    Flash
+                    Flash sale
                   </span>
                 )}
                 <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold">
@@ -219,34 +266,63 @@ export function HomePage({
       )}
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <h2 className="section-title">{t("featured")}</h2>
-          <Link href="/products?featured=1" className="text-sm font-semibold text-[var(--huza-green)]">
-            {t("viewAll")}
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} />
+        <h2 className="section-title mb-6">Why choose Huza</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              icon: BadgeCheck,
+              title: "Quality controlled",
+              body: "Youth Huza inspects produce before it reaches your cart.",
+            },
+            {
+              icon: Truck,
+              title: "One delivery team",
+              body: "We sell and deliver — one brand, one customer service.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Secure payments",
+              body: "Pay Youth Huza with MTN MoMo, Airtel Money, or cash on delivery.",
+            },
+            {
+              icon: Leaf,
+              title: "Farm-fresh stock",
+              body: "Retail prices set by Huza from verified farm partners.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+              <item.icon className="size-7 text-[var(--huza-green)]" />
+              <h3 className="mt-3 font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm text-[var(--huza-muted)]">{item.body}</p>
+            </div>
           ))}
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <h2 className="section-title">{t("bestSellers")}</h2>
-          <Link href="/products?best=1" className="text-sm font-semibold text-[var(--huza-green)]">
-            {t("viewAll")}
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {bestSellers.map((p) => (
-            <ProductCard key={p.id} product={p} />
+        <h2 className="section-title mb-6">Delivery coverage</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            { zone: "Kigali", fee: "2,000 RWF", time: "About 45 min", icon: MapPin },
+            { zone: "Kamonyi (Ruyenzi)", fee: "3,000 RWF", time: "About 75 min", icon: MapPin },
+            { zone: "Bugesera (Nyamata)", fee: "3,000 RWF", time: "About 75 min", icon: MapPin },
+          ].map((z) => (
+            <div key={z.zone} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+              <z.icon className="size-6 text-[var(--huza-green)]" />
+              <h3 className="mt-3 font-semibold">{z.zone}</h3>
+              <p className="mt-1 text-sm text-[var(--huza-muted)]">Delivery fee {z.fee}</p>
+              <p className="mt-1 text-sm text-[var(--huza-muted)] inline-flex items-center gap-1">
+                <Clock className="size-3.5" /> {z.time}
+              </p>
+            </div>
           ))}
         </div>
+        <p className="mt-3 text-sm text-[var(--huza-muted)]">
+          Choose Today, Tomorrow, or Scheduled delivery at checkout.
+        </p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16 mb-8">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
         <h2 className="section-title mb-6">{t("testimonials")}</h2>
         <div className="grid md:grid-cols-3 gap-5">
           {testimonials.map((x) => (
@@ -262,6 +338,37 @@ export function HomePage({
               </footer>
             </blockquote>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
+        <div className="rounded-3xl bg-[var(--huza-green-dark)] text-white p-8 sm:p-10 grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
+          <div>
+            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
+              Newsletter
+            </h2>
+            <p className="mt-2 text-sm text-[#C8E8D4]">
+              Get fresh arrivals, flash sales, and delivery updates from Youth Huza.
+            </p>
+          </div>
+          <form onSubmit={subscribe} className="space-y-3">
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="Email address"
+              className="w-full rounded-lg border-0 px-4 py-2.5 text-[var(--huza-ink)]"
+            />
+            <input
+              name="phone"
+              placeholder="Phone (optional)"
+              className="w-full rounded-lg border-0 px-4 py-2.5 text-[var(--huza-ink)]"
+            />
+            <Button type="submit" variant="secondary" className="w-full">
+              Subscribe
+            </Button>
+            {newsletterMsg && <p className="text-sm text-[var(--huza-gold)]">{newsletterMsg}</p>}
+          </form>
         </div>
       </section>
 
