@@ -4,6 +4,11 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.supportMessage.deleteMany();
+  await prisma.supportThread.deleteMany();
+  await prisma.contactMessage.deleteMany();
+  await prisma.faqItem.deleteMany();
+  await prisma.auditLog.deleteMany();
   await prisma.orderStatusLog.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.delivery.deleteMany();
@@ -109,6 +114,8 @@ async function main() {
         ratingAvg: 4.8,
         ratingCount: 42,
         approvedAt: new Date(),
+        isVerified: true,
+        verificationBadge: "Youth Huza Verified",
       },
     }),
     prisma.supplier.create({
@@ -124,6 +131,8 @@ async function main() {
         ratingAvg: 4.6,
         ratingCount: 28,
         approvedAt: new Date(),
+        isVerified: true,
+        verificationBadge: "Youth Huza Verified",
       },
     }),
     prisma.supplier.create({
@@ -139,6 +148,8 @@ async function main() {
         ratingAvg: 4.7,
         ratingCount: 35,
         approvedAt: new Date(),
+        isVerified: true,
+        verificationBadge: "Youth Huza Verified",
       },
     }),
   ]);
@@ -421,6 +432,12 @@ async function main() {
     const product = await prisma.product.create({
       data: {
         ...data,
+        availableDistricts:
+          data.location === "Musanze"
+            ? ["Musanze", "Gasabo", "Kicukiro", "Nyarugenge"]
+            : data.location === "Kamonyi"
+              ? ["Kamonyi", "Gasabo", "Nyarugenge", "Kicukiro"]
+              : ["Bugesera", "Kicukiro", "Gasabo", "Kayonza"],
         ratingAvg: 4 + Math.random(),
         ratingCount: Math.floor(Math.random() * 40) + 5,
         images: {
@@ -585,6 +602,47 @@ async function main() {
       title: "Order delivered",
       body: `Your order ${sampleOrder.orderNumber} was delivered. Thank you for shopping with Huza Market Place!`,
       isRead: false,
+    },
+  });
+
+  await prisma.faqItem.createMany({
+    data: [
+      {
+        sortOrder: 1,
+        questionEn: "Who delivers my order?",
+        questionFr: "Qui livre ma commande ?",
+        questionRw: "Ninde utanga ibicuruzwa?",
+        answerEn: "Youth Huza delivers directly — there is no middleman for deliveries.",
+        answerFr: "Youth Huza livre directement — pas d'intermédiaire.",
+        answerRw: "Youth Huza itanga ubwayo — nta muntu wo hagati.",
+      },
+      {
+        sortOrder: 2,
+        questionEn: "How do I pay?",
+        questionFr: "Comment payer ?",
+        questionRw: "Nishyura nte?",
+        answerEn: "MTN MoMo or Airtel Money. Approve the prompt on your phone; money goes to the seller.",
+        answerFr: "MTN MoMo ou Airtel Money. Approuvez sur votre téléphone; l'argent va au vendeur.",
+        answerRw: "MTN MoMo cyangwa Airtel Money. Emeza kuri telefone; amafaranga ajya ku mucuruzi.",
+      },
+      {
+        sortOrder: 3,
+        questionEn: "Can I track my order?",
+        questionFr: "Puis-je suivre ma commande ?",
+        questionRw: "Nshobora gukurikirana ibicuruzwa?",
+        answerEn: "Yes — use Track Order with your order number and checkout phone.",
+        answerFr: "Oui — utilisez Suivi de commande avec votre numéro et téléphone.",
+        answerRw: "Yego — koresha Track Order hamwe n'nimero y'ibicuruzwa na telefone.",
+      },
+    ],
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorName: "System",
+      action: "seed.complete",
+      entity: "Platform",
+      details: "Initial HUZA MARKETPLACE seed by Youth Huza",
     },
   });
 

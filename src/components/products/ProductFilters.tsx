@@ -29,6 +29,7 @@ export function ProductFilters({
     category: sp.get("category") ?? "",
     supplier: sp.get("supplier") ?? "",
     location: sp.get("location") ?? "",
+    district: sp.get("district") ?? "",
     minPrice: sp.get("minPrice") ?? "",
     maxPrice: sp.get("maxPrice") ?? "",
     organic: sp.get("organic") === "1",
@@ -98,6 +99,32 @@ export function ProductFilters({
           onChange={(e) => setForm({ ...form, location: e.target.value })}
           placeholder="Kigali, Musanze..."
         />
+      </div>
+      <div>
+        <label className="label">District availability</label>
+        <select
+          className="input-field"
+          value={form.district}
+          onChange={(e) => setForm({ ...form, district: e.target.value })}
+        >
+          <option value="">All districts</option>
+          {[
+            "Gasabo",
+            "Kicukiro",
+            "Nyarugenge",
+            "Kamonyi",
+            "Bugesera",
+            "Musanze",
+            "Rwamagana",
+            "Huye",
+            "Rubavu",
+            "Kayonza",
+          ].map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div>

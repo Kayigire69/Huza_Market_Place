@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SupplierStatus } from "@prisma/client";
+import { writeAuditLog } from "@/lib/audit";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -11,7 +12,8 @@ async function requireAdmin() {
 }
 
 export async function PATCH(req: Request) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id, action, reason } = await req.json();
 
   const map: Record<string, SupplierStatus> = {
@@ -31,6 +33,8 @@ export async function PATCH(req: Request) {
       rejectionReason: action === "reject" ? reason || "Rejected" : null,
       approvedAt: action === "approve" ? new Date() : undefined,
       availability: action === "approve" ? "OPEN" : "CLOSED",
+      isVerified: action === "approve",
+      verificationBadge: action === "approve" ? "Youth Huza Verified" : null,
     },
   });
 
@@ -42,6 +46,15 @@ export async function PATCH(req: Request) {
       title: `Supplier ${action}`,
       body: `Your supplier account is now ${status}.`,
     },
+  });
+
+  await writeAuditLog({
+    actorId: session.user.id,
+    actorName: session.user.name,
+    action: `supplier.${action}`,
+    entity: "Supplier",
+    entityId: id,
+    details: reason || `Status set to ${status}`,
   });
 
   return NextResponse.json(supplier);

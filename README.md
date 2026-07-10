@@ -148,6 +148,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+
+## Extra features (added)
+
+- Wishlist · Frequently bought together · Recently viewed · Smart recommendations
+- Order tracking (`/track`) · Invoice PDF (`/api/invoices/[orderNumber]`)
+- Supplier verification badges · Product availability by district
+- Admin audit logs · AI search suggestions (header autocomplete)
+- Customer support chat · FAQ · Contact · About · Privacy · Terms
+- Branding: **HUZA MARKETPLACE** — Powered by Youth Huza
+
 ## Mobile Money payments (MTN / Airtel)
 
 After **Place order**, Huza sends a **request-to-pay** to the customer’s phone (the usual pending approval + PIN). When approved, money is credited to the **seller’s MoMo / Airtel number** (primary supplier on the order).

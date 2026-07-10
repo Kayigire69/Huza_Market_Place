@@ -4,6 +4,11 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ProductDetailClient } from "@/components/products/ProductDetailClient";
 import { ProductCard } from "@/components/products/ProductCard";
+import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
+import {
+  getFrequentlyBoughtTogether,
+  getSmartRecommendations,
+} from "@/lib/recommendations";
 
 export const dynamic = "force-dynamic";
 
@@ -30,28 +35,38 @@ export default async function ProductDetailPage({
 
   if (!product || !product.isActive) notFound();
 
-  const related = await prisma.product.findMany({
-    where: {
-      isActive: true,
+  const [fbt, recommended] = await Promise.all([
+    getFrequentlyBoughtTogether(product.id, 4),
+    getSmartRecommendations({
+      productId: product.id,
       categoryId: product.categoryId,
-      id: { not: product.id },
-    },
-    include: { images: true, supplier: true, category: true },
-    take: 4,
-  });
+      take: 4,
+    }),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <ProductDetailClient product={product} />
 
       <section className="mt-14">
-        <h2 className="section-title mb-6">Related products</h2>
+        <h2 className="section-title mb-6">Frequently bought together</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-          {related.map((p) => (
+          {fbt.map((p) =>
+            p ? <ProductCard key={p.id} product={p} /> : null
+          )}
+        </div>
+      </section>
+
+      <section className="mt-14">
+        <h2 className="section-title mb-6">Recommended for you</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          {recommended.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
       </section>
+
+      <RecentlyViewedSection />
 
       <section className="mt-14">
         <h2 className="section-title mb-6">Customer reviews</h2>

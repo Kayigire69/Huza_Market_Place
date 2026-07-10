@@ -80,6 +80,11 @@ export default async function AdminPage() {
     prisma.emergencyClosure.findMany({ where: { isActive: true } }),
   ]);
 
+  const auditLogs = await prisma.auditLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
   const allSuppliers = await prisma.supplier.findMany({
     include: { user: true, _count: { select: { products: true } } },
     orderBy: { createdAt: "desc" },
@@ -144,6 +149,7 @@ export default async function AdminPage() {
         holidays={holidays}
         emergency={emergency}
         deliveryPeople={deliveryPeople}
+        auditLogs={auditLogs}
       />
     </div>
   );
