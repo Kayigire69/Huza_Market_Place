@@ -22,6 +22,8 @@ export async function PATCH(req: Request) {
       reviewNote: note || null,
       reviewedAt: new Date(),
       isActive: action === "approve",
+      // Show accepted farmer products on the customer home "Fresh today" strip
+      ...(action === "approve" ? { isNewArrival: true } : { isActive: false }),
     },
     include: { supplier: true },
   });
