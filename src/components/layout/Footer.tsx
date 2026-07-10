@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Phone, Mail, MapPin, Share2 } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 
 export function Footer() {
@@ -98,7 +98,7 @@ export function Footer() {
             <li>{t("kamonyi")}</li>
             <li>{t("bugesera")}</li>
           </ul>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <a
               href="https://facebook.com"
               target="_blank"
@@ -119,10 +119,9 @@ export function Footer() {
               href="https://wa.me/250788000000"
               target="_blank"
               rel="noreferrer"
-              className="rounded-full bg-white/10 p-2 hover:bg-white/20"
-              aria-label="WhatsApp"
+              className="rounded-full bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/20"
             >
-              <Share2 className="size-5" />
+              WhatsApp
             </a>
           </div>
         </div>
