@@ -628,8 +628,8 @@ export function AdminClient(props: {
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
           <h2 className="font-semibold mb-1">Product review</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-4">
-            Accept or reject farmer product submissions using photos and field/production/sales
-            details.
+            Accept a product to publish its photos on the HUZA FRESH home page and shop. Reject keeps
+            it hidden from customers.
           </p>
           {(props.pendingFarmerProducts || []).length === 0 ? (
             <p className="text-sm text-[var(--huza-muted)]">No products waiting for review.</p>
@@ -722,7 +722,7 @@ export function AdminClient(props: {
                   ) : null}
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => productReview(String(p.id), "approve")}>
-                      Accept product
+                      Accept &amp; show on home
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => productReview(String(p.id), "reject")}>
                       Reject product
