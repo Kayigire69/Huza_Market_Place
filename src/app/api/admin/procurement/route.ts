@@ -84,13 +84,13 @@ export async function PATCH(req: Request) {
         nameRw: offer.title,
         descriptionEn:
           offer.description ||
-          `Fresh ${offer.title} sold by Youth Huza on HUZA MARKETPLACE.`,
+          `Fresh ${offer.title} sold by Youth Huza on HUZA FRESH.`,
         descriptionFr:
           offer.description ||
-          `${offer.title} frais vendu par Youth Huza sur HUZA MARKETPLACE.`,
+          `${offer.title} frais vendu par Youth Huza sur HUZA FRESH.`,
         descriptionRw:
           offer.description ||
-          `${offer.title} bishya bigurishwa na Youth Huza kuri HUZA MARKETPLACE.`,
+          `${offer.title} bishya bigurishwa na Youth Huza kuri HUZA FRESH.`,
         price: sellPrice,
         unit: offer.unit as UnitType,
         stockQty: Math.floor(qty),

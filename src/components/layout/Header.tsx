@@ -42,11 +42,11 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-[var(--huza-line)] bg-[rgba(247,251,248,0.92)] backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex h-16 items-center gap-3 sm:gap-6">
-          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="HUZA MARKETPLACE">
+          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="HUZA FRESH">
             <Image src="/logo.svg" alt="Youth Huza" width={40} height={40} priority />
             <div className="hidden sm:block leading-tight">
               <p className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)] tracking-tight">
-                HUZA MARKETPLACE
+                HUZA FRESH
               </p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)]">
                 Powered by Youth Huza
@@ -154,7 +154,7 @@ export function Header() {
                     </Link>
                   )}
                   {(session.user.role === "SUPPLIER" || session.user.role === "ADMIN") && (
-                    <Link href="/supplier" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
+                    <Link href="/farmer" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
                       {t("supplierPortal")}
                     </Link>
                   )}

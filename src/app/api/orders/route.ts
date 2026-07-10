@@ -31,7 +31,7 @@ function huzaPayee() {
     "0788000000";
   return {
     phone,
-    name: process.env.HUZA_MERCHANT_NAME || "Youth Huza — HUZA MARKETPLACE",
+    name: process.env.HUZA_MERCHANT_NAME || "Youth Huza — HUZA FRESH",
   };
 }
 
@@ -258,7 +258,7 @@ export async function POST(req: Request) {
           type: "ORDER_CONFIRMATION",
           channel: "IN_APP",
           title: "Approve payment on your phone",
-          body: `Order ${order.orderNumber}: approve ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} on ${data.paymentPhone}. You are paying Youth Huza (HUZA MARKETPLACE). ETA: ${estimatedDelivery}.`,
+          body: `Order ${order.orderNumber}: approve ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} on ${data.paymentPhone}. You are paying Youth Huza (HUZA FRESH). ETA: ${estimatedDelivery}.`,
         },
       });
     }

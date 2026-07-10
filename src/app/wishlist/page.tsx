@@ -36,7 +36,7 @@ export default function WishlistPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <h1 className="section-title mb-2">Wishlist</h1>
-      <p className="text-[var(--huza-muted)] mb-8">Products you saved on HUZA MARKETPLACE</p>
+      <p className="text-[var(--huza-muted)] mb-8">Products you saved on HUZA FRESH</p>
       {items.length === 0 ? (
         <p className="text-[var(--huza-muted)]">
           No saved items yet. Tap the heart on a product to add it.{" "}

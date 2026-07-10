@@ -4,7 +4,7 @@ export function portalPathForRole(role?: string | null) {
     case "ADMIN":
       return "/admin";
     case "SUPPLIER":
-      return "/supplier";
+      return "/farmer";
     case "WAREHOUSE":
       return "/warehouse";
     case "PROCUREMENT":

@@ -14,19 +14,38 @@ async function getSupplierId(userId: string, role?: string) {
   return null;
 }
 
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const supplierId = await getSupplierId(session.user.id, session.user.role);
+  if (!supplierId) return NextResponse.json({ error: "Farmer not found" }, { status: 404 });
+
+  const products = await prisma.product.findMany({
+    where: { supplierId },
+    include: { category: true },
+    orderBy: { updatedAt: "desc" },
+  });
+  return NextResponse.json(products);
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supplierId = await getSupplierId(session.user.id, session.user.role);
-  if (!supplierId) return NextResponse.json({ error: "Supplier not found" }, { status: 404 });
+  if (!supplierId) return NextResponse.json({ error: "Farmer not found" }, { status: 404 });
 
   const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
   if (supplier?.status !== "APPROVED" && session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Supplier not approved yet" }, { status: 403 });
+    return NextResponse.json({ error: "Farmer not approved yet" }, { status: 403 });
   }
 
   const body = await req.json();
+  if (!body.categoryId || !body.nameEn) {
+    return NextResponse.json({ error: "Name and category are required" }, { status: 400 });
+  }
+
   const product = await prisma.product.create({
     data: {
       supplierId,
@@ -42,12 +61,14 @@ export async function POST(req: Request) {
       stockQty: Number(body.stockQty) || 0,
       isOrganic: Boolean(body.isOrganic),
       isNewArrival: true,
+      isActive: false,
       location: supplier?.location,
+      originDistrict: body.originDistrict || supplier?.district || null,
       images: {
         create: [{ url: "/images/products/mushroom.svg", alt: body.nameEn }],
       },
       stockLogs: {
-        create: { change: Number(body.stockQty) || 0, reason: "Initial upload" },
+        create: { change: Number(body.stockQty) || 0, reason: "Initial upload by farmer" },
       },
     },
   });

@@ -32,7 +32,7 @@ export default function ContactPage() {
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-12">
       <h1 className="section-title">Contact Us</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Reach Youth Huza — the team behind HUZA MARKETPLACE.
+        Reach Youth Huza — the team behind HUZA FRESH.
       </p>
       <div className="mb-8 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm space-y-2">
         <p>

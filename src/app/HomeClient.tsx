@@ -114,13 +114,10 @@ export function HomePage({
                 <p className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold tracking-tight">
                   YOUTH HUZA
                 </p>
-                <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-[var(--huza-gold)]">
-                  Company logo
-                </p>
               </div>
             </div>
             <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight max-w-xl">
-              HUZA MARKETPLACE
+              HUZA FRESH
             </h1>
             <p className="mt-2 text-lg sm:text-xl text-[var(--huza-gold)] font-semibold tracking-wide">
               Powered by Youth Huza
@@ -303,9 +300,9 @@ export function HomePage({
         <h2 className="section-title mb-6">Delivery coverage</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { zone: "Kigali", fee: "2,000 RWF", time: "About 45 min", icon: MapPin },
-            { zone: "Kamonyi (Ruyenzi)", fee: "3,000 RWF", time: "About 75 min", icon: MapPin },
-            { zone: "Bugesera (Nyamata)", fee: "3,000 RWF", time: "About 75 min", icon: MapPin },
+            { zone: "Kigali", fee: "5,000 RWF", time: "About 45 min", icon: MapPin },
+            { zone: "Kamonyi (Ruyenzi)", fee: "5,000 RWF", time: "About 75 min", icon: MapPin },
+            { zone: "Bugesera (Nyamata)", fee: "5,000 RWF", time: "About 75 min", icon: MapPin },
           ].map((z) => (
             <div key={z.zone} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
               <z.icon className="size-6 text-[var(--huza-green)]" />

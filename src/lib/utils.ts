@@ -1,7 +1,7 @@
 export const DELIVERY_FEES = {
-  KIGALI: 2000,
-  KAMONYI_RUYENZI: 3000,
-  BUGESERA_NYAMATA: 3000,
+  KIGALI: 5000,
+  KAMONYI_RUYENZI: 5000,
+  BUGESERA_NYAMATA: 5000,
 } as const;
 
 export type DeliveryZoneKey = keyof typeof DELIVERY_FEES;

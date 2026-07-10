@@ -37,9 +37,9 @@ const fallback: Faq[] = [
     questionEn: "What are the delivery fees?",
     questionFr: "Quels sont les frais de livraison ?",
     questionRw: "Amafaranga yo gutanga ni angahe?",
-    answerEn: "Kigali 2,000 RWF · Kamonyi (Ruyenzi) 3,000 RWF · Bugesera (Nyamata) 3,000 RWF.",
-    answerFr: "Kigali 2 000 RWF · Kamonyi (Ruyenzi) 3 000 RWF · Bugesera (Nyamata) 3 000 RWF.",
-    answerRw: "Kigali 2,000 RWF · Kamonyi (Ruyenzi) 3,000 RWF · Bugesera (Nyamata) 3,000 RWF.",
+    answerEn: "All delivery zones: 5,000 RWF.",
+    answerFr: "Toutes les zones : 5 000 RWF.",
+    answerRw: "All delivery zones: 5,000 RWF.",
   },
 ];
 
@@ -65,7 +65,7 @@ export default function FaqPage() {
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12">
       <h1 className="section-title">FAQ</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Common questions about HUZA MARKETPLACE, powered by Youth Huza.
+        Common questions about HUZA FRESH, powered by Youth Huza.
       </p>
       <div className="space-y-4">
         {faqs.map((f) => (

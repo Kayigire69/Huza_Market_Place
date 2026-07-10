@@ -1,4 +1,4 @@
-# Huza Market Place by Youth Huza
+# HUZA FRESH by Youth Huza
 
 Farm-fresh marketplace for Rwanda — fruits, vegetables, dairy, meat, and more — with **direct delivery by Youth Huza (no middlemen)**.
 
@@ -78,7 +78,7 @@ cd Huza_Market_Place
 git checkout cursor/huza-marketplace-platform-5604
 ```
 
-If you already created an empty `Huza Market Place` folder, delete it or clone into a new folder name.
+If you already created an empty `HUZA FRESH` folder, delete it or clone into a new folder name.
 
 **macOS / Linux:**
 
@@ -156,7 +156,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - Supplier verification badges · Product availability by district
 - Admin audit logs · AI search suggestions (header autocomplete)
 - Customer support chat · FAQ · Contact · About · Privacy · Terms
-- Branding: **HUZA MARKETPLACE** — Powered by Youth Huza
+- Branding: **HUZA FRESH** — Powered by Youth Huza
 
 ## Mobile Money payments (MTN / Airtel)
 
@@ -205,4 +205,4 @@ src/lib/          # prisma, auth, i18n, cart, business hours
 - Connect SMS/Email providers for notifications
 - Host Postgres (e.g. Neon, Railway, or self-hosted) and deploy Next.js (Vercel or Node host)
 
-Built for **Youth Huza** · Huza Market Place
+Built for **Youth Huza** · HUZA FRESH

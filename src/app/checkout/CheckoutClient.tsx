@@ -342,7 +342,7 @@ export default function CheckoutClient() {
       <h1 className="section-title mb-2">{t("guestCheckout")}</h1>
       <p className="text-sm text-[var(--huza-muted)] mb-8">
         After you place the order, approve payment on your phone. You pay{" "}
-        <strong>Youth Huza (HUZA MARKETPLACE)</strong> — we sell and deliver the products.
+        <strong>Youth Huza (HUZA FRESH)</strong> — we sell and deliver the products.
       </p>
 
       <form

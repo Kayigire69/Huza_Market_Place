@@ -56,7 +56,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
   }, [product.id, name, product.price, product.images]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = encodeURIComponent(`${name} on HUZA MARKETPLACE — ${formatRwf(product.price)}`);
+  const shareText = encodeURIComponent(`${name} on HUZA FRESH — ${formatRwf(product.price)}`);
 
   const availabilityLabel = useMemo(() => {
     if (product.stockQty <= 0) return t("outOfStock");
