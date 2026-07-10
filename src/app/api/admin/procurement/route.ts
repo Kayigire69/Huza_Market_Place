@@ -15,9 +15,13 @@ function poNumber() {
  * - offer actions: accept | reject | purchase (creates PO + inventory)
  * - PO actions: receive | inspect_accept | inspect_reject | pay | cancel
  */
+function canProcure(role?: string) {
+  return role === "ADMIN" || role === "PROCUREMENT";
+}
+
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !canProcure(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -264,7 +268,7 @@ async function handlePoAction(
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !canProcure(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
