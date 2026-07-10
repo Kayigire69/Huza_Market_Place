@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ShoppingCart, User, Menu, X, Heart, MapPinned } from "lucide-react";
+import { ShoppingCart, User, Menu, X, Heart, MapPinned, LayoutDashboard } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -19,6 +19,7 @@ export function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const nav = [
     { href: "/", label: t("home") },
@@ -26,6 +27,7 @@ export function Header() {
     { href: "/categories", label: t("categories") },
     { href: "/track", label: "Track order" },
     { href: "/about", label: "About" },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
   return (
@@ -80,6 +82,17 @@ export function Header() {
             >
               <MapPinned className="size-5" />
             </Link>
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[var(--huza-green-dark)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white hover:bg-[var(--huza-green)]"
+                aria-label="Admin dashboard"
+              >
+                <LayoutDashboard className="size-3.5" />
+                Admin
+              </Link>
+            )}
 
             <Link
               href="/cart"
@@ -173,6 +186,24 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="block py-2 font-bold text-[var(--huza-green-dark)]"
+              >
+                Admin dashboard
+              </Link>
+            )}
+            {!session?.user && (
+              <Link
+                href="/auth/login"
+                onClick={() => setOpen(false)}
+                className="inline-flex rounded-full bg-[var(--huza-green)] px-3 py-1.5 text-sm font-semibold text-white"
+              >
+                {t("login")}
+              </Link>
+            )}
           </div>
         )}
       </div>

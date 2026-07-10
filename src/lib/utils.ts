@@ -12,12 +12,11 @@ export const DELIVERY_ZONE_LABELS: Record<DeliveryZoneKey, string> = {
   BUGESERA_NYAMATA: "Bugesera (Nyamata)",
 };
 
-export function formatRwf(amount: number, locale = "en"): string {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-RW" : "en-RW", {
-    style: "currency",
-    currency: "RWF",
+export function formatRwf(amount: number): string {
+  const formatted = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
   }).format(amount);
+  return `RWF ${formatted}`;
 }
 
 export function formatUnit(unit: string): string {

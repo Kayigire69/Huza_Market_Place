@@ -1,11 +1,23 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf } from "@/lib/utils";
 
 type AnyObj = Record<string, unknown>;
+
+type Tab =
+  | "suppliers"
+  | "orders"
+  | "delivery"
+  | "payments"
+  | "reviews"
+  | "inventory"
+  | "hours"
+  | "promos"
+  | "reports"
+  | "audit";
 
 export function AdminClient(props: {
   pendingSuppliers: AnyObj[];
@@ -24,21 +36,32 @@ export function AdminClient(props: {
   auditLogs: AnyObj[];
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<
-    | "suppliers"
-    | "orders"
-    | "delivery"
-    | "payments"
-    | "reviews"
-    | "inventory"
-    | "hours"
-    | "promos"
-    | "reports"
-    | "audit"
-  >("suppliers");
+  const [tab, setTab] = useState<Tab>("suppliers");
   const [msg, setMsg] = useState("");
 
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "") as Tab;
+    const valid: Tab[] = [
+      "suppliers",
+      "orders",
+      "delivery",
+      "payments",
+      "reviews",
+      "inventory",
+      "hours",
+      "promos",
+      "reports",
+      "audit",
+    ];
+    if (valid.includes(hash)) setTab(hash);
+  }, []);
+
   const refresh = () => router.refresh();
+
+  const selectTab = (t: Tab) => {
+    setTab(t);
+    window.history.replaceState(null, "", `#${t}`);
+  };
 
   const supplierAction = async (id: string, action: string, reason?: string) => {
     const res = await fetch("/api/admin/suppliers", {
@@ -136,7 +159,8 @@ export function AdminClient(props: {
         {tabs.map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            id={t}
+            onClick={() => selectTab(t)}
             className={`rounded-full px-3 py-1.5 text-sm font-semibold capitalize ${
               tab === t ? "bg-[var(--huza-green)] text-white" : "bg-white border border-[var(--huza-line)]"
             }`}

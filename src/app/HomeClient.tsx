@@ -89,14 +89,24 @@ export function HomePage({
       <section className="hero-wash text-white relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
           <div className="animate-rise">
-            <Image
-              src="/logo-wordmark.svg"
-              alt="Youth Huza — Huza Market Place"
-              width={320}
-              height={82}
-              className="brightness-0 invert mb-6"
-              priority
-            />
+            <div className="mb-6 flex items-center gap-4">
+              <Image
+                src="/logo.svg"
+                alt="Youth Huza logo"
+                width={88}
+                height={88}
+                className="rounded-full shadow-lg ring-2 ring-white/30"
+                priority
+              />
+              <div>
+                <p className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold tracking-tight">
+                  YOUTH HUZA
+                </p>
+                <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-[var(--huza-gold)]">
+                  Company logo
+                </p>
+              </div>
+            </div>
             <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight max-w-xl">
               HUZA MARKETPLACE
             </h1>
