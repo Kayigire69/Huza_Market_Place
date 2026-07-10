@@ -12,6 +12,9 @@ enum Role {
   SUPPLIER
   ADMIN
   DELIVERY
+  WAREHOUSE
+  PROCUREMENT
+  SUPPORT
 }
 
 enum SupplierStatus {
@@ -30,17 +33,61 @@ enum AvailabilityStatus {
 
 enum OrderStatus {
   PENDING
+  PAID
   CONFIRMED
   PREPARING
+  PACKED
+  READY_FOR_DISPATCH
   READY_FOR_PICKUP
   OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
+  RETURNED
+  REFUNDED
 }
 
 enum PaymentMethod {
   MTN_MOMO
   AIRTEL_MONEY
+  CASH_ON_DELIVERY
+  CARD
+}
+
+enum DeliverySlot {
+  TODAY
+  TOMORROW
+  SCHEDULED
+}
+
+enum ReviewType {
+  PRODUCT
+  DELIVERY
+  EXPERIENCE
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketType {
+  GENERAL
+  COMPLAINT
+  RETURN
+  REFUND
+  CALL_REQUEST
+}
+
+enum StockMovementType {
+  RECEIVE
+  SALE
+  ADJUST
+  DAMAGE
+  RETURN
+  TRANSFER
+  COUNT
 }
 
 enum PaymentStatus {
@@ -81,6 +128,14 @@ enum NotificationType {
   NEW_PRODUCT
   LOW_STOCK
   SUPPLIER_STATUS
+  ORDER_PACKED
+  ORDER_OUT_FOR_DELIVERY
+  ORDER_DELIVERED
+  PO_RECEIVED
+  PAYMENT_PROCESSED
+  DELIVERY_SCHEDULE
+  NEW_SUPPLIER
+  FAILED_PAYMENT
 }
 
 model User {
@@ -91,6 +146,9 @@ model User {
   fullName      String
   role          Role      @default(CUSTOMER)
   locale        String    @default("en")
+  loyaltyPoints Int       @default(0)
+  referralCode  String?   @unique
+  referredBy    String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -101,6 +159,8 @@ model User {
   notifications Notification[]
   supplier      Supplier?
   deliveries    Delivery[] @relation("DeliveryPerson")
+  supportTickets SupportTicket[]
+  reviewReplies Review[] @relation("ReviewReplies")
 }
 
 model Address {
@@ -168,6 +228,8 @@ model Supplier {
   orders         OrderItem[]
   offers         SupplierOffer[]
   purchaseOrders PurchaseOrder[]
+  goodsReceipts  GoodsReceipt[]
+  messages       ProcurementMessage[]
 }
 
 model Category {
@@ -193,10 +255,15 @@ model Product {
   descriptionEn String
   descriptionFr String
   descriptionRw String
+  /// Optional nutritional facts shown to customers
+  nutritionalInfo String?
+  /// Origin district (e.g. Nyabihu) — never supplier name
+  originDistrict  String?
   price         Int
   unit          UnitType @default(KG)
   stockQty      Int      @default(0)
   lowStockAt    Int      @default(5)
+  barcode       String?
   isOrganic     Boolean  @default(false)
   isFeatured    Boolean  @default(false)
   isBestSeller  Boolean  @default(false)
@@ -217,6 +284,9 @@ model Product {
   reviews    Review[]
   favorites  Favorite[]
   stockLogs  StockHistory[]
+  batches    StockBatch[]
+  movements  StockMovement[]
+  goodsReceiptItems GoodsReceiptItem[]
 }
 
 model ProductImage {
@@ -252,10 +322,15 @@ model Order {
   gpsLat               Float?
   gpsLng               Float?
   deliveryInstructions String?
+  deliverySlot         DeliverySlot  @default(TODAY)
+  scheduledFor         DateTime?
+  estimatedDelivery    String?
+  promoCode            String?
+  discountAmt          Int           @default(0)
   subtotal             Int
   total                Int
   status               OrderStatus   @default(PENDING)
-  scheduledFor         DateTime?
+  packedAt             DateTime?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
@@ -264,6 +339,7 @@ model Order {
   payment   Payment?
   delivery  Delivery?
   statusLog OrderStatusLog[]
+  returns   ReturnRequest[]
 }
 
 model OrderItem {
@@ -314,34 +390,57 @@ model Delivery {
   id               String      @id @default(cuid())
   orderId          String      @unique
   deliveryPersonId String?
-  status           OrderStatus @default(READY_FOR_PICKUP)
+  vehicleId        String?
+  status           OrderStatus @default(READY_FOR_DISPATCH)
   estimatedMinutes Int?
+  routeNotes       String?
   pickedAt         DateTime?
   deliveredAt      DateTime?
+  /// Proof of delivery
+  podPhotoUrl      String?
+  podSignatureUrl  String?
+  podNotes         String?
   notes            String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
-  order          Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  deliveryPerson User? @relation("DeliveryPerson", fields: [deliveryPersonId], references: [id])
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryPerson User?    @relation("DeliveryPerson", fields: [deliveryPersonId], references: [id])
+  vehicle        Vehicle? @relation(fields: [vehicleId], references: [id])
+}
+
+model Vehicle {
+  id           String     @id @default(cuid())
+  plateNumber  String     @unique
+  label        String
+  capacityKg   Int?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  deliveries   Delivery[]
 }
 
 model Review {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
   userId        String
   productId     String?
   supplierId    String?
+  orderId       String?
+  type          ReviewType @default(PRODUCT)
   rating        Int
   comment       String?
   photoUrl      String?
-  isReported    Boolean  @default(false)
-  isHidden      Boolean  @default(false)
+  adminReply    String?
+  repliedById   String?
+  repliedAt     DateTime?
+  isReported    Boolean    @default(false)
+  isHidden      Boolean    @default(false)
   reportReason  String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime   @default(now())
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product  Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplier  Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  repliedBy User?     @relation("ReviewReplies", fields: [repliedById], references: [id])
 }
 
 model StockHistory {
@@ -380,6 +479,11 @@ model Promotion {
   getY          Int?
   freeDelivery  Boolean   @default(false)
   isFlashSale   Boolean   @default(false)
+  isLoyalty     Boolean   @default(false)
+  loyaltyPoints Int?
+  isMembership  Boolean   @default(false)
+  isReferral    Boolean   @default(false)
+  referralBonus Int?
   isActive      Boolean   @default(true)
   startsAt      DateTime?
   endsAt        DateTime?
@@ -552,9 +656,139 @@ model PurchaseOrder {
 
   supplier Supplier       @relation(fields: [supplierId], references: [id])
   offer    SupplierOffer? @relation(fields: [offerId], references: [id])
+  goodsReceipts GoodsReceipt[]
 
   @@index([supplierId])
   @@index([status])
   @@index([poNumber])
+}
+
+model WarehouseLocation {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  zone      String?
+  isActive  Boolean  @default(true)
+  batches   StockBatch[]
+  createdAt DateTime @default(now())
+}
+
+model StockBatch {
+  id          String    @id @default(cuid())
+  productId   String
+  batchNumber String
+  quantity    Int
+  expiryDate  DateTime?
+  locationId  String?
+  receivedAt  DateTime  @default(now())
+  notes       String?
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  location    WarehouseLocation? @relation(fields: [locationId], references: [id])
+
+  @@index([productId])
+  @@index([batchNumber])
+}
+
+model GoodsReceipt {
+  id            String   @id @default(cuid())
+  receiptNumber String   @unique
+  purchaseOrderId String?
+  supplierId    String
+  receivedById  String?
+  notes         String?
+  damageNotes   String?
+  receivedAt    DateTime @default(now())
+  purchaseOrder PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  items         GoodsReceiptItem[]
+}
+
+model GoodsReceiptItem {
+  id             String @id @default(cuid())
+  goodsReceiptId String
+  productId      String?
+  productName    String
+  quantity       Float
+  unit           UnitType @default(KG)
+  batchNumber    String?
+  expiryDate     DateTime?
+  damagedQty     Float    @default(0)
+  locationCode   String?
+  goodsReceipt   GoodsReceipt @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+  product        Product? @relation(fields: [productId], references: [id])
+}
+
+model StockMovement {
+  id        String            @id @default(cuid())
+  productId String
+  type      StockMovementType
+  quantity  Int
+  reason    String?
+  actorId   String?
+  createdAt DateTime          @default(now())
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([type])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id          String       @id @default(cuid())
+  ticketNumber String      @unique
+  userId      String?
+  guestName   String?
+  guestPhone  String?
+  type        TicketType   @default(GENERAL)
+  status      TicketStatus @default(OPEN)
+  subject     String
+  body        String
+  orderNumber String?
+  adminReply  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User?        @relation(fields: [userId], references: [id])
+}
+
+model ReturnRequest {
+  id          String   @id @default(cuid())
+  orderId     String
+  reason      String
+  status      String   @default("PENDING")
+  refundAmt   Int?
+  adminNote   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model ProcurementMessage {
+  id         String   @id @default(cuid())
+  supplierId String
+  senderRole String
+  senderName String
+  body       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  amount      Int
+  notes       String?
+  incurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
 }
 
