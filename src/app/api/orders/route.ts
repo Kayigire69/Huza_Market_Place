@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { getBusinessStatus } from "@/lib/business-hours";
 import { DELIVERY_FEES, generateOrderNumber } from "@/lib/utils";
+import { initiateMobileMoneyPayment, normalizeMsisdn } from "@/lib/payments/mobile-money";
 import { DeliveryZone, OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 
 const schema = z.object({
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
     const productIds = data.items.map((i) => i.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds }, isActive: true },
+      include: { supplier: true },
     });
 
     if (products.length !== data.items.length) {
@@ -63,6 +65,17 @@ export async function POST(req: Request) {
         lineTotal,
       };
     });
+
+    // Primary seller = supplier with the largest line total (money goes to their number)
+    const totalsBySupplier = new Map<string, number>();
+    for (const item of lineItems) {
+      totalsBySupplier.set(
+        item.supplierId,
+        (totalsBySupplier.get(item.supplierId) || 0) + item.lineTotal
+      );
+    }
+    const primarySupplierId = [...totalsBySupplier.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const primarySupplier = products.find((p) => p.supplierId === primarySupplierId)!.supplier;
 
     const deliveryFee = DELIVERY_FEES[data.deliveryZone as keyof typeof DELIVERY_FEES];
     const total = subtotal + deliveryFee;
@@ -107,39 +120,63 @@ export async function POST(req: Request) {
           deliveryInstructions: data.instructions || null,
           subtotal,
           total,
-          status: scheduledFor ? OrderStatus.PENDING : OrderStatus.CONFIRMED,
+          status: OrderStatus.PENDING,
           scheduledFor,
           items: { create: lineItems },
           payment: {
             create: {
               method: data.paymentMethod as PaymentMethod,
-              phoneNumber: data.paymentPhone,
+              phoneNumber: normalizeMsisdn(data.paymentPhone),
               amount: total,
-              status: PaymentStatus.VERIFIED,
-              transactionRef: `${data.paymentMethod}-${Date.now()}`,
-              verifiedAt: new Date(),
+              status: PaymentStatus.PENDING,
+              payeePhone: normalizeMsisdn(primarySupplier.phone),
+              payeeName: primarySupplier.businessName,
+              providerMessage: "Initiating mobile money request...",
             },
           },
           delivery: {
             create: {
-              status: OrderStatus.READY_FOR_PICKUP,
-              estimatedMinutes:
-                data.deliveryZone === "KIGALI" ? 45 : 75,
+              status: OrderStatus.PENDING,
+              estimatedMinutes: data.deliveryZone === "KIGALI" ? 45 : 75,
             },
           },
           statusLog: {
-            create: [
-              { status: OrderStatus.PENDING, note: "Order placed" },
-              {
-                status: scheduledFor ? OrderStatus.PENDING : OrderStatus.CONFIRMED,
-                note: scheduledFor
-                  ? `Scheduled for next business day (${scheduledFor.toISOString()})`
-                  : "Payment verified",
-              },
-            ],
+            create: [{ status: OrderStatus.PENDING, note: "Order placed — awaiting mobile money approval" }],
           },
         },
+        include: { payment: true },
       });
+    });
+
+    let paymentResult;
+    try {
+      paymentResult = await initiateMobileMoneyPayment({
+        method: data.paymentMethod as PaymentMethod,
+        payerPhone: data.paymentPhone,
+        payeePhone: primarySupplier.phone,
+        payeeName: primarySupplier.businessName,
+        amount: total,
+        orderNumber,
+      });
+    } catch (payErr) {
+      await prisma.payment.update({
+        where: { orderId: order.id },
+        data: {
+          status: PaymentStatus.FAILED,
+          providerMessage: payErr instanceof Error ? payErr.message : "Payment request failed",
+        },
+      });
+      throw payErr;
+    }
+
+    await prisma.payment.update({
+      where: { orderId: order.id },
+      data: {
+        status: PaymentStatus.PENDING,
+        externalId: paymentResult.externalId,
+        transactionRef: paymentResult.transactionRef,
+        providerMessage: paymentResult.message,
+      },
     });
 
     if (session?.user?.id) {
@@ -148,17 +185,8 @@ export async function POST(req: Request) {
           userId: session.user.id,
           type: "ORDER_CONFIRMATION",
           channel: "IN_APP",
-          title: "Order confirmation",
-          body: `Order ${order.orderNumber} placed successfully. Total ${total} RWF.`,
-        },
-      });
-      await prisma.notification.create({
-        data: {
-          userId: session.user.id,
-          type: "PAYMENT_CONFIRMATION",
-          channel: "SMS",
-          title: "Payment confirmation",
-          body: `Payment of ${total} RWF received via ${data.paymentMethod}.`,
+          title: "Approve payment on your phone",
+          body: `Order ${order.orderNumber}: check ${data.paymentPhone} for the ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} prompt and enter your PIN. Money goes to ${primarySupplier.businessName}.`,
         },
       });
     }
@@ -166,8 +194,16 @@ export async function POST(req: Request) {
     return NextResponse.json({
       orderNumber: order.orderNumber,
       id: order.id,
+      paymentId: order.payment?.id,
       scheduledFor,
       total,
+      paymentStatus: "PENDING",
+      paymentMode: paymentResult.mode,
+      paymentMessage: paymentResult.message,
+      payerPhone: data.paymentPhone,
+      payeeName: primarySupplier.businessName,
+      payeePhone: primarySupplier.phone,
+      method: data.paymentMethod,
     });
   } catch (err) {
     console.error(err);

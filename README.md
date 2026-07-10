@@ -148,6 +148,17 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Mobile Money payments (MTN / Airtel)
+
+After **Place order**, Huza sends a **request-to-pay** to the customer’s phone (the usual pending approval + PIN). When approved, money is credited to the **seller’s MoMo / Airtel number** (primary supplier on the order).
+
+| Mode | What happens |
+|------|----------------|
+| **Demo** (no API keys) | Shows “Approve on your phone”, then use **I approved on my phone** to simulate PIN approval |
+| **Live** | Set MTN / Airtel keys in `.env` — real prompt on the handset via provider APIs |
+
+See `.env.example` for `MTN_MOMO_*` and `AIRTEL_*` variables. Register apps at [MTN MoMo Developer](https://momodeveloper.mtn.com/) and [Airtel Africa Developers](https://developers.airtel.africa/).
+
 ## Demo accounts
 
 | Role | Login | Password |
