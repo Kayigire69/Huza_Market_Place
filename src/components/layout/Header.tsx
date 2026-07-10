@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ShoppingCart, User, Menu, X, Heart, MapPinned, LayoutDashboard } from "lucide-react";
+import { ShoppingCart, User, Menu, X, Heart, MapPinned } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -19,12 +19,8 @@ export function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const role = session?.user?.role;
-  const isAdmin = role === "ADMIN";
-  const isWarehouse = role === "WAREHOUSE" || isAdmin;
-  const isDelivery = role === "DELIVERY" || isAdmin;
-  const isProcurement = role === "PROCUREMENT" || isAdmin;
 
+  // Customer storefront nav only — staff portals are not advertised here
   const nav = [
     { href: "/", label: t("home") },
     { href: "/products", label: t("products") },
@@ -32,10 +28,6 @@ export function Header() {
     { href: "/track", label: "Track order" },
     { href: "/support", label: "Support" },
     { href: "/about", label: "About" },
-    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
-    ...(isWarehouse && !isAdmin ? [{ href: "/warehouse", label: "Warehouse" }] : []),
-    ...(isDelivery && !isAdmin ? [{ href: "/delivery-portal", label: "Deliveries" }] : []),
-    ...(isProcurement && !isAdmin ? [{ href: "/procurement", label: "Procurement" }] : []),
   ];
 
   return (
@@ -91,17 +83,6 @@ export function Header() {
               <MapPinned className="size-5" />
             </Link>
 
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[var(--huza-green-dark)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white hover:bg-[var(--huza-green)]"
-                aria-label="Admin dashboard"
-              >
-                <LayoutDashboard className="size-3.5" />
-                Admin
-              </Link>
-            )}
-
             <Link
               href="/cart"
               className="relative inline-flex items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)]"
@@ -133,27 +114,7 @@ export function Header() {
                   <Link href="/wishlist" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
                     Wishlist
                   </Link>
-                  {session.user.role === "ADMIN" && (
-                    <Link href="/admin" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                      {t("admin")}
-                    </Link>
-                  )}
-                  {(session.user.role === "WAREHOUSE" || session.user.role === "ADMIN") && (
-                    <Link href="/warehouse" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                      Warehouse
-                    </Link>
-                  )}
-                  {(session.user.role === "DELIVERY" || session.user.role === "ADMIN") && (
-                    <Link href="/delivery-portal" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                      Delivery portal
-                    </Link>
-                  )}
-                  {(session.user.role === "PROCUREMENT" || session.user.role === "ADMIN") && (
-                    <Link href="/procurement" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                      Procurement
-                    </Link>
-                  )}
-                  {(session.user.role === "SUPPLIER" || session.user.role === "ADMIN") && (
+                  {session.user.role === "SUPPLIER" && (
                     <Link href="/farmer" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
                       {t("supplierPortal")}
                     </Link>
@@ -209,15 +170,6 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                onClick={() => setOpen(false)}
-                className="block py-2 font-bold text-[var(--huza-green-dark)]"
-              >
-                Admin dashboard
-              </Link>
-            )}
             {!session?.user && (
               <Link
                 href="/auth/login"
