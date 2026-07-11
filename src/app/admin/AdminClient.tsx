@@ -4,22 +4,73 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf } from "@/lib/utils";
+import { AdminCatalogPanel, AdminInventoryPanel } from "./AdminCatalogPanels";
+import { AdminOffersPanel } from "./AdminOffersPanel";
 
 type AnyObj = Record<string, unknown>;
 
 type Tab =
+  | "overview"
   | "suppliers"
   | "products"
+  | "catalog"
+  | "inventory"
   | "procurement"
   | "orders"
   | "delivery"
   | "payments"
   | "reviews"
-  | "inventory"
-  | "hours"
   | "promos"
+  | "hours"
   | "reports"
   | "audit";
+
+const WORKSPACES: { title: string; hint: string; tabs: { id: Tab; label: string }[] }[] = [
+  {
+    title: "Overview",
+    hint: "Shared snapshot for every admin on shift",
+    tabs: [
+      { id: "overview", label: "How to use" },
+      { id: "reports", label: "Reports" },
+      { id: "audit", label: "Audit log" },
+    ],
+  },
+  {
+    title: "Farmers & sourcing",
+    hint: "Approve partners and buy stock",
+    tabs: [
+      { id: "suppliers", label: "Farmer approval" },
+      { id: "products", label: "Product review" },
+      { id: "procurement", label: "Procurement / POs" },
+    ],
+  },
+  {
+    title: "Catalog & warehouse",
+    hint: "Prices, stock in/out, listing flags",
+    tabs: [
+      { id: "catalog", label: "Prices & listings" },
+      { id: "inventory", label: "Stock movements" },
+    ],
+  },
+  {
+    title: "Customer operations",
+    hint: "Orders, drivers, payments, reviews",
+    tabs: [
+      { id: "orders", label: "Orders" },
+      { id: "delivery", label: "Delivery" },
+      { id: "payments", label: "Payments" },
+      { id: "reviews", label: "Reviews" },
+    ],
+  },
+  {
+    title: "Marketing & settings",
+    hint: "Homepage offers and shop hours",
+    tabs: [
+      { id: "promos", label: "Special offers" },
+      { id: "hours", label: "Business hours" },
+    ],
+  },
+];
 
 export function AdminClient(props: {
   pendingSuppliers: AnyObj[];
@@ -39,31 +90,25 @@ export function AdminClient(props: {
   auditLogs: AnyObj[];
   procurementOffers: AnyObj[];
   purchaseOrders: AnyObj[];
+  catalogProducts?: AnyObj[];
+  recentMovements?: AnyObj[];
+  adminName?: string | null;
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("suppliers");
+  const [tab, setTab] = useState<Tab>("overview");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "") as Tab;
-    const valid: Tab[] = [
-      "suppliers",
-      "products",
-      "procurement",
-      "orders",
-      "delivery",
-      "payments",
-      "reviews",
-      "inventory",
-      "hours",
-      "promos",
-      "reports",
-      "audit",
-    ];
+    const valid = WORKSPACES.flatMap((w) => w.tabs.map((t) => t.id));
     if (valid.includes(hash)) setTab(hash);
   }, []);
 
   const refresh = () => router.refresh();
+  const done = (message: string) => {
+    setMsg(message);
+    refresh();
+  };
 
   const selectTab = (t: Tab) => {
     setTab(t);
@@ -169,22 +214,6 @@ export function AdminClient(props: {
 
   const createPromo = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    await fetch("/api/admin/promotions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        code: form.get("code"),
-        titleEn: form.get("titleEn"),
-        titleFr: form.get("titleEn"),
-        titleRw: form.get("titleEn"),
-        discountPct: Number(form.get("discountPct")) || null,
-        freeDelivery: form.get("freeDelivery") === "on",
-        isFlashSale: form.get("isFlashSale") === "on",
-      }),
-    });
-    (e.target as HTMLFormElement).reset();
-    refresh();
   };
 
   const setEmergency = async (e: FormEvent<HTMLFormElement>) => {
@@ -198,44 +227,128 @@ export function AdminClient(props: {
     refresh();
   };
 
-  const tabs = [
-    "suppliers",
-    "products",
-    "procurement",
-    "orders",
-    "delivery",
-    "payments",
-    "reviews",
-    "inventory",
-    "hours",
-    "promos",
-    "reports",
-    "audit",
-  ] as const;
-
   return (
-    <div>
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            id={t}
-            onClick={() => selectTab(t)}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold capitalize ${
-              tab === t ? "bg-[var(--huza-green)] text-white" : "bg-white border border-[var(--huza-line)]"
-            }`}
-          >
-            {t === "suppliers"
-              ? "Farmer Approval"
-              : t === "products"
-                ? "Product review"
-                : t === "procurement"
-                  ? "Procurement"
-                  : t}
-          </button>
+    <div className="grid lg:grid-cols-[240px_1fr] gap-6 items-start">
+      <aside className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 sticky top-24 space-y-5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--huza-green)]">
+            Admin workspaces
+          </p>
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">
+            {props.adminName ? `Signed in as ${props.adminName}` : "Youth Huza staff"} — pick a
+            lane so multiple people can work at once.
+          </p>
+        </div>
+        {WORKSPACES.map((group) => (
+          <div key={group.title}>
+            <p className="text-xs font-semibold text-[var(--huza-ink)]">{group.title}</p>
+            <p className="text-[11px] text-[var(--huza-muted)] mb-2">{group.hint}</p>
+            <div className="space-y-1">
+              {group.tabs.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  id={t.id}
+                  onClick={() => selectTab(t.id)}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium ${
+                    tab === t.id
+                      ? "bg-[var(--huza-green)] text-white"
+                      : "hover:bg-[var(--huza-mint)] text-[var(--huza-ink)]"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
-      </div>
-      {msg && <p className="mb-4 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
+        <div className="border-t border-[var(--huza-line)] pt-3 space-y-1 text-xs">
+          <a href="/warehouse" className="block text-[var(--huza-green)] font-semibold">
+            Warehouse portal →
+          </a>
+          <a href="/procurement" className="block text-[var(--huza-green)] font-semibold">
+            Procurement portal →
+          </a>
+          <a href="/delivery-portal" className="block text-[var(--huza-green)] font-semibold">
+            Delivery portal →
+          </a>
+        </div>
+      </aside>
+
+      <div className="min-w-0">
+      {msg && (
+        <p className="mb-4 rounded-xl bg-[var(--huza-mint)] px-4 py-2 text-sm text-[var(--huza-green-dark)]">
+          {msg}
+        </p>
+      )}
+
+      {tab === "overview" && (
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 space-y-4">
+          <h2 className="font-semibold text-lg">Team playbook</h2>
+          <p className="text-sm text-[var(--huza-muted)]">
+            Several staff can use admin at the same time. Use the left menu so each person stays in
+            their lane — audit log records who did what.
+          </p>
+          <ul className="text-sm space-y-2 list-disc pl-5 text-[var(--huza-muted)]">
+            <li>
+              <strong className="text-[var(--huza-ink)]">Farmer approval / product review</strong> —
+              verify partners and accept listings before they sell on HUZA FRESH.
+            </li>
+            <li>
+              <strong className="text-[var(--huza-ink)]">Prices &amp; listings</strong> — only Huza
+              staff set customer retail prices.
+            </li>
+            <li>
+              <strong className="text-[var(--huza-ink)]">Stock movements</strong> — stock in / out
+              here; sales and warehouse receives also write movements automatically.
+            </li>
+            <li>
+              <strong className="text-[var(--huza-ink)]">Special offers</strong> — publish homepage
+              cards from Marketing (not hardcoded).
+            </li>
+            <li>
+              <strong className="text-[var(--huza-ink)]">Orders / delivery / payments</strong> —
+              day-to-day customer fulfillment.
+            </li>
+          </ul>
+          <div className="grid sm:grid-cols-2 gap-3 pt-2">
+            {[
+              { id: "catalog" as Tab, label: "Set product prices" },
+              { id: "inventory" as Tab, label: "Stock in / out" },
+              { id: "promos" as Tab, label: "Post a special offer" },
+              { id: "suppliers" as Tab, label: "Review farmers" },
+            ].map((q) => (
+              <button
+                key={q.id}
+                type="button"
+                onClick={() => selectTab(q.id)}
+                className="rounded-xl border border-[var(--huza-line)] px-4 py-3 text-left text-sm font-semibold hover:border-[var(--huza-green)]"
+              >
+                {q.label} →
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === "catalog" && (
+        <AdminCatalogPanel
+          products={(props.catalogProducts || []) as never}
+          onDone={done}
+        />
+      )}
+
+      {tab === "inventory" && (
+        <AdminInventoryPanel
+          products={(props.catalogProducts || props.lowStock || []) as never}
+          movements={(props.recentMovements || []) as never}
+          onDone={done}
+        />
+      )}
+
+      {tab === "promos" && (
+        <AdminOffersPanel promotions={props.promotions as never} onDone={done} />
+      )}
 
       {tab === "procurement" && (
         <div className="space-y-6">
@@ -897,27 +1010,6 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "inventory" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-3">Low-stock products</h2>
-            {props.lowStock.map((p) => (
-              <p key={String(p.id)} className="text-sm border-b border-[var(--huza-line)] py-2">
-                {String(p.nameEn)} — {String(p.stockQty)} left
-              </p>
-            ))}
-          </div>
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-3">Top-selling products</h2>
-            {props.topProducts.map((p) => (
-              <p key={String(p.id)} className="text-sm border-b border-[var(--huza-line)] py-2">
-                {String(p.nameEn)} · ★ {Number(p.ratingAvg).toFixed(1)}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
-
       {tab === "hours" && (
         <div className="grid md:grid-cols-2 gap-4">
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
@@ -939,33 +1031,6 @@ export function AdminClient(props: {
             <input name="reason" placeholder="Reason" className="input-field" required />
             <Button type="submit">Activate emergency closure</Button>
           </form>
-        </div>
-      )}
-
-      {tab === "promos" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <form onSubmit={createPromo} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-            <h2 className="font-semibold">Create promotion</h2>
-            <input name="code" placeholder="Code (optional)" className="input-field" />
-            <input name="titleEn" placeholder="Title" className="input-field" required />
-            <input name="discountPct" type="number" placeholder="Discount %" className="input-field" />
-            <label className="flex gap-2 text-sm">
-              <input type="checkbox" name="freeDelivery" /> Free delivery
-            </label>
-            <label className="flex gap-2 text-sm">
-              <input type="checkbox" name="isFlashSale" /> Flash sale
-            </label>
-            <Button type="submit">Create</Button>
-          </form>
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-3">Active promotions</h2>
-            {props.promotions.map((p) => (
-              <p key={String(p.id)} className="text-sm border-b border-[var(--huza-line)] py-2">
-                {String(p.titleEn)} {p.code ? `(${String(p.code)})` : ""} ·{" "}
-                {p.isActive ? "Active" : "Off"}
-              </p>
-            ))}
-          </div>
         </div>
       )}
 
@@ -1014,6 +1079,7 @@ export function AdminClient(props: {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
