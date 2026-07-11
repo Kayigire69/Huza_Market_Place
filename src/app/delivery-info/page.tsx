@@ -33,7 +33,10 @@ export default async function DeliveryInfoPage() {
               <tr key={z.code} className="border-t border-[var(--huza-line)]">
                 <td className="px-4 py-3">{z.labelEn}</td>
                 <td className="px-4 py-3">{formatRwf(z.feeRwf)}</td>
-                <td className="px-4 py-3">About {z.etaMinutes} min</td>
+                <td className="px-4 py-3">
+                  {("etaLabelEn" in z && typeof z.etaLabelEn === "string" && z.etaLabelEn) ||
+                    `About ${z.etaMinutes} min`}
+                </td>
               </tr>
             ))}
           </tbody>

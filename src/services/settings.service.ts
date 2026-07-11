@@ -6,19 +6,28 @@ const FALLBACK_ZONES: {
   labelEn: string;
   feeRwf: number;
   etaMinutes: number;
+  etaLabelEn: string;
 }[] = [
-  { code: "KIGALI", labelEn: "Kigali", feeRwf: DELIVERY_FEES.KIGALI, etaMinutes: 45 },
+  {
+    code: "KIGALI",
+    labelEn: "Kigali",
+    feeRwf: DELIVERY_FEES.KIGALI,
+    etaMinutes: 90,
+    etaLabelEn: "45–90 minutes",
+  },
   {
     code: "KAMONYI_RUYENZI",
     labelEn: "Kamonyi (Ruyenzi)",
     feeRwf: DELIVERY_FEES.KAMONYI_RUYENZI,
-    etaMinutes: 75,
+    etaMinutes: 180,
+    etaLabelEn: "2–3 hours",
   },
   {
     code: "BUGESERA_NYAMATA",
     labelEn: "Bugesera (Nyamata)",
     feeRwf: DELIVERY_FEES.BUGESERA_NYAMATA,
-    etaMinutes: 75,
+    etaMinutes: 180,
+    etaLabelEn: "2–3 hours",
   },
 ];
 
@@ -40,6 +49,7 @@ export async function listDeliveryZones() {
     labelRw: z.labelEn,
     feeRwf: z.feeRwf,
     etaMinutes: z.etaMinutes,
+    etaLabelEn: z.etaLabelEn,
     isActive: true,
     sortOrder: i,
     createdAt: new Date(),
