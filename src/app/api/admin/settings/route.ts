@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { writeAuditLog } from "@/lib/audit";
+import { auditAdminAction } from "@/lib/audit";
 import { setSetting } from "@/services/settings.service";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -49,13 +49,10 @@ export async function PATCH(req: Request) {
     const value = String(body.value ?? "");
     if (!key) return NextResponse.json({ error: "key required" }, { status: 400 });
     await setSetting(key, value);
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "settings.update",
       entity: "WebsiteSetting",
       details: `${key}=${value}`,
-      ipAddress: clientIp(req),
     });
     return NextResponse.json({ ok: true });
   }
@@ -78,14 +75,11 @@ export async function PATCH(req: Request) {
         ...(etaMinutes !== undefined ? { etaMinutes: Number(etaMinutes) } : {}),
       },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "delivery_zone.update",
       entity: "DeliveryZoneConfig",
       entityId: id,
       details: JSON.stringify({ feeRwf, labelEn, isActive, etaMinutes }),
-      ipAddress: clientIp(req),
     });
     return NextResponse.json(updated);
   }
@@ -108,14 +102,11 @@ export async function PATCH(req: Request) {
       data.deletedAt = isActive ? null : new Date();
     }
     const updated = await prisma.product.update({ where: { id: productId }, data });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "product.flags",
       entity: "Product",
       entityId: productId,
       details: JSON.stringify(data),
-      ipAddress: clientIp(req),
     });
     return NextResponse.json(updated);
   }
@@ -127,13 +118,10 @@ export async function PATCH(req: Request) {
       where: { id: productId },
       data: { isActive: false, deletedAt: new Date() },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "product.soft_delete",
       entity: "Product",
       entityId: productId,
-      ipAddress: clientIp(req),
     });
     return NextResponse.json(updated);
   }

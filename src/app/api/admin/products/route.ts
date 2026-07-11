@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { writeAuditLog } from "@/lib/audit";
+import { auditAdminAction } from "@/lib/audit";
 import { stockService } from "@/services/stock.service";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 
@@ -119,13 +119,22 @@ export async function PATCH(req: Request) {
       },
     });
 
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: `product.${action}`,
       entity: "Product",
       entityId: id,
       details: note || action,
+      before: {
+        reviewStatus: existing.reviewStatus,
+        isActive: existing.isActive,
+        price: existing.price,
+      },
+      after: {
+        reviewStatus: product.reviewStatus,
+        isActive: product.isActive,
+        price: product.price,
+        reviewNote: product.reviewNote,
+      },
     });
 
     await cacheDel(CacheKeys.homeCatalog);
@@ -142,13 +151,13 @@ export async function PATCH(req: Request) {
       where: { id },
       data: { price: Math.round(price) },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "product.update_price",
       entity: "Product",
       entityId: id,
-      details: `${existing.price} → ${product.price} RWF`,
+      details: `${existing.nameEn}: ${existing.price} → ${product.price} RWF`,
+      before: { price: existing.price, name: existing.nameEn },
+      after: { price: product.price, name: product.nameEn },
     });
     await cacheDel(CacheKeys.homeCatalog);
     return NextResponse.json(product);
@@ -170,13 +179,13 @@ export async function PATCH(req: Request) {
           ? await stockService.stockIn(id, quantity, reason, session.user.id, "RECEIVE")
           : await stockService.stockOut(id, quantity, reason, session.user.id, "ADJUST");
 
-      await writeAuditLog({
-        actorId: session.user.id,
-        actorName: session.user.name,
+      await auditAdminAction(req, session, {
         action: `product.${action}`,
         entity: "Product",
         entityId: id,
-        details: `${quantity} · ${reason}`,
+        details: `${existing.nameEn}: ${quantity} · ${reason}`,
+        before: { stockQty: existing.stockQty },
+        after: { stockQty: product.stockQty, quantity, reason },
       });
       await cacheDel(CacheKeys.homeCatalog);
       return NextResponse.json(product);
@@ -198,17 +207,21 @@ export async function PATCH(req: Request) {
         ...(body.isActive !== undefined ? { isActive: Boolean(body.isActive) } : {}),
       },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "product.update_flags",
       entity: "Product",
       entityId: id,
-      details: JSON.stringify({
-        isFeatured: body.isFeatured,
-        isBestSeller: body.isBestSeller,
-        isActive: body.isActive,
-      }),
+      details: `${existing.nameEn} flags updated`,
+      before: {
+        isFeatured: existing.isFeatured,
+        isBestSeller: existing.isBestSeller,
+        isActive: existing.isActive,
+      },
+      after: {
+        isFeatured: product.isFeatured,
+        isBestSeller: product.isBestSeller,
+        isActive: product.isActive,
+      },
     });
     await cacheDel(CacheKeys.homeCatalog);
     return NextResponse.json(product);

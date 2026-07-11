@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SupplierStatus } from "@prisma/client";
-import { writeAuditLog } from "@/lib/audit";
+import { auditAdminAction } from "@/lib/audit";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -32,9 +32,7 @@ export async function PATCH(req: Request) {
         body: adminNotes || reason || "Please update your verification documents.",
       },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "supplier.request_info",
       entity: "Supplier",
       entityId: id,
@@ -61,9 +59,7 @@ export async function PATCH(req: Request) {
         body: `Youth Huza scheduled an inspection for ${when.toLocaleString()}.`,
       },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "supplier.schedule_inspection",
       entity: "Supplier",
       entityId: id,
@@ -108,10 +104,8 @@ export async function PATCH(req: Request) {
     },
   });
 
-  await writeAuditLog({
-    actorId: session.user.id,
-    actorName: session.user.name,
-    action: `supplier.${action}`,
+  await auditAdminAction(req, session, {
+      action: `supplier.${action}`,
     entity: "Supplier",
     entityId: id,
     details: reason || `Status set to ${status}`,

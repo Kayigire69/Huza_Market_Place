@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { writeAuditLog } from "@/lib/audit";
+import { auditAdminAction } from "@/lib/audit";
 import { OfferStatus, PurchaseOrderStatus, UnitType } from "@prisma/client";
 
 function poNumber() {
@@ -28,7 +28,7 @@ export async function PATCH(req: Request) {
   const body = await req.json();
 
   if (body.poId && body.poAction) {
-    return handlePoAction(session, body);
+    return handlePoAction(req, session, body);
   }
 
   const { offerId, action, adminNote, retailPrice, purchasedQty, negotiatedPrice } = body as {
@@ -52,9 +52,7 @@ export async function PATCH(req: Request) {
       where: { id: offerId },
       data: { status, adminNote: adminNote || null },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: `offer.${action}`,
       entity: "SupplierOffer",
       entityId: offerId,
@@ -172,9 +170,7 @@ export async function PATCH(req: Request) {
       },
     });
 
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "offer.purchase",
       entity: "PurchaseOrder",
       entityId: purchaseOrder.id,
@@ -188,7 +184,8 @@ export async function PATCH(req: Request) {
 }
 
 async function handlePoAction(
-  session: { user: { id: string; name?: string | null } },
+  req: Request,
+  session: Session,
   body: {
     poId: string;
     poAction: string;
@@ -284,10 +281,8 @@ async function handlePoAction(
     },
   });
 
-  await writeAuditLog({
-    actorId: session.user.id,
-    actorName: session.user.name,
-    action: `po.${body.poAction}`,
+  await auditAdminAction(req, session, {
+      action: `po.${body.poAction}`,
     entity: "PurchaseOrder",
     entityId: body.poId,
     details: JSON.stringify(data),
@@ -344,10 +339,8 @@ export async function POST(req: Request) {
     },
   });
 
-  await writeAuditLog({
-    actorId: session.user.id,
-    actorName: session.user.name,
-    action: "po.create",
+  await auditAdminAction(req, session, {
+      action: "po.create",
     entity: "PurchaseOrder",
     entityId: po.id,
     details: po.poNumber,

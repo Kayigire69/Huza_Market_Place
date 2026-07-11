@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { auditAdminAction } from "@/lib/audit";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -15,6 +16,14 @@ export async function POST(req: Request) {
     const closure = await prisma.emergencyClosure.create({
       data: { reason: body.reason || "Emergency closure", isActive: true },
     });
+    await auditAdminAction(req, session, {
+      action: "hours.emergency_activate",
+      entity: "EmergencyClosure",
+      entityId: closure.id,
+      details: closure.reason,
+      before: { isActive: false },
+      after: { isActive: true, reason: closure.reason },
+    });
     return NextResponse.json(closure);
   }
 
@@ -25,6 +34,13 @@ export async function POST(req: Request) {
         name: body.name,
         isClosed: true,
       },
+    });
+    await auditAdminAction(req, session, {
+      action: "hours.holiday_add",
+      entity: "Holiday",
+      entityId: holiday.id,
+      details: `${holiday.name} on ${holiday.date.toISOString().slice(0, 10)}`,
+      after: { name: holiday.name, date: holiday.date, isClosed: holiday.isClosed },
     });
     return NextResponse.json(holiday);
   }

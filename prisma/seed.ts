@@ -50,14 +50,61 @@ async function main() {
 
   const password = await bcrypt.hash("password123", 10);
 
+  // Each shift admin must use a personal login — never share credentials.
+  const alice = await prisma.user.create({
+    data: {
+      email: "alice@huza.rw",
+      phone: "0780000001",
+      passwordHash: password,
+      fullName: "Alice Uwimana",
+      role: Role.ADMIN,
+    },
+  });
+
+  const john = await prisma.user.create({
+    data: {
+      email: "john@huza.rw",
+      phone: "0780000011",
+      passwordHash: password,
+      fullName: "John Habimana",
+      role: Role.ADMIN,
+    },
+  });
+
+  // Legacy alias kept for existing docs — still a distinct personal account
   await prisma.user.create({
     data: {
       email: "admin@youthhuza.rw",
-      phone: "0780000001",
+      phone: "0780000099",
       passwordHash: password,
-      fullName: "Huza Admin",
+      fullName: "Huza Ops Lead",
       role: Role.ADMIN,
     },
+  });
+
+  await prisma.auditLog.createMany({
+    data: [
+      {
+        actorId: alice.id,
+        actorName: alice.fullName,
+        actorEmail: alice.email,
+        action: "seed.admin_ready",
+        entity: "User",
+        entityId: alice.id,
+        details: "Alice admin account ready for Monday–Wednesday shifts",
+        ipAddress: "seed",
+      },
+      {
+        actorId: john.id,
+        actorName: john.fullName,
+        actorEmail: john.email,
+        action: "seed.admin_ready",
+        entity: "User",
+        entityId: john.id,
+        details: "John admin account ready for Thursday–Sunday shifts",
+        ipAddress: "seed",
+      },
+    ],
   });
 
   const customer = await prisma.user.create({
@@ -719,10 +766,6 @@ async function main() {
     },
   });
 
-  console.log("Seed complete.");
-  console.log("Admin: admin@youthhuza.rw / password123");
-  console.log("Customer: customer@example.com / password123");
-  
   await prisma.deliveryZoneConfig.createMany({
     data: [
       { id: "zone-kigali", code: "KIGALI", labelEn: "Kigali", labelFr: "Kigali", labelRw: "Kigali", feeRwf: 5000, etaMinutes: 45, sortOrder: 1 },
@@ -746,7 +789,13 @@ async function main() {
 
   await prisma.orderSequence.create({ data: { year: new Date().getFullYear(), lastValue: 245 } });
 
-console.log("Supplier: greenvalley@farm.rw / password123");
+  console.log("Seed complete.");
+  console.log("Admins (personal accounts — do not share):");
+  console.log("  alice@huza.rw / password123");
+  console.log("  john@huza.rw / password123");
+  console.log("  admin@youthhuza.rw / password123");
+  console.log("Customer: customer@example.com / password123");
+  console.log("Supplier: greenvalley@farm.rw / password123");
 }
 
 main()

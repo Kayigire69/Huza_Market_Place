@@ -3,11 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { buildPurchaseRecordPdf, loadOrderDocument } from "@/lib/documents/order-docs";
 import { pdfResponse } from "@/lib/documents/pdf";
-import { writeAuditLog } from "@/lib/audit";
+import { auditAdminAction } from "@/lib/audit";
 
 /** Internal purchase record PDF — ADMIN only (never customer-facing). */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ orderNumber: string }> }
 ) {
   const session = await getServerSession(authOptions);
@@ -22,9 +22,7 @@ export async function GET(
   }
 
   const buffer = await buildPurchaseRecordPdf(order);
-  await writeAuditLog({
-    actorId: session.user.id,
-    actorName: session.user.name || session.user.email || "Admin",
+  await auditAdminAction(req, session, {
     action: "purchase_record.download",
     entity: "Order",
     entityId: order.id,

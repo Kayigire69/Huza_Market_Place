@@ -648,12 +648,22 @@ model AuditLog {
   id         String   @id @default(cuid())
   actorId    String?
   actorName  String?
+  /// Login email/phone so shared “admin” accounts are never ambiguous
+  actorEmail String?
   action     String
   entity     String
   entityId   String?
   details    String?
+  /// Snapshot before the change (JSON)
+  beforeJson Json?
+  /// Snapshot after the change (JSON)
+  afterJson  Json?
   ipAddress  String?
   createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 model SupportThread {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeAuditLog } from "@/lib/audit";
+import { auditAdminAction } from "@/lib/audit";
 import {
   buildActivityReportPdf,
   isReportType,
@@ -34,10 +34,8 @@ export async function GET(req: Request) {
 
   const { buffer, filename } = await buildActivityReportPdf(type, from, to);
 
-  await writeAuditLog({
-    actorId: session.user.id,
-    actorName: session.user.name || session.user.email || "Admin",
-    action: "report.generate",
+  await auditAdminAction(req, session, {
+      action: "report.generate",
     entity: "Report",
     entityId: type,
     details: `PDF ${REPORT_LABELS[type]} (${from || "default"} → ${to || "now"})`,
