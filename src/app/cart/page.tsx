@@ -8,6 +8,7 @@ import { formatRwf, formatUnit, DELIVERY_FEES, DELIVERY_ZONE_LABELS, type Delive
 import { Button } from "@/components/ui/Button";
 import { useMemo, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { cartFulfillmentEta, productFulfillmentLabel } from "@/lib/delivery-eta";
 
 type DeliverySlot = "TODAY" | "TOMORROW" | "SCHEDULED";
 
@@ -19,11 +20,10 @@ export default function CartPage() {
   const fee = DELIVERY_FEES[zone];
   const total = subtotal() + (items.length ? fee : 0);
 
-  const etaLabel = useMemo(() => {
-    if (slot === "TODAY") return "Today (within business hours)";
-    if (slot === "TOMORROW") return "Tomorrow";
-    return "Scheduled — pick a date at checkout";
-  }, [slot]);
+  const fulfillment = useMemo(
+    () => cartFulfillmentEta(items, zone, slot),
+    [items, zone, slot]
+  );
 
   if (items.length === 0) {
     return (
@@ -54,6 +54,14 @@ export default function CartPage() {
                 <p className="font-semibold truncate">{item.name}</p>
                 <p className="mt-1 font-bold text-[var(--huza-green-dark)]">
                   {formatRwf(item.price)} / {formatUnit(item.unit)}
+                </p>
+                <p className="mt-1 text-xs text-[var(--huza-muted)]">
+                  {(() => {
+                    const f = productFulfillmentLabel(item.stockQty);
+                    return f.inStock
+                      ? `${t("inStock")} · ${t("arrivesIn")} ${f.etaLabel}`
+                      : `${t("preparingStock")} · ${t("arrivesIn")} ${f.etaLabel}`;
+                  })()}
                 </p>
                 <div className="mt-2 flex items-center gap-3">
                   <button
@@ -127,7 +135,17 @@ export default function CartPage() {
               </label>
             ))}
           </div>
-          <p className="mb-4 text-xs text-[var(--huza-muted)]">ETA: {etaLabel}</p>
+          <p className="mb-2 text-sm font-semibold text-[var(--huza-green-dark)]">
+            {t("deliveryEta")}: {fulfillment.etaLabel}
+          </p>
+          {fulfillment.needsRestock && (
+            <p className="mb-4 text-xs text-[var(--huza-muted)]">{t("restockEtaHint")}</p>
+          )}
+          {!fulfillment.needsRestock && (
+            <p className="mb-4 text-xs text-[var(--huza-muted)]">
+              {slot === "TODAY" ? t("inStockEtaHint") + " " + fulfillment.etaLabel : `ETA: ${fulfillment.etaLabel}`}
+            </p>
+          )}
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">

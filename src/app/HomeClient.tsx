@@ -1,14 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { OptimizedImage } from "@/components/media/OptimizedImage";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { Button } from "@/components/ui/Button";
 import { ProductCard, type ProductCardData } from "@/components/products/ProductCard";
+import { HeroGallery } from "@/components/home/HeroGallery";
 import { categoryName } from "@/lib/i18n";
-import { formatRwf } from "@/lib/utils";
 import {
   ArrowRight,
   Leaf,
@@ -53,7 +52,6 @@ type Testimonial = {
 };
 
 export function HomePage({
-  heroProducts,
   shopProducts,
   featured,
   bestSellers,
@@ -63,7 +61,7 @@ export function HomePage({
   testimonials,
   isOpen,
 }: {
-  heroProducts: ProductCardData[];
+  heroProducts?: ProductCardData[];
   shopProducts: ProductCardData[];
   featured: ProductCardData[];
   bestSellers: ProductCardData[];
@@ -103,72 +101,35 @@ export function HomePage({
         </div>
       )}
 
-      <section className="hero-wash text-white relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
-          <div className="animate-rise">
+      <section className="hero-fullbleed">
+        <HeroGallery />
+        <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 py-20 sm:px-6 sm:py-28">
+          <div className="animate-rise max-w-xl">
             <div className="mb-6 flex items-center gap-4">
               <Image
                 src="/logo.svg"
                 alt="Youth Huza logo"
-                width={88}
-                height={88}
-                className="rounded-full shadow-lg ring-2 ring-white/30"
+                width={72}
+                height={72}
+                className="rounded-full shadow-lg ring-2 ring-white/35"
                 priority
               />
-              <div>
-                <p className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold tracking-tight">
-                  YOUTH HUZA
-                </p>
-              </div>
+              <p className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold tracking-tight">
+                YOUTH HUZA
+              </p>
             </div>
-            <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight max-w-xl">
+            <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight">
               HUZA FRESH
             </h1>
-            <p className="mt-2 text-lg sm:text-xl text-[var(--huza-gold)] font-semibold tracking-wide">
-              {t("poweredBy")}
-            </p>
-            <p className="mt-5 max-w-lg text-base sm:text-lg text-[#D7F0E1] leading-relaxed">
+            <p className="mt-4 max-w-md text-base sm:text-lg text-[#E2F6EA] leading-relaxed">
               {t("tagline")}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8">
               <Link href="/products">
                 <Button size="lg" variant="secondary">
                   {t("heroCta")} <ArrowRight className="size-4" />
                 </Button>
               </Link>
-            </div>
-          </div>
-
-          <div className="relative animate-rise-delay hidden sm:block">
-            <div className="animate-float rounded-[2rem] overflow-hidden border border-white/20 shadow-2xl bg-white/10 backdrop-blur-sm p-4">
-              <div className="grid grid-cols-2 gap-3">
-                {(heroProducts.length ? heroProducts : featured).slice(0, 4).map((p) => {
-                  const img = p.images[0]?.url ?? "/logo.svg";
-                  return (
-                    <Link
-                      key={p.id}
-                      href={`/products/${p.id}`}
-                      className="rounded-xl overflow-hidden bg-white/95 text-[var(--huza-ink)]"
-                    >
-                      <div className="relative aspect-square">
-                        <OptimizedImage
-                          src={img}
-                          alt={p.nameEn}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width:1024px) 40vw, 20vw"
-                        />
-                      </div>
-                      <div className="p-2.5">
-                        <p className="text-xs font-semibold truncate">{p.nameEn}</p>
-                        <p className="text-sm font-bold text-[var(--huza-green-dark)]">
-                          {formatRwf(p.price)}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
             </div>
           </div>
         </div>

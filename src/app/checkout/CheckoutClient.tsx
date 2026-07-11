@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { Smartphone, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { cartFulfillmentEta } from "@/lib/delivery-eta";
 
 type PaymentSuccess = {
   orderNumber: string;
@@ -24,6 +25,7 @@ type PaymentSuccess = {
   payeePhone: string;
   method: string;
   paymentMode: "live" | "demo";
+  estimatedDelivery?: string;
 };
 
 type PayPhase = "form" | "awaiting" | "paid" | "failed";
@@ -59,6 +61,10 @@ export default function CheckoutClient() {
   const fee = DELIVERY_FEES[zone];
   const cartSubtotal = subtotal();
   const total = useMemo(() => cartSubtotal + fee, [cartSubtotal, fee]);
+  const fulfillment = useMemo(
+    () => cartFulfillmentEta(items, zone, slot),
+    [items, zone, slot]
+  );
   const [locStatus, setLocStatus] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -268,6 +274,11 @@ export default function CheckoutClient() {
         <p className="mt-4 text-[var(--huza-muted)]">
           {formatRwf(payment.total)} · Youth Huza will prepare and deliver your order.
         </p>
+        {payment.estimatedDelivery && (
+          <p className="mt-2 text-sm font-semibold text-[var(--huza-green-dark)]">
+            Estimated arrival: {payment.estimatedDelivery}
+          </p>
+        )}
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/products">
             <Button>{t("continueShopping")}</Button>
@@ -329,6 +340,7 @@ export default function CheckoutClient() {
         payeePhone: data.payeePhone,
         method: data.method,
         paymentMode: data.paymentMode,
+        estimatedDelivery: data.estimatedDelivery,
       });
       setPhase(data.paymentStatus === "CONFIRMED" ? "paid" : "awaiting");
     } catch (err) {
@@ -345,6 +357,15 @@ export default function CheckoutClient() {
         After you place the order, approve payment on your phone. You pay{" "}
         <strong>Youth Huza (HUZA FRESH)</strong> — we sell and deliver the products.
       </p>
+
+      <div className="mb-6 rounded-2xl border border-[var(--huza-line)] bg-[var(--huza-mint)] px-4 py-3 text-sm">
+        <p className="font-semibold text-[var(--huza-green-dark)]">
+          {t("deliveryEta")}: {fulfillment.etaLabel}
+        </p>
+        <p className="mt-1 text-[var(--huza-muted)]">
+          {fulfillment.needsRestock ? t("restockEtaHint") : `${t("inStockEtaHint")} ${fulfillment.etaLabel}`}
+        </p>
+      </div>
 
       <form
         onSubmit={onSubmit}

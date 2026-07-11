@@ -14,6 +14,13 @@ import { enqueueAnalytics, enqueueJob } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 import { generateOrderNumber, getDeliveryFee } from "@/services/settings.service";
 import { writeAuditLog } from "@/lib/audit";
+import {
+  cartFulfillmentEta,
+  formatBackorderEta,
+  formatZoneEta,
+  ZONE_ETA_MINUTES,
+} from "@/lib/delivery-eta";
+import type { DeliveryZoneKey } from "@/lib/utils";
 
 export const createOrderSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -58,9 +65,10 @@ export const orderService = {
 
     const status = await getBusinessStatus();
     const slot = (data.deliverySlot || "TODAY") as DeliverySlot;
+    const zoneKey = data.deliveryZone as DeliveryZoneKey;
 
     let scheduledFor: Date | null = null;
-    let estimatedDelivery = "Today";
+    let estimatedDelivery = formatZoneEta(zoneKey);
     if (slot === "TOMORROW") {
       const next = new Date();
       next.setDate(next.getDate() + 1);
@@ -81,16 +89,17 @@ export const orderService = {
     const productIds = data.items.map((i) => i.productId);
     const products = await productRepository.findActiveByIds(productIds);
     if (products.length !== data.items.length) {
-      throw new Error("Some products are unavailable");
+      throw new Error("Some products could not be found");
     }
 
     const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
     let subtotal = 0;
+    let needsRestock = false;
     const lineItems = data.items.map((item) => {
       const product = productMap[item.productId];
       const available = availableQty(product.stockQty, product.reservedQty);
       if (available < item.quantity) {
-        throw new Error(`Insufficient stock for ${product.nameEn} (${available} available)`);
+        needsRestock = true;
       }
       const lineTotal = Math.round(product.price * item.quantity);
       subtotal += lineTotal;
@@ -100,24 +109,51 @@ export const orderService = {
         quantity: item.quantity,
         unitPrice: product.price,
         lineTotal,
+        allowBackorder: available < item.quantity,
       };
     });
+
+    // Any restock line → customer sees 6–12 hours (never “unavailable”)
+    if (needsRestock && (slot === "TODAY" || !data.deliverySlot)) {
+      estimatedDelivery = formatBackorderEta();
+    } else if (!needsRestock && slot === "TODAY" && status.canCheckout) {
+      estimatedDelivery = formatZoneEta(zoneKey);
+    }
+
+    const fulfillment = cartFulfillmentEta(
+      data.items.map((i) => ({
+        stockQty: productMap[i.productId].stockQty,
+        quantity: i.quantity,
+      })),
+      zoneKey,
+      slot
+    );
+    if (fulfillment.needsRestock && slot === "TODAY") {
+      estimatedDelivery = fulfillment.etaLabel;
+    }
 
     const merchant = huzaPayee();
     const deliveryFee = await getDeliveryFee(data.deliveryZone);
     const total = subtotal + deliveryFee;
     const orderNumber = await generateOrderNumber();
     const payPhone = data.paymentPhone!;
+    const estimatedMinutes = needsRestock
+      ? fulfillment.estimatedMinutes
+      : ZONE_ETA_MINUTES[zoneKey];
 
-    // Step 1 — create pending order and reserve stock until MoMo/Airtel payment confirms
+    // Step 1 — create pending order and reserve stock (backorders allowed)
     const order = await prisma.$transaction(async (tx) => {
       for (const item of lineItems) {
-        const updated = await productRepository.reserveStock(tx, item.productId, item.quantity);
+        const updated = await productRepository.reserveStock(tx, item.productId, item.quantity, {
+          allowBackorder: item.allowBackorder,
+        });
         await tx.stockHistory.create({
           data: {
             productId: item.productId,
             change: 0,
-            reason: `Reserved ${item.quantity} for pending order ${orderNumber}`,
+            reason: item.allowBackorder
+              ? `Backorder reserved ${item.quantity} for ${orderNumber} (ETA 6–12h)`
+              : `Reserved ${item.quantity} for pending order ${orderNumber}`,
           },
         });
         await tx.stockMovement.create({
@@ -129,6 +165,8 @@ export const orderService = {
           },
         });
       }
+
+      const createItems = lineItems.map(({ allowBackorder: _a, ...rest }) => rest);
 
       return tx.order.create({
         data: {
@@ -148,7 +186,7 @@ export const orderService = {
           total,
           status: OrderStatus.PENDING,
           scheduledFor,
-          items: { create: lineItems },
+          items: { create: createItems },
           payment: {
             create: {
               method: data.paymentMethod as PaymentMethod,
@@ -157,20 +195,24 @@ export const orderService = {
               status: PaymentStatus.PENDING,
               payeePhone: normalizeMsisdn(merchant.phone),
               payeeName: merchant.name,
-              providerMessage: "Payment request queued — stock reserved for 10 minutes",
+              providerMessage: needsRestock
+                ? "Payment request queued — restock ETA 6–12 hours after payment"
+                : "Payment request queued — stock reserved for 10 minutes",
             },
           },
           delivery: {
             create: {
               status: OrderStatus.PENDING,
-              estimatedMinutes: data.deliveryZone === "KIGALI" ? 45 : 75,
+              estimatedMinutes,
             },
           },
           statusLog: {
             create: [
               {
                 status: OrderStatus.PENDING,
-                note: "Pending order — stock reserved awaiting MoMo/Airtel payment",
+                note: needsRestock
+                  ? `Pending payment — delivery ETA ${estimatedDelivery} (fresh stock being prepared)`
+                  : "Pending order — stock reserved awaiting MoMo/Airtel payment",
               },
             ],
           },
@@ -278,6 +320,8 @@ export const orderService = {
       paymentId: order.payment?.id,
       scheduledFor,
       total,
+      estimatedDelivery,
+      needsRestock,
       paymentStatus: "PENDING" as const,
       paymentMode: paymentResult.mode,
       paymentMessage: paymentResult.message,
