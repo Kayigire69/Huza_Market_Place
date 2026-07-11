@@ -70,16 +70,23 @@ export async function POST(req: Request) {
     );
   }
 
-  const crop = pickProductCropFields(body);
+  const cropRaw = pickProductCropFields(body);
+  const isStandard = supplier?.farmingType === "STANDARD";
+  // Non-organic farmers only store simple listing fields — never the organic dossier block
+  const crop = isStandard
+    ? {
+        priceUnit: cropRaw.priceUnit,
+        pricePerUnit: cropRaw.pricePerUnit,
+      }
+    : cropRaw;
   const price =
     Number(body.price) ||
     Number(crop.pricePerUnit) ||
-    Number(crop.farmGatePrice) ||
+    Number(!isStandard ? cropRaw.farmGatePrice : 0) ||
     0;
 
   // STANDARD (non-organic) farmers never list organic badges
-  const isOrganic =
-    supplier?.farmingType === "STANDARD" ? false : Boolean(body.isOrganic);
+  const isOrganic = isStandard ? false : Boolean(body.isOrganic);
 
   const product = await prisma.product.create({
     data: {
@@ -88,42 +95,50 @@ export async function POST(req: Request) {
       nameEn: body.nameEn,
       nameFr: body.nameFr || body.nameEn,
       nameRw: body.nameRw || body.nameEn,
-      descriptionEn: body.descriptionEn || body.farmerComments || "",
-      descriptionFr: body.descriptionFr || body.descriptionEn || body.farmerComments || "",
-      descriptionRw: body.descriptionRw || body.descriptionEn || body.farmerComments || "",
+      descriptionEn: body.descriptionEn || (!isStandard ? body.farmerComments : "") || "",
+      descriptionFr:
+        body.descriptionFr || body.descriptionEn || (!isStandard ? body.farmerComments : "") || "",
+      descriptionRw:
+        body.descriptionRw || body.descriptionEn || (!isStandard ? body.farmerComments : "") || "",
       price,
       unit: (body.unit as UnitType) || UnitType.KG,
-      stockQty: Number(body.stockQty) || Number(body.totalQuantityHarvested) || 0,
+      stockQty: Number(body.stockQty) || Number(!isStandard ? body.totalQuantityHarvested : 0) || 0,
       isOrganic,
       isNewArrival: true,
       isActive: false,
       reviewStatus: "PENDING",
       location: supplier?.location,
       originDistrict: body.originDistrict || supplier?.district || null,
-      fieldType: crop.fieldType as string | undefined,
-      fieldSize: crop.fieldSize as string | undefined,
-      pastCropsSeason1: crop.pastCropsSeason1 as string | undefined,
-      pastCropsSeason2: crop.pastCropsSeason2 as string | undefined,
-      pastCropsSeason3: crop.pastCropsSeason3 as string | undefined,
-      currentCrop: crop.currentCrop as string | undefined,
-      chemicalsPerWeek: crop.chemicalsPerWeek as string | undefined,
-      chemicalsWhy: crop.chemicalsWhy as string | undefined,
-      chemicalsDosage: crop.chemicalsDosage as string | undefined,
-      fertilizerPerWeek: crop.fertilizerPerWeek as string | undefined,
-      irrigationMethod: crop.irrigationMethod as string | undefined,
-      diseasesIdentified: crop.diseasesIdentified as string | undefined,
-      pestsIdentified: crop.pestsIdentified as string | undefined,
-      totalQuantityHarvested: crop.totalQuantityHarvested as string | undefined,
-      qualityGeneral: crop.qualityGeneral as string | undefined,
+      fieldType: !isStandard ? (crop.fieldType as string | undefined) : undefined,
+      fieldSize: !isStandard ? (crop.fieldSize as string | undefined) : undefined,
+      pastCropsSeason1: !isStandard ? (crop.pastCropsSeason1 as string | undefined) : undefined,
+      pastCropsSeason2: !isStandard ? (crop.pastCropsSeason2 as string | undefined) : undefined,
+      pastCropsSeason3: !isStandard ? (crop.pastCropsSeason3 as string | undefined) : undefined,
+      currentCrop: !isStandard ? (crop.currentCrop as string | undefined) : undefined,
+      chemicalsPerWeek: !isStandard ? (crop.chemicalsPerWeek as string | undefined) : undefined,
+      chemicalsWhy: !isStandard ? (crop.chemicalsWhy as string | undefined) : undefined,
+      chemicalsDosage: !isStandard ? (crop.chemicalsDosage as string | undefined) : undefined,
+      fertilizerPerWeek: !isStandard ? (crop.fertilizerPerWeek as string | undefined) : undefined,
+      irrigationMethod: !isStandard ? (crop.irrigationMethod as string | undefined) : undefined,
+      diseasesIdentified: !isStandard ? (crop.diseasesIdentified as string | undefined) : undefined,
+      pestsIdentified: !isStandard ? (crop.pestsIdentified as string | undefined) : undefined,
+      totalQuantityHarvested: !isStandard
+        ? (crop.totalQuantityHarvested as string | undefined)
+        : undefined,
+      qualityGeneral: !isStandard ? (crop.qualityGeneral as string | undefined) : undefined,
       priceUnit: crop.priceUnit as string | undefined,
       pricePerUnit: crop.pricePerUnit as number | undefined,
-      totalKgsBoughtByHuza: (crop.totalKgsBoughtByHuza as number) || 0,
-      paymentOption: crop.paymentOption as string | undefined,
-      farmGatePrice: crop.farmGatePrice as number | undefined,
-      priceUponDelivery: crop.priceUponDelivery as number | undefined,
-      priceAfterSale: crop.priceAfterSale as number | undefined,
-      proofOfPaymentUrl: crop.proofOfPaymentUrl as string | undefined,
-      farmerComments: crop.farmerComments as string | undefined,
+      totalKgsBoughtByHuza: !isStandard ? (cropRaw.totalKgsBoughtByHuza as number) || 0 : 0,
+      paymentOption: !isStandard ? (cropRaw.paymentOption as string | undefined) : undefined,
+      farmGatePrice: !isStandard ? (cropRaw.farmGatePrice as number | undefined) : undefined,
+      priceUponDelivery: !isStandard
+        ? (cropRaw.priceUponDelivery as number | undefined)
+        : undefined,
+      priceAfterSale: !isStandard ? (cropRaw.priceAfterSale as number | undefined) : undefined,
+      proofOfPaymentUrl: !isStandard
+        ? (cropRaw.proofOfPaymentUrl as string | undefined)
+        : undefined,
+      farmerComments: !isStandard ? (cropRaw.farmerComments as string | undefined) : undefined,
       images: {
         create: imageUrls.map((url, i) => ({
           url,
