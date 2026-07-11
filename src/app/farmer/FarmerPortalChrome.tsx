@@ -133,7 +133,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/60 bg-white/85 p-5 shadow-sm backdrop-blur-sm">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--huza-green)]">
             {t("farmersPortalSellBadge")}
@@ -168,7 +168,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white p-4 text-sm text-[var(--huza-muted)]">
+      <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white/90 p-4 text-sm text-[var(--huza-muted)] backdrop-blur-sm">
         <strong className="text-[var(--huza-ink)]">{t("howItWorks")}</strong>{" "}
         {farmingType === "STANDARD" ? t("howItWorksStandardBody") : t("howItWorksBody")}
       </div>

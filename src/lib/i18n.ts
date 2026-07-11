@@ -227,7 +227,8 @@ const en: Dict = {
   farmerInformation: "Farmer information",
   productsAndPhotos: "Products & photos",
   inventoryTab: "Inventory",
-  farmersPortalBadge: "Farmers Portal · Private partner entry",
+  farmersPortalBadge: "Youth Huza · Farmers Portal",
+  farmersPortalSellBadge: "Youth Huza · Sell to Huza",
   farmerLoginWallBody:
     "This portal is for Youth Huza farm partners only. It is not part of the customer shop. Sign in with the credentials Huza shared with you, or submit a new application.",
   farmerPortalPrivateHint:
@@ -269,7 +270,7 @@ const en: Dict = {
   standardProductNotOrganicNote:
     "This account is for non-organic crops. Products are submitted without an organic badge.",
   farmerLogin: "Farmer login",
-  farmersPortalSellBadge: "Farmers Portal · Sell to Youth Huza",
+  farmersPortalSellBadge: "Youth Huza · Sell to Huza",
   farmerLandingBody: "Register your farm so Youth Huza can buy your produce for HUZA FRESH. Huza field agents visit farms to help you register and list products with photos. Huza does not place online purchase orders here — agents work with you on the ground. Customers shop only on the storefront.",
   customerStorefront: "← Customer storefront",
   demoFarmerLogins: "Demo farmer logins",
