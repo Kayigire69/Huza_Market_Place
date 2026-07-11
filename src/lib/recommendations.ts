@@ -10,8 +10,20 @@ export async function getFrequentlyBoughtTogether(productId: string, take = 4) {
   const orderIds = orderItems.map((o) => o.orderId);
   if (orderIds.length === 0) {
     return prisma.product.findMany({
-      where: { isActive: true, isBestSeller: true, id: { not: productId } },
-      include: { images: true, supplier: true, category: true },
+      where: {
+        isActive: true,
+        isBestSeller: true,
+        id: { not: productId },
+        images: { some: { kind: "STOREFRONT" } },
+      },
+      include: {
+        images: {
+          where: { kind: "STOREFRONT" },
+          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        },
+        supplier: true,
+        category: true,
+      },
       take,
     });
   }
@@ -30,15 +42,33 @@ export async function getFrequentlyBoughtTogether(productId: string, take = 4) {
   const ids = companions.map((c) => c.productId);
   if (ids.length === 0) {
     return prisma.product.findMany({
-      where: { isActive: true, id: { not: productId } },
-      include: { images: true, supplier: true, category: true },
+      where: {
+        isActive: true,
+        id: { not: productId },
+        images: { some: { kind: "STOREFRONT" } },
+      },
+      include: {
+        images: {
+          where: { kind: "STOREFRONT" },
+          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        },
+        supplier: true,
+        category: true,
+      },
       take,
     });
   }
 
   const products = await prisma.product.findMany({
-    where: { id: { in: ids }, isActive: true },
-    include: { images: true, supplier: true, category: true },
+    where: { id: { in: ids }, isActive: true, images: { some: { kind: "STOREFRONT" } } },
+    include: {
+      images: {
+        where: { kind: "STOREFRONT" },
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+      },
+      supplier: true,
+      category: true,
+    },
   });
 
   return ids
@@ -60,9 +90,17 @@ export async function getSmartRecommendations(opts: {
         where: {
           isActive: true,
           categoryId: opts.categoryId,
+          images: { some: { kind: "STOREFRONT" } },
           ...exclude,
         },
-        include: { images: true, supplier: true, category: true },
+        include: {
+          images: {
+            where: { kind: "STOREFRONT" },
+            orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+          },
+          supplier: true,
+          category: true,
+        },
         orderBy: [{ ratingAvg: "desc" }, { isBestSeller: "desc" }],
         take,
       })
@@ -73,10 +111,20 @@ export async function getSmartRecommendations(opts: {
   const more = await prisma.product.findMany({
     where: {
       isActive: true,
+      images: { some: { kind: "STOREFRONT" } },
       OR: [{ isBestSeller: true }, { isFeatured: true }],
-      ...(opts.productId ? { id: { notIn: [opts.productId, ...sameCategory.map((p) => p.id)] } } : {}),
+      ...(opts.productId
+        ? { id: { notIn: [opts.productId, ...sameCategory.map((p) => p.id)] } }
+        : {}),
     },
-    include: { images: true, supplier: true, category: true },
+    include: {
+      images: {
+        where: { kind: "STOREFRONT" },
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+      },
+      supplier: true,
+      category: true,
+    },
     orderBy: { ratingAvg: "desc" },
     take: take - sameCategory.length,
   });

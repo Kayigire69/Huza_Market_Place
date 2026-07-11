@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf } from "@/lib/utils";
 import { AdminCatalogPanel, AdminInventoryPanel } from "./AdminCatalogPanels";
+import { AdminProductImages } from "@/components/admin/AdminProductImages";
 import { AdminOffersPanel } from "./AdminOffersPanel";
 import { AdminReportsPanel } from "./AdminReportsPanel";
 import { AdminStaffPanel } from "./AdminStaffPanel";
@@ -156,7 +157,12 @@ export function AdminClient(props: {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, action, note }),
     });
-    setMsg(res.ok ? `Product ${action}d` : "Product review failed");
+    const data = await res.json().catch(() => ({}));
+    setMsg(
+      res.ok
+        ? `Product ${action}d`
+        : (data as { error?: string }).error || "Product review failed"
+    );
     refresh();
   };
 
@@ -781,36 +787,40 @@ export function AdminClient(props: {
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
           <h2 className="font-semibold mb-1">Product review</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-4">
-            Accept a product to publish its photos on the HUZA FRESH home page and shop. Reject keeps
-            it hidden from customers.
+            Farmer photos are for inspection only. Upload HUZA storefront images (cover + gallery)
+            before accepting — those are what customers see on the home page and shop.
           </p>
           {(props.pendingFarmerProducts || []).length === 0 ? (
             <p className="text-sm text-[var(--huza-muted)]">No products waiting for review.</p>
           ) : (
             (props.pendingFarmerProducts || []).map((p) => {
               const supplier = p.supplier as AnyObj | undefined;
-              const images = (p.images as { url?: string }[]) || [];
+              const images = ((p.images as { id?: string; url?: string; kind?: string; isCover?: boolean }[]) || []).map(
+                (img) => ({
+                  id: img.id,
+                  url: String(img.url || ""),
+                  kind: img.kind,
+                  isCover: Boolean(img.isCover),
+                })
+              );
               return (
                 <div key={String(p.id)} className="rounded-xl border border-[var(--huza-line)] p-4 space-y-3">
-                  <div className="flex flex-wrap gap-3">
-                    {images.slice(0, 4).map((img) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={String(img.url)}
-                        src={String(img.url)}
-                        alt=""
-                        className="h-16 w-16 rounded-lg object-cover border border-[var(--huza-line)]"
-                      />
-                    ))}
-                    <div>
-                      <p className="font-semibold">{String(p.nameEn)}</p>
-                      <p className="text-sm text-[var(--huza-muted)]">
-                        {String(supplier?.businessName || "Farmer")} ·{" "}
-                        {formatRwf(Number(p.pricePerUnit || p.price || 0))}/
-                        {String(p.priceUnit || p.unit || "unit")}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="font-semibold">{String(p.nameEn)}</p>
+                    <p className="text-sm text-[var(--huza-muted)]">
+                      {String(supplier?.businessName || "Farmer")} ·{" "}
+                      {formatRwf(Number(p.pricePerUnit || p.price || 0))}/
+                      {String(p.priceUnit || p.unit || "unit")}
+                    </p>
                   </div>
+                  <AdminProductImages
+                    productId={String(p.id)}
+                    images={images}
+                    onDone={(msg) => {
+                      setMsg(msg);
+                      router.refresh();
+                    }}
+                  />
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-[var(--huza-muted)]">
                     <p>
                       <strong className="text-[var(--huza-ink)]">Field:</strong> {String(p.fieldType || "—")} ·{" "}
@@ -875,7 +885,7 @@ export function AdminClient(props: {
                   ) : null}
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => productReview(String(p.id), "approve")}>
-                      Accept &amp; show on home
+                      Accept &amp; publish (needs HUZA images)
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => productReview(String(p.id), "reject")}>
                       Reject product

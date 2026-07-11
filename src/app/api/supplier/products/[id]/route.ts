@@ -46,13 +46,16 @@ export async function PATCH(
 
   const updated = await prisma.$transaction(async (tx) => {
     if (imageUrls.length > 0) {
-      await tx.productImage.deleteMany({ where: { productId: id } });
+      // Farmers may only replace inspection photos — never customer storefront gallery
+      await tx.productImage.deleteMany({ where: { productId: id, kind: "INSPECTION" } });
       await tx.productImage.createMany({
         data: imageUrls.map((url, i) => ({
           productId: id,
           url,
-          alt: `${body.nameEn || product.nameEn} photo ${i + 1}`,
+          alt: `${body.nameEn || product.nameEn} inspection ${i + 1}`,
           sortOrder: i,
+          kind: "INSPECTION",
+          isCover: false,
         })),
       });
     }
@@ -72,7 +75,10 @@ export async function PATCH(
         ...(stockQty !== undefined ? { stockQty } : {}),
         ...(body.isOrganic !== undefined ? { isOrganic: Boolean(body.isOrganic) } : {}),
       },
-      include: { images: { orderBy: { sortOrder: "asc" } }, category: true },
+      include: {
+        images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] },
+        category: true,
+      },
     });
 
     if (stockQty !== undefined && change !== 0) {

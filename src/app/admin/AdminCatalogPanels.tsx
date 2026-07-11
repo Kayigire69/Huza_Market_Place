@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { formatRwf, formatUnit } from "@/lib/utils";
+import { AdminProductImages } from "@/components/admin/AdminProductImages";
 
 type ProductRow = {
   id: string;
@@ -18,6 +19,7 @@ type ProductRow = {
   reviewStatus?: string | null;
   category?: { nameEn?: string } | null;
   supplier?: { businessName?: string } | null;
+  images?: { id?: string; url: string; kind?: string; isCover?: boolean }[];
 };
 
 /**
@@ -60,8 +62,9 @@ export function AdminCatalogPanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, action: "update_flags", [field]: value }),
     });
+    const data = await res.json().catch(() => ({}));
     setBusyId(null);
-    onDone(res.ok ? "Listing flags updated" : "Update failed");
+    onDone(res.ok ? "Listing flags updated" : (data as { error?: string }).error || "Update failed");
   };
 
   return (
@@ -69,46 +72,32 @@ export function AdminCatalogPanel({
       <div>
         <h2 className="font-semibold text-lg">Catalog &amp; prices</h2>
         <p className="text-sm text-[var(--huza-muted)] mt-1">
-          Youth Huza sets every customer retail price. Edit prices here — farm partners never set
-          storefront pricing.
+          Youth Huza sets every customer retail price and storefront photos. Farm-partner inspection
+          photos are never shown to shoppers until you upload HUZA images.
         </p>
       </div>
 
       {products.length === 0 ? (
         <p className="text-sm text-[var(--huza-muted)]">No products yet.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-[var(--huza-muted)] border-b border-[var(--huza-line)]">
-                <th className="py-2 pr-3">Product</th>
-                <th className="py-2 pr-3">Stock</th>
-                <th className="py-2 pr-3">Retail price (RWF)</th>
-                <th className="py-2 pr-3">Flags</th>
-                <th className="py-2">Save</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.id} className="border-b border-[var(--huza-line)] align-top">
-                  <td className="py-3 pr-3">
-                    <p className="font-medium">{p.nameEn}</p>
-                    <p className="text-xs text-[var(--huza-muted)]">
-                      {p.category?.nameEn || "—"}
-                      {p.isOrganic ? " · Organic" : ""}
-                      {p.reviewStatus ? ` · ${p.reviewStatus}` : ""}
-                      {!p.isActive ? " · Hidden" : ""}
-                    </p>
-                  </td>
-                  <td className="py-3 pr-3 whitespace-nowrap">
+        <div className="space-y-4">
+          {products.map((p) => (
+            <div key={p.id} className="rounded-xl border border-[var(--huza-line)] p-4 space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{p.nameEn}</p>
+                  <p className="text-xs text-[var(--huza-muted)]">
+                    {p.category?.nameEn || "—"}
+                    {p.isOrganic ? " · Organic" : ""}
+                    {p.reviewStatus ? ` · ${p.reviewStatus}` : ""}
+                    {!p.isActive ? " · Hidden" : ""}
+                    {" · "}
                     {p.stockQty} {formatUnit(p.unit)}
-                    {p.reservedQty ? (
-                      <span className="block text-xs text-[var(--huza-muted)]">
-                        {p.reservedQty} reserved
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="py-3 pr-3">
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-end gap-2">
+                  <div>
+                    <label className="label">Retail price (RWF)</label>
                     <input
                       className="input-field max-w-[140px]"
                       type="number"
@@ -116,52 +105,52 @@ export function AdminCatalogPanel({
                       value={prices[p.id] ?? String(p.price)}
                       onChange={(e) => setPrices((s) => ({ ...s, [p.id]: e.target.value }))}
                     />
-                    <p className="text-[11px] text-[var(--huza-muted)] mt-1">
-                      Now {formatRwf(p.price)}
-                    </p>
-                  </td>
-                  <td className="py-3 pr-3 space-y-1 text-xs">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={p.isActive}
-                        disabled={busyId === p.id}
-                        onChange={(e) => toggleFlag(p.id, "isActive", e.target.checked)}
-                      />
-                      Active on shop
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={p.isFeatured}
-                        disabled={busyId === p.id}
-                        onChange={(e) => toggleFlag(p.id, "isFeatured", e.target.checked)}
-                      />
-                      Featured
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={p.isBestSeller}
-                        disabled={busyId === p.id}
-                        onChange={(e) => toggleFlag(p.id, "isBestSeller", e.target.checked)}
-                      />
-                      Best seller
-                    </label>
-                  </td>
-                  <td className="py-3">
-                    <Button
-                      size="sm"
-                      disabled={busyId === p.id}
-                      onClick={() => savePrice(p.id)}
-                    >
-                      Save price
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  <Button size="sm" disabled={busyId === p.id} onClick={() => savePrice(p.id)}>
+                    Save price
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4 text-xs">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={p.isActive}
+                    disabled={busyId === p.id}
+                    onChange={(e) => toggleFlag(p.id, "isActive", e.target.checked)}
+                  />
+                  Active on shop
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={p.isFeatured}
+                    disabled={busyId === p.id}
+                    onChange={(e) => toggleFlag(p.id, "isFeatured", e.target.checked)}
+                  />
+                  Featured
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={p.isBestSeller}
+                    disabled={busyId === p.id}
+                    onChange={(e) => toggleFlag(p.id, "isBestSeller", e.target.checked)}
+                  />
+                  Best seller
+                </label>
+              </div>
+
+              <AdminProductImages
+                productId={p.id}
+                images={p.images || []}
+                onDone={(msg) => {
+                  onDone(msg);
+                }}
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

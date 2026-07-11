@@ -76,6 +76,21 @@ export async function PATCH(req: Request) {
 
   // --- Review approve / reject ---
   if (action === "approve" || action === "reject") {
+    if (action === "approve") {
+      const storefrontCount = await prisma.productImage.count({
+        where: { productId: id, kind: "STOREFRONT" },
+      });
+      if (storefrontCount === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Upload at least one HUZA storefront image before publishing. Farmer photos are for inspection only.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {
@@ -142,6 +157,97 @@ export async function PATCH(req: Request) {
     return NextResponse.json(product);
   }
 
+  // --- Set / replace customer-facing HUZA images ---
+  if (action === "set_storefront_images") {
+    const imageUrls = Array.isArray(body.imageUrls)
+      ? (body.imageUrls as unknown[]).map(String).map((u) => u.trim()).filter(Boolean)
+      : [];
+    if (imageUrls.length === 0) {
+      return NextResponse.json({ error: "Upload at least one storefront image" }, { status: 400 });
+    }
+    const coverIndex = Math.max(0, Math.min(Number(body.coverIndex) || 0, imageUrls.length - 1));
+    await prisma.$transaction([
+      prisma.productImage.deleteMany({ where: { productId: id, kind: "STOREFRONT" } }),
+      prisma.productImage.createMany({
+        data: imageUrls.map((url, i) => ({
+          productId: id,
+          url,
+          alt: `${existing.nameEn} ${i + 1}`,
+          sortOrder: i,
+          kind: "STOREFRONT",
+          isCover: i === coverIndex,
+        })),
+      }),
+    ]);
+    await auditAdminAction(req, session, {
+      action: "product.set_storefront_images",
+      entity: "Product",
+      entityId: id,
+      details: `${existing.nameEn}: ${imageUrls.length} storefront image(s)`,
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] } },
+    });
+    return NextResponse.json(product);
+  }
+
+  // --- Promote farmer inspection photos into storefront (temporary draft) ---
+  if (action === "promote_inspection_images") {
+    const inspection = await prisma.productImage.findMany({
+      where: { productId: id, kind: "INSPECTION" },
+      orderBy: { sortOrder: "asc" },
+    });
+    if (inspection.length === 0) {
+      return NextResponse.json({ error: "No farmer inspection photos to copy" }, { status: 400 });
+    }
+    await prisma.$transaction([
+      prisma.productImage.deleteMany({ where: { productId: id, kind: "STOREFRONT" } }),
+      prisma.productImage.createMany({
+        data: inspection.map((img, i) => ({
+          productId: id,
+          url: img.url,
+          alt: img.alt || `${existing.nameEn} ${i + 1}`,
+          sortOrder: i,
+          kind: "STOREFRONT",
+          isCover: i === 0,
+        })),
+      }),
+    ]);
+    await auditAdminAction(req, session, {
+      action: "product.promote_inspection_images",
+      entity: "Product",
+      entityId: id,
+      details: `${existing.nameEn}: copied ${inspection.length} inspection photo(s) to storefront (replace with HUZA photos when ready)`,
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] } },
+    });
+    return NextResponse.json(product);
+  }
+
+  // --- Set cover image among storefront gallery ---
+  if (action === "set_cover") {
+    const imageId = String(body.imageId || "");
+    if (!imageId) return NextResponse.json({ error: "imageId required" }, { status: 400 });
+    const img = await prisma.productImage.findFirst({
+      where: { id: imageId, productId: id, kind: "STOREFRONT" },
+    });
+    if (!img) return NextResponse.json({ error: "Storefront image not found" }, { status: 404 });
+    await prisma.$transaction([
+      prisma.productImage.updateMany({
+        where: { productId: id, kind: "STOREFRONT" },
+        data: { isCover: false },
+      }),
+      prisma.productImage.update({ where: { id: imageId }, data: { isCover: true } }),
+    ]);
+    await cacheDel(CacheKeys.homeCatalog);
+    return NextResponse.json({ ok: true });
+  }
+
   // --- Admin sets retail price ---
   if (action === "update_price") {
     const price = Number(body.price);
@@ -200,6 +306,17 @@ export async function PATCH(req: Request) {
 
   // --- Flags ---
   if (action === "update_flags") {
+    if (body.isActive === true) {
+      const storefrontCount = await prisma.productImage.count({
+        where: { productId: id, kind: "STOREFRONT" },
+      });
+      if (storefrontCount === 0) {
+        return NextResponse.json(
+          { error: "Add at least one HUZA storefront image before activating on the shop" },
+          { status: 400 }
+        );
+      }
+    }
     const product = await prisma.product.update({
       where: { id },
       data: {
