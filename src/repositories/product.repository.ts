@@ -93,7 +93,7 @@ export const productRepository = {
     });
   },
 
-  /** COD / already-confirmed — deduct physical stock immediately */
+  /** Immediate physical sale helper (legacy / warehouse) — checkout uses reserve → commit */
   async sellNow(tx: Prisma.TransactionClient, productId: string, quantity: number) {
     const product = await tx.product.findUniqueOrThrow({ where: { id: productId } });
     if (availableQty(product.stockQty, product.reservedQty) < quantity) {

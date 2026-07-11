@@ -56,7 +56,6 @@ export default function CheckoutClient() {
     paymentPhone: "",
   });
 
-  const isCod = form.paymentMethod === "CASH_ON_DELIVERY";
   const fee = DELIVERY_FEES[zone];
   const cartSubtotal = subtotal();
   const total = useMemo(() => cartSubtotal + fee, [cartSubtotal, fee]);
@@ -119,7 +118,7 @@ export default function CheckoutClient() {
 
   // Poll payment status while awaiting phone approval
   useEffect(() => {
-    if (phase !== "awaiting" || !payment || isCod) return;
+    if (phase !== "awaiting" || !payment) return;
 
     const tick = async () => {
       const res = await fetch(`/api/payments/status?orderNumber=${payment.orderNumber}`);
@@ -135,7 +134,7 @@ export default function CheckoutClient() {
     tick();
     const id = setInterval(tick, 3000);
     return () => clearInterval(id);
-  }, [phase, payment, isCod]);
+  }, [phase, payment]);
 
   if (items.length === 0 && phase === "form") {
     return (
@@ -245,7 +244,9 @@ export default function CheckoutClient() {
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <CheckCircle2 className="mx-auto size-14 text-[var(--huza-green)]" />
         <h1 className="section-title mt-4">
-          {payment.method === "CASH_ON_DELIVERY" ? "Order confirmed!" : "Payment confirmed!"}
+          {payment.method === "MTN_MOMO" || payment.method === "AIRTEL_MONEY"
+            ? "Payment confirmed!"
+            : "Payment confirmed!"}
         </h1>
         <div className="mt-6 rounded-2xl border-2 border-[var(--huza-green)] bg-white p-5 text-left">
           <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Your order number</p>
@@ -308,7 +309,7 @@ export default function CheckoutClient() {
           deliveryZone: zone,
           deliverySlot: slot,
           scheduledFor: slot === "SCHEDULED" && scheduledDate ? scheduledDate : undefined,
-          paymentPhone: isCod ? form.phone : form.paymentPhone,
+          paymentPhone: form.paymentPhone,
           items: items.map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
@@ -329,7 +330,7 @@ export default function CheckoutClient() {
         method: data.method,
         paymentMode: data.paymentMode,
       });
-      setPhase(data.method === "CASH_ON_DELIVERY" || data.paymentStatus === "CONFIRMED" ? "paid" : "awaiting");
+      setPhase(data.paymentStatus === "CONFIRMED" ? "paid" : "awaiting");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
@@ -468,42 +469,27 @@ export default function CheckoutClient() {
               />
               {t("airtel")}
             </label>
-            <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm">
-              <input
-                type="radio"
-                name="pay"
-                checked={form.paymentMethod === "CASH_ON_DELIVERY"}
-                onChange={() => setForm({ ...form, paymentMethod: "CASH_ON_DELIVERY" })}
-              />
-              Cash on delivery
-            </label>
             <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm opacity-60">
               <input type="radio" name="pay" disabled />
               Card (coming soon)
             </label>
           </div>
         </div>
-        {!isCod && (
-          <div>
-            <label className="label">Phone that will receive the payment prompt</label>
-            <input
-              required
-              className="input-field"
-              value={form.paymentPhone}
-              onChange={(e) => setForm({ ...form, paymentPhone: e.target.value })}
-              placeholder="078xxxxxxx"
-              inputMode="tel"
-            />
-            <p className="mt-1 text-xs text-[var(--huza-muted)]">
-              Enter the phone that will approve MoMo/Airtel. Payment goes to Youth Huza.
-            </p>
-          </div>
-        )}
-        {isCod && (
-          <p className="text-sm text-[var(--huza-muted)] rounded-lg bg-[var(--huza-mint)] p-3">
-            You will pay the delivery rider in cash when your order arrives.
+        <div>
+          <label className="label">Phone that will receive the payment prompt</label>
+          <input
+            required
+            className="input-field"
+            value={form.paymentPhone}
+            onChange={(e) => setForm({ ...form, paymentPhone: e.target.value })}
+            placeholder="078xxxxxxx"
+            inputMode="tel"
+          />
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">
+            Enter the phone that will approve MoMo/Airtel. Payment goes to Youth Huza. Bank card
+            payments are coming soon.
           </p>
-        )}
+        </div>
 
         <div className="rounded-xl bg-[var(--huza-mint)] p-4 text-sm space-y-1">
           <div className="flex justify-between">
@@ -523,11 +509,7 @@ export default function CheckoutClient() {
         {error && <p className="text-sm text-red-700">{error}</p>}
 
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading
-            ? isCod
-              ? "Placing order..."
-              : "Sending payment request..."
-            : t("placeOrder")}
+          {loading ? "Sending payment request..." : t("placeOrder")}
         </Button>
       </form>
     </div>

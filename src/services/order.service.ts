@@ -10,7 +10,7 @@ import { getBusinessStatus } from "@/lib/business-hours";
 import { initiateMobileMoneyPayment, normalizeMsisdn } from "@/lib/payments/mobile-money";
 import { prisma } from "@/lib/prisma";
 import { productRepository, availableQty } from "@/repositories/product.repository";
-import { enqueueAnalytics, enqueueJob, enqueueSms } from "@/jobs/queue";
+import { enqueueAnalytics, enqueueJob } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 import { generateOrderNumber, getDeliveryFee } from "@/services/settings.service";
 import { writeAuditLog } from "@/lib/audit";
@@ -25,7 +25,7 @@ export const createOrderSchema = z.object({
   gpsLat: z.string().optional(),
   gpsLng: z.string().optional(),
   instructions: z.string().optional(),
-  paymentMethod: z.enum(["MTN_MOMO", "AIRTEL_MONEY", "CASH_ON_DELIVERY"]),
+  paymentMethod: z.enum(["MTN_MOMO", "AIRTEL_MONEY"]),
   paymentPhone: z.string().optional(),
   items: z.array(z.object({ productId: z.string(), quantity: z.number().positive() })).min(1),
 });
@@ -52,10 +52,8 @@ function huzaPayee() {
 export const orderService = {
   async createOrder(input: CreateOrderInput, userId?: string) {
     const data = createOrderSchema.parse(input);
-    if (data.paymentMethod !== "CASH_ON_DELIVERY") {
-      if (!data.paymentPhone || data.paymentPhone.length < 8) {
-        throw new Error("Enter your MoMo / Airtel phone number (e.g. 078xxxxxxx)");
-      }
+    if (!data.paymentPhone || data.paymentPhone.length < 8) {
+      throw new Error("Enter your MoMo / Airtel phone number (e.g. 078xxxxxxx)");
     }
 
     const status = await getBusinessStatus();
@@ -109,58 +107,27 @@ export const orderService = {
     const deliveryFee = await getDeliveryFee(data.deliveryZone);
     const total = subtotal + deliveryFee;
     const orderNumber = await generateOrderNumber();
-    const isCod = data.paymentMethod === "CASH_ON_DELIVERY";
-    const payPhone = isCod ? data.phone : data.paymentPhone!;
+    const payPhone = data.paymentPhone!;
 
-    // Step 1 — create pending order
-    // MoMo: reserve stock (reservedQty↑). COD: sell immediately (stockQty↓).
+    // Step 1 — create pending order and reserve stock until MoMo/Airtel payment confirms
     const order = await prisma.$transaction(async (tx) => {
       for (const item of lineItems) {
-        if (isCod) {
-          const updated = await productRepository.sellNow(tx, item.productId, item.quantity);
-          await tx.stockHistory.create({
-            data: {
-              productId: item.productId,
-              change: -item.quantity,
-              reason: `Order ${orderNumber} (COD sale)`,
-            },
-          });
-          await tx.stockMovement.create({
-            data: {
-              productId: item.productId,
-              type: "SALE",
-              quantity: -Math.floor(item.quantity),
-              reason: `Order ${orderNumber}`,
-            },
-          });
-          if (updated.stockQty <= updated.lowStockAt) {
-            await tx.notification.create({
-              data: {
-                type: "LOW_STOCK",
-                channel: "IN_APP",
-                title: "Low stock alert",
-                body: `Product ${updated.nameEn} is low (${updated.stockQty} left).`,
-              },
-            });
-          }
-        } else {
-          const updated = await productRepository.reserveStock(tx, item.productId, item.quantity);
-          await tx.stockHistory.create({
-            data: {
-              productId: item.productId,
-              change: 0,
-              reason: `Reserved ${item.quantity} for pending order ${orderNumber}`,
-            },
-          });
-          await tx.stockMovement.create({
-            data: {
-              productId: item.productId,
-              type: "ADJUST",
-              quantity: 0,
-              reason: `Reservation ${orderNumber} (+${item.quantity} reserved; available ${availableQty(updated.stockQty, updated.reservedQty)})`,
-            },
-          });
-        }
+        const updated = await productRepository.reserveStock(tx, item.productId, item.quantity);
+        await tx.stockHistory.create({
+          data: {
+            productId: item.productId,
+            change: 0,
+            reason: `Reserved ${item.quantity} for pending order ${orderNumber}`,
+          },
+        });
+        await tx.stockMovement.create({
+          data: {
+            productId: item.productId,
+            type: "ADJUST",
+            quantity: 0,
+            reason: `Reservation ${orderNumber} (+${item.quantity} reserved; available ${availableQty(updated.stockQty, updated.reservedQty)})`,
+          },
+        });
       }
 
       return tx.order.create({
@@ -179,7 +146,7 @@ export const orderService = {
           estimatedDelivery,
           subtotal,
           total,
-          status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
+          status: OrderStatus.PENDING,
           scheduledFor,
           items: { create: lineItems },
           payment: {
@@ -188,11 +155,9 @@ export const orderService = {
               phoneNumber: normalizeMsisdn(payPhone),
               amount: total,
               status: PaymentStatus.PENDING,
-              payeePhone: isCod ? null : normalizeMsisdn(merchant.phone),
+              payeePhone: normalizeMsisdn(merchant.phone),
               payeeName: merchant.name,
-              providerMessage: isCod
-                ? "Cash on delivery — collect from customer"
-                : "Payment request queued — stock reserved for 10 minutes",
+              providerMessage: "Payment request queued — stock reserved for 10 minutes",
             },
           },
           delivery: {
@@ -204,10 +169,8 @@ export const orderService = {
           statusLog: {
             create: [
               {
-                status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
-                note: isCod
-                  ? "Order placed — cash on delivery"
-                  : "Pending order — stock reserved awaiting payment",
+                status: OrderStatus.PENDING,
+                note: "Pending order — stock reserved awaiting MoMo/Airtel payment",
               },
             ],
           },
@@ -219,14 +182,14 @@ export const orderService = {
     await writeAuditLog({
       actorId: userId,
       actorName: data.fullName,
-      action: isCod ? "order.create_cod" : "order.create_pending",
+      action: "order.create_pending",
       entity: "Order",
       entityId: order.id,
       details: `${orderNumber} · ${total} RWF · ${data.paymentMethod}`,
     });
 
-    // MoMo: auto-release reservation if unpaid after 10 minutes
-    if (!isCod && order.payment?.id) {
+    // Auto-release reservation if unpaid after 10 minutes
+    if (order.payment?.id) {
       await enqueueJob(
         "PAYMENT_VERIFY",
         { paymentId: order.payment.id, orderNumber, expireIfPending: true },
@@ -239,43 +202,9 @@ export const orderService = {
       orderNumber,
       total,
       method: data.paymentMethod,
-      isCod,
     });
 
-    if (isCod) {
-      if (userId) {
-        await prisma.notification.create({
-          data: {
-            userId,
-            type: "ORDER_CONFIRMATION",
-            channel: "IN_APP",
-            title: "Order confirmed",
-            body: `Order ${order.orderNumber} placed. Pay cash on delivery. ETA: ${estimatedDelivery}.`,
-          },
-        });
-      }
-      await enqueueSms(
-        data.phone,
-        `HUZA FRESH: Order ${order.orderNumber} confirmed (cash on delivery). ETA: ${estimatedDelivery}.`
-      );
-
-      return {
-        orderNumber: order.orderNumber,
-        id: order.id,
-        paymentId: order.payment?.id,
-        scheduledFor,
-        total,
-        paymentStatus: "PENDING" as const,
-        paymentMode: "demo" as const,
-        paymentMessage: "Cash on delivery confirmed. Youth Huza will deliver your order.",
-        payerPhone: data.phone,
-        payeeName: merchant.name,
-        payeePhone: merchant.phone,
-        method: data.paymentMethod,
-      };
-    }
-
-    // Step 2 — initiate MoMo promptly so the phone prompt appears, then queue verification
+    // Step 2 — initiate MoMo/Airtel promptly so the phone prompt appears, then queue verification
     let paymentResult;
     try {
       paymentResult = await initiateMobileMoneyPayment({
@@ -294,7 +223,7 @@ export const orderService = {
           providerMessage: payErr instanceof Error ? payErr.message : "Payment request failed",
         },
       });
-      // Release reservation if MoMo initiation fails
+      // Release reservation if payment initiation fails
       await prisma.$transaction(async (tx) => {
         for (const item of lineItems) {
           await productRepository.releaseReservation(tx, item.productId, item.quantity);
