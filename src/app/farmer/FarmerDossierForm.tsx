@@ -20,6 +20,7 @@ import {
 } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { Button } from "@/components/ui/Button";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 
 export type FarmerDossierValues = {
   profilePhotoUrl?: string | null;
@@ -144,8 +145,9 @@ export function FarmerDossierForm({
             <label className="label">{t("picture")}</label>
             <input name="profilePhoto" type="file" accept="image/*" className="input-field" />
             {photoUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoUrl} alt="Profile" className="mt-2 h-24 w-24 rounded-full object-cover" />
+              <div className="relative mt-2 h-24 w-24 overflow-hidden rounded-full">
+                <OptimizedImage src={photoUrl} alt="Profile" fill className="object-cover" sizes="96px" />
+              </div>
             )}
             <input type="hidden" name="profilePhotoUrl" value={photoUrl} />
           </div>

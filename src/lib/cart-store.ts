@@ -23,7 +23,21 @@ type CartState = {
   clear: () => void;
   count: () => number;
   subtotal: () => number;
+  syncToServer: () => Promise<void>;
+  hydrateFromServer: () => Promise<void>;
 };
+
+async function pushCart(items: CartItem[]) {
+  try {
+    await fetch("/api/cart", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
+  } catch {
+    /* offline / guest — ignore */
+  }
+}
 
 export const useCart = create<CartState>()(
   persist(
@@ -42,9 +56,12 @@ export const useCart = create<CartState>()(
         } else {
           set({ items: [...get().items, { ...item, quantity: Math.min(item.stockQty, qty) }] });
         }
+        void get().syncToServer();
       },
-      removeItem: (productId) =>
-        set({ items: get().items.filter((i) => i.productId !== productId) }),
+      removeItem: (productId) => {
+        set({ items: get().items.filter((i) => i.productId !== productId) });
+        void get().syncToServer();
+      },
       updateQty: (productId, quantity) => {
         if (quantity <= 0) {
           get().removeItem(productId);
@@ -57,10 +74,29 @@ export const useCart = create<CartState>()(
               : i
           ),
         });
+        void get().syncToServer();
       },
-      clear: () => set({ items: [] }),
+      clear: () => {
+        set({ items: [] });
+        void fetch("/api/cart", { method: "DELETE" }).catch(() => null);
+      },
       count: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       subtotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      syncToServer: async () => {
+        await pushCart(get().items);
+      },
+      hydrateFromServer: async () => {
+        try {
+          const res = await fetch("/api/cart");
+          if (!res.ok) return;
+          const data = await res.json();
+          if (Array.isArray(data.items) && data.items.length > 0 && get().items.length === 0) {
+            set({ items: data.items });
+          }
+        } catch {
+          /* ignore */
+        }
+      },
     }),
     { name: "huza-cart" }
   )

@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Eye, Heart, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -78,13 +78,12 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       <div className="relative block overflow-hidden rounded-2xl">
         <Link href={`/products/${product.id}`}>
           <div className="aspect-[4/3] bg-[var(--huza-mint)] relative">
-            <Image
+            <OptimizedImage
               src={image}
               alt={name}
               fill
               className="object-cover transition duration-500 group-hover:scale-105"
               sizes="(max-width:768px) 50vw, 25vw"
-              unoptimized={image.startsWith("/uploads/")}
             />
           </div>
         </Link>
@@ -154,7 +153,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             </button>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="relative aspect-square rounded-xl overflow-hidden bg-[var(--huza-mint)]">
-                <Image src={image} alt={name} fill className="object-cover" />
+                <OptimizedImage src={image} alt={name} fill className="object-cover" sizes="80vw" />
               </div>
               <div>
                 {categoryName && <p className="text-xs text-[var(--huza-muted)]">{categoryName}</p>}
