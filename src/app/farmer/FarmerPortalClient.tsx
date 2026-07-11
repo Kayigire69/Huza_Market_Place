@@ -214,23 +214,23 @@ export function FarmerPortalClient({
 
   return (
     <div>
-      <div className="farmer-tabs">
+      <div className="flex flex-wrap gap-2 mb-6">
         {TABS.map(({ key, label }) => (
           <button
             key={key}
             type="button"
             onClick={() => setTab(key)}
-            className={`farmer-tab ${tab === key ? "is-active" : ""}`}
+            className={`rounded-full px-4 py-2 text-sm font-semibold ${
+              tab === key
+                ? "bg-[var(--huza-green)] text-white"
+                : "bg-white border border-[var(--huza-line)]"
+            }`}
           >
             {label}
           </button>
         ))}
       </div>
-      {msg && (
-        <p className="mb-4 rounded-xl border border-[var(--huza-line)] bg-[var(--huza-mint)] px-4 py-2.5 text-sm font-medium text-[var(--huza-green-dark)]">
-          {msg}
-        </p>
-      )}
+      {msg && <p className="mb-4 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
 
       {tab === "dossier" && isOrganicFarmer && (
         <div>
@@ -240,8 +240,8 @@ export function FarmerPortalClient({
       )}
 
       {tab === "agreement" && !isOrganicFarmer && (
-        <div className="farmer-panel p-6 space-y-4 max-w-2xl">
-          <h2 className="farmer-panel-title text-xl">{t("huzaAgreementTab")}</h2>
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 space-y-4 max-w-2xl">
+          <h2 className="font-semibold text-lg">{t("huzaAgreementTab")}</h2>
           <p className="text-sm text-[var(--huza-muted)]">{t("standardAgreementIntro")}</p>
           <div className="grid sm:grid-cols-2 gap-3 text-sm">
             <div>
@@ -282,9 +282,9 @@ export function FarmerPortalClient({
         <div className="grid lg:grid-cols-2 gap-6">
           <form
             onSubmit={createProduct}
-            className="farmer-panel p-5 space-y-4"
+            className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4"
           >
-            <h2 className="farmer-panel-title text-xl">{t("submitProductTitle")}</h2>
+            <h2 className="font-semibold">{t("submitProductTitle")}</h2>
             <p className="text-xs text-[var(--huza-muted)]">
               {isOrganicFarmer ? t("submitProductHint") : t("submitProductHintStandard")}
             </p>
@@ -553,14 +553,14 @@ export function FarmerPortalClient({
             )}
           </form>
 
-          <div className="farmer-panel p-5">
-            <h2 className="farmer-panel-title mb-4 text-xl">{t("submittedProducts")}</h2>
+          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+            <h2 className="font-semibold mb-4">{t("submittedProducts")}</h2>
             <div className="space-y-3 max-h-[720px] overflow-y-auto">
               {products.length === 0 ? (
                 <p className="text-sm text-[var(--huza-muted)]">{t("noProductsYet")}</p>
               ) : (
                 products.map((p) => (
-                  <div key={p.id} className="farmer-row">
+                  <div key={p.id} className="rounded-xl border border-[var(--huza-line)] p-3">
                     <div className="flex gap-3">
                       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--huza-mint)]">
                         {p.images?.[0]?.url ? (
@@ -581,18 +581,8 @@ export function FarmerPortalClient({
                             ? ` · ${t("qualityInGeneral")} ${t(qualityLabelKey[p.qualityGeneral] || p.qualityGeneral)}`
                             : ""}
                         </p>
-                        <p className="mt-1.5">
-                          <span
-                            className={
-                              (p.reviewStatus || "PENDING") === "APPROVED"
-                                ? "farmer-status farmer-status-ok"
-                                : (p.reviewStatus || "PENDING") === "REJECTED"
-                                  ? "farmer-status farmer-status-muted"
-                                  : "farmer-status farmer-status-warn"
-                            }
-                          >
-                            {t("review")}: {p.reviewStatus || "PENDING"}
-                          </span>
+                        <p className="text-[11px] mt-1 font-semibold text-[var(--huza-green-dark)]">
+                          {t("review")}: {p.reviewStatus || "PENDING"}
                         </p>
                         {p.reviewNote && (
                           <p className="text-[11px] text-[var(--huza-muted)]">
@@ -610,8 +600,8 @@ export function FarmerPortalClient({
       )}
 
       {tab === "inventory" && (
-        <div className="farmer-panel p-5">
-          <h2 className="farmer-panel-title mb-1 text-xl">{t("inventoryTab")}</h2>
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+          <h2 className="font-semibold mb-1">{t("inventoryTab")}</h2>
           <p className="text-xs text-[var(--huza-muted)] mb-4">{t("inventoryHint")}</p>
           {products.length === 0 ? (
             <p className="text-sm text-[var(--huza-muted)]">{t("submitProductsFirst")}</p>
@@ -620,7 +610,7 @@ export function FarmerPortalClient({
               {products.map((p) => (
                 <div
                   key={p.id}
-                  className="farmer-row flex flex-wrap items-end justify-between gap-3"
+                  className="rounded-xl border border-[var(--huza-line)] p-3 flex flex-wrap items-end justify-between gap-3"
                 >
                   <div>
                     <p className="font-medium">{p.nameEn}</p>

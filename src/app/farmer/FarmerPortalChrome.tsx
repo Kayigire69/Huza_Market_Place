@@ -38,27 +38,20 @@ export type FarmerPortalChromeProps =
   | ApplyProps
   | DashboardProps;
 
-function statusClass(status: string) {
-  if (status === "APPROVED") return "farmer-status farmer-status-ok";
-  if (status === "REJECTED") return "farmer-status farmer-status-muted";
-  return "farmer-status farmer-status-warn";
-}
-
 export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
   const { t } = useLocale();
 
   if (props.mode === "landing") {
     return (
-      <div className="mx-auto max-w-lg px-4 py-14 sm:py-16">
+      <div className="mx-auto max-w-lg px-4 py-16">
         <div className="text-center">
-          <p className="farmer-badge">{t("farmersPortalBadge")}</p>
-          <h1 className="farmer-panel-title mt-4 text-3xl sm:text-4xl">{t("farmerPortal")}</h1>
-          <p className="farmer-panel-sub mx-auto mt-2 max-w-md">
-            {t("farmersPortalSellBadge")}
+          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
+            {t("farmersPortalBadge")}
           </p>
+          <h1 className="section-title mt-3">{t("farmerPortal")}</h1>
         </div>
 
-        <div className="farmer-panel mt-8 space-y-3 p-6 sm:p-7">
+        <div className="mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white/95 p-6 shadow-sm backdrop-blur-sm">
           <Link href="/auth/login?callbackUrl=/farmer" className="block">
             <Button className="w-full" size="lg">
               {t("farmerLogin")}
@@ -76,10 +69,12 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
   if (props.mode === "register") {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+      <div className="mx-auto max-w-3xl px-4 py-16">
         <div className="text-center">
-          <p className="farmer-badge">{t("farmersPortalBadge")}</p>
-          <h1 className="farmer-panel-title mt-4 text-3xl">{t("farmerPortal")}</h1>
+          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
+            {t("farmersPortalBadge")}
+          </p>
+          <h1 className="section-title mt-3">{t("farmerPortal")}</h1>
           <p className="mt-3 text-sm">
             <Link
               href="/auth/login?callbackUrl=/farmer"
@@ -96,17 +91,15 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
   if (props.mode === "apply") {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16">
-        <div className="farmer-panel p-7 text-center sm:p-8">
-          <h1 className="farmer-panel-title text-2xl sm:text-3xl">{t("becomeVerifiedFarmer")}</h1>
-          <p className="farmer-panel-sub mt-3">{t("becomeVerifiedBody")}</p>
-          <Link
-            href="/farmer/register"
-            className="mt-6 inline-flex rounded-xl bg-[var(--huza-green)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(11,92,52,0.22)] hover:bg-[var(--huza-green-dark)]"
-          >
-            {t("apply")}
-          </Link>
-        </div>
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="section-title">{t("becomeVerifiedFarmer")}</h1>
+        <p className="mt-4 text-[var(--huza-muted)]">{t("becomeVerifiedBody")}</p>
+        <Link
+          href="/farmer/register"
+          className="mt-6 inline-block font-bold text-[var(--huza-green-dark)] underline decoration-[var(--huza-green)] underline-offset-4"
+        >
+          {t("apply")}
+        </Link>
       </div>
     );
   }
@@ -124,56 +117,49 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
   } = props;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <div className="farmer-panel mb-6 flex flex-wrap items-end justify-between gap-4 p-5 sm:p-6">
-        <div className="min-w-0">
-          <p className="farmer-badge">{t("farmersPortalSellBadge")}</p>
-          <h1 className="farmer-panel-title mt-3 text-2xl sm:text-3xl">{businessName}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[var(--huza-muted)]">
-            <span className={statusClass(status)}>
-              {t("status")}: {status}
-            </span>
-            {isVerified && <span className="farmer-status farmer-status-ok">{t("verified")}</span>}
-            <span>
-              {t("agentAssistedSelling")}
-              {farmingType === "STANDARD"
-                ? ` · ${t("standardFarmerPath")}`
-                : ` · ${t("organicFarmerPath")}`}
-            </span>
-          </div>
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/60 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
+        <div>
+          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
+            {t("farmersPortalSellBadge")}
+          </p>
+          <h1 className="section-title mt-1">{businessName}</h1>
+          <p className="text-sm text-[var(--huza-muted)] mt-1">
+            {t("status")}: {status}
+            {isVerified ? ` · ${t("verified")}` : ""} · {t("agentAssistedSelling")}
+            {farmingType === "STANDARD"
+              ? ` · ${t("standardFarmerPath")}`
+              : ` · ${t("organicFarmerPath")}`}
+          </p>
           {rejectionReason && (
-            <p className="mt-2 text-sm font-medium text-red-700">
+            <p className="text-sm text-red-700 mt-1">
               {t("reason")}: {rejectionReason}
             </p>
           )}
           {adminNotes && (
-            <p className="mt-1 text-sm text-[var(--huza-muted)]">
+            <p className="text-sm text-[var(--huza-muted)] mt-1">
               {t("adminNote")}: {adminNotes}
             </p>
           )}
           {inspectionScheduledAt && (
-            <p className="mt-1 text-sm text-[var(--huza-muted)]">
+            <p className="text-sm text-[var(--huza-muted)] mt-1">
               {t("agentVisitScheduled")}: {new Date(inspectionScheduledAt).toLocaleString()}
             </p>
           )}
         </div>
-        <div className="farmer-stat">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
-            {t("productsListed")}
-          </p>
-          <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-green-dark)]">
-            {listed}
-          </p>
+        <div className="rounded-xl bg-[var(--huza-mint)] px-4 py-3 text-sm">
+          <p className="text-[var(--huza-muted)]">{t("productsListed")}</p>
+          <p className="text-xl font-bold text-[var(--huza-green-dark)]">{listed}</p>
         </div>
       </div>
 
-      <div className="farmer-panel mb-6 p-4 text-sm text-[var(--huza-muted)] sm:px-5">
+      <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white/95 p-4 text-sm text-[var(--huza-muted)] backdrop-blur-sm">
         <strong className="text-[var(--huza-ink)]">{t("howItWorks")}</strong>{" "}
         {farmingType === "STANDARD" ? t("howItWorksStandardBody") : t("howItWorksBody")}
       </div>
 
       {status !== "APPROVED" && (
-        <div className="mb-6 rounded-xl border border-[var(--huza-gold)] bg-[#FFF8E6] px-4 py-3.5 text-sm shadow-sm">
+        <div className="mb-6 rounded-xl border border-[var(--huza-gold)] bg-[#FFF8E6] p-4 text-sm">
           {t("pendingApprovalBanner")}
         </div>
       )}

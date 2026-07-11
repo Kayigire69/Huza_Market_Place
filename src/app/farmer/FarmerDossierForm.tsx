@@ -138,7 +138,7 @@ export function FarmerDossierForm({
     <form onSubmit={onSubmit} className="space-y-8">
       {msg && <p className="text-sm text-[var(--huza-green-dark)]">{msg}</p>}
 
-      <section className="farmer-panel p-5 space-y-3">
+      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("farmerPersonalInfo")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
@@ -229,7 +229,7 @@ export function FarmerDossierForm({
         </div>
       </section>
 
-      <section className="farmer-panel p-5 space-y-3">
+      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("fieldInformation")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
@@ -300,7 +300,7 @@ export function FarmerDossierForm({
         </div>
       </section>
 
-      <section className="farmer-panel p-5 space-y-3">
+      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("productionInformation")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
@@ -332,7 +332,7 @@ export function FarmerDossierForm({
         </div>
       </section>
 
-      <section className="farmer-panel p-5 space-y-3">
+      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("sales")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
@@ -368,7 +368,7 @@ export function FarmerDossierForm({
         </div>
       </section>
 
-      <section className="farmer-panel p-5 space-y-3">
+      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("paymentOptions")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
@@ -437,7 +437,7 @@ export function FarmerDossierForm({
         </div>
       </section>
 
-      <section className="farmer-panel p-5 space-y-3">
+      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("comments")}</h2>
         <textarea
           name="farmerComments"
