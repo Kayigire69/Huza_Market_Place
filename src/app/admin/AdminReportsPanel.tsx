@@ -67,7 +67,8 @@ export function AdminReportsPanel({ snapshot }: { snapshot: Snapshot }) {
         <div>
           <h2 className="font-semibold">PDF activity reports</h2>
           <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            Generate downloadable PDF reports for operations activity. Each download is written to
+            Download branded Youth Huza / HUZA FRESH reports with period detail, prepared-by
+            (logged-in employee), and manager approval signature lines. Each download is written to
             the audit log.
           </p>
         </div>
