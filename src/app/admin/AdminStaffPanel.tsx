@@ -83,8 +83,8 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold">Staff accounts</h2>
+      <div className="admin-panel p-5 space-y-3">
+        <h2 className="admin-panel-title text-xl">Staff accounts</h2>
         <p className="text-sm text-[var(--huza-muted)]">
           Only the Super Admin manages employees. Normal Administrators never see this page, the
           audit log, or system settings. Never share one login across shifts.
@@ -132,7 +132,7 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
 
       <form
         onSubmit={onCreate}
-        className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 grid gap-3 sm:grid-cols-2"
+        className="admin-panel p-5 grid gap-3 sm:grid-cols-2"
       >
         <h3 className="sm:col-span-2 font-semibold">Add staff member</h3>
         <label className="text-sm space-y-1">

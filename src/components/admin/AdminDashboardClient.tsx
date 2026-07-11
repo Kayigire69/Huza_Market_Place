@@ -102,10 +102,8 @@ export function AdminDashboardClient({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-green-dark)] sm:text-3xl">
-            Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-[var(--huza-muted)]">
+          <h1 className="admin-panel-title text-2xl sm:text-3xl">Dashboard</h1>
+          <p className="admin-panel-sub">
             Live business data from real orders, stock, and farmers — updates every 15 seconds.
           </p>
         </div>
@@ -123,17 +121,19 @@ export function AdminDashboardClient({
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {cards.map((card) => (
-          <div key={card.label} className={`rounded-2xl border border-white/60 p-4 shadow-sm ${card.tone}`}>
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{card.label}</p>
-            <p className="mt-2 text-2xl font-bold">{card.value}</p>
+          <div key={card.label} className={`admin-kpi ${card.tone}`}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-80">{card.label}</p>
+            <p className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight">
+              {card.value}
+            </p>
           </div>
         ))}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 lg:col-span-2">
+        <div className="admin-panel p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold">Recent orders</h2>
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Recent orders</h2>
             <Link href="/admin/orders" className="text-sm font-semibold text-[var(--huza-green)]">
               View all →
             </Link>
@@ -143,10 +143,7 @@ export function AdminDashboardClient({
               <p className="text-sm text-[var(--huza-muted)]">No orders yet.</p>
             ) : (
               data.recentOrders.map((o) => (
-                <div
-                  key={o.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--huza-line)] px-3 py-3"
-                >
+                <div key={o.id} className="admin-row !py-3">
                   <div>
                     <p className="font-mono text-sm font-semibold text-[var(--huza-green-dark)]">
                       {o.orderNumber}
@@ -173,8 +170,8 @@ export function AdminDashboardClient({
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold">Alerts</h2>
+          <div className="admin-panel p-5">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Alerts</h2>
             <ul className="mt-3 space-y-2 text-sm">
               <li className="rounded-xl bg-red-50 px-3 py-2 text-red-800">
                 {c.pendingPayment} pending payment
@@ -191,8 +188,8 @@ export function AdminDashboardClient({
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold">Low stock</h2>
+          <div className="admin-panel p-5">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Low stock</h2>
             <ul className="mt-3 space-y-2 text-sm">
               {stockPreview.length === 0 ? (
                 <li className="text-[var(--huza-muted)]">Stock levels look healthy.</li>
@@ -215,8 +212,8 @@ export function AdminDashboardClient({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-          <h2 className="font-semibold">Orders last 7 days</h2>
+        <div className="admin-panel p-5">
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Orders last 7 days</h2>
           <div className="mt-4 flex h-40 items-end gap-2">
             {week.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No order data yet.</p>
@@ -244,8 +241,8 @@ export function AdminDashboardClient({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-          <h2 className="font-semibold">Sales by category</h2>
+        <div className="admin-panel p-5">
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Sales by category</h2>
           <div className="mt-3 space-y-2">
             {salesByCategory.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No paid sales yet.</p>
@@ -274,8 +271,8 @@ export function AdminDashboardClient({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-        <h2 className="font-semibold">Top products (by units sold)</h2>
+      <div className="admin-panel p-5">
+        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Top products (by units sold)</h2>
         <ol className="mt-3 space-y-2 text-sm">
           {topProducts.length === 0 ? (
             <li className="text-[var(--huza-muted)]">No product sales yet.</li>
@@ -299,8 +296,8 @@ export function AdminDashboardClient({
         </ol>
       </div>
 
-      <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-        <h2 className="mb-3 font-semibold">Quick actions</h2>
+      <div className="admin-panel p-5">
+        <h2 className="mb-3 font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Quick actions</h2>
         <div className="flex flex-wrap gap-2">
           {[
             ["/admin/products", "Manage products"],

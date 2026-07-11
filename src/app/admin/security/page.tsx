@@ -79,7 +79,7 @@ export default function AdminSecurityPage() {
 
   if (session?.user?.role !== "SUPER_ADMIN") {
     return (
-      <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6">
+      <div className="admin-panel p-6">
         <p className="text-sm text-[var(--huza-muted)]">Security settings are Super Admin only.</p>
       </div>
     );
@@ -88,16 +88,14 @@ export default function AdminSecurityPage() {
   return (
     <div className="space-y-4 max-w-xl">
       <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-green-dark)]">
-          Super Admin security
-        </h1>
-        <p className="mt-1 text-sm text-[var(--huza-muted)]">
+        <h1 className="admin-panel-title text-2xl">Super Admin security</h1>
+        <p className="admin-panel-sub">
           Enable two-factor authentication so a stolen password alone cannot access the most powerful
           account in the system.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+      <div className="admin-panel p-5 space-y-3">
         <p className="text-sm">
           Status:{" "}
           <strong className={totpEnabled ? "text-emerald-800" : "text-amber-800"}>
