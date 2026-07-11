@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isAdminPortalRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { SupplierStatus } from "@prisma/client";
 import { auditAdminAction } from "@/lib/audit";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") return null;
+  if (!session?.user || !isAdminPortalRole(session.user.role)) return null;
   return session;
 }
 

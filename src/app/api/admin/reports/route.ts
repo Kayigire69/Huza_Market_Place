@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isAdminPortalRole } from "@/lib/rbac";
 import { auditAdminAction } from "@/lib/audit";
 import {
   buildActivityReportPdf,
@@ -13,7 +14,7 @@ import { pdfResponse } from "@/lib/documents/pdf";
 /** List available report types */
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !isAdminPortalRole(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

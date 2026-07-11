@@ -18,9 +18,10 @@ const NAV = [
   { href: "/admin/payments", label: "Payments" },
   { href: "/admin/offers", label: "Offers" },
   { href: "/admin/reports", label: "Reports" },
-  { href: "/admin/staff", label: "Staff" },
-  { href: "/admin/audit", label: "Audit log" },
-  { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/staff", label: "Employee management", superOnly: true },
+  { href: "/admin/audit", label: "Audit logs", superOnly: true },
+  { href: "/admin/settings", label: "System settings", superOnly: true },
+  { href: "/admin/security", label: "Security (2FA)", superOnly: true },
 ];
 
 type LiveCounts = {
@@ -39,6 +40,9 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const role = session?.user?.role;
+  const isSuper = role === "SUPER_ADMIN";
+  const navItems = NAV.filter((item) => !item.superOnly || isSuper);
   const [open, setOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [notifications, setNotifications] = useState<
@@ -69,8 +73,9 @@ export function AdminShell({
     };
   }, []);
 
-  const unread = notifications.filter((n) => true).length;
   const name = adminName || session?.user?.name || "Admin";
+  const roleLabel = isSuper ? "Super Admin" : "Administrator";
+  const unread = notifications.length;
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
@@ -172,7 +177,7 @@ export function AdminShell({
 
             <div className="hidden sm:block text-right">
               <p className="text-sm font-semibold">{name}</p>
-              <p className="text-[10px] text-[var(--huza-muted)]">Administrator</p>
+              <p className="text-[10px] text-[var(--huza-muted)]">{roleLabel}</p>
             </div>
             <button
               type="button"
@@ -192,7 +197,7 @@ export function AdminShell({
           } fixed inset-y-0 left-0 z-30 w-64 border-r border-[var(--huza-line)] bg-white pt-16 transition lg:static lg:translate-x-0 lg:pt-0`}
         >
           <nav className="flex h-full flex-col gap-1 p-4">
-            {NAV.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

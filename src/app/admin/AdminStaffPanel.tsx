@@ -46,6 +46,7 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
           phone: form.get("phone"),
           role: form.get("role"),
           password: form.get("password"),
+          promoteSuperAdmin: form.get("promoteSuperAdmin") === "1",
         }),
       });
       const data = await res.json();
@@ -85,8 +86,8 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
       <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold">Staff accounts</h2>
         <p className="text-sm text-[var(--huza-muted)]">
-          Every employee who works the admin portal must have a personal login. Never share one
-          username/password across shifts — the audit log records who did each action.
+          Only the Super Admin manages employees. Normal Administrators never see this page, the
+          audit log, or system settings. Never share one login across shifts.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -164,8 +165,15 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
             required
             minLength={8}
             className="input-field"
-            placeholder="At least 8 characters"
+            placeholder="At least 8 characters — they must change it on first login"
           />
+        </label>
+        <label className="text-sm space-y-1 sm:col-span-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+          <input name="promoteSuperAdmin" type="checkbox" className="mt-1" value="1" />
+          <span>
+            <strong>Promote to Super Admin</strong> (deliberate). Only use for a trusted director.
+            Prefer one or two Super Admins total.
+          </span>
         </label>
         <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={busy}>

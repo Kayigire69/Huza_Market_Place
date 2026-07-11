@@ -21,6 +21,7 @@ async function main() {
   await prisma.contactMessage.deleteMany();
   await prisma.faqItem.deleteMany();
   await prisma.auditLog.deleteMany();
+  await prisma.passwordResetToken.deleteMany();
   await prisma.orderStatusLog.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.delivery.deleteMany();
@@ -49,8 +50,23 @@ async function main() {
   await prisma.user.deleteMany();
 
   const password = await bcrypt.hash("password123", 10);
+  const ownerPassword = await bcrypt.hash("Huza@2026!", 10);
 
-  // Each shift admin must use a personal login — never share credentials.
+  // Primary Super Admin — created at system setup (not via the public website).
+  // Owner must change this temporary password on first login.
+  await prisma.user.create({
+    data: {
+      email: "owner@huza.rw",
+      phone: "0780000000",
+      passwordHash: ownerPassword,
+      fullName: "YOUTH HUZA Owner",
+      role: Role.SUPER_ADMIN,
+      mustChangePassword: true,
+      isPrimarySuperAdmin: true,
+    },
+  });
+
+  // Day-to-day shift admins — cannot see Staff / Audit / System Settings
   const alice = await prisma.user.create({
     data: {
       email: "alice@huza.rw",
@@ -71,17 +87,6 @@ async function main() {
     },
   });
 
-  // Legacy alias kept for existing docs — still a distinct personal account
-  await prisma.user.create({
-    data: {
-      email: "admin@youthhuza.rw",
-      phone: "0780000099",
-      passwordHash: password,
-      fullName: "Huza Ops Lead",
-      role: Role.ADMIN,
-    },
-  });
-
   await prisma.auditLog.createMany({
     data: [
       {
@@ -91,7 +96,7 @@ async function main() {
         action: "seed.admin_ready",
         entity: "User",
         entityId: alice.id,
-        details: "Alice admin account ready for Monday–Wednesday shifts",
+        details: "Alice ADMIN account for operational shifts (no Staff/Audit/Settings access)",
         ipAddress: "seed",
       },
       {
@@ -101,7 +106,7 @@ async function main() {
         action: "seed.admin_ready",
         entity: "User",
         entityId: john.id,
-        details: "John admin account ready for Thursday–Sunday shifts",
+        details: "John ADMIN account for operational shifts (no Staff/Audit/Settings access)",
         ipAddress: "seed",
       },
     ],
@@ -790,10 +795,11 @@ async function main() {
   await prisma.orderSequence.create({ data: { year: new Date().getFullYear(), lastValue: 245 } });
 
   console.log("Seed complete.");
-  console.log("Admins (personal accounts — do not share):");
+  console.log("Super Admin (setup — change password on first login):");
+  console.log("  owner@huza.rw / Huza@2026!");
+  console.log("Shift Admins (cannot see Staff / Audit / Settings):");
   console.log("  alice@huza.rw / password123");
   console.log("  john@huza.rw / password123");
-  console.log("  admin@youthhuza.rw / password123");
   console.log("Customer: customer@example.com / password123");
   console.log("Supplier: greenvalley@farm.rw / password123");
 }

@@ -11,6 +11,7 @@ enum Role {
   CUSTOMER
   SUPPLIER
   ADMIN
+  SUPER_ADMIN
   DELIVERY
   WAREHOUSE
   PROCUREMENT
@@ -166,6 +167,14 @@ model User {
   referralCode  String?   @unique
   referredBy    String?
   isActive      Boolean   @default(true)
+  /// Force password change on next login (temporary passwords / Super Admin setup)
+  mustChangePassword Boolean @default(false)
+  passwordChangedAt   DateTime?
+  /// TOTP 2FA (strongly recommended for SUPER_ADMIN)
+  totpSecret         String?
+  totpEnabled        Boolean  @default(false)
+  /// Primary owner Super Admin cannot be deleted
+  isPrimarySuperAdmin Boolean @default(false)
   deletedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -179,6 +188,20 @@ model User {
   deliveries    Delivery[] @relation("DeliveryPerson")
   supportTickets SupportTicket[]
   reviewReplies Review[] @relation("ReviewReplies")
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Address {

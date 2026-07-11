@@ -5,15 +5,22 @@ import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { setSetting } from "@/services/settings.service";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { canEditSystemSettings, isAdminPortalRole } from "@/lib/rbac";
 
-async function requireAdmin() {
+async function requirePortalAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") return null;
+  if (!session?.user || !isAdminPortalRole(session.user.role)) return null;
+  return session;
+}
+
+async function requireSuperAdmin() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !canEditSystemSettings(session.user.role)) return null;
   return session;
 }
 
 export async function GET() {
-  const session = await requireAdmin();
+  const session = await requirePortalAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [settings, zones, stockHistory, banners] = await Promise.all([
@@ -31,8 +38,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireSuperAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
 
   const rl = await rateLimit({
     key: `admin-settings:${clientIp(req)}`,
