@@ -3,19 +3,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useLocale } from "@/lib/locale-context";
-import { DemoCredentials } from "@/components/portals/DemoCredentials";
 import { Button } from "@/components/ui/Button";
-
-type DemoCredential = {
-  label: string;
-  email: string;
-  password: string;
-  note: string;
-};
 
 type LandingProps = {
   mode: "landing";
-  demoCredentials?: DemoCredential[];
   children?: ReactNode;
 };
 
@@ -58,10 +49,9 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
             {t("farmersPortalBadge")}
           </p>
           <h1 className="section-title mt-2">{t("farmerPortal")}</h1>
-          <p className="mt-4 text-[var(--huza-muted)] leading-relaxed">{t("farmerLoginWallBody")}</p>
         </div>
 
-        <div className="mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
+        <div className="mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white/95 p-6 shadow-sm backdrop-blur-sm">
           <Link href="/auth/login?callbackUrl=/farmer" className="block">
             <Button className="w-full" size="lg">
               {t("farmerLogin")}
@@ -72,12 +62,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
               {t("newFarmerApplication")}
             </Button>
           </Link>
-          <p className="text-center text-xs text-[var(--huza-muted)]">{t("farmerPortalPrivateHint")}</p>
         </div>
-
-        {props.demoCredentials && (
-          <DemoCredentials title={t("demoFarmerLogins")} credentials={props.demoCredentials} />
-        )}
       </div>
     );
   }
@@ -90,9 +75,6 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
             {t("farmersPortalBadge")}
           </p>
           <h1 className="section-title mt-2">{t("farmerPortal")}</h1>
-          <p className="mt-4 text-[var(--huza-muted)] leading-relaxed max-w-2xl mx-auto">
-            {t("farmerLandingBody")}
-          </p>
           <p className="mt-3 text-sm">
             <Link href="/auth/login?callbackUrl=/farmer" className="font-semibold text-[var(--huza-green)]">
               {t("farmerLogin")}
@@ -133,7 +115,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/60 bg-white/85 p-5 shadow-sm backdrop-blur-sm">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/60 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--huza-green)]">
             {t("farmersPortalSellBadge")}
@@ -168,7 +150,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white/90 p-4 text-sm text-[var(--huza-muted)] backdrop-blur-sm">
+      <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white/95 p-4 text-sm text-[var(--huza-muted)] backdrop-blur-sm">
         <strong className="text-[var(--huza-ink)]">{t("howItWorks")}</strong>{" "}
         {farmingType === "STANDARD" ? t("howItWorksStandardBody") : t("howItWorksBody")}
       </div>

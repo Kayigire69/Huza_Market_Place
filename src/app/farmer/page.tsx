@@ -7,21 +7,6 @@ import { FarmerPortalChrome } from "./FarmerPortalChrome";
 
 export const dynamic = "force-dynamic";
 
-const FARMER_DEMO = [
-  {
-    label: "Approved farmer — Green Valley Farm",
-    email: "greenvalley@farm.rw",
-    password: "password123",
-    note: "List products with photos, manage inventory & profile",
-  },
-  {
-    label: "Pending farmer — Sunrise Honey Co-op",
-    email: "newfarm@example.rw",
-    password: "password123",
-    note: "Waiting for admin / agent approval",
-  },
-];
-
 /**
  * Partner-only entry. Not linked from the customer storefront.
  * Guests see a login wall; registration is at /farmer/register (unlisted).
@@ -30,7 +15,7 @@ export default async function FarmerPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return <FarmerPortalChrome mode="landing" demoCredentials={FARMER_DEMO} />;
+    return <FarmerPortalChrome mode="landing" />;
   }
 
   if (session.user.role !== "SUPPLIER" && session.user.role !== "ADMIN") {

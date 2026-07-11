@@ -10,6 +10,7 @@ const CROP_BACKGROUNDS = [
   "/images/hero/hero-crops.png",
   "/images/hero/hero-greenhouse.png",
   "/images/hero/hero-goods.png",
+  "/images/hero/hero-shoppers.png",
 ];
 
 /**
@@ -21,17 +22,27 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="farmer-portal relative min-h-screen overflow-hidden">
-      {/* Soft crop atmosphere — different images, low opacity so forms stay readable */}
+      {/* Clear crop atmosphere — readable farm imagery behind the workspace */}
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-        <div className="absolute inset-0 farmer-portal-wash" />
-        <div className="absolute -right-8 top-24 h-64 w-64 overflow-hidden rounded-full opacity-[0.22] sm:h-80 sm:w-80">
-          <Image src={CROP_BACKGROUNDS[0]} alt="" fill className="object-cover" sizes="320px" />
+        <div className="absolute inset-0">
+          <Image
+            src={CROP_BACKGROUNDS[0]}
+            alt=""
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            priority
+          />
         </div>
-        <div className="absolute -left-10 bottom-40 h-72 w-72 overflow-hidden rounded-[2rem] opacity-[0.18] sm:h-96 sm:w-96">
+        <div className="absolute inset-0 farmer-portal-wash" />
+        <div className="absolute -right-4 top-20 h-72 w-72 overflow-hidden rounded-full border-4 border-white/40 shadow-lg opacity-90 sm:h-96 sm:w-96">
           <Image src={CROP_BACKGROUNDS[1]} alt="" fill className="object-cover" sizes="384px" />
         </div>
-        <div className="absolute right-[12%] bottom-8 hidden h-48 w-72 overflow-hidden rounded-3xl opacity-[0.16] lg:block">
-          <Image src={CROP_BACKGROUNDS[2]} alt="" fill className="object-cover" sizes="288px" />
+        <div className="absolute -left-6 bottom-28 h-80 w-80 overflow-hidden rounded-[2rem] border-4 border-white/40 shadow-lg opacity-90 sm:h-[26rem] sm:w-[26rem]">
+          <Image src={CROP_BACKGROUNDS[2]} alt="" fill className="object-cover" sizes="416px" />
+        </div>
+        <div className="absolute right-[10%] bottom-6 hidden h-56 w-80 overflow-hidden rounded-3xl border-4 border-white/40 shadow-lg opacity-90 lg:block">
+          <Image src={CROP_BACKGROUNDS[3]} alt="" fill className="object-cover" sizes="320px" />
         </div>
       </div>
 
@@ -97,11 +108,10 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
 
       <div className="relative z-10">{children}</div>
 
-      <footer className="relative z-10 mt-16 border-t border-[var(--huza-line)]/70 bg-white/80 py-6 text-center text-xs text-[var(--huza-muted)] backdrop-blur-sm">
+      <footer className="relative z-10 mt-16 border-t border-[var(--huza-line)]/70 bg-white/85 py-6 text-center text-xs text-[var(--huza-muted)] backdrop-blur-sm">
         <p>
-          © {new Date().getFullYear()} Youth Huza · {t("farmerPortal")} — partner entry only
+          © {new Date().getFullYear()} Youth Huza · {t("farmerPortal")}
         </p>
-        <p className="mt-1">{t("farmerPortalPrivateHint")}</p>
       </footer>
     </div>
   );
