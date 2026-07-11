@@ -7,7 +7,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 import { portalPathForRole } from "@/lib/auth-redirect";
-import { DemoCredentials } from "@/components/portals/DemoCredentials";
 
 export default function LoginForm() {
   const { t } = useLocale();
@@ -119,30 +118,6 @@ export default function LoginForm() {
         <Link href="/" className="hover:underline">
           Customer shop
         </Link>
-      </p>
-      <DemoCredentials
-        title="Demo logins"
-        credentials={[
-          {
-            label: "Customer shop",
-            email: "customer@example.com",
-            password: "password123",
-          },
-          {
-            label: "Shift Admin Alice (no Staff/Audit/Settings)",
-            email: "alice@huza.rw",
-            password: "password123",
-          },
-          {
-            label: "Shift Admin John (no Staff/Audit/Settings)",
-            email: "john@huza.rw",
-            password: "password123",
-          },
-        ]}
-      />
-      <p className="mt-3 text-center text-[11px] text-[var(--huza-muted)]">
-        Super Admin is created at system setup and is not listed here. Use the credentials given to
-        the owner, then change the temporary password on first login.
       </p>
     </div>
   );
