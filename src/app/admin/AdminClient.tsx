@@ -212,10 +212,6 @@ export function AdminClient(props: {
     refresh();
   };
 
-  const createPromo = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-  };
-
   const setEmergency = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);

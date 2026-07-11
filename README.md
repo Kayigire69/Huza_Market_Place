@@ -1,6 +1,6 @@
 # HUZA FRESH by Youth Huza
 
-Farm-fresh marketplace for Rwanda — fruits, vegetables, dairy, meat, and more — with **direct delivery by Youth Huza (no middlemen)**.
+**HUZA FRESH** is Youth Huza’s farm-fresh store for Rwanda — fruits, vegetables, dairy, meat, and more — with **direct delivery by Youth Huza (no middlemen)**.
 
 Inspired by the clean ordering experience of [KFC Rwanda](https://www.kfc.rw/): bold brand hero, featured offers, category browsing, product cards with RWF pricing, and a clear path to cart/checkout.
 
@@ -75,7 +75,7 @@ Do **not** run `npm install` in an empty Desktop folder. Clone the GitHub repo f
 cd %USERPROFILE%\Desktop
 git clone https://github.com/Kayigire69/Huza_Market_Place.git
 cd Huza_Market_Place
-git checkout cursor/huza-marketplace-platform-5604
+git checkout cursor/home-gallery-delivery-eta-5604
 ```
 
 If you already created an empty `HUZA FRESH` folder, delete it or clone into a new folder name.
@@ -86,7 +86,7 @@ If you already created an empty `HUZA FRESH` folder, delete it or clone into a n
 cd ~/Desktop
 git clone https://github.com/Kayigire69/Huza_Market_Place.git
 cd Huza_Market_Place
-git checkout cursor/huza-marketplace-platform-5604
+git checkout cursor/home-gallery-delivery-eta-5604
 ```
 
 Confirm you see `package.json` in the folder before continuing.
