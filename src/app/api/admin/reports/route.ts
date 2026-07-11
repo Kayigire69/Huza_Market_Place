@@ -33,13 +33,17 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unknown report type" }, { status: 400 });
   }
 
-  const { buffer, filename } = await buildActivityReportPdf(type, from, to);
+  const { buffer, filename } = await buildActivityReportPdf(type, from, to, {
+    name: session.user.name || "Huza staff",
+    email: session.user.email || "ops@huza.rw",
+    role: session.user.role || "STAFF",
+  });
 
   await auditAdminAction(req, session, {
-      action: "report.generate",
+    action: "report.generate",
     entity: "Report",
     entityId: type,
-    details: `PDF ${REPORT_LABELS[type]} (${from || "default"} → ${to || "now"})`,
+    details: `PDF ${REPORT_LABELS[type]} (${from || "default"} → ${to || "now"}) prepared by ${session.user.email}`,
   });
 
   return pdfResponse(buffer, filename);
