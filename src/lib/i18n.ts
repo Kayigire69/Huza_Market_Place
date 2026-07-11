@@ -23,7 +23,7 @@ const en: Dict = {
   company: "Youth Huza",
   tagline: "Farm-fresh food sold and delivered by Youth Huza.",
   heroCta: "Start shopping",
-  heroSecondary: "Farmers Portal",
+  heroSecondary: "Shop fresh",
   searchPlaceholder: "Search fruits, vegetables, dairy...",
   cart: "Cart",
   categories: "Categories",
@@ -227,11 +227,51 @@ const en: Dict = {
   farmerInformation: "Farmer information",
   productsAndPhotos: "Products & photos",
   inventoryTab: "Inventory",
-  farmersPortalBadge: "Farmers Portal · Separate from customer shop",
+  farmersPortalBadge: "Farmers Portal · Private partner entry",
+  farmerLoginWallBody:
+    "This portal is for Youth Huza farm partners only. It is not part of the customer shop. Sign in with the credentials Huza shared with you, or submit a new application.",
+  farmerPortalPrivateHint:
+    "Customers never see this portal in the public menu. Farm identities stay internal to Huza.",
+  newFarmerApplication: "New farmer application",
+  selectFarmingType: "Choose your farmer type to continue",
+  farmingTypeChooserHint:
+    "Same portal — two paths. Organic farms complete the full dossier. Other farms use a short application with ID, products, and the Huza purchase agreement.",
+  organicFarmerPath: "Organic products",
+  organicFarmerPathHint:
+    "Full registration: farm details, documents, organic certification, then the complete farmer dossier after login.",
+  standardFarmerPath: "Other crops (non-organic)",
+  standardFarmerPathHint:
+    "Shorter registration: your name, national ID, products you offer, and how Huza will buy from you.",
+  standardRegistrationHint:
+    "Only your identity, products, and the purchase agreement with Huza. No full organic dossier.",
+  changeFarmingType: "Change type",
+  productsOfferedLabel: "Products / crops you offer to Huza",
+  productsOfferedPlaceholder: "e.g. Tomatoes, cabbage, Irish potatoes — quantities if known",
+  huzaPurchaseAgreementLabel: "Agreement: how Huza will buy from you",
+  huzaPurchaseAgreementPlaceholder:
+    "e.g. Huza agents visit weekly, agree farm-gate price, collect produce, pay via MoMo within 48 hours…",
+  huzaPurchaseAgreementHint:
+    "Describe the buying arrangement you accept with Youth Huza (price basis, pickup, payment timing).",
+  agreeHuzaBuyTerms:
+    "I agree that Youth Huza buys from me under the arrangement described above, and that customers buy only from HUZA FRESH — not from me directly.",
+  optional: "optional",
+  huzaAgreementTab: "Huza agreement",
+  standardAgreementIntro:
+    "Your short partner profile on file with Youth Huza. Customers never see your name on the shop.",
+  huzaTermsAccepted: "Huza purchase terms accepted at registration.",
+  huzaTermsPending: "Purchase terms not marked yet — contact Huza staff.",
+  standardAgreementEditHint:
+    "To update this agreement, contact your Huza agent or support. Product listings are submitted under Products.",
+  howItWorksStandardBody:
+    "Submit products with photos → Huza reviews and buys → stock is listed on HUZA FRESH under Youth Huza (your farm name stays private).",
+  submitProductHintStandard:
+    "List the crop/product and photos. No organic dossier fields — Huza reviews before buying.",
+  standardProductNotOrganicNote:
+    "This account is for non-organic crops. Products are submitted without an organic badge.",
+  farmerLogin: "Farmer login",
   farmersPortalSellBadge: "Farmers Portal · Sell to Youth Huza",
   farmerLandingBody: "Register your farm so Youth Huza can buy your produce for HUZA FRESH. Huza field agents visit farms to help you register and list products with photos. Huza does not place online purchase orders here — agents work with you on the ground. Customers shop only on the storefront.",
   customerStorefront: "← Customer storefront",
-  farmerLogin: "Farmer login",
   demoFarmerLogins: "Demo farmer logins",
   becomeVerifiedFarmer: "Become a verified farmer",
   becomeVerifiedBody: "Register so a Huza agent can help verify your farm and list your produce.",

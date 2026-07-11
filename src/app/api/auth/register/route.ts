@@ -10,6 +10,7 @@ const schema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   password: z.string().min(6),
   role: z.enum(["CUSTOMER", "SUPPLIER"]).default("CUSTOMER"),
+  farmingType: z.enum(["ORGANIC", "STANDARD"]).optional(),
   businessName: z.string().optional(),
   location: z.string().optional(),
   district: z.string().optional(),
@@ -21,6 +22,9 @@ const schema = z.object({
   farmSize: z.string().optional(),
   productionCapacity: z.string().optional(),
   productCategories: z.string().optional(),
+  productsOffered: z.string().optional(),
+  huzaPurchaseAgreement: z.string().optional(),
+  agreedToHuzaTerms: z.boolean().optional(),
   paymentMomo: z.string().optional(),
   bankAccount: z.string().optional(),
   bankName: z.string().optional(),
@@ -59,6 +63,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Phone or email already registered" }, { status: 400 });
     }
 
+    if (data.role === "SUPPLIER") {
+      if (!data.nationalId || data.nationalId.trim().length < 5) {
+        return NextResponse.json({ error: "National ID is required for farmers" }, { status: 400 });
+      }
+      if (!data.agreedToHuzaTerms) {
+        return NextResponse.json(
+          { error: "You must agree to how Huza will buy from you" },
+          { status: 400 }
+        );
+      }
+      const farmingType = data.farmingType || "ORGANIC";
+      if (farmingType === "STANDARD") {
+        if (!data.productsOffered || data.productsOffered.trim().length < 3) {
+          return NextResponse.json({ error: "List the products you offer to Huza" }, { status: 400 });
+        }
+        if (!data.huzaPurchaseAgreement || data.huzaPurchaseAgreement.trim().length < 10) {
+          return NextResponse.json(
+            { error: "Describe the purchase agreement with Huza" },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    const farmingType = data.farmingType || "ORGANIC";
     const passwordHash = await bcrypt.hash(data.password, 10);
     const user = await prisma.user.create({
       data: {
@@ -83,7 +112,13 @@ export async function POST(req: Request) {
                   tin: data.tin || null,
                   farmSize: data.farmSize || null,
                   productionCapacity: data.productionCapacity || null,
-                  productCategories: data.productCategories || null,
+                  productCategories:
+                    data.productCategories || data.productsOffered || null,
+                  productsOffered: data.productsOffered || null,
+                  huzaPurchaseAgreement: data.huzaPurchaseAgreement || null,
+                  farmingType,
+                  agreedToHuzaTerms: Boolean(data.agreedToHuzaTerms),
+                  agreedToHuzaTermsAt: data.agreedToHuzaTerms ? new Date() : null,
                   paymentMomo: data.paymentMomo || null,
                   bankAccount: data.bankAccount || null,
                   bankName: data.bankName || null,
@@ -104,7 +139,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ id: user.id });
+    return NextResponse.json({ id: user.id, farmingType });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Registration failed" }, { status: 400 });

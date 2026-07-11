@@ -46,7 +46,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const [products, categories] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: { images: true, supplier: true, category: true },
+      include: { images: true, supplier: { select: { id: true } }, category: true },
       orderBy: [{ isFeatured: "desc" }, { ratingAvg: "desc" }],
     }),
     prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),

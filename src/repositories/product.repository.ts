@@ -124,7 +124,7 @@ export const productRepository = {
   async findHomeLists(take = 16) {
     const include = {
       images: { orderBy: { sortOrder: "asc" as const } },
-      supplier: true,
+      supplier: { select: { id: true } },
       category: true,
     };
     // Include zero-stock items — storefront shows a 6–12h arrival window instead of hiding them

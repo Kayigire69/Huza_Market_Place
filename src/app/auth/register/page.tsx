@@ -74,13 +74,6 @@ export default function RegisterPage() {
           {t("login")}
         </Link>
       </p>
-      <p className="mt-6 text-center text-xs text-[var(--huza-muted)]">
-        Are you a farmer? Use the{" "}
-        <Link href="/farmer" className="font-semibold text-[var(--huza-green)]">
-          Farmers Portal
-        </Link>{" "}
-        to register and sell produce to Youth Huza.
-      </p>
     </div>
   );
 }

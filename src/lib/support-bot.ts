@@ -193,10 +193,10 @@ const replies: Record<string, Record<Locale, string>> = {
 
   // 9 Farmers
   farmer: {
-    en: "Farmers sell to Youth Huza via the Farmers Portal (/farmer). Field agents visit farms to help register and review products with photos. Customers only buy from HUZA FRESH — not from farms by name.",
-    fr: "Les agriculteurs vendent à Youth Huza via le Portail agriculteurs (/farmer). Des agents visitent les fermes. Les clients achètent uniquement sur HUZA FRESH.",
-    rw: "Abahinzi bagurisha kuri Youth Huza binyuze kuri Farmers Portal (/farmer). Abakozi basura abahinzi. Abakiriya bagura gusa kuri HUZA FRESH.",
-    sw: "Wakulima wanauza kwa Youth Huza kupitia Tovuti ya Wakulima (/farmer). Mawakala hutembelea mashamba. Wateja hununua tu kutoka HUZA FRESH.",
+    en: "Verified farmers partner with Youth Huza through a private Farmers Portal (shared by Huza staff — not listed on the customer shop). Field agents help with registration and product photos. Customers only buy from HUZA FRESH — farm names stay internal.",
+    fr: "Les agriculteurs vérifiés travaillent avec Youth Huza via un portail privé (partagé par le personnel Huza — pas sur la boutique client). Les clients achètent uniquement sur HUZA FRESH.",
+    rw: "Abahinzi bemewe bakorana na Youth Huza binyuze ku rubuga rwihariye (ruhabwa n'abakozi ba Huza — ntiruboneka ku iduka ry'abakiriya). Abakiriya bagura gusa kuri HUZA FRESH.",
+    sw: "Wakulima walioidhinishwa hushirikiana na Youth Huza kupitia tovuti ya faragha (inayotolewa na wafanyakazi wa Huza — haionyeshwi kwenye duka la wateja). Wateja hununua tu kutoka HUZA FRESH.",
   },
 
   // 10 Contact / about / language

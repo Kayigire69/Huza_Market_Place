@@ -54,11 +54,15 @@ type Farmer = FarmerDossierValues & {
   nationalId: string | null;
   farmSize: string | null;
   status: string;
+  farmingType?: string | null;
+  productsOffered?: string | null;
+  huzaPurchaseAgreement?: string | null;
+  agreedToHuzaTerms?: boolean;
   products?: ProductRow[];
   user?: { fullName?: string } | null;
 };
 
-type Tab = "dossier" | "products" | "inventory";
+type Tab = "dossier" | "agreement" | "products" | "inventory";
 
 async function uploadPhotos(files: FileList | File[]): Promise<string[]> {
   const list = Array.from(files);
@@ -91,17 +95,24 @@ export function FarmerPortalClient({
 }) {
   const { t } = useLocale();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("dossier");
+  const isOrganicFarmer = farmer.farmingType !== "STANDARD";
+  const [tab, setTab] = useState<Tab>(isOrganicFarmer ? "dossier" : "agreement");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [products, setProducts] = useState<ProductRow[]>(farmer.products || []);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
 
-  const TABS: { key: Tab; label: string }[] = [
-    { key: "dossier", label: t("farmerInformation") },
-    { key: "products", label: t("productsAndPhotos") },
-    { key: "inventory", label: t("inventoryTab") },
-  ];
+  const TABS: { key: Tab; label: string }[] = isOrganicFarmer
+    ? [
+        { key: "dossier", label: t("farmerInformation") },
+        { key: "products", label: t("productsAndPhotos") },
+        { key: "inventory", label: t("inventoryTab") },
+      ]
+    : [
+        { key: "agreement", label: t("huzaAgreementTab") },
+        { key: "products", label: t("productsAndPhotos") },
+        { key: "inventory", label: t("inventoryTab") },
+      ];
 
   const refresh = () => router.refresh();
   const approved = farmer.status === "APPROVED";
@@ -150,7 +161,7 @@ export function FarmerPortalClient({
           ...payload,
           price: Number(payload.pricePerUnit || payload.price || 0),
           stockQty: Number(payload.stockQty || payload.totalQuantityHarvested || 0),
-          isOrganic: form.get("isOrganic") === "on",
+          isOrganic: isOrganicFarmer && form.get("isOrganic") === "on",
           originDistrict: payload.originDistrict || farmer.district,
           imageUrls,
           proofOfPaymentUrl,
@@ -221,10 +232,49 @@ export function FarmerPortalClient({
       </div>
       {msg && <p className="mb-4 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
 
-      {tab === "dossier" && (
+      {tab === "dossier" && isOrganicFarmer && (
         <div>
           <p className="mb-4 text-sm text-[var(--huza-muted)]">{t("dossierIntro")}</p>
           <FarmerDossierForm initial={dossierInitial} onSaved={refresh} />
+        </div>
+      )}
+
+      {tab === "agreement" && !isOrganicFarmer && (
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 space-y-4 max-w-2xl">
+          <h2 className="font-semibold text-lg">{t("huzaAgreementTab")}</h2>
+          <p className="text-sm text-[var(--huza-muted)]">{t("standardAgreementIntro")}</p>
+          <div className="grid sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("fullNameContact")}</p>
+              <p className="font-medium">{farmer.user?.fullName || farmer.businessName}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("nationalIdOrReg")}</p>
+              <p className="font-medium">{farmer.nationalId || "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("phone")}</p>
+              <p className="font-medium">{farmer.phone}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("farmBusinessName")}</p>
+              <p className="font-medium">{farmer.businessName}</p>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("productsOfferedLabel")}</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm">{farmer.productsOffered || "—"}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">
+              {t("huzaPurchaseAgreementLabel")}
+            </p>
+            <p className="mt-1 whitespace-pre-wrap text-sm">{farmer.huzaPurchaseAgreement || "—"}</p>
+          </div>
+          <p className="text-xs text-[var(--huza-green-dark)] font-medium">
+            {farmer.agreedToHuzaTerms ? t("huzaTermsAccepted") : t("huzaTermsPending")}
+          </p>
+          <p className="text-xs text-[var(--huza-muted)]">{t("standardAgreementEditHint")}</p>
         </div>
       )}
 
@@ -235,7 +285,9 @@ export function FarmerPortalClient({
             className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4"
           >
             <h2 className="font-semibold">{t("submitProductTitle")}</h2>
-            <p className="text-xs text-[var(--huza-muted)]">{t("submitProductHint")}</p>
+            <p className="text-xs text-[var(--huza-muted)]">
+              {isOrganicFarmer ? t("submitProductHint") : t("submitProductHintStandard")}
+            </p>
 
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">{t("productsAndPhotos")}</h3>
@@ -281,76 +333,78 @@ export function FarmerPortalClient({
               )}
             </div>
 
-            <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">{t("fieldInformation")}</h3>
-              <select name="fieldType" className="input-field" defaultValue={farmer.fieldType || ""} required>
-                <option value="">{t("greenhouseOrOpen")}</option>
-                {FIELD_TYPES.map((f) => (
-                  <option key={f} value={f}>
-                    {t(fieldTypeLabelKey[f])}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="fieldSize"
-                className="input-field"
-                placeholder={t("size")}
-                defaultValue={farmer.farmSize || ""}
-                required
-              />
-              <input
-                name="pastCropsSeason1"
-                className="input-field"
-                placeholder={t("pastCrops1")}
-                defaultValue={farmer.pastCropsSeason1 || ""}
-              />
-              <input
-                name="pastCropsSeason2"
-                className="input-field"
-                placeholder={t("pastCrops2")}
-                defaultValue={farmer.pastCropsSeason2 || ""}
-              />
-              <input
-                name="pastCropsSeason3"
-                className="input-field"
-                placeholder={t("pastCrops3")}
-                defaultValue={farmer.pastCropsSeason3 || ""}
-              />
-              <input
-                name="currentCrop"
-                className="input-field"
-                placeholder={t("currentCrop")}
-                defaultValue={farmer.currentCrop || ""}
-                required
-              />
-              <input
-                name="chemicalsPerWeek"
-                className="input-field"
-                placeholder={t("chemicalsPerWeek")}
-              />
-              <input name="chemicalsWhy" className="input-field" placeholder={t("chemicalsWhy")} />
-              <input name="chemicalsDosage" className="input-field" placeholder={t("dosage")} />
-              <input
-                name="fertilizerPerWeek"
-                className="input-field"
-                placeholder={t("fertilizerPerWeek")}
-              />
-              <input
-                name="irrigationMethod"
-                className="input-field"
-                placeholder={t("irrigationMethod")}
-              />
-              <input
-                name="diseasesIdentified"
-                className="input-field"
-                placeholder={t("diseasesIdentified")}
-              />
-              <input
-                name="pestsIdentified"
-                className="input-field"
-                placeholder={t("pestsIdentified")}
-              />
-            </div>
+            {isOrganicFarmer && (
+              <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
+                <h3 className="text-sm font-semibold">{t("fieldInformation")}</h3>
+                <select name="fieldType" className="input-field" defaultValue={farmer.fieldType || ""} required>
+                  <option value="">{t("greenhouseOrOpen")}</option>
+                  {FIELD_TYPES.map((f) => (
+                    <option key={f} value={f}>
+                      {t(fieldTypeLabelKey[f])}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="fieldSize"
+                  className="input-field"
+                  placeholder={t("size")}
+                  defaultValue={farmer.farmSize || ""}
+                  required
+                />
+                <input
+                  name="pastCropsSeason1"
+                  className="input-field"
+                  placeholder={t("pastCrops1")}
+                  defaultValue={farmer.pastCropsSeason1 || ""}
+                />
+                <input
+                  name="pastCropsSeason2"
+                  className="input-field"
+                  placeholder={t("pastCrops2")}
+                  defaultValue={farmer.pastCropsSeason2 || ""}
+                />
+                <input
+                  name="pastCropsSeason3"
+                  className="input-field"
+                  placeholder={t("pastCrops3")}
+                  defaultValue={farmer.pastCropsSeason3 || ""}
+                />
+                <input
+                  name="currentCrop"
+                  className="input-field"
+                  placeholder={t("currentCrop")}
+                  defaultValue={farmer.currentCrop || ""}
+                  required
+                />
+                <input
+                  name="chemicalsPerWeek"
+                  className="input-field"
+                  placeholder={t("chemicalsPerWeek")}
+                />
+                <input name="chemicalsWhy" className="input-field" placeholder={t("chemicalsWhy")} />
+                <input name="chemicalsDosage" className="input-field" placeholder={t("dosage")} />
+                <input
+                  name="fertilizerPerWeek"
+                  className="input-field"
+                  placeholder={t("fertilizerPerWeek")}
+                />
+                <input
+                  name="irrigationMethod"
+                  className="input-field"
+                  placeholder={t("irrigationMethod")}
+                />
+                <input
+                  name="diseasesIdentified"
+                  className="input-field"
+                  placeholder={t("diseasesIdentified")}
+                />
+                <input
+                  name="pestsIdentified"
+                  className="input-field"
+                  placeholder={t("pestsIdentified")}
+                />
+              </div>
+            )}
 
             <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
               <h3 className="text-sm font-semibold">{t("productionInformation")}</h3>
@@ -358,9 +412,9 @@ export function FarmerPortalClient({
                 name="totalQuantityHarvested"
                 className="input-field"
                 placeholder={t("totalQuantityHarvested")}
-                required
+                required={isOrganicFarmer}
               />
-              <select name="qualityGeneral" className="input-field" required>
+              <select name="qualityGeneral" className="input-field" required={isOrganicFarmer}>
                 <option value="">{t("qualityInGeneral")}</option>
                 {QUALITY_LEVELS.map((q) => (
                   <option key={q} value={q}>
@@ -373,6 +427,7 @@ export function FarmerPortalClient({
                 type="number"
                 className="input-field"
                 placeholder={t("availableStockQty")}
+                required={!isOrganicFarmer}
               />
             </div>
 
@@ -445,9 +500,15 @@ export function FarmerPortalClient({
               />
             </div>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input name="isOrganic" type="checkbox" /> {t("organic")}
-            </label>
+            {isOrganicFarmer ? (
+              <label className="flex items-center gap-2 text-sm">
+                <input name="isOrganic" type="checkbox" defaultChecked /> {t("organic")}
+              </label>
+            ) : (
+              <p className="text-xs text-[var(--huza-muted)] rounded-lg bg-[var(--huza-mint)] px-3 py-2">
+                {t("standardProductNotOrganicNote")}
+              </p>
+            )}
             <Button type="submit" className="w-full" disabled={busy || !approved}>
               {busy ? t("submitting") : t("submitProductCta")}
             </Button>

@@ -35,6 +35,32 @@ export default async function ProductDetailPage({
 
   if (!product || !product.isActive || product.deletedAt) notFound();
 
+  // Never expose farmer/supplier identity to the customer storefront payload
+  const storefrontProduct = {
+    id: product.id,
+    nameEn: product.nameEn,
+    nameFr: product.nameFr,
+    nameRw: product.nameRw,
+    descriptionEn: product.descriptionEn,
+    descriptionFr: product.descriptionFr,
+    descriptionRw: product.descriptionRw,
+    price: product.price,
+    unit: product.unit,
+    stockQty: product.stockQty,
+    reservedQty: product.reservedQty,
+    availability: product.availability,
+    isOrganic: product.isOrganic,
+    ratingAvg: product.ratingAvg,
+    ratingCount: product.ratingCount,
+    location: product.location,
+    originDistrict: product.originDistrict,
+    nutritionalInfo: product.nutritionalInfo,
+    availableDistricts: product.availableDistricts,
+    images: product.images,
+    category: product.category,
+    supplier: { id: product.supplierId },
+  };
+
   const [fbt, recommended] = await Promise.all([
     getFrequentlyBoughtTogether(product.id, 4),
     getSmartRecommendations({
@@ -46,7 +72,7 @@ export default async function ProductDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
-      <ProductDetailClient product={product} />
+      <ProductDetailClient product={storefrontProduct} />
 
       <section className="mt-14">
         <h2 className="section-title mb-6">Frequently bought together</h2>

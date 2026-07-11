@@ -17,9 +17,10 @@ export default function AboutPage() {
           recipient, and one delivery service. Quality and pricing stay under Huza control.
         </p>
         <p>
-          Farms that want to sell produce <em>to</em> Youth Huza use the separate{" "}
-          <strong className="text-[var(--huza-ink)]">Farmers Portal</strong>. After
-          verification and purchase, stock is listed on HUZA FRESH under Youth Huza.
+          Farms partner with Youth Huza through a <strong className="text-[var(--huza-ink)]">private
+          Farmers Portal</strong> (shared by Huza staff — not listed on this customer site). After
+          verification and purchase, stock is listed on HUZA FRESH under Youth Huza. Customers never
+          see farm names on the shop.
         </p>
         <p>
           Pay Youth Huza with MTN MoMo or Airtel Money (bank cards coming soon — no Cash on

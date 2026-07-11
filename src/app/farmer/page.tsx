@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { FarmerPortalClient } from "./FarmerPortalClient";
 import { FarmerPortalChrome } from "./FarmerPortalChrome";
-import { FarmerRegisterForm } from "./FarmerRegisterForm";
 
 export const dynamic = "force-dynamic";
 
@@ -23,15 +22,15 @@ const FARMER_DEMO = [
   },
 ];
 
+/**
+ * Partner-only entry. Not linked from the customer storefront.
+ * Guests see a login wall; registration is at /farmer/register (unlisted).
+ */
 export default async function FarmerPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return (
-      <FarmerPortalChrome mode="landing" demoCredentials={FARMER_DEMO}>
-        <FarmerRegisterForm />
-      </FarmerPortalChrome>
-    );
+    return <FarmerPortalChrome mode="landing" demoCredentials={FARMER_DEMO} />;
   }
 
   if (session.user.role !== "SUPPLIER" && session.user.role !== "ADMIN") {
@@ -68,6 +67,7 @@ export default async function FarmerPage() {
       businessName={farmer.businessName}
       status={farmer.status}
       isVerified={farmer.isVerified}
+      farmingType={farmer.farmingType}
       rejectionReason={farmer.rejectionReason}
       adminNotes={farmer.adminNotes}
       inspectionScheduledAt={farmer.inspectionScheduledAt?.toISOString() ?? null}
