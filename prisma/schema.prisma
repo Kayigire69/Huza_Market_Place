@@ -25,6 +25,12 @@ enum SupplierStatus {
   REMOVED
 }
 
+/// Organic farmers complete the full dossier; standard farmers use a short registration.
+enum FarmingType {
+  ORGANIC
+  STANDARD
+}
+
 enum AvailabilityStatus {
   OPEN
   BUSY
@@ -219,6 +225,15 @@ model Supplier {
   farmPhotoUrls      String[]           @default([])
   productPhotoUrls   String[]           @default([])
   documentsUrl       String?
+
+  /// ORGANIC = full dossier path; STANDARD = name, ID, products, Huza purchase agreement
+  farmingType            FarmingType @default(ORGANIC)
+  /// Non-organic: products the farmer offers to sell to Huza (free text)
+  productsOffered        String?
+  /// Written agreement summary: how Huza will buy from this farmer
+  huzaPurchaseAgreement  String?
+  agreedToHuzaTerms      Boolean      @default(false)
+  agreedToHuzaTermsAt    DateTime?
 
   /// Farmer personal dossier (Module 9)
   profilePhotoUrl    String?

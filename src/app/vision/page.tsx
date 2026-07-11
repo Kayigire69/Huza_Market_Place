@@ -13,10 +13,11 @@ export default function VisionPage() {
       </p>
       <p className="mt-4 leading-relaxed text-[var(--huza-muted)]">
         We are building the systems (warehouses, delivery teams, and digital tools) so HUZA FRESH
-        can scale without losing quality or the farmer relationships behind it.
+        can scale without losing quality or the farmer relationships behind it. Farmers partner
+        with Youth Huza privately — customers always buy from HUZA FRESH.
       </p>
-      <Link href="/farmer" className="mt-8 inline-block font-semibold text-[var(--huza-green)]">
-        Farmers Portal →
+      <Link href="/products" className="mt-8 inline-block font-semibold text-[var(--huza-green)]">
+        Shop HUZA FRESH →
       </Link>
     </div>
   );

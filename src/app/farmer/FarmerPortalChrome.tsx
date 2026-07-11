@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { DemoCredentials } from "@/components/portals/DemoCredentials";
+import { Button } from "@/components/ui/Button";
 
 type DemoCredential = {
   label: string;
@@ -18,6 +19,11 @@ type LandingProps = {
   children?: ReactNode;
 };
 
+type RegisterProps = {
+  mode: "register";
+  children: ReactNode;
+};
+
 type ApplyProps = {
   mode: "apply";
 };
@@ -27,6 +33,7 @@ type DashboardProps = {
   businessName: string;
   status: string;
   isVerified: boolean;
+  farmingType?: string | null;
   rejectionReason?: string | null;
   adminNotes?: string | null;
   inspectionScheduledAt?: string | null;
@@ -34,12 +41,48 @@ type DashboardProps = {
   children: ReactNode;
 };
 
-export type FarmerPortalChromeProps = LandingProps | ApplyProps | DashboardProps;
+export type FarmerPortalChromeProps =
+  | LandingProps
+  | RegisterProps
+  | ApplyProps
+  | DashboardProps;
 
 export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
   const { t } = useLocale();
 
   if (props.mode === "landing") {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)]">
+            {t("farmersPortalBadge")}
+          </p>
+          <h1 className="section-title mt-2">{t("farmerPortal")}</h1>
+          <p className="mt-4 text-[var(--huza-muted)] leading-relaxed">{t("farmerLoginWallBody")}</p>
+        </div>
+
+        <div className="mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
+          <Link href="/auth/login?callbackUrl=/farmer" className="block">
+            <Button className="w-full" size="lg">
+              {t("farmerLogin")}
+            </Button>
+          </Link>
+          <Link href="/farmer/register" className="block">
+            <Button className="w-full" variant="ghost" size="lg">
+              {t("newFarmerApplication")}
+            </Button>
+          </Link>
+          <p className="text-center text-xs text-[var(--huza-muted)]">{t("farmerPortalPrivateHint")}</p>
+        </div>
+
+        {props.demoCredentials && (
+          <DemoCredentials title={t("demoFarmerLogins")} credentials={props.demoCredentials} />
+        )}
+      </div>
+    );
+  }
+
+  if (props.mode === "register") {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16">
         <div className="text-center">
@@ -51,18 +94,11 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
             {t("farmerLandingBody")}
           </p>
           <p className="mt-3 text-sm">
-            <Link href="/" className="text-[var(--huza-muted)] hover:underline">
-              {t("customerStorefront")}
-            </Link>
-            {" · "}
-            <Link href="/auth/login" className="font-semibold text-[var(--huza-green)]">
+            <Link href="/auth/login?callbackUrl=/farmer" className="font-semibold text-[var(--huza-green)]">
               {t("farmerLogin")}
             </Link>
           </p>
         </div>
-        {props.demoCredentials && (
-          <DemoCredentials title={t("demoFarmerLogins")} credentials={props.demoCredentials} />
-        )}
         {props.children}
       </div>
     );
@@ -73,7 +109,10 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="section-title">{t("becomeVerifiedFarmer")}</h1>
         <p className="mt-4 text-[var(--huza-muted)]">{t("becomeVerifiedBody")}</p>
-        <Link href="/farmer" className="inline-block mt-6 text-[var(--huza-green)] font-semibold">
+        <Link
+          href="/farmer/register"
+          className="inline-block mt-6 text-[var(--huza-green)] font-semibold"
+        >
           {t("apply")}
         </Link>
       </div>
@@ -84,6 +123,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
     businessName,
     status,
     isVerified,
+    farmingType,
     rejectionReason,
     adminNotes,
     inspectionScheduledAt,
@@ -102,6 +142,9 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
           <p className="text-sm text-[var(--huza-muted)] mt-1">
             {t("status")}: {status}
             {isVerified ? ` · ${t("verified")}` : ""} · {t("agentAssistedSelling")}
+            {farmingType === "STANDARD"
+              ? ` · ${t("standardFarmerPath")}`
+              : ` · ${t("organicFarmerPath")}`}
           </p>
           {rejectionReason && (
             <p className="text-sm text-red-700 mt-1">
@@ -126,7 +169,8 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
       </div>
 
       <div className="mb-6 rounded-xl border border-[var(--huza-line)] bg-white p-4 text-sm text-[var(--huza-muted)]">
-        <strong className="text-[var(--huza-ink)]">{t("howItWorks")}</strong> {t("howItWorksBody")}
+        <strong className="text-[var(--huza-ink)]">{t("howItWorks")}</strong>{" "}
+        {farmingType === "STANDARD" ? t("howItWorksStandardBody") : t("howItWorksBody")}
       </div>
 
       {status !== "APPROVED" && (

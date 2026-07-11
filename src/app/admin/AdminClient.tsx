@@ -402,8 +402,8 @@ export function AdminClient(props: {
           <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-1">Farmer Approval (Module 10)</h2>
             <p className="text-sm text-[var(--huza-muted)] mb-4">
-              Review the full farmer dossier (personal, field, production, sales, payment, comments)
-              before approving or rejecting.
+              Review farmer applications. Organic farms use the full dossier; standard (non-organic)
+              farms submit name, ID, products, and the Huza purchase agreement.
             </p>
             {props.pendingSuppliers.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No pending requests.</p>
@@ -426,8 +426,35 @@ export function AdminClient(props: {
                       <p className="text-sm text-[var(--huza-muted)]">
                         {(s.user as { fullName?: string })?.fullName} · {String(s.phone)}
                       </p>
+                      <p className="mt-1 text-xs font-semibold text-[var(--huza-green-dark)]">
+                        Path:{" "}
+                        {String(s.farmingType || "ORGANIC") === "STANDARD"
+                          ? "Other crops (non-organic)"
+                          : "Organic products"}
+                      </p>
                     </div>
                   </div>
+
+                  {String(s.farmingType || "ORGANIC") === "STANDARD" && (
+                    <div className="rounded-xl bg-[var(--huza-mint)] p-3 text-sm space-y-2">
+                      <p>
+                        <strong>ID:</strong> {String(s.nationalId || "—")}
+                      </p>
+                      <p>
+                        <strong>Products offered:</strong>{" "}
+                        <span className="whitespace-pre-wrap">{String(s.productsOffered || "—")}</span>
+                      </p>
+                      <p>
+                        <strong>Huza purchase agreement:</strong>{" "}
+                        <span className="whitespace-pre-wrap">
+                          {String(s.huzaPurchaseAgreement || "—")}
+                        </span>
+                      </p>
+                      <p className="text-xs">
+                        Terms accepted: {s.agreedToHuzaTerms ? "Yes" : "No"}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-[var(--huza-muted)]">
                     <p>

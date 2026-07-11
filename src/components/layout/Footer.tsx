@@ -86,12 +86,6 @@ export function Footer() {
                 {t("wishlist")}
               </Link>
             </li>
-            <li>
-              <Link href="/farmer" className="hover:text-white">
-                {t("farmerPortal")}
-              </Link>
-              <p className="mt-1 text-[11px] text-[#8FBF9F]">{t("farmersPortalHint")}</p>
-            </li>
           </ul>
         </div>
 

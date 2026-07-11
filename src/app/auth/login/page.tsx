@@ -82,10 +82,6 @@ export default function LoginPage() {
         </Link>
       </p>
       <p className="mt-2 text-center text-xs text-[var(--huza-muted)]">
-        <Link href="/farmer" className="font-semibold text-[var(--huza-green)]">
-          Farmers Portal
-        </Link>
-        {" · "}
         <Link href="/" className="hover:underline">
           Customer shop
         </Link>
@@ -93,16 +89,6 @@ export default function LoginPage() {
       <DemoCredentials
         title="Demo logins"
         credentials={[
-          {
-            label: "Farmers portal (approved)",
-            email: "greenvalley@farm.rw",
-            password: "password123",
-          },
-          {
-            label: "Farmers portal (pending approval)",
-            email: "newfarm@example.rw",
-            password: "password123",
-          },
           {
             label: "Customer shop",
             email: "customer@example.com",
@@ -112,7 +98,7 @@ export default function LoginPage() {
             label: "Staff / admin (private)",
             email: "admin@youthhuza.rw",
             password: "password123",
-            note: "Not linked publicly — use only for Youth Huza staff testing",
+            note: "Not linked publicly — Youth Huza staff only",
           },
         ]}
       />

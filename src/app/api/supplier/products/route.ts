@@ -77,6 +77,10 @@ export async function POST(req: Request) {
     Number(crop.farmGatePrice) ||
     0;
 
+  // STANDARD (non-organic) farmers never list organic badges
+  const isOrganic =
+    supplier?.farmingType === "STANDARD" ? false : Boolean(body.isOrganic);
+
   const product = await prisma.product.create({
     data: {
       supplierId,
@@ -90,7 +94,7 @@ export async function POST(req: Request) {
       price,
       unit: (body.unit as UnitType) || UnitType.KG,
       stockQty: Number(body.stockQty) || Number(body.totalQuantityHarvested) || 0,
-      isOrganic: Boolean(body.isOrganic),
+      isOrganic,
       isNewArrival: true,
       isActive: false,
       reviewStatus: "PENDING",
