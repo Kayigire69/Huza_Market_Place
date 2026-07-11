@@ -52,6 +52,21 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/mission" className="hover:text-white">
+                Our Mission
+              </Link>
+            </li>
+            <li>
+              <Link href="/vision" className="hover:text-white">
+                Our Vision
+              </Link>
+            </li>
+            <li>
+              <Link href="/delivery-info" className="hover:text-white">
+                Delivery Information
+              </Link>
+            </li>
+            <li>
               <Link href="/faq" className="hover:text-white">
                 {t("faq")}
               </Link>
@@ -91,6 +106,11 @@ export function Footer() {
             <li>
               <Link href="/terms" className="hover:text-white">
                 {t("termsConditions")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/refund-policy" className="hover:text-white">
+                Refund Policy
               </Link>
             </li>
             <li>{t("deliveryZones")}</li>

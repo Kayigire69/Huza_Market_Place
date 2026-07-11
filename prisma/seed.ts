@@ -41,6 +41,11 @@ async function main() {
   await prisma.holiday.deleteMany();
   await prisma.emergencyClosure.deleteMany();
   await prisma.testimonial.deleteMany();
+  await prisma.errorLog.deleteMany();
+  await prisma.homepageBanner.deleteMany();
+  await prisma.websiteSetting.deleteMany();
+  await prisma.deliveryZoneConfig.deleteMany();
+  await prisma.orderSequence.deleteMany();
   await prisma.user.deleteMany();
 
   const password = await bcrypt.hash("password123", 10);
@@ -700,7 +705,31 @@ async function main() {
   console.log("Seed complete.");
   console.log("Admin: admin@youthhuza.rw / password123");
   console.log("Customer: customer@example.com / password123");
-  console.log("Supplier: greenvalley@farm.rw / password123");
+  
+  await prisma.deliveryZoneConfig.createMany({
+    data: [
+      { id: "zone-kigali", code: "KIGALI", labelEn: "Kigali", labelFr: "Kigali", labelRw: "Kigali", feeRwf: 5000, etaMinutes: 45, sortOrder: 1 },
+      { id: "zone-kamonyi", code: "KAMONYI_RUYENZI", labelEn: "Kamonyi (Ruyenzi)", labelFr: "Kamonyi (Ruyenzi)", labelRw: "Kamonyi (Ruyenzi)", feeRwf: 5000, etaMinutes: 75, sortOrder: 2 },
+      { id: "zone-bugesera", code: "BUGESERA_NYAMATA", labelEn: "Bugesera (Nyamata)", labelFr: "Bugesera (Nyamata)", labelRw: "Bugesera (Nyamata)", feeRwf: 5000, etaMinutes: 75, sortOrder: 3 },
+    ],
+  });
+
+  await prisma.websiteSetting.createMany({
+    data: [
+      { key: "company_name", value: "Youth Huza" },
+      { key: "brand_name", value: "HUZA FRESH" },
+      { key: "phone", value: "+250 788 000 000" },
+      { key: "email", value: "hello@youthhuza.rw" },
+      { key: "currency", value: "RWF" },
+      { key: "facebook_url", value: "https://facebook.com" },
+      { key: "instagram_url", value: "https://instagram.com" },
+      { key: "whatsapp_url", value: "https://wa.me/250788000000" },
+    ],
+  });
+
+  await prisma.orderSequence.create({ data: { year: new Date().getFullYear(), lastValue: 245 } });
+
+console.log("Supplier: greenvalley@farm.rw / password123");
 }
 
 main()

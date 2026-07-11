@@ -24,6 +24,8 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findFirst({
           where: {
+            deletedAt: null,
+            isActive: true,
             OR: [
               { email: { equals: identifier, mode: "insensitive" } },
               { phone: identifier },
@@ -33,6 +35,14 @@ export const authOptions: NextAuthOptions = {
           include: { supplier: true },
         });
         if (!user) return null;
+
+        const { rateLimit } = await import("./rate-limit");
+        const rl = await rateLimit({
+          key: `login:${identifier.toLowerCase()}`,
+          limit: 10,
+          windowMs: 15 * 60_000,
+        });
+        if (!rl.ok) return null;
 
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;

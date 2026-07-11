@@ -55,12 +55,13 @@ async function processReport(payload: Payload) {
 async function processPaymentVerify(payload: Payload) {
   const paymentId = String(payload.paymentId || "");
   if (!paymentId) throw new Error("paymentId required");
-  const result = await paymentService.verifyPendingPayment(paymentId);
+  const expireIfPending = Boolean(payload.expireIfPending);
+  const result = await paymentService.verifyPendingPayment(paymentId, { expireIfPending });
   // Keep polling while still pending (background verification loop)
-  if (result.status === "PENDING") {
+  if (result.status === "PENDING" && !expireIfPending) {
     await enqueueJob(
       "PAYMENT_VERIFY",
-      { ...payload } as Prisma.InputJsonValue,
+      { paymentId, orderNumber: payload.orderNumber } as Prisma.InputJsonValue,
       { runAfter: new Date(Date.now() + 5_000), maxAttempts: 20 }
     );
   }

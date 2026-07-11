@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { useCart } from "@/lib/cart-store";
@@ -21,6 +21,8 @@ type Product = {
   price: number;
   unit: string;
   stockQty: number;
+  reservedQty?: number;
+  availability?: string | null;
   isOrganic: boolean;
   ratingAvg: number;
   ratingCount: number;
@@ -42,6 +44,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const addItem = useCart((s) => s.addItem);
   const [qty, setQty] = useState(1);
   const [active, setActive] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
   const name = productName(product, locale);
   const description = productDescription(product, locale);
   const image = product.images[active]?.url ?? "/logo.svg";
@@ -58,31 +61,56 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = encodeURIComponent(`${name} on HUZA FRESH — ${formatRwf(product.price)}`);
 
+  const available = Math.max(0, product.stockQty - (product.reservedQty || 0));
   const availabilityLabel = useMemo(() => {
-    if (product.stockQty <= 0) return t("outOfStock");
-    if (product.stockQty <= 5) return t("lowStock");
+    if (product.availability === "COMING_SOON") return "Coming soon";
+    if (product.availability === "TEMPORARILY_UNAVAILABLE") return "Temporarily unavailable";
+    if (available <= 0 || product.availability === "OUT_OF_STOCK") return t("outOfStock");
+    if (available <= 5 || product.availability === "LOW_STOCK") return t("lowStock");
     return t("inStock");
-  }, [product.stockQty, t]);
+  }, [available, product.availability, t]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-10">
       <div>
-        <div className="relative aspect-square overflow-hidden rounded-3xl bg-[var(--huza-mint)]">
-          <Image src={image} alt={name} fill className="object-cover" priority />
-        </div>
-        {product.images.length > 1 && (
+        <button
+          type="button"
+          className="relative aspect-square w-full overflow-hidden rounded-3xl bg-[var(--huza-mint)]"
+          onClick={() => setLightbox(true)}
+          aria-label="Open image gallery"
+        >
+          <OptimizedImage src={image} alt={name} fill className="object-cover" priority sizes="(max-width:1024px) 100vw, 50vw" />
+        </button>
+        {product.images.length > 0 && (
           <div className="mt-3 flex gap-2 overflow-x-auto">
             {product.images.map((img, i) => (
               <button
                 key={img.id}
+                type="button"
                 onClick={() => setActive(i)}
                 className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 ${
                   i === active ? "border-[var(--huza-green)]" : "border-transparent"
                 }`}
+                aria-label={img.alt || `Photo ${i + 1}`}
               >
-                <Image src={img.url} alt={img.alt ?? name} fill className="object-cover" />
+                <OptimizedImage src={img.url} alt={img.alt ?? name} fill className="object-cover" sizes="64px" />
               </button>
             ))}
+          </div>
+        )}
+        {product.images.length > 1 && (
+          <p className="mt-2 text-xs text-[var(--huza-muted)]">
+            Gallery: main, side, packaging &amp; close-up views when provided by Huza.
+          </p>
+        )}
+        {lightbox && (
+          <div
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4"
+            onClick={() => setLightbox(false)}
+          >
+            <div className="relative h-[min(80vh,640px)] w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+              <OptimizedImage src={image} alt={name} fill className="object-contain" sizes="90vw" />
+            </div>
           </div>
         )}
       </div>
@@ -106,7 +134,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
         </p>
         <p className="mt-2 text-sm">
           {t("availability")}: <strong>{availabilityLabel}</strong>
-          {product.stockQty > 0 ? ` · ${product.stockQty} in stock` : ""}
+          {available > 0 ? ` · ${product.stockQty} in stock` : ""}
         </p>
         {product.originDistrict && (
           <p className="mt-1 text-sm text-[var(--huza-muted)]">
@@ -132,7 +160,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
             <span className="w-10 text-center font-semibold">{qty}</span>
             <button
               className="rounded-lg border border-[var(--huza-line)] p-2"
-              onClick={() => setQty((q) => Math.min(product.stockQty, q + 1))}
+              onClick={() => setQty((q) => Math.min(available, q + 1))}
               aria-label="Increase"
             >
               <Plus className="size-4" />
