@@ -93,10 +93,10 @@ const replies: Record<string, Record<Locale, string>> = {
 
   // 4 Payment
   payment: {
-    en: "Pay Youth Huza with MTN MoMo or Airtel Money. After checkout, approve the payment prompt on your phone. Bank card payments are coming soon — Cash on Delivery is not available.",
-    fr: "Payez Youth Huza via MTN MoMo ou Airtel Money. Après la commande, approuvez l’invite sur votre téléphone. Les cartes bancaires arrivent bientôt — le paiement à la livraison n’est pas disponible.",
-    rw: "Ishyura Youth Huza ukoresheje MTN MoMo cyangwa Airtel Money. Nyuma yo gutumiza, emera ubutumire kuri telefoni yawe. Amakarita ya banki aza vuba — nta kwishyura amafaranga iyo bagutegereje.",
-    sw: "Lipa Youth Huza kwa MTN MoMo au Airtel Money. Baada ya kuagiza, idhinisha ombi kwenye simu yako. Malipo ya kadi ya benki yanakuja hivi karibuni — hakuna malipo taslimu wakati wa uwasilishaji.",
+    en: "Pay Youth Huza with MTN MoMo or Airtel Money only. After checkout, approve the payment prompt on your phone. Bank card payments are coming soon. Cash on Delivery is not available.",
+    fr: "Payez Youth Huza uniquement via MTN MoMo ou Airtel Money. Après la commande, approuvez l’invite sur votre téléphone. Les cartes bancaires arrivent bientôt. Le paiement à la livraison n’est pas disponible.",
+    rw: "Ishyura Youth Huza gusa ukoresheje MTN MoMo cyangwa Airtel Money. Nyuma yo gutumiza, emera ubutumire kuri telefoni yawe. Amakarita ya banki aza vuba. Nta kwishyura amafaranga iyo bagutegereje.",
+    sw: "Lipa Youth Huza kwa MTN MoMo au Airtel Money tu. Baada ya kuagiza, idhinisha ombi kwenye simu yako. Malipo ya kadi ya benki yanakuja hivi karibuni. Hakuna malipo taslimu wakati wa uwasilishaji.",
   },
   momo: {
     en: "For MTN MoMo or Airtel Money, enter the phone that will receive the payment prompt. Approve it on that phone within a few minutes. Stock is reserved for about 10 minutes while we wait.",

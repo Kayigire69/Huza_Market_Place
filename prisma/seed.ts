@@ -677,9 +677,12 @@ async function main() {
         questionEn: "How do I pay?",
         questionFr: "Comment payer ?",
         questionRw: "Nishyura nte?",
-        answerEn: "MTN MoMo or Airtel Money. Approve the prompt on your phone; money goes to the seller.",
-        answerFr: "MTN MoMo ou Airtel Money. Approuvez sur votre téléphone; l'argent va au vendeur.",
-        answerRw: "MTN MoMo cyangwa Airtel Money. Emeza kuri telefone; amafaranga ajya ku mucuruzi.",
+        answerEn:
+          "Pay Youth Huza with MTN MoMo or Airtel Money — approve the prompt on your phone. Bank cards are coming soon. Cash on Delivery is not available.",
+        answerFr:
+          "Payez Youth Huza via MTN MoMo ou Airtel Money — approuvez l’invite sur votre téléphone. Les cartes bancaires arrivent bientôt. Le paiement à la livraison n’est pas disponible.",
+        answerRw:
+          "Ishyura Youth Huza ukoresheje MTN MoMo cyangwa Airtel Money — emera ubutumire kuri telefone. Amakarita ya banki aza vuba. Nta kwishyura amafaranga iyo bagutegereje.",
       },
       {
         sortOrder: 3,

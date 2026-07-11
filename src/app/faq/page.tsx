@@ -28,9 +28,12 @@ const fallback: Faq[] = [
     questionEn: "Which payment methods are supported?",
     questionFr: "Quels modes de paiement sont acceptés ?",
     questionRw: "Ni ubuhe buryo bwo kwishyura?",
-    answerEn: "MTN Mobile Money and Airtel Money. You approve the payment on your phone.",
-    answerFr: "MTN Mobile Money et Airtel Money. Vous approuvez le paiement sur votre téléphone.",
-    answerRw: "MTN MoMo na Airtel Money. Wemeza kwishyura kuri telefone yawe.",
+    answerEn:
+      "Pay Youth Huza with MTN MoMo or Airtel Money — approve the prompt on your phone. Bank cards are coming soon. Cash on Delivery is not available.",
+    answerFr:
+      "Payez Youth Huza via MTN MoMo ou Airtel Money — approuvez l’invite sur votre téléphone. Les cartes bancaires arrivent bientôt. Le paiement à la livraison n’est pas disponible.",
+    answerRw:
+      "Ishyura Youth Huza ukoresheje MTN MoMo cyangwa Airtel Money — emera ubutumire kuri telefone. Amakarita ya banki aza vuba. Nta kwishyura amafaranga iyo bagutegereje.",
   },
   {
     id: "3",

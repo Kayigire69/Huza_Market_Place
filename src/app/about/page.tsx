@@ -22,7 +22,8 @@ export default function AboutPage() {
           verification and purchase, stock is listed on HUZA FRESH under Youth Huza.
         </p>
         <p>
-          Pay with MTN MoMo or Airtel Money (to Youth Huza). Browse in Kinyarwanda, English, or French.
+          Pay Youth Huza with MTN MoMo or Airtel Money (bank cards coming soon — no Cash on
+          Delivery). Browse in Kinyarwanda, English, French, or Kiswahili.
           Delivery across Kigali, Kamonyi (Ruyenzi), and Bugesera (Nyamata).
         </p>
       </div>
