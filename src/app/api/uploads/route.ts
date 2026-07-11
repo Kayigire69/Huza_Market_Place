@@ -1,19 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { authOptions } from "@/lib/auth";
+import { uploadFiles, storageMode, type UploadFolder } from "@/services/upload.service";
 
 export const runtime = "nodejs";
-
-const ALLOWED = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "application/pdf",
-]);
-const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -24,48 +14,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const form = await req.formData();
-  const folder = String(form.get("folder") || "products");
-  const safeFolder = ["products", "profiles", "documents"].includes(folder)
-    ? folder
-    : "products";
-  const files = form.getAll("files").filter((f): f is File => f instanceof File);
-  if (files.length === 0) {
-    return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
+  try {
+    const form = await req.formData();
+    const folder = String(form.get("folder") || "products") as UploadFolder;
+    const safeFolder: UploadFolder = ["products", "profiles", "documents"].includes(folder)
+      ? folder
+      : "products";
+    const files = form.getAll("files").filter((f): f is File => f instanceof File);
+    const urls = await uploadFiles(files, safeFolder);
+    return NextResponse.json({ urls, storage: storageMode() });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
-  if (files.length > 8) {
-    return NextResponse.json({ error: "Maximum 8 files per upload" }, { status: 400 });
-  }
-
-  const dir = path.join(process.cwd(), "public", "uploads", safeFolder);
-  await mkdir(dir, { recursive: true });
-
-  const urls: string[] = [];
-  for (const file of files) {
-    if (!ALLOWED.has(file.type)) {
-      return NextResponse.json(
-        { error: `Unsupported file type: ${file.type || file.name}` },
-        { status: 400 }
-      );
-    }
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json({ error: `${file.name} is larger than 8MB` }, { status: 400 });
-    }
-    const ext =
-      file.type === "application/pdf"
-        ? "pdf"
-        : file.type === "image/png"
-          ? "png"
-          : file.type === "image/webp"
-            ? "webp"
-            : file.type === "image/gif"
-              ? "gif"
-              : "jpg";
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(dir, name), buffer);
-    urls.push(`/uploads/${safeFolder}/${name}`);
-  }
-
-  return NextResponse.json({ urls });
 }

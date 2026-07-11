@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf, formatUnit } from "@/lib/utils";
@@ -466,12 +467,12 @@ export function FarmerPortalClient({
                     <div className="flex gap-3">
                       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--huza-mint)]">
                         {p.images?.[0]?.url ? (
-                          <Image
+                          <OptimizedImage
                             src={p.images[0].url}
                             alt={p.nameEn}
                             fill
                             className="object-cover"
-                            unoptimized={p.images[0].url.startsWith("/uploads/")}
+                            sizes="64px"
                           />
                         ) : null}
                       </div>

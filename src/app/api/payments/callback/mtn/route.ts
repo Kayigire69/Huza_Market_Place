@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { disburseToSeller } from "@/lib/payments/mobile-money";
-import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { paymentService } from "@/services/payment.service";
+import { paymentRepository } from "@/repositories/payment.repository";
 
 /**
  * MTN MoMo collection callback.
@@ -15,69 +14,23 @@ export async function POST(req: Request) {
       body["external-id"] ||
       req.headers.get("x-reference-id") ||
       body.referenceId;
-    const status = String(body.status || body.financialTransactionId ? "SUCCESSFUL" : "PENDING").toUpperCase();
+    const status = String(
+      body.status || (body.financialTransactionId ? "SUCCESSFUL" : "PENDING")
+    ).toUpperCase();
 
     if (!externalId) {
       return NextResponse.json({ error: "Missing reference" }, { status: 400 });
     }
 
-    const payment = await prisma.payment.findFirst({
-      where: { OR: [{ externalId }, { transactionRef: externalId }] },
-      include: { order: true },
-    });
-
+    const payment = await paymentRepository.findByExternalId(String(externalId));
     if (!payment) {
       return NextResponse.json({ ok: true, note: "Unknown payment" });
     }
 
     if (status === "SUCCESSFUL" || status === "SUCCESS") {
-      await disburseToSeller({
-        method: payment.method,
-        payeePhone: payment.payeePhone || payment.phoneNumber,
-        amount: payment.amount,
-        orderNumber: payment.order.orderNumber,
-        externalId: payment.externalId || payment.id,
-      });
-
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: PaymentStatus.CONFIRMED,
-          verifiedAt: new Date(),
-          providerMessage: "Customer approved on phone. Paid to seller.",
-        },
-      });
-
-      await prisma.order.update({
-        where: { id: payment.orderId },
-        data: {
-          status: OrderStatus.CONFIRMED,
-          statusLog: {
-            create: {
-              status: OrderStatus.CONFIRMED,
-              note: "MTN MoMo callback — payment confirmed",
-            },
-          },
-          delivery: { update: { status: OrderStatus.READY_FOR_PICKUP } },
-        },
-      });
+      await paymentService.confirmPayment(payment.id);
     } else if (status === "FAILED" || status === "REJECTED") {
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: PaymentStatus.FAILED,
-          providerMessage: "Customer declined or payment failed",
-        },
-      });
-      await prisma.order.update({
-        where: { id: payment.orderId },
-        data: {
-          status: OrderStatus.CANCELLED,
-          statusLog: {
-            create: { status: OrderStatus.CANCELLED, note: "MoMo payment failed/declined" },
-          },
-        },
-      });
+      await paymentService.failPayment(payment.id, "Customer declined or payment failed");
     }
 
     return NextResponse.json({ ok: true });

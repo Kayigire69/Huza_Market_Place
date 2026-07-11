@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
@@ -150,12 +151,12 @@ export function HomePage({
                       className="rounded-xl overflow-hidden bg-white/95 text-[var(--huza-ink)]"
                     >
                       <div className="relative aspect-square">
-                        <Image
+                        <OptimizedImage
                           src={img}
                           alt={p.nameEn}
                           fill
                           className="object-cover"
-                          unoptimized={img.startsWith("/uploads/")}
+                          sizes="(max-width:1024px) 40vw, 20vw"
                         />
                       </div>
                       <div className="p-2.5">
