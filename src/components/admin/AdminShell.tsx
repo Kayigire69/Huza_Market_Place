@@ -211,10 +211,12 @@ export function AdminShell({
                 {item.label}
               </Link>
             ))}
-            <div className="mt-auto border-t border-[var(--huza-line)] pt-4 text-xs text-[var(--huza-muted)]">
-              <p>HUZA Admin Portal</p>
-              <p>
-                Version 1.0 · © {new Date().getFullYear()} Youth Huza. All rights reserved.
+            <div className="mt-auto rounded-xl border border-[var(--huza-line)] bg-[var(--huza-mint)] px-3 py-3">
+              <p className="text-xs font-bold tracking-wide text-[var(--huza-green-dark)]">
+                HUZA Admin Portal
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-[var(--huza-muted)]">
+                © {new Date().getFullYear()} Youth Huza. All rights reserved.
               </p>
             </div>
           </nav>
