@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { formatRwf } from "@/lib/utils";
 import { AdminCatalogPanel, AdminInventoryPanel } from "./AdminCatalogPanels";
 import { AdminOffersPanel } from "./AdminOffersPanel";
+import { AdminReportsPanel } from "./AdminReportsPanel";
 
 type AnyObj = Record<string, unknown>;
 
@@ -1030,24 +1031,7 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "reports" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
-          <h2 className="font-semibold">Reports & analytics</h2>
-          <p className="text-sm text-[var(--huza-muted)]">
-            Snapshot of platform performance. Expand with date-range exports as you grow.
-          </p>
-          <ul className="text-sm space-y-2">
-            <li>Total orders: {props.orders.length}+ (latest page)</li>
-            <li>
-              Confirmed revenue (non-cancelled): see dashboard revenue card above
-            </li>
-            <li>Farmer count: {props.allSuppliers.length}</li>
-            <li>Low-stock SKUs: {props.lowStock.length}</li>
-            <li>Deliveries tracked: {props.deliveries.length}</li>
-            <li>Payments recorded: {props.payments.length}</li>
-          </ul>
-        </div>
-      )}
+      {tab === "reports" && <AdminReportsPanel snapshot={props} />}
 
       {tab === "audit" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">

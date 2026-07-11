@@ -151,13 +151,27 @@ function TrackForm() {
               </p>
             ))}
           </div>
-          <Link
-            href={`/api/invoices/${data.orderNumber}`}
-            className="inline-block text-sm font-semibold text-[var(--huza-green)]"
-            target="_blank"
-          >
-            Download invoice →
-          </Link>
+          <div className="flex flex-wrap gap-4">
+            <Link
+              href={`/api/invoices/${data.orderNumber}`}
+              className="inline-block text-sm font-semibold text-[var(--huza-green)]"
+              target="_blank"
+            >
+              View invoice →
+            </Link>
+            <a
+              href={`/api/invoices/${data.orderNumber}?format=pdf`}
+              className="inline-block text-sm font-semibold text-[var(--huza-green)]"
+            >
+              PDF invoice ↓
+            </a>
+            <a
+              href={`/api/receipts/${data.orderNumber}?format=pdf`}
+              className="inline-block text-sm font-semibold text-[var(--huza-green)]"
+            >
+              PDF receipt ↓
+            </a>
+          </div>
         </div>
       )}
     </>
