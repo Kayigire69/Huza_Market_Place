@@ -321,7 +321,7 @@ export function AdminClient(props: {
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
             <h2 className="font-semibold mb-1">Purchase orders</h2>
             <p className="text-sm text-[var(--huza-muted)] mb-4">
-              Record receipt, quality inspection, and supplier payment.
+              Record receipt, quality inspection, and farmer payment.
             </p>
             {(props.purchaseOrders || []).length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No purchase orders yet.</p>
@@ -953,7 +953,7 @@ export function AdminClient(props: {
             <li>
               Confirmed revenue (non-cancelled): see dashboard revenue card above
             </li>
-            <li>Supplier count: {props.allSuppliers.length}</li>
+            <li>Farmer count: {props.allSuppliers.length}</li>
             <li>Low-stock SKUs: {props.lowStock.length}</li>
             <li>Deliveries tracked: {props.deliveries.length}</li>
             <li>Payments recorded: {props.payments.length}</li>
@@ -965,7 +965,7 @@ export function AdminClient(props: {
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
           <h2 className="font-semibold mb-2">Admin audit logs</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-3">
-            Track who approved suppliers, changed orders, and other admin actions.
+            Track who approved farmers, changed orders, and other admin actions.
           </p>
           {(props.auditLogs || []).length === 0 ? (
             <p className="text-sm text-[var(--huza-muted)]">No audit events yet.</p>

@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit } from "@/lib/utils";
 
 type Offer = {
@@ -62,6 +63,7 @@ export function ProcurementClient({
   compareGroups: CompareGroup[];
   messages: Msg[];
 }) {
+  const { t } = useLocale();
   const router = useRouter();
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -232,7 +234,7 @@ export function ProcurementClient({
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
         <h2 className="font-semibold text-[var(--huza-green-dark)]">Compare ask prices</h2>
         <p className="text-sm text-[var(--huza-muted)] mt-1 mb-4">
-          Same product title from multiple suppliers.
+          Same product title from multiple farmers.
         </p>
         {compareGroups.length === 0 ? (
           <p className="text-sm text-[var(--huza-muted)]">No overlapping offers to compare.</p>
@@ -266,7 +268,7 @@ export function ProcurementClient({
         <p className="text-sm text-[var(--huza-muted)] mb-4">Draft a PO without an offer.</p>
         <form onSubmit={createPo} className="grid sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
-            <label className="label">Supplier</label>
+            <label className="label">{t("farmer")}</label>
             <select name="supplierId" className="input-field" required>
               <option value="">Select</option>
               {suppliers.map((s) => (
@@ -367,12 +369,12 @@ export function ProcurementClient({
       </section>
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-        <h2 className="font-semibold text-[var(--huza-green-dark)]">Message suppliers</h2>
+        <h2 className="font-semibold text-[var(--huza-green-dark)]">{t("messageFarmers")}</h2>
         <p className="text-sm text-[var(--huza-muted)] mt-1 mb-4">
           Send procurement notes to verified farms.
         </p>
         <div className="mb-3">
-          <label className="label">Supplier thread</label>
+          <label className="label">{t("farmerThread")}</label>
           <select
             className="input-field"
             value={threadSupplierId}
@@ -405,7 +407,7 @@ export function ProcurementClient({
           <textarea
             name="body"
             className="input-field min-h-24"
-            placeholder="Message to supplier…"
+            placeholder={t("messageToFarmer")}
             required
           />
           <Button type="submit" size="sm" disabled={loading || !threadSupplierId}>

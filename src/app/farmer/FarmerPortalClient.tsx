@@ -11,6 +11,12 @@ import {
   PRICE_UNITS,
   QUALITY_LEVELS,
 } from "@/lib/farmer-dossier";
+import {
+  fieldTypeLabelKey,
+  paymentLabelKey,
+  qualityLabelKey,
+} from "@/lib/i18n";
+import { useLocale } from "@/lib/locale-context";
 import { FarmerDossierForm, type FarmerDossierValues } from "./FarmerDossierForm";
 
 type Category = { id: string; nameEn: string; slug: string };
@@ -53,12 +59,6 @@ type Farmer = FarmerDossierValues & {
 
 type Tab = "dossier" | "products" | "inventory";
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "dossier", label: "Farmer information" },
-  { key: "products", label: "Products & photos" },
-  { key: "inventory", label: "Inventory" },
-];
-
 async function uploadPhotos(files: FileList | File[]): Promise<string[]> {
   const list = Array.from(files);
   if (list.length === 0) return [];
@@ -88,12 +88,19 @@ export function FarmerPortalClient({
   farmer: Farmer;
   categories: Category[];
 }) {
+  const { t } = useLocale();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("dossier");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [products, setProducts] = useState<ProductRow[]>(farmer.products || []);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+
+  const TABS: { key: Tab; label: string }[] = [
+    { key: "dossier", label: t("farmerInformation") },
+    { key: "products", label: t("productsAndPhotos") },
+    { key: "inventory", label: t("inventoryTab") },
+  ];
 
   const refresh = () => router.refresh();
   const approved = farmer.status === "APPROVED";
@@ -111,7 +118,7 @@ export function FarmerPortalClient({
   const createProduct = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!approved) {
-      setMsg("Wait for admin approval before listing products.");
+      setMsg(t("waitAdminApproval"));
       return;
     }
     setBusy(true);
@@ -120,7 +127,7 @@ export function FarmerPortalClient({
       const form = new FormData(e.currentTarget);
       const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
       if (photos.length === 0) {
-        setMsg("Add at least one product photo.");
+        setMsg(t("addProductPhoto"));
         setBusy(false);
         return;
       }
@@ -158,11 +165,7 @@ export function FarmerPortalClient({
         }),
       });
       const data = await res.json();
-      setMsg(
-        res.ok
-          ? "Product submitted for Huza review (photos + field dossier)."
-          : data.error || "Upload failed"
-      );
+      setMsg(res.ok ? t("productSubmitted") : data.error || t("uploadFailed"));
       if (res.ok) {
         (e.target as HTMLFormElement).reset();
         setPhotoPreviews([]);
@@ -170,7 +173,7 @@ export function FarmerPortalClient({
         refresh();
       }
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Upload failed");
+      setMsg(err instanceof Error ? err.message : t("uploadFailed"));
     } finally {
       setBusy(false);
     }
@@ -185,7 +188,7 @@ export function FarmerPortalClient({
     });
     const data = await res.json();
     setBusy(false);
-    setMsg(res.ok ? "Inventory updated" : data.error || "Update failed");
+    setMsg(res.ok ? t("inventoryUpdated") : data.error || t("updateFailed"));
     if (res.ok) {
       await loadProducts();
       refresh();
@@ -219,10 +222,7 @@ export function FarmerPortalClient({
 
       {tab === "dossier" && (
         <div>
-          <p className="mb-4 text-sm text-[var(--huza-muted)]">
-            Complete all sections below. Huza uses this information when accepting or rejecting your
-            products.
-          </p>
+          <p className="mb-4 text-sm text-[var(--huza-muted)]">{t("dossierIntro")}</p>
           <FarmerDossierForm initial={dossierInitial} onSaved={refresh} />
         </div>
       )}
@@ -233,22 +233,24 @@ export function FarmerPortalClient({
             onSubmit={createProduct}
             className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4"
           >
-            <h2 className="font-semibold">Submit product for Huza review</h2>
-            <p className="text-xs text-[var(--huza-muted)]">
-              Include photos plus field, production, sales, and payment details. Huza agents review
-              this before accepting the product.
-            </p>
+            <h2 className="font-semibold">{t("submitProductTitle")}</h2>
+            <p className="text-xs text-[var(--huza-muted)]">{t("submitProductHint")}</p>
 
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Product &amp; photos</h3>
-              <input name="nameEn" placeholder="Product / current crop name" className="input-field" required />
+              <h3 className="text-sm font-semibold">{t("productsAndPhotos")}</h3>
+              <input
+                name="nameEn"
+                placeholder={t("productCropName")}
+                className="input-field"
+                required
+              />
               <textarea
                 name="descriptionEn"
-                placeholder="Short description"
+                placeholder={t("shortDescription")}
                 className="input-field min-h-16"
               />
               <select name="categoryId" className="input-field" required>
-                <option value="">Select category</option>
+                <option value="">{t("selectCategory")}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nameEn}
@@ -279,81 +281,106 @@ export function FarmerPortalClient({
             </div>
 
             <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">Field information</h3>
+              <h3 className="text-sm font-semibold">{t("fieldInformation")}</h3>
               <select name="fieldType" className="input-field" defaultValue={farmer.fieldType || ""} required>
-                <option value="">Greenhouse or open field</option>
+                <option value="">{t("greenhouseOrOpen")}</option>
                 {FIELD_TYPES.map((f) => (
                   <option key={f} value={f}>
-                    {f}
+                    {t(fieldTypeLabelKey[f])}
                   </option>
                 ))}
               </select>
               <input
                 name="fieldSize"
                 className="input-field"
-                placeholder="Size"
+                placeholder={t("size")}
                 defaultValue={farmer.farmSize || ""}
                 required
               />
               <input
                 name="pastCropsSeason1"
                 className="input-field"
-                placeholder="Past crops — season 1"
+                placeholder={t("pastCrops1")}
                 defaultValue={farmer.pastCropsSeason1 || ""}
               />
               <input
                 name="pastCropsSeason2"
                 className="input-field"
-                placeholder="Past crops — season 2"
+                placeholder={t("pastCrops2")}
                 defaultValue={farmer.pastCropsSeason2 || ""}
               />
               <input
                 name="pastCropsSeason3"
                 className="input-field"
-                placeholder="Past crops — season 3"
+                placeholder={t("pastCrops3")}
                 defaultValue={farmer.pastCropsSeason3 || ""}
               />
               <input
                 name="currentCrop"
                 className="input-field"
-                placeholder="Current crop"
+                placeholder={t("currentCrop")}
                 defaultValue={farmer.currentCrop || ""}
                 required
               />
-              <input name="chemicalsPerWeek" className="input-field" placeholder="Chemicals sprayed per week" />
-              <input name="chemicalsWhy" className="input-field" placeholder="Why chemicals are used" />
-              <input name="chemicalsDosage" className="input-field" placeholder="Dosage" />
-              <input name="fertilizerPerWeek" className="input-field" placeholder="Fertilizer applied per week" />
-              <input name="irrigationMethod" className="input-field" placeholder="Irrigation method" />
-              <input name="diseasesIdentified" className="input-field" placeholder="Diseases identified" />
-              <input name="pestsIdentified" className="input-field" placeholder="Pests identified" />
+              <input
+                name="chemicalsPerWeek"
+                className="input-field"
+                placeholder={t("chemicalsPerWeek")}
+              />
+              <input name="chemicalsWhy" className="input-field" placeholder={t("chemicalsWhy")} />
+              <input name="chemicalsDosage" className="input-field" placeholder={t("dosage")} />
+              <input
+                name="fertilizerPerWeek"
+                className="input-field"
+                placeholder={t("fertilizerPerWeek")}
+              />
+              <input
+                name="irrigationMethod"
+                className="input-field"
+                placeholder={t("irrigationMethod")}
+              />
+              <input
+                name="diseasesIdentified"
+                className="input-field"
+                placeholder={t("diseasesIdentified")}
+              />
+              <input
+                name="pestsIdentified"
+                className="input-field"
+                placeholder={t("pestsIdentified")}
+              />
             </div>
 
             <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">Production information</h3>
+              <h3 className="text-sm font-semibold">{t("productionInformation")}</h3>
               <input
                 name="totalQuantityHarvested"
                 className="input-field"
-                placeholder="Total quantity harvested"
+                placeholder={t("totalQuantityHarvested")}
                 required
               />
               <select name="qualityGeneral" className="input-field" required>
-                <option value="">Quality in general</option>
+                <option value="">{t("qualityInGeneral")}</option>
                 {QUALITY_LEVELS.map((q) => (
                   <option key={q} value={q}>
-                    {q}
+                    {t(qualityLabelKey[q])}
                   </option>
                 ))}
               </select>
-              <input name="stockQty" type="number" className="input-field" placeholder="Available stock qty" />
+              <input
+                name="stockQty"
+                type="number"
+                className="input-field"
+                placeholder={t("availableStockQty")}
+              />
             </div>
 
             <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">Sales</h3>
+              <h3 className="text-sm font-semibold">{t("sales")}</h3>
               <select name="priceUnit" className="input-field" defaultValue="kg">
                 {PRICE_UNITS.map((u) => (
                   <option key={u} value={u}>
-                    Price per {u}
+                    {t("pricePer")} {u}
                   </option>
                 ))}
               </select>
@@ -361,7 +388,7 @@ export function FarmerPortalClient({
                 name="pricePerUnit"
                 type="number"
                 className="input-field"
-                placeholder="Price (RWF)"
+                placeholder={t("priceRwf")}
                 required
               />
               <input
@@ -369,67 +396,70 @@ export function FarmerPortalClient({
                 type="number"
                 step="0.1"
                 className="input-field"
-                placeholder="Total kgs bought by Huza"
+                placeholder={t("totalKgsBoughtByHuza")}
                 defaultValue={0}
               />
             </div>
 
             <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">Payment options</h3>
+              <h3 className="text-sm font-semibold">{t("paymentOptions")}</h3>
               <select name="paymentOption" className="input-field" required>
-                <option value="">Select payment option</option>
+                <option value="">{t("selectPaymentOption")}</option>
                 {PAYMENT_OPTIONS.map((p) => (
                   <option key={p.value} value={p.value}>
-                    {p.label}
+                    {t(paymentLabelKey[p.value])}
                   </option>
                 ))}
               </select>
-              <input name="farmGatePrice" type="number" className="input-field" placeholder="Farm gate price (RWF)" />
+              <input
+                name="farmGatePrice"
+                type="number"
+                className="input-field"
+                placeholder={t("farmGatePrice")}
+              />
               <input
                 name="priceUponDelivery"
                 type="number"
                 className="input-field"
-                placeholder="Price upon delivery (RWF)"
+                placeholder={t("priceUponDelivery")}
               />
               <input
                 name="priceAfterSale"
                 type="number"
                 className="input-field"
-                placeholder="Price after sale (RWF)"
+                placeholder={t("priceAfterSale")}
               />
               <div>
-                <label className="label">Proof of payment (attach document)</label>
+                <label className="label">{t("proofOfPayment")}</label>
                 <input name="proofOfPayment" type="file" accept="image/*,application/pdf" className="input-field" />
               </div>
             </div>
 
             <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">Comments</h3>
+              <h3 className="text-sm font-semibold">{t("comments")}</h3>
               <textarea
                 name="farmerComments"
                 className="input-field min-h-20"
-                placeholder="Comments for Huza review"
+                placeholder={t("commentsForHuza")}
               />
             </div>
 
             <label className="flex items-center gap-2 text-sm">
-              <input name="isOrganic" type="checkbox" /> Organic
+              <input name="isOrganic" type="checkbox" /> {t("organic")}
             </label>
             <Button type="submit" className="w-full" disabled={busy || !approved}>
-              {busy ? "Submitting…" : "Submit product for Huza review"}
+              {busy ? t("submitting") : t("submitProductCta")}
             </Button>
             {!approved && (
-              <p className="text-xs text-[var(--huza-muted)]">
-                Complete Farmer information and wait for approval before submitting products.
-              </p>
+              <p className="text-xs text-[var(--huza-muted)]">{t("waitApprovalProducts")}</p>
             )}
           </form>
 
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-4">Submitted products</h2>
+            <h2 className="font-semibold mb-4">{t("submittedProducts")}</h2>
             <div className="space-y-3 max-h-[720px] overflow-y-auto">
               {products.length === 0 ? (
-                <p className="text-sm text-[var(--huza-muted)]">No products yet.</p>
+                <p className="text-sm text-[var(--huza-muted)]">{t("noProductsYet")}</p>
               ) : (
                 products.map((p) => (
                   <div key={p.id} className="rounded-xl border border-[var(--huza-line)] p-3">
@@ -448,14 +478,18 @@ export function FarmerPortalClient({
                       <div>
                         <p className="font-medium">{p.nameEn}</p>
                         <p className="text-xs text-[var(--huza-muted)]">
-                          {formatRwf(p.price)}/{formatUnit(p.unit)} · Stock {p.stockQty}
-                          {p.qualityGeneral ? ` · Quality ${p.qualityGeneral}` : ""}
+                          {formatRwf(p.price)}/{formatUnit(p.unit)} · {t("stock")} {p.stockQty}
+                          {p.qualityGeneral
+                            ? ` · ${t("qualityInGeneral")} ${t(qualityLabelKey[p.qualityGeneral] || p.qualityGeneral)}`
+                            : ""}
                         </p>
                         <p className="text-[11px] mt-1 font-semibold text-[var(--huza-green-dark)]">
-                          Review: {p.reviewStatus || "PENDING"}
+                          {t("review")}: {p.reviewStatus || "PENDING"}
                         </p>
                         {p.reviewNote && (
-                          <p className="text-[11px] text-[var(--huza-muted)]">Note: {p.reviewNote}</p>
+                          <p className="text-[11px] text-[var(--huza-muted)]">
+                            {t("note")}: {p.reviewNote}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -469,10 +503,10 @@ export function FarmerPortalClient({
 
       {tab === "inventory" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-          <h2 className="font-semibold mb-1">Inventory</h2>
-          <p className="text-xs text-[var(--huza-muted)] mb-4">Update available stock for listed products.</p>
+          <h2 className="font-semibold mb-1">{t("inventoryTab")}</h2>
+          <p className="text-xs text-[var(--huza-muted)] mb-4">{t("inventoryHint")}</p>
           {products.length === 0 ? (
-            <p className="text-sm text-[var(--huza-muted)]">Submit products first.</p>
+            <p className="text-sm text-[var(--huza-muted)]">{t("submitProductsFirst")}</p>
           ) : (
             <div className="space-y-3">
               {products.map((p) => (
@@ -483,7 +517,7 @@ export function FarmerPortalClient({
                   <div>
                     <p className="font-medium">{p.nameEn}</p>
                     <p className="text-xs text-[var(--huza-muted)]">
-                      Current: {p.stockQty} {formatUnit(p.unit)}
+                      {t("current")}: {p.stockQty} {formatUnit(p.unit)}
                     </p>
                   </div>
                   <form
@@ -503,7 +537,7 @@ export function FarmerPortalClient({
                       required
                     />
                     <Button type="submit" size="sm" disabled={busy}>
-                      Update
+                      {t("update")}
                     </Button>
                   </form>
                 </div>

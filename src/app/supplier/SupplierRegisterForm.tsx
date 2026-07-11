@@ -43,7 +43,7 @@ export function SupplierRegisterForm() {
       onSubmit={onSubmit}
       className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6 text-left"
     >
-      <h2 className="font-semibold text-lg">Supplier registration</h2>
+      <h2 className="font-semibold text-lg">Farmer registration</h2>
       <p className="text-xs text-[var(--huza-muted)]">
         Apply to sell produce to Youth Huza. An admin will verify your documents before you can submit
         offers.

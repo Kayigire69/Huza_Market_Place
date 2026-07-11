@@ -40,7 +40,7 @@ export async function GET() {
 
   const supplier = await resolveSupplier(session.user.id, session.user.role);
   if (!supplier) {
-    return NextResponse.json({ error: "Supplier profile not found" }, { status: 404 });
+    return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
   }
 
   const purchaseOrders = await prisma.purchaseOrder.findMany({
@@ -60,7 +60,7 @@ export async function PATCH(req: Request) {
 
   const supplier = await resolveSupplier(session.user.id, session.user.role);
   if (!supplier) {
-    return NextResponse.json({ error: "Supplier profile not found" }, { status: 404 });
+    return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
   }
 
   const body = await req.json();
@@ -91,7 +91,7 @@ export async function PATCH(req: Request) {
       data: {
         status: PurchaseOrderStatus.ORDERED,
         orderedAt: po.orderedAt || new Date(),
-        notes: [po.notes, `Accepted by supplier ${new Date().toISOString()}`]
+        notes: [po.notes, `Accepted by farmer ${new Date().toISOString()}`]
           .filter(Boolean)
           .join("\n"),
       },

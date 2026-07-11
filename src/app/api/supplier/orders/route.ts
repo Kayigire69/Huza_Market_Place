@@ -22,7 +22,7 @@ export async function PATCH(req: Request) {
       statusLog: {
         create: {
           status,
-          note: accept ? "Accepted by supplier" : "Rejected by supplier",
+          note: accept ? "Accepted by farmer" : "Rejected by farmer",
         },
       },
     },

@@ -10,6 +10,15 @@ import {
   QUALITY_LEVELS,
   RWANDA_PROVINCES,
 } from "@/lib/farmer-dossier";
+import {
+  ageLabelKey,
+  fieldTypeLabelKey,
+  genderLabelKey,
+  paymentLabelKey,
+  provinceLabelKey,
+  qualityLabelKey,
+} from "@/lib/i18n";
+import { useLocale } from "@/lib/locale-context";
 import { Button } from "@/components/ui/Button";
 
 export type FarmerDossierValues = {
@@ -68,6 +77,7 @@ export function FarmerDossierForm({
   initial: FarmerDossierValues;
   onSaved?: () => void;
 }) {
+  const { t } = useLocale();
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(initial.profilePhotoUrl || "");
@@ -114,10 +124,10 @@ export function FarmerDossierForm({
           priceAfterSale: payload.priceAfterSale ? Number(payload.priceAfterSale) : null,
         }),
       });
-      setMsg(res.ok ? "Farmer information saved — Huza uses this to accept or reject products." : "Save failed");
+      setMsg(res.ok ? t("farmerInfoSaved") : t("saveFailed"));
       if (res.ok) onSaved?.();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Save failed");
+      setMsg(err instanceof Error ? err.message : t("saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -128,10 +138,10 @@ export function FarmerDossierForm({
       {msg && <p className="text-sm text-[var(--huza-green-dark)]">{msg}</p>}
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">Farmer personal information</h2>
+        <h2 className="font-semibold text-lg">{t("farmerPersonalInfo")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
-            <label className="label">Picture</label>
+            <label className="label">{t("picture")}</label>
             <input name="profilePhoto" type="file" accept="image/*" className="input-field" />
             {photoUrl && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -140,7 +150,7 @@ export function FarmerDossierForm({
             <input type="hidden" name="profilePhotoUrl" value={photoUrl} />
           </div>
           <div>
-            <label className="label">Name</label>
+            <label className="label">{t("name")}</label>
             <input
               name="fullName"
               defaultValue={initial.fullName || initial.businessName || ""}
@@ -149,7 +159,7 @@ export function FarmerDossierForm({
             />
           </div>
           <div>
-            <label className="label">Farm / business name</label>
+            <label className="label">{t("farmBusinessName")}</label>
             <input
               name="businessName"
               defaultValue={initial.businessName || ""}
@@ -158,161 +168,161 @@ export function FarmerDossierForm({
             />
           </div>
           <div>
-            <label className="label">ID number</label>
+            <label className="label">{t("idNumber")}</label>
             <input name="nationalId" defaultValue={initial.nationalId || ""} className="input-field" required />
           </div>
           <div>
-            <label className="label">Gender</label>
+            <label className="label">{t("gender")}</label>
             <select name="gender" defaultValue={initial.gender || ""} className="input-field" required>
-              <option value="">Select</option>
+              <option value="">{t("select")}</option>
               {GENDERS.map((g) => (
                 <option key={g} value={g}>
-                  {g}
+                  {t(genderLabelKey[g])}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="label">Telephone number</label>
+            <label className="label">{t("telephone")}</label>
             <input name="phone" defaultValue={initial.phone || ""} className="input-field" required />
           </div>
           <div>
-            <label className="label">Age range</label>
+            <label className="label">{t("ageRange")}</label>
             <select name="ageRange" defaultValue={initial.ageRange || ""} className="input-field" required>
-              <option value="">Select</option>
+              <option value="">{t("select")}</option>
               {AGE_RANGES.map((a) => (
                 <option key={a} value={a}>
-                  {a}
+                  {t(ageLabelKey[a])}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="label">Province</label>
+            <label className="label">{t("province")}</label>
             <select name="province" defaultValue={initial.province || ""} className="input-field" required>
-              <option value="">Select</option>
+              <option value="">{t("select")}</option>
               {RWANDA_PROVINCES.map((p) => (
                 <option key={p} value={p}>
-                  {p}
+                  {t(provinceLabelKey[p])}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="label">District</label>
+            <label className="label">{t("district")}</label>
             <input name="district" defaultValue={initial.district || ""} className="input-field" required />
           </div>
           <div>
-            <label className="label">Sector</label>
+            <label className="label">{t("sector")}</label>
             <input name="sector" defaultValue={initial.sector || ""} className="input-field" required />
           </div>
           <div>
-            <label className="label">Cell</label>
+            <label className="label">{t("cell")}</label>
             <input name="cell" defaultValue={initial.cell || ""} className="input-field" required />
           </div>
           <div>
-            <label className="label">Village</label>
+            <label className="label">{t("village")}</label>
             <input name="village" defaultValue={initial.village || ""} className="input-field" required />
           </div>
         </div>
       </section>
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">Field information</h2>
+        <h2 className="font-semibold text-lg">{t("fieldInformation")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
-            <label className="label">Greenhouse or open field</label>
+            <label className="label">{t("greenhouseOrOpen")}</label>
             <select name="fieldType" defaultValue={initial.fieldType || ""} className="input-field" required>
-              <option value="">Select</option>
+              <option value="">{t("select")}</option>
               {FIELD_TYPES.map((f) => (
                 <option key={f} value={f}>
-                  {f}
+                  {t(fieldTypeLabelKey[f])}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="label">Size</label>
+            <label className="label">{t("size")}</label>
             <input
               name="farmSize"
               defaultValue={initial.farmSize || ""}
               className="input-field"
-              placeholder="e.g. 0.5 ha"
+              placeholder={t("sizePlaceholder")}
               required
             />
           </div>
           <div>
-            <label className="label">Past crops — season 1</label>
+            <label className="label">{t("pastCrops1")}</label>
             <input name="pastCropsSeason1" defaultValue={initial.pastCropsSeason1 || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Past crops — season 2</label>
+            <label className="label">{t("pastCrops2")}</label>
             <input name="pastCropsSeason2" defaultValue={initial.pastCropsSeason2 || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Past crops — season 3</label>
+            <label className="label">{t("pastCrops3")}</label>
             <input name="pastCropsSeason3" defaultValue={initial.pastCropsSeason3 || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Current crop</label>
+            <label className="label">{t("currentCrop")}</label>
             <input name="currentCrop" defaultValue={initial.currentCrop || ""} className="input-field" required />
           </div>
           <div>
-            <label className="label">Chemicals sprayed per week</label>
+            <label className="label">{t("chemicalsPerWeek")}</label>
             <input name="chemicalsPerWeek" defaultValue={initial.chemicalsPerWeek || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Why chemicals are used</label>
+            <label className="label">{t("chemicalsWhy")}</label>
             <input name="chemicalsWhy" defaultValue={initial.chemicalsWhy || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Dosage</label>
+            <label className="label">{t("dosage")}</label>
             <input name="chemicalsDosage" defaultValue={initial.chemicalsDosage || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Fertilizer applied per week</label>
+            <label className="label">{t("fertilizerPerWeek")}</label>
             <input name="fertilizerPerWeek" defaultValue={initial.fertilizerPerWeek || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Irrigation method</label>
+            <label className="label">{t("irrigationMethod")}</label>
             <input name="irrigationMethod" defaultValue={initial.irrigationMethod || ""} className="input-field" />
           </div>
           <div>
-            <label className="label">Diseases identified</label>
+            <label className="label">{t("diseasesIdentified")}</label>
             <input name="diseasesIdentified" defaultValue={initial.diseasesIdentified || ""} className="input-field" />
           </div>
           <div className="sm:col-span-2">
-            <label className="label">Pests identified</label>
+            <label className="label">{t("pestsIdentified")}</label>
             <input name="pestsIdentified" defaultValue={initial.pestsIdentified || ""} className="input-field" />
           </div>
         </div>
       </section>
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">Production information</h2>
+        <h2 className="font-semibold text-lg">{t("productionInformation")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
-            <label className="label">Total quantity harvested</label>
+            <label className="label">{t("totalQuantityHarvested")}</label>
             <input
               name="totalQuantityHarvested"
               defaultValue={initial.totalQuantityHarvested || ""}
               className="input-field"
-              placeholder="e.g. 500 kg"
+              placeholder={t("harvestPlaceholder")}
               required
             />
           </div>
           <div>
-            <label className="label">Quality in general</label>
+            <label className="label">{t("qualityInGeneral")}</label>
             <select
               name="qualityGeneral"
               defaultValue={initial.qualityGeneral || ""}
               className="input-field"
               required
             >
-              <option value="">Select</option>
+              <option value="">{t("select")}</option>
               {QUALITY_LEVELS.map((q) => (
                 <option key={q} value={q}>
-                  {q}
+                  {t(qualityLabelKey[q])}
                 </option>
               ))}
             </select>
@@ -321,10 +331,10 @@ export function FarmerDossierForm({
       </section>
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">Sales</h2>
+        <h2 className="font-semibold text-lg">{t("sales")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
-            <label className="label">Price unit</label>
+            <label className="label">{t("priceUnit")}</label>
             <select name="priceUnit" defaultValue={initial.priceUnit || "kg"} className="input-field">
               {PRICE_UNITS.map((u) => (
                 <option key={u} value={u}>
@@ -334,7 +344,7 @@ export function FarmerDossierForm({
             </select>
           </div>
           <div>
-            <label className="label">Price per kg / crate / piece / field (RWF)</label>
+            <label className="label">{t("pricePerUnit")}</label>
             <input
               name="pricePerUnit"
               type="number"
@@ -344,7 +354,7 @@ export function FarmerDossierForm({
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="label">Total kgs bought by Huza</label>
+            <label className="label">{t("totalKgsBoughtByHuza")}</label>
             <input
               name="totalKgsBoughtByHuza"
               type="number"
@@ -357,26 +367,26 @@ export function FarmerDossierForm({
       </section>
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">Payment options</h2>
+        <h2 className="font-semibold text-lg">{t("paymentOptions")}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
-            <label className="label">Preferred payment option</label>
+            <label className="label">{t("preferredPayment")}</label>
             <select
               name="paymentOption"
               defaultValue={initial.paymentOption || ""}
               className="input-field"
               required
             >
-              <option value="">Select</option>
+              <option value="">{t("select")}</option>
               {PAYMENT_OPTIONS.map((p) => (
                 <option key={p.value} value={p.value}>
-                  {p.label}
+                  {t(paymentLabelKey[p.value])}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="label">Farm gate price (RWF)</label>
+            <label className="label">{t("farmGatePrice")}</label>
             <input
               name="farmGatePrice"
               type="number"
@@ -385,7 +395,7 @@ export function FarmerDossierForm({
             />
           </div>
           <div>
-            <label className="label">Price upon delivery (RWF)</label>
+            <label className="label">{t("priceUponDelivery")}</label>
             <input
               name="priceUponDelivery"
               type="number"
@@ -394,7 +404,7 @@ export function FarmerDossierForm({
             />
           </div>
           <div>
-            <label className="label">Price after sale (RWF)</label>
+            <label className="label">{t("priceAfterSale")}</label>
             <input
               name="priceAfterSale"
               type="number"
@@ -403,7 +413,7 @@ export function FarmerDossierForm({
             />
           </div>
           <div>
-            <label className="label">Proof of payment (attach document)</label>
+            <label className="label">{t("proofOfPayment")}</label>
             <input
               name="proofOfPayment"
               type="file"
@@ -417,7 +427,7 @@ export function FarmerDossierForm({
                 rel="noreferrer"
                 className="mt-1 inline-block text-xs text-[var(--huza-green)] underline"
               >
-                View attached proof
+                {t("viewAttachedProof")}
               </a>
             )}
             <input type="hidden" name="proofOfPaymentUrl" value={proofUrl} />
@@ -426,17 +436,17 @@ export function FarmerDossierForm({
       </section>
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">Comments</h2>
+        <h2 className="font-semibold text-lg">{t("comments")}</h2>
         <textarea
           name="farmerComments"
           defaultValue={initial.farmerComments || ""}
           className="input-field min-h-28"
-          placeholder="Anything Huza should know when reviewing your farm or products..."
+          placeholder={t("farmerCommentsPlaceholder")}
         />
       </section>
 
       <Button type="submit" className="w-full sm:w-auto" disabled={busy}>
-        {busy ? "Saving…" : "Save farmer information"}
+        {busy ? t("saving") : t("saveFarmerInfo")}
       </Button>
     </form>
   );

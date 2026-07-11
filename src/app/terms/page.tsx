@@ -20,8 +20,8 @@ export default function TermsPage() {
           sell. Availability may depend on district and business hours (default 6:00 AM – 9:00 PM).
         </p>
         <p>
-          <strong className="text-[var(--huza-ink)]">Supplier procurement.</strong> Verified farms may
-          offer produce for Youth Huza to purchase through the Supplier Procurement Portal. Partners
+          <strong className="text-[var(--huza-ink)]">Farmer procurement.</strong> Verified farms may
+          offer produce for Youth Huza to purchase through the Farmers Portal. Partners
           do not sell directly to shoppers on this site — Huza is the seller to customers.
         </p>
         <p>

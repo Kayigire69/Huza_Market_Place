@@ -90,7 +90,7 @@ export function HomePage({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: form.get("email"), phone: form.get("phone") }),
     });
-    setNewsletterMsg(res.ok ? "Thanks — you’re subscribed!" : "Could not subscribe. Try again.");
+    setNewsletterMsg(res.ok ? t("thanksSubscribed") : t("subscribeFailed"));
     if (res.ok) (e.target as HTMLFormElement).reset();
   };
 
@@ -124,7 +124,7 @@ export function HomePage({
               HUZA FRESH
             </h1>
             <p className="mt-2 text-lg sm:text-xl text-[var(--huza-gold)] font-semibold tracking-wide">
-              Powered by Youth Huza
+              {t("poweredBy")}
             </p>
             <p className="mt-5 max-w-lg text-base sm:text-lg text-[#D7F0E1] leading-relaxed">
               {t("tagline")}
@@ -198,7 +198,7 @@ export function HomePage({
           <div>
             <h2 className="section-title">{t("products")}</h2>
             <p className="mt-1 text-sm text-[var(--huza-muted)]">
-              Photos of produce approved by Youth Huza — what customers buy on HUZA FRESH
+              {t("shopProductsHint")}
             </p>
           </div>
           <Link href="/products" className="text-sm font-semibold text-[var(--huza-green)]">
@@ -229,7 +229,7 @@ export function HomePage({
       {freshToday.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
           <div className="flex items-end justify-between gap-4 mb-6">
-            <h2 className="section-title">Fresh products today</h2>
+            <h2 className="section-title">{t("freshToday")}</h2>
             <Link href="/products?new=1" className="text-sm font-semibold text-[var(--huza-green)]">
               {t("viewAll")}
             </Link>
@@ -269,7 +269,7 @@ export function HomePage({
               >
                 {p.isFlashSale && (
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--huza-gold)]">
-                    Flash sale
+                    {t("flashSale")}
                   </span>
                 )}
                 <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold">
@@ -280,7 +280,7 @@ export function HomePage({
                   <p className="mt-4 inline-block rounded-md bg-white/15 px-3 py-1 text-sm font-mono">
                     {p.code}
                     {p.discountPct ? ` · ${p.discountPct}%` : ""}
-                    {p.freeDelivery ? " · Free delivery" : ""}
+                    {p.freeDelivery ? ` · ${t("freeDelivery")}` : ""}
                   </p>
                 )}
               </div>
@@ -290,28 +290,28 @@ export function HomePage({
       )}
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <h2 className="section-title mb-6">Why choose Huza</h2>
+        <h2 className="section-title mb-6">{t("whyChooseHuza")}</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
               icon: BadgeCheck,
-              title: "Quality controlled",
-              body: "Youth Huza inspects produce before it reaches your cart.",
+              title: t("qualityControlled"),
+              body: t("qualityControlledBody"),
             },
             {
               icon: Truck,
-              title: "One delivery team",
-              body: "We sell and deliver — one brand, one customer service.",
+              title: t("oneDeliveryTeam"),
+              body: t("oneDeliveryTeamBody"),
             },
             {
               icon: ShieldCheck,
-              title: "Secure payments",
-              body: "Pay Youth Huza with MTN MoMo, Airtel Money, or cash on delivery.",
+              title: t("securePayments"),
+              body: t("securePaymentsBody"),
             },
             {
               icon: Leaf,
-              title: "Farm-fresh stock",
-              body: "Retail prices set by Huza from verified farm partners.",
+              title: t("farmFreshStock"),
+              body: t("farmFreshStockBody"),
             },
           ].map((item) => (
             <div key={item.title} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
@@ -324,26 +324,26 @@ export function HomePage({
       </section>
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <h2 className="section-title mb-6">Delivery coverage</h2>
+        <h2 className="section-title mb-6">{t("deliveryCoverage")}</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { zone: "Kigali", fee: "5,000 RWF", time: "About 45 min", icon: MapPin },
-            { zone: "Kamonyi (Ruyenzi)", fee: "5,000 RWF", time: "About 75 min", icon: MapPin },
-            { zone: "Bugesera (Nyamata)", fee: "5,000 RWF", time: "About 75 min", icon: MapPin },
+            { zone: t("zoneKigali"), fee: "5,000 RWF", time: t("about45min"), icon: MapPin },
+            { zone: t("zoneKamonyi"), fee: "5,000 RWF", time: t("about75min"), icon: MapPin },
+            { zone: t("zoneBugesera"), fee: "5,000 RWF", time: t("about75min"), icon: MapPin },
           ].map((z) => (
             <div key={z.zone} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
               <z.icon className="size-6 text-[var(--huza-green)]" />
               <h3 className="mt-3 font-semibold">{z.zone}</h3>
-              <p className="mt-1 text-sm text-[var(--huza-muted)]">Delivery fee {z.fee}</p>
+              <p className="mt-1 text-sm text-[var(--huza-muted)]">
+                {t("deliveryFeeLabel")} {z.fee}
+              </p>
               <p className="mt-1 text-sm text-[var(--huza-muted)] inline-flex items-center gap-1">
                 <Clock className="size-3.5" /> {z.time}
               </p>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-sm text-[var(--huza-muted)]">
-          Choose Today, Tomorrow, or Scheduled delivery at checkout.
-        </p>
+        <p className="mt-3 text-sm text-[var(--huza-muted)]">{t("deliveryScheduleHint")}</p>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
@@ -369,27 +369,25 @@ export function HomePage({
         <div className="rounded-3xl bg-[var(--huza-green-dark)] text-white p-8 sm:p-10 grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
           <div>
             <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
-              Newsletter
+              {t("newsletter")}
             </h2>
-            <p className="mt-2 text-sm text-[#C8E8D4]">
-              Get fresh arrivals, flash sales, and delivery updates from Youth Huza.
-            </p>
+            <p className="mt-2 text-sm text-[#C8E8D4]">{t("newsletterBody")}</p>
           </div>
           <form onSubmit={subscribe} className="space-y-3">
             <input
               name="email"
               type="email"
               required
-              placeholder="Email address"
+              placeholder={t("emailAddress")}
               className="w-full rounded-lg border-0 px-4 py-2.5 text-[var(--huza-ink)]"
             />
             <input
               name="phone"
-              placeholder="Phone (optional)"
+              placeholder={t("phoneOptional")}
               className="w-full rounded-lg border-0 px-4 py-2.5 text-[var(--huza-ink)]"
             />
             <Button type="submit" variant="secondary" className="w-full">
-              Subscribe
+              {t("subscribe")}
             </Button>
             {newsletterMsg && <p className="text-sm text-[var(--huza-gold)]">{newsletterMsg}</p>}
           </form>

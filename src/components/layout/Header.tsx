@@ -25,9 +25,9 @@ export function Header() {
     { href: "/", label: t("home") },
     { href: "/products", label: t("products") },
     { href: "/categories", label: t("categories") },
-    { href: "/track", label: "Track order" },
-    { href: "/support", label: "Support" },
-    { href: "/about", label: "About" },
+    { href: "/track", label: t("trackOrder") },
+    { href: "/support", label: t("support") },
+    { href: "/about", label: t("about") },
   ];
 
   return (
@@ -41,7 +41,7 @@ export function Header() {
                 HUZA FRESH
               </p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)]">
-                Powered by Youth Huza
+                {t("poweredBy")}
               </p>
             </div>
           </Link>
@@ -70,7 +70,7 @@ export function Header() {
             <Link
               href="/wishlist"
               className="relative inline-flex items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)]"
-              aria-label="Wishlist"
+              aria-label={t("wishlist")}
             >
               <Heart className="size-5" />
             </Link>
@@ -78,7 +78,7 @@ export function Header() {
             <Link
               href="/track"
               className="hidden sm:inline-flex items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)]"
-              aria-label="Track order"
+              aria-label={t("trackOrder")}
             >
               <MapPinned className="size-5" />
             </Link>
@@ -112,11 +112,11 @@ export function Header() {
                     {t("account")}
                   </Link>
                   <Link href="/wishlist" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                    Wishlist
+                    {t("wishlist")}
                   </Link>
                   {session.user.role === "SUPPLIER" && (
                     <Link href="/farmer" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                      {t("supplierPortal")}
+                      {t("farmerPortal")}
                     </Link>
                   )}
                   <button
@@ -136,7 +136,7 @@ export function Header() {
               </Link>
             )}
 
-            <button className="md:hidden p-2" onClick={() => setOpen((v) => !v)} aria-label="Menu">
+            <button className="md:hidden p-2" onClick={() => setOpen((v) => !v)} aria-label={t("menu")}>
               {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
           </div>
