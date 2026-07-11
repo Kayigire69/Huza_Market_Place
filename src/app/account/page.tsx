@@ -76,13 +76,26 @@ export default async function AccountPage() {
                       >
                         Track order →
                       </Link>
-                      <Link
+                      <a
                         href={`/api/invoices/${o.orderNumber}`}
                         className="font-semibold text-[var(--huza-green)]"
                         target="_blank"
+                        rel="noreferrer"
                       >
-                        Invoice →
-                      </Link>
+                        View invoice →
+                      </a>
+                      <a
+                        href={`/api/invoices/${o.orderNumber}?format=pdf`}
+                        className="font-semibold text-[var(--huza-green)]"
+                      >
+                        PDF invoice ↓
+                      </a>
+                      <a
+                        href={`/api/receipts/${o.orderNumber}?format=pdf`}
+                        className="font-semibold text-[var(--huza-green)]"
+                      >
+                        PDF receipt ↓
+                      </a>
                     </div>
                   </div>
                 ))}

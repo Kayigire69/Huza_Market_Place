@@ -269,6 +269,16 @@ export default function CheckoutClient() {
             <Link href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(payment.payerPhone || "")}`}>
               <Button size="sm">Track this order</Button>
             </Link>
+            <a href={`/api/invoices/${encodeURIComponent(payment.orderNumber)}?format=pdf`}>
+              <Button type="button" size="sm" variant="ghost">
+                Download invoice
+              </Button>
+            </a>
+            <a href={`/api/receipts/${encodeURIComponent(payment.orderNumber)}?format=pdf`}>
+              <Button type="button" size="sm" variant="ghost">
+                Download receipt
+              </Button>
+            </a>
           </div>
         </div>
         <p className="mt-4 text-[var(--huza-muted)]">
