@@ -45,15 +45,15 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--huza-orange-dark)]">
+          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
             {t("farmersPortalBadge")}
           </p>
-          <h1 className="section-title mt-2">{t("farmerPortal")}</h1>
+          <h1 className="section-title mt-3">{t("farmerPortal")}</h1>
         </div>
 
         <div className="mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white/95 p-6 shadow-sm backdrop-blur-sm">
           <Link href="/auth/login?callbackUrl=/farmer" className="block">
-            <Button className="w-full !bg-[var(--huza-orange)] hover:!bg-[var(--huza-orange-dark)]" size="lg">
+            <Button className="w-full" size="lg">
               {t("farmerLogin")}
             </Button>
           </Link>
@@ -71,14 +71,14 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16">
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--huza-orange-dark)]">
+          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
             {t("farmersPortalBadge")}
           </p>
-          <h1 className="section-title mt-2">{t("farmerPortal")}</h1>
+          <h1 className="section-title mt-3">{t("farmerPortal")}</h1>
           <p className="mt-3 text-sm">
             <Link
               href="/auth/login?callbackUrl=/farmer"
-              className="font-semibold text-[var(--huza-orange-dark)]"
+              className="font-bold text-[var(--huza-green-dark)] underline decoration-[var(--huza-green)] underline-offset-4"
             >
               {t("farmerLogin")}
             </Link>
@@ -96,7 +96,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
         <p className="mt-4 text-[var(--huza-muted)]">{t("becomeVerifiedBody")}</p>
         <Link
           href="/farmer/register"
-          className="inline-block mt-6 font-semibold text-[var(--huza-orange-dark)]"
+          className="mt-6 inline-block font-bold text-[var(--huza-green-dark)] underline decoration-[var(--huza-green)] underline-offset-4"
         >
           {t("apply")}
         </Link>
@@ -120,7 +120,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/60 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--huza-orange-dark)]">
+          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
             {t("farmersPortalSellBadge")}
           </p>
           <h1 className="section-title mt-1">{businessName}</h1>

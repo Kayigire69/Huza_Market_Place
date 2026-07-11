@@ -66,9 +66,9 @@ export function FarmerRegisterForm() {
           <button
             type="button"
             onClick={() => setFarmingType("ORGANIC")}
-            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-orange)] hover:bg-[#fff8ef]"
+            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
           >
-            <Leaf className="size-7 text-[var(--huza-orange)]" />
+            <Leaf className="size-7 text-[var(--huza-green-dark)]" />
             <p className="mt-3 font-semibold">{t("organicFarmerPath")}</p>
             <p className="mt-2 text-xs text-[var(--huza-muted)] leading-relaxed">
               {t("organicFarmerPathHint")}
@@ -77,9 +77,9 @@ export function FarmerRegisterForm() {
           <button
             type="button"
             onClick={() => setFarmingType("STANDARD")}
-            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-orange)] hover:bg-[#fff8ef]"
+            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
           >
-            <Sprout className="size-7 text-[var(--huza-orange)]" />
+            <Sprout className="size-7 text-[var(--huza-green-dark)]" />
             <p className="mt-3 font-semibold">{t("standardFarmerPath")}</p>
             <p className="mt-2 text-xs text-[var(--huza-muted)] leading-relaxed">
               {t("standardFarmerPathHint")}
@@ -90,7 +90,7 @@ export function FarmerRegisterForm() {
           {t("alreadyRegistered")}{" "}
           <Link
             href="/auth/login?callbackUrl=/farmer"
-            className="font-semibold text-[var(--huza-orange-dark)]"
+            className="font-bold text-[var(--huza-green-dark)] underline decoration-[var(--huza-green)] underline-offset-4"
           >
             {t("farmerLogin")}
           </Link>
@@ -117,7 +117,7 @@ export function FarmerRegisterForm() {
         </div>
         <button
           type="button"
-          className="text-xs font-semibold text-[var(--huza-orange-dark)]"
+          className="text-xs font-bold text-[var(--huza-green-dark)]"
           onClick={() => setFarmingType(null)}
         >
           {t("changeFarmingType")}
@@ -280,7 +280,7 @@ export function FarmerRegisterForm() {
         {t("alreadyRegistered")}{" "}
         <Link
           href="/auth/login?callbackUrl=/farmer"
-          className="font-semibold text-[var(--huza-orange-dark)]"
+          className="font-bold text-[var(--huza-green-dark)] underline decoration-[var(--huza-green)] underline-offset-4"
         >
           {t("farmerLogin")}
         </Link>
