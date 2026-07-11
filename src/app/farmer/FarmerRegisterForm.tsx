@@ -60,13 +60,13 @@ export function FarmerRegisterForm() {
 
   if (!farmingType) {
     return (
-      <div className="farmer-panel mt-8 space-y-4 p-6 sm:p-7">
-        <h2 className="farmer-panel-title text-center text-xl">{t("farmerRegistration")}</h2>
+      <div className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
+        <h2 className="text-center font-semibold text-lg">{t("farmerRegistration")}</h2>
         <div className="grid gap-3 sm:grid-cols-2 text-left">
           <button
             type="button"
             onClick={() => setFarmingType("ORGANIC")}
-            className="farmer-choice-card"
+            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
           >
             <Leaf className="size-7 text-[var(--huza-green-dark)]" />
             <p className="mt-3 font-semibold">{t("organicFarmerPath")}</p>
@@ -77,7 +77,7 @@ export function FarmerRegisterForm() {
           <button
             type="button"
             onClick={() => setFarmingType("STANDARD")}
-            className="farmer-choice-card"
+            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
           >
             <Sprout className="size-7 text-[var(--huza-green-dark)]" />
             <p className="mt-3 font-semibold">{t("standardFarmerPath")}</p>
@@ -104,11 +104,11 @@ export function FarmerRegisterForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="farmer-panel mt-8 space-y-4 p-6 text-left sm:p-7"
+      className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6 text-left"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="farmer-panel-title text-xl">
+          <h2 className="font-semibold text-lg">
             {isOrganic ? t("organicFarmerPath") : t("standardFarmerPath")}
           </h2>
           <p className="text-xs text-[var(--huza-muted)] mt-1">
