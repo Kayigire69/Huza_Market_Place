@@ -123,12 +123,19 @@ export const productRepository = {
 
   async findHomeLists(take = 16) {
     const include = {
-      images: { orderBy: { sortOrder: "asc" as const } },
+      images: {
+        where: { kind: "STOREFRONT" as const },
+        orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
+      },
       supplier: { select: { id: true } },
       category: true,
     };
-    // Include zero-stock items — storefront shows a 6–12h arrival window instead of hiding them
-    const active = { isActive: true, deletedAt: null };
+    // Active products that have at least one HUZA storefront image
+    const active = {
+      isActive: true,
+      deletedAt: null,
+      images: { some: { kind: "STOREFRONT" as const } },
+    };
     const [shopProducts, featured, bestSellers, freshToday] = await Promise.all([
       prisma.product.findMany({
         where: active,

@@ -21,7 +21,10 @@ export default async function ProductDetailPage({
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
-      images: { orderBy: { sortOrder: "asc" } },
+      images: {
+        where: { kind: "STOREFRONT" },
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+      },
       supplier: true,
       category: true,
       reviews: {
@@ -34,6 +37,7 @@ export default async function ProductDetailPage({
   });
 
   if (!product || !product.isActive || product.deletedAt) notFound();
+  if (product.images.length === 0) notFound();
 
   // Never expose farmer/supplier identity to the customer storefront payload
   const storefrontProduct = {

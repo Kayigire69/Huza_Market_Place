@@ -102,8 +102,19 @@ export async function PATCH(req: Request) {
             ? offer.availableDistricts
             : [offer.supplier.district],
         images: {
-          create: [{ url: "/images/products/mushroom.svg", alt: offer.title }],
+          create: [
+            {
+              url: "/images/products/mushroom.svg",
+              alt: offer.title,
+              sortOrder: 0,
+              kind: "STOREFRONT",
+              isCover: true,
+            },
+          ],
         },
+        // Placeholder image — replace with professional HUZA photos in Catalog before featuring
+        reviewStatus: "APPROVED",
+        reviewNote: "Created from procurement — replace placeholder image with HUZA photos",
       },
     });
 

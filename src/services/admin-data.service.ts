@@ -38,7 +38,7 @@ export async function loadAdminWorkspace() {
       include: {
         supplier: { include: { user: true } },
         category: true,
-        images: { orderBy: { sortOrder: "asc" }, take: 4 },
+        images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }], take: 12 },
       },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -117,7 +117,10 @@ export async function loadAdminWorkspace() {
       include: {
         category: true,
         supplier: { select: { id: true, businessName: true, farmingType: true } },
-        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        images: {
+          orderBy: [{ kind: "asc" }, { isCover: "desc" }, { sortOrder: "asc" }],
+          take: 8,
+        },
       },
       orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
       take: 120,

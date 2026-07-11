@@ -22,6 +22,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
 
   const where: Prisma.ProductWhereInput = {
     isActive: true,
+    images: { some: { kind: "STOREFRONT" } },
     ...(q
       ? {
           OR: [
@@ -46,7 +47,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const [products, categories] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: { images: true, supplier: { select: { id: true } }, category: true },
+      include: {
+        images: {
+          where: { kind: "STOREFRONT" },
+          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        },
+        supplier: { select: { id: true } },
+        category: true,
+      },
       orderBy: [{ isFeatured: "desc" }, { ratingAvg: "desc" }],
     }),
     prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),

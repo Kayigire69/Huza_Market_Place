@@ -31,7 +31,7 @@ type Product = {
   originDistrict?: string | null;
   nutritionalInfo?: string | null;
   availableDistricts?: string[];
-  images: { id: string; url: string; alt: string | null }[];
+  images: { id: string; url: string; alt: string | null; isCover?: boolean }[];
   /** Internal only — not displayed on storefront */
   supplier?: {
     id: string;
@@ -44,18 +44,24 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const { locale, t } = useLocale();
   const addItem = useCart((s) => s.addItem);
   const [qty, setQty] = useState(1);
-  const [active, setActive] = useState(0);
+  const coverIdx = Math.max(
+    0,
+    product.images.findIndex((i) => i.isCover)
+  );
+  const [active, setActive] = useState(coverIdx >= 0 ? coverIdx : 0);
   const [lightbox, setLightbox] = useState(false);
   const name = productName(product, locale);
   const description = productDescription(product, locale);
   const image = product.images[active]?.url ?? "/logo.svg";
 
   useEffect(() => {
+    const cover =
+      product.images.find((i) => i.isCover)?.url ?? product.images[0]?.url ?? "/logo.svg";
     pushRecentlyViewed({
       id: product.id,
       name,
       price: product.price,
-      imageUrl: product.images[0]?.url ?? "/logo.svg",
+      imageUrl: cover,
     });
   }, [product.id, name, product.price, product.images]);
 
