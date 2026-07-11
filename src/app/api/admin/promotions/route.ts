@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { writeAuditLog } from "@/lib/audit";
+import { auditAdminAction } from "@/lib/audit";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 
 async function requireAdmin() {
@@ -58,10 +58,8 @@ export async function POST(req: Request) {
     },
   });
 
-  await writeAuditLog({
-    actorId: session.user.id,
-    actorName: session.user.name,
-    action: "promotion.create",
+  await auditAdminAction(req, session, {
+      action: "promotion.create",
     entity: "Promotion",
     entityId: promo.id,
     details: promo.titleEn,
@@ -87,9 +85,7 @@ export async function PATCH(req: Request) {
       where: { id },
       data: { isActive: !existing.isActive },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "promotion.toggle",
       entity: "Promotion",
       entityId: id,
@@ -131,9 +127,7 @@ export async function PATCH(req: Request) {
         ...(body.endsAt !== undefined ? { endsAt: body.endsAt ? new Date(body.endsAt) : null } : {}),
       },
     });
-    await writeAuditLog({
-      actorId: session.user.id,
-      actorName: session.user.name,
+    await auditAdminAction(req, session, {
       action: "promotion.update",
       entity: "Promotion",
       entityId: id,
@@ -155,10 +149,8 @@ export async function DELETE(req: Request) {
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
   await prisma.promotion.delete({ where: { id } });
-  await writeAuditLog({
-    actorId: session.user.id,
-    actorName: session.user.name,
-    action: "promotion.delete",
+  await auditAdminAction(req, session, {
+      action: "promotion.delete",
     entity: "Promotion",
     entityId: id,
   });

@@ -7,6 +7,8 @@ import { formatRwf } from "@/lib/utils";
 import { AdminCatalogPanel, AdminInventoryPanel } from "./AdminCatalogPanels";
 import { AdminOffersPanel } from "./AdminOffersPanel";
 import { AdminReportsPanel } from "./AdminReportsPanel";
+import { AdminStaffPanel } from "./AdminStaffPanel";
+import { AdminAuditPanel } from "./AdminAuditPanel";
 
 type AnyObj = Record<string, unknown>;
 
@@ -24,7 +26,8 @@ type Tab =
   | "promos"
   | "hours"
   | "reports"
-  | "audit";
+  | "audit"
+  | "staff";
 
 const WORKSPACES: { title: string; hint: string; tabs: { id: Tab; label: string }[] }[] = [
   {
@@ -93,6 +96,7 @@ export function AdminClient(props: {
   purchaseOrders: AnyObj[];
   catalogProducts?: AnyObj[];
   recentMovements?: AnyObj[];
+  staffUsers?: AnyObj[];
   adminName?: string | null;
   /** When set, only this module is shown (used by /admin/* routes + AdminShell). */
   forcedTab?: Tab;
@@ -1103,31 +1107,37 @@ export function AdminClient(props: {
 
       {activeTab === "reports" && <AdminReportsPanel snapshot={props} />}
 
+      {activeTab === "staff" && (
+        <AdminStaffPanel
+          initialStaff={(props.staffUsers || []).map((u) => ({
+            id: String(u.id),
+            fullName: String(u.fullName),
+            email: (u.email as string | null) ?? null,
+            phone: String(u.phone),
+            role: String(u.role),
+            isActive: Boolean(u.isActive),
+            createdAt: String(u.createdAt),
+          }))}
+        />
+      )}
+
       {activeTab === "audit" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-          <h2 className="font-semibold mb-2">Admin audit logs</h2>
-          <p className="text-sm text-[var(--huza-muted)] mb-3">
-            Track who approved farmers, changed orders, and other admin actions.
-          </p>
-          {(props.auditLogs || []).length === 0 ? (
-            <p className="text-sm text-[var(--huza-muted)]">No audit events yet.</p>
-          ) : (
-            props.auditLogs.map((log) => (
-              <div key={String(log.id)} className="rounded-xl border border-[var(--huza-line)] p-3 text-sm">
-                <p className="font-medium">
-                  {String(log.action)} · {String(log.entity)}
-                  {log.entityId ? ` #${String(log.entityId).slice(0, 8)}` : ""}
-                </p>
-                <p className="text-[var(--huza-muted)]">
-                  {String(log.actorName || "System")} — {String(log.details || "")}
-                </p>
-                <p className="text-xs text-[var(--huza-muted)] mt-1">
-                  {new Date(String(log.createdAt)).toLocaleString()}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
+        <AdminAuditPanel
+          logs={(props.auditLogs || []).map((log) => ({
+            id: String(log.id),
+            actorId: (log.actorId as string | null) ?? null,
+            actorName: (log.actorName as string | null) ?? null,
+            actorEmail: (log.actorEmail as string | null) ?? null,
+            action: String(log.action),
+            entity: String(log.entity),
+            entityId: (log.entityId as string | null) ?? null,
+            details: (log.details as string | null) ?? null,
+            beforeJson: log.beforeJson,
+            afterJson: log.afterJson,
+            ipAddress: (log.ipAddress as string | null) ?? null,
+            createdAt: String(log.createdAt),
+          }))}
+        />
       )}
       </div>
     </div>

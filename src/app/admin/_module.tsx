@@ -18,7 +18,8 @@ type Tab =
   | "promos"
   | "hours"
   | "reports"
-  | "audit";
+  | "audit"
+  | "staff";
 
 export async function renderAdminModule(forcedTab: Tab) {
   const session = await getServerSession(authOptions);
@@ -46,6 +47,7 @@ export async function renderAdminModule(forcedTab: Tab) {
       emergency={data.emergency}
       deliveryPeople={data.deliveryPeople}
       auditLogs={data.auditLogs}
+      staffUsers={data.staffUsers}
       procurementOffers={data.procurementOffers}
       purchaseOrders={data.purchaseOrders}
       catalogProducts={data.catalogProducts}
