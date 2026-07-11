@@ -4,7 +4,8 @@ import { FormEvent, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { formatRwf } from "@/lib/utils";
+import { formatRwf, DELIVERY_ZONE_LABELS, type DeliveryZoneKey } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 type TrackData = {
   orderNumber: string;
@@ -14,6 +15,7 @@ type TrackData = {
   deliveryZone: string;
   createdAt: string;
   scheduledFor?: string | null;
+  estimatedDelivery?: string | null;
   payment?: { status: string; method: string; payeeName?: string | null };
   delivery?: {
     status: string;
@@ -24,16 +26,25 @@ type TrackData = {
   items: { quantity: number; lineTotal: number; product: { nameEn: string } }[];
 };
 
-const STEPS = [
-  "PENDING",
-  "PAID",
-  "CONFIRMED",
-  "PREPARING",
-  "PACKED",
-  "READY_FOR_DISPATCH",
-  "OUT_FOR_DELIVERY",
-  "DELIVERED",
+const STEPS: { code: string; label: string }[] = [
+  { code: "PENDING", label: "Order received" },
+  { code: "PAID", label: "Payment confirmed" },
+  { code: "CONFIRMED", label: "Order confirmed" },
+  { code: "PREPARING", label: "Preparing products" },
+  { code: "PACKED", label: "Packed" },
+  { code: "READY_FOR_DISPATCH", label: "Driver assigned" },
+  { code: "OUT_FOR_DELIVERY", label: "Out for delivery" },
+  { code: "DELIVERED", label: "Delivered" },
 ];
+
+function resolveStepIndex(status: string) {
+  if (status === "CANCELLED" || status === "REFUNDED" || status === "RETURNED") return -1;
+  // Payment confirmed maps onto PAID visually when order jumps to CONFIRMED
+  if (status === "CONFIRMED") return STEPS.findIndex((s) => s.code === "CONFIRMED");
+  if (status === "READY_FOR_PICKUP") return STEPS.findIndex((s) => s.code === "READY_FOR_DISPATCH");
+  const idx = STEPS.findIndex((s) => s.code === status);
+  return Math.max(0, idx);
+}
 
 function TrackForm() {
   const sp = useSearchParams();
@@ -67,11 +78,9 @@ function TrackForm() {
     setData(json);
   };
 
-  const stepIndex = data
-    ? data.status === "CANCELLED"
-      ? -1
-      : Math.max(0, STEPS.indexOf(data.status))
-    : 0;
+  const stepIndex = data ? resolveStepIndex(data.status) : 0;
+  const zoneLabel =
+    DELIVERY_ZONE_LABELS[data?.deliveryZone as DeliveryZoneKey] || data?.deliveryZone;
 
   return (
     <>
@@ -83,7 +92,7 @@ function TrackForm() {
           <label className="label">Order number</label>
           <input
             className="input-field"
-            placeholder="e.g. HUZA-123456"
+            placeholder="e.g. HZ-2026-000245"
             value={orderNumber}
             onChange={(e) => setOrderNumber(e.target.value)}
             required
@@ -106,30 +115,63 @@ function TrackForm() {
       </form>
 
       {data && (
-        <div className="mt-8 rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
+        <div className="mt-8 rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-5">
           <div>
             <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Order number</p>
             <p className="font-mono text-xl font-bold text-[var(--huza-green-dark)]">{data.orderNumber}</p>
             <p className="text-sm text-[var(--huza-muted)] mt-1">
-              Status: <strong>{data.status}</strong> · {formatRwf(data.total)}
+              {formatRwf(data.total)}
+              {data.estimatedDelivery ? ` · ETA ${data.estimatedDelivery}` : ""}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {STEPS.map((s, i) => (
-              <span
-                key={s}
-                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                  stepIndex >= i
-                    ? "bg-[var(--huza-green)] text-white"
-                    : "bg-[var(--huza-mint)] text-[var(--huza-muted)]"
-                }`}
-              >
-                {s.replace(/_/g, " ")}
-              </span>
-            ))}
-          </div>
+
+          {data.status === "CANCELLED" ? (
+            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+              This order was cancelled.
+            </p>
+          ) : (
+            <ol className="space-y-0">
+              {STEPS.map((s, i) => {
+                const done = stepIndex >= i;
+                const current = stepIndex === i;
+                return (
+                  <li key={s.code} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                          done
+                            ? "bg-[var(--huza-green)] text-white"
+                            : "bg-[var(--huza-mint)] text-[var(--huza-muted)]"
+                        }`}
+                      >
+                        {done ? <Check className="size-3.5" /> : i + 1}
+                      </span>
+                      {i < STEPS.length - 1 && (
+                        <span
+                          className={`w-0.5 flex-1 min-h-6 ${
+                            stepIndex > i ? "bg-[var(--huza-green)]" : "bg-[var(--huza-line)]"
+                          }`}
+                        />
+                      )}
+                    </div>
+                    <div className={`pb-5 ${current ? "pt-0.5" : "pt-1"}`}>
+                      <p
+                        className={`text-sm font-semibold ${
+                          done ? "text-[var(--huza-green-dark)]" : "text-[var(--huza-muted)]"
+                        }`}
+                      >
+                        {s.label}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+
           <p className="text-sm text-[var(--huza-muted)]">
-            Deliver to: {data.deliveryAddress} ({data.deliveryZone})
+            Deliver to: {data.deliveryAddress}
+            {zoneLabel ? ` (${zoneLabel})` : ""}
           </p>
           {data.delivery?.deliveryPerson && (
             <p className="text-sm">
@@ -152,24 +194,17 @@ function TrackForm() {
             ))}
           </div>
           <div className="flex flex-wrap gap-4">
-            <Link
-              href={`/api/invoices/${data.orderNumber}`}
-              className="inline-block text-sm font-semibold text-[var(--huza-green)]"
-              target="_blank"
+            <a
+              href={`/api/receipts/${data.orderNumber}?format=pdf`}
+              className="inline-block text-sm font-semibold text-[var(--huza-green-dark)]"
             >
-              View invoice →
-            </Link>
+              Download receipt ↓
+            </a>
             <a
               href={`/api/invoices/${data.orderNumber}?format=pdf`}
               className="inline-block text-sm font-semibold text-[var(--huza-green)]"
             >
-              PDF invoice ↓
-            </a>
-            <a
-              href={`/api/receipts/${data.orderNumber}?format=pdf`}
-              className="inline-block text-sm font-semibold text-[var(--huza-green)]"
-            >
-              PDF receipt ↓
+              Download invoice ↓
             </a>
           </div>
         </div>
@@ -183,8 +218,8 @@ export default function TrackOrderPage() {
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
       <h1 className="section-title">Track your order</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Use the order number shown after checkout (and in My Account) plus the phone you used when
-        ordering.
+        Follow every step from order received to delivered. Use your order number and the phone you
+        used at checkout.
       </p>
       <Suspense fallback={<p className="text-sm text-[var(--huza-muted)]">Loading…</p>}>
         <TrackForm />

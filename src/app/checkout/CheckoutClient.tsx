@@ -8,12 +8,13 @@ import {
   DELIVERY_FEES,
   DELIVERY_ZONE_LABELS,
   formatRwf,
+  formatUnit,
   type DeliveryZoneKey,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import { Smartphone, CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { cartFulfillmentEta } from "@/lib/delivery-eta";
+import { Smartphone, CheckCircle2, XCircle, Loader2, FileText, CreditCard, MapPin } from "lucide-react";
+import { cartFulfillmentEta, ZONE_ETA_LABELS } from "@/lib/delivery-eta";
 
 type PaymentSuccess = {
   orderNumber: string;
@@ -28,7 +29,19 @@ type PaymentSuccess = {
   estimatedDelivery?: string;
 };
 
-type PayPhase = "form" | "awaiting" | "paid" | "failed";
+type CheckoutPhase =
+  | "delivery"
+  | "invoice"
+  | "payment"
+  | "awaiting"
+  | "paid"
+  | "failed";
+
+const STEPS = [
+  { id: "delivery", label: "Delivery", icon: MapPin },
+  { id: "invoice", label: "Invoice", icon: FileText },
+  { id: "payment", label: "Payment", icon: CreditCard },
+] as const;
 
 export default function CheckoutClient() {
   const { t } = useLocale();
@@ -45,12 +58,13 @@ export default function CheckoutClient() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [phase, setPhase] = useState<PayPhase>("form");
+  const [phase, setPhase] = useState<CheckoutPhase>("delivery");
   const [payment, setPayment] = useState<PaymentSuccess | null>(null);
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
     address: "",
+    landmark: "",
     deliveryDistrict: "",
     deliverySector: "",
     deliveryCell: "",
@@ -126,7 +140,6 @@ export default function CheckoutClient() {
     }
   };
 
-  // Poll payment status while awaiting phone approval
   useEffect(() => {
     if (phase !== "awaiting" || !payment) return;
 
@@ -146,7 +159,81 @@ export default function CheckoutClient() {
     return () => clearInterval(id);
   }, [phase, payment]);
 
-  if (items.length === 0 && phase === "form") {
+  const validateDelivery = (): string | null => {
+    if (!form.fullName.trim()) return "Enter your full name.";
+    if (!form.phone.trim()) return "Enter your phone number.";
+    if (!form.address.trim()) return "Enter your delivery address.";
+    if (slot === "SCHEDULED" && !scheduledDate) return "Pick a scheduled delivery date.";
+    return null;
+  };
+
+  const goToInvoice = (e: FormEvent) => {
+    e.preventDefault();
+    const err = validateDelivery();
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError("");
+    setPhase("invoice");
+  };
+
+  const placeOrder = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const addressWithLandmark = form.landmark.trim()
+        ? `${form.address.trim()} (Landmark: ${form.landmark.trim()})`
+        : form.address.trim();
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          address: addressWithLandmark,
+          deliveryZone: zone,
+          deliverySlot: slot,
+          scheduledFor: slot === "SCHEDULED" && scheduledDate ? scheduledDate : undefined,
+          paymentPhone: form.paymentPhone,
+          items: items.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Checkout failed");
+      clear();
+      setPayment({
+        orderNumber: data.orderNumber,
+        orderId: data.id,
+        total: data.total,
+        paymentMessage: data.paymentMessage,
+        payerPhone: data.payerPhone,
+        payeeName: data.payeeName,
+        payeePhone: data.payeePhone,
+        method: data.method,
+        paymentMode: data.paymentMode,
+        estimatedDelivery: data.estimatedDelivery,
+      });
+      setPhase(data.paymentStatus === "CONFIRMED" ? "paid" : "awaiting");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onPay = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!form.paymentPhone.trim()) {
+      setError("Enter the Mobile Money phone number.");
+      return;
+    }
+    await placeOrder();
+  };
+
+  if (items.length === 0 && (phase === "delivery" || phase === "invoice" || phase === "payment")) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p>{t("emptyCart")}</p>
@@ -157,10 +244,41 @@ export default function CheckoutClient() {
     );
   }
 
+  const stepIndex =
+    phase === "delivery" ? 0 : phase === "invoice" ? 1 : phase === "payment" || phase === "awaiting" || phase === "paid" || phase === "failed" ? 2 : 0;
+
+  const Stepper = () => (
+    <ol className="mb-8 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+      {STEPS.map((s, i) => {
+        const Icon = s.icon;
+        const active = i === stepIndex;
+        const done = i < stepIndex;
+        return (
+          <li key={s.id} className="flex items-center gap-2">
+            {i > 0 && <span className="mx-1 text-[var(--huza-line)]">→</span>}
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-semibold ${
+                active
+                  ? "bg-[var(--huza-green)] text-white"
+                  : done
+                    ? "bg-[var(--huza-mint)] text-[var(--huza-green-dark)]"
+                    : "bg-white text-[var(--huza-muted)] ring-1 ring-[var(--huza-line)]"
+              }`}
+            >
+              <Icon className="size-3.5" />
+              {s.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+
   if (phase === "awaiting" && payment) {
     const network = payment.method === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money";
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <Stepper />
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--huza-mint)] animate-float">
           <Smartphone className="size-10 text-[var(--huza-green-dark)]" />
         </div>
@@ -180,9 +298,6 @@ export default function CheckoutClient() {
           <p>
             You are paying <strong>Youth Huza</strong> ({payment.payeeName}). Huza sells and delivers
             your order.
-          </p>
-          <p className="text-xs text-[var(--huza-muted)]">
-            Save your order number to track delivery
           </p>
           <div className="rounded-xl bg-[var(--huza-mint)] px-4 py-3 flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -253,34 +368,35 @@ export default function CheckoutClient() {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <CheckCircle2 className="mx-auto size-14 text-[var(--huza-green)]" />
-        <h1 className="section-title mt-4">
-          {payment.method === "MTN_MOMO" || payment.method === "AIRTEL_MONEY"
-            ? "Payment confirmed!"
-            : "Payment confirmed!"}
-        </h1>
+        <h1 className="section-title mt-4">Payment successful</h1>
         <div className="mt-6 rounded-2xl border-2 border-[var(--huza-green)] bg-white p-5 text-left">
-          <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Your order number</p>
+          <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Order number</p>
           <p className="mt-1 font-mono text-2xl font-bold text-[var(--huza-green-dark)] break-all">
             {payment.orderNumber}
           </p>
+          {payment.estimatedDelivery && (
+            <p className="mt-3 text-sm font-semibold text-[var(--huza-green-dark)]">
+              Estimated delivery: {payment.estimatedDelivery}
+            </p>
+          )}
           <p className="mt-2 text-sm text-[var(--huza-muted)]">
-            Save this number — use it with your phone on Track Order to follow delivery.
+            Your receipt confirms payment. Track every step from received → delivered.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={() => copyOrderNumber(payment.orderNumber)}>
               {copied ? "Copied!" : "Copy order number"}
             </Button>
-            <Link href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(payment.payerPhone || "")}`}>
-              <Button size="sm">Track this order</Button>
+            <Link href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(payment.payerPhone || form.phone || "")}`}>
+              <Button size="sm">Track order</Button>
             </Link>
+            <a href={`/api/receipts/${encodeURIComponent(payment.orderNumber)}?format=pdf`}>
+              <Button type="button" size="sm">
+                Download receipt
+              </Button>
+            </a>
             <a href={`/api/invoices/${encodeURIComponent(payment.orderNumber)}?format=pdf`}>
               <Button type="button" size="sm" variant="ghost">
                 Download invoice
-              </Button>
-            </a>
-            <a href={`/api/receipts/${encodeURIComponent(payment.orderNumber)}?format=pdf`}>
-              <Button type="button" size="sm" variant="ghost">
-                Download receipt
               </Button>
             </a>
           </div>
@@ -288,11 +404,6 @@ export default function CheckoutClient() {
         <p className="mt-4 text-[var(--huza-muted)]">
           {formatRwf(payment.total)} · Youth Huza will prepare and deliver your order.
         </p>
-        {payment.estimatedDelivery && (
-          <p className="mt-2 text-sm font-semibold text-[var(--huza-green-dark)]">
-            Estimated arrival: {payment.estimatedDelivery}
-          </p>
-        )}
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/products">
             <Button>{t("continueShopping")}</Button>
@@ -314,75 +425,218 @@ export default function CheckoutClient() {
           The approval on <strong>{payment.payerPhone}</strong> was declined or timed out. Order{" "}
           {payment.orderNumber} was cancelled and stock restored.
         </p>
-        <Button className="mt-6" onClick={() => { setPhase("form"); setPayment(null); }}>
-          Try again
+        <Button
+          className="mt-6"
+          onClick={() => {
+            setPhase("payment");
+            setPayment(null);
+          }}
+        >
+          Try payment again
         </Button>
       </div>
     );
   }
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          deliveryZone: zone,
-          deliverySlot: slot,
-          scheduledFor: slot === "SCHEDULED" && scheduledDate ? scheduledDate : undefined,
-          paymentPhone: form.paymentPhone,
-          items: items.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-          })),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Checkout failed");
-      clear();
-      setPayment({
-        orderNumber: data.orderNumber,
-        orderId: data.id,
-        total: data.total,
-        paymentMessage: data.paymentMessage,
-        payerPhone: data.payerPhone,
-        payeeName: data.payeeName,
-        payeePhone: data.payeePhone,
-        method: data.method,
-        paymentMode: data.paymentMode,
-        estimatedDelivery: data.estimatedDelivery,
-      });
-      setPhase(data.paymentStatus === "CONFIRMED" ? "paid" : "awaiting");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-      <h1 className="section-title mb-2">{t("guestCheckout")}</h1>
-      <p className="text-sm text-[var(--huza-muted)] mb-8">
-        After you place the order, approve payment on your phone. You pay{" "}
-        <strong>Youth Huza (HUZA FRESH)</strong> — we sell and deliver the products.
-      </p>
-
-      <div className="mb-6 rounded-2xl border border-[var(--huza-line)] bg-[var(--huza-mint)] px-4 py-3 text-sm">
-        <p className="font-semibold text-[var(--huza-green-dark)]">
-          {t("deliveryEta")}: {fulfillment.etaLabel}
+  if (phase === "invoice") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-10">
+        <Stepper />
+        <h1 className="section-title mb-2">Invoice preview</h1>
+        <p className="text-sm text-[var(--huza-muted)] mb-6">
+          Review everything before you pay. You can still edit the order.
         </p>
-        <p className="mt-1 text-[var(--huza-muted)]">
-          {fulfillment.needsRestock ? t("restockEtaHint") : `${t("inStockEtaHint")} ${fulfillment.etaLabel}`}
+
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--huza-line)] pb-4">
+            <div>
+              <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-green-dark)]">
+                HUZA FRESH
+              </p>
+              <p className="text-xs text-[var(--huza-muted)]">Powered by Youth Huza · Invoice</p>
+            </div>
+            <div className="text-right text-sm">
+              <p className="font-semibold text-[var(--huza-green-dark)]">
+                {DELIVERY_ZONE_LABELS[zone]}
+              </p>
+              <p className="text-[var(--huza-muted)]">ETA: {fulfillment.etaLabel}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-1 text-sm sm:grid-cols-2">
+            <p>
+              <span className="text-[var(--huza-muted)]">Customer</span>
+              <br />
+              <strong>{form.fullName}</strong>
+            </p>
+            <p>
+              <span className="text-[var(--huza-muted)]">Phone</span>
+              <br />
+              <strong>{form.phone}</strong>
+            </p>
+            <p className="sm:col-span-2">
+              <span className="text-[var(--huza-muted)]">Delivery</span>
+              <br />
+              <strong>
+                {form.address}
+                {form.landmark ? ` · ${form.landmark}` : ""}
+                {form.deliveryDistrict ? ` · ${form.deliveryDistrict}` : ""}
+              </strong>
+            </p>
+          </div>
+
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--huza-line)] text-left text-[var(--huza-muted)]">
+                  <th className="py-2 pr-2 font-medium">Product</th>
+                  <th className="py-2 pr-2 font-medium">Qty</th>
+                  <th className="py-2 pr-2 font-medium">Price</th>
+                  <th className="py-2 text-right font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.productId} className="border-b border-[var(--huza-line)]/60">
+                    <td className="py-2.5 pr-2 font-medium">{item.name}</td>
+                    <td className="py-2.5 pr-2">
+                      {item.quantity} {formatUnit(item.unit)}
+                    </td>
+                    <td className="py-2.5 pr-2">{formatRwf(item.price)}</td>
+                    <td className="py-2.5 text-right">{formatRwf(item.price * item.quantity)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 space-y-1.5 text-sm">
+            <div className="flex justify-between">
+              <span>{t("subtotal")}</span>
+              <span>{formatRwf(cartSubtotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>
+                {t("deliveryFee")} ({DELIVERY_ZONE_LABELS[zone]})
+              </span>
+              <span>{formatRwf(fee)}</span>
+            </div>
+            <div className="flex justify-between border-t border-[var(--huza-line)] pt-2 text-base font-bold">
+              <span>{t("total")}</span>
+              <span className="text-[var(--huza-green-dark)]">{formatRwf(total)}</span>
+            </div>
+            <p className="pt-2 text-sm font-semibold text-[var(--huza-green-dark)]">
+              Estimated delivery: {fulfillment.etaLabel}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Button variant="ghost" className="sm:flex-1" onClick={() => setPhase("delivery")}>
+            Edit order
+          </Button>
+          <Button className="sm:flex-1" size="lg" onClick={() => setPhase("payment")}>
+            Proceed to payment
+          </Button>
+        </div>
+        <p className="mt-3 text-center text-xs text-[var(--huza-muted)]">
+          Or{" "}
+          <Link href="/cart" className="font-semibold text-[var(--huza-green-dark)] underline">
+            go back to cart
+          </Link>
         </p>
       </div>
+    );
+  }
+
+  if (phase === "payment") {
+    return (
+      <div className="mx-auto max-w-lg px-4 sm:px-6 py-10">
+        <Stepper />
+        <h1 className="section-title mb-2">Payment</h1>
+        <p className="text-sm text-[var(--huza-muted)] mb-6">
+          Pay <strong>{formatRwf(total)}</strong> to Youth Huza via Mobile Money. Amount due matches
+          your invoice.
+        </p>
+
+        <div className="mb-5 rounded-xl border border-[var(--huza-line)] bg-[var(--huza-mint)] px-4 py-3 text-sm">
+          <div className="flex justify-between font-semibold">
+            <span>Amount due</span>
+            <span>{formatRwf(total)}</span>
+          </div>
+          <p className="mt-1 text-[var(--huza-muted)]">
+            {DELIVERY_ZONE_LABELS[zone]} · ETA {fulfillment.etaLabel}
+          </p>
+        </div>
+
+        <form onSubmit={onPay} className="space-y-5 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
+          <div>
+            <label className="label">{t("paymentMethod")}</label>
+            <div className="flex flex-wrap gap-3">
+              <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm cursor-pointer has-[:checked]:border-[var(--huza-green)] has-[:checked]:bg-[var(--huza-mint)]">
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={form.paymentMethod === "MTN_MOMO"}
+                  onChange={() => setForm({ ...form, paymentMethod: "MTN_MOMO" })}
+                />
+                {t("mtn")}
+              </label>
+              <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm cursor-pointer has-[:checked]:border-[var(--huza-green)] has-[:checked]:bg-[var(--huza-mint)]">
+                <input
+                  type="radio"
+                  name="pay"
+                  checked={form.paymentMethod === "AIRTEL_MONEY"}
+                  onChange={() => setForm({ ...form, paymentMethod: "AIRTEL_MONEY" })}
+                />
+                {t("airtel")}
+              </label>
+              <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm opacity-60">
+                <input type="radio" name="pay" disabled />
+                {t("cardComingSoon")}
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="label">{t("paymentPhoneLabel")}</label>
+            <input
+              required
+              className="input-field"
+              value={form.paymentPhone}
+              onChange={(e) => setForm({ ...form, paymentPhone: e.target.value })}
+              placeholder="078xxxxxxx"
+              inputMode="tel"
+            />
+            <p className="mt-1 text-xs text-[var(--huza-muted)]">{t("paymentPhoneHint")}</p>
+          </div>
+
+          {error && <p className="text-sm text-red-700">{error}</p>}
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button type="button" variant="ghost" className="sm:flex-1" onClick={() => setPhase("invoice")}>
+              Back to invoice
+            </Button>
+            <Button type="submit" className="sm:flex-1" size="lg" disabled={loading}>
+              {loading ? "Sending payment request…" : "Pay now"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // Delivery details step
+  return (
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+      <Stepper />
+      <h1 className="section-title mb-2">Delivery details</h1>
+      <p className="text-sm text-[var(--huza-muted)] mb-6">
+        Choose where we deliver. Fee is <strong>{formatRwf(5000)}</strong> for all zones — arrival
+        time updates when you pick a destination.
+      </p>
 
       <form
-        onSubmit={onSubmit}
+        onSubmit={goToInvoice}
         className="space-y-5 rounded-2xl border border-[var(--huza-line)] bg-white p-6"
       >
         <div className="grid sm:grid-cols-2 gap-4">
@@ -406,6 +660,47 @@ export default function CheckoutClient() {
             />
           </div>
         </div>
+
+        <div>
+          <label className="label">Delivery destination</label>
+          <div className="mt-2 grid gap-3 sm:grid-cols-3">
+            {(Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map((z) => {
+              const selected = zone === z;
+              return (
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => setZone(z)}
+                  className={`rounded-xl border p-4 text-left transition ${
+                    selected
+                      ? "border-[var(--huza-green)] bg-[var(--huza-mint)] ring-2 ring-[var(--huza-green)]/30"
+                      : "border-[var(--huza-line)] hover:border-[var(--huza-green)]"
+                  }`}
+                >
+                  <p className="font-semibold text-[var(--huza-green-dark)]">
+                    {DELIVERY_ZONE_LABELS[z]}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--huza-muted)]">
+                    Fee {formatRwf(DELIVERY_FEES[z])}
+                  </p>
+                  <p className="mt-2 text-sm font-bold text-[var(--huza-ink)]">
+                    {ZONE_ETA_LABELS[z]}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 rounded-xl bg-[var(--huza-mint)] px-4 py-3 text-sm">
+            <p className="font-semibold text-[var(--huza-green-dark)]">
+              {DELIVERY_ZONE_LABELS[zone]} · {t("deliveryFee")} {formatRwf(fee)}
+            </p>
+            <p className="mt-0.5 text-[var(--huza-muted)]">
+              Estimated delivery: <strong>{fulfillment.etaLabel}</strong>
+              {fulfillment.needsRestock ? ` · ${t("restockEtaHint")}` : ""}
+            </p>
+          </div>
+        </div>
+
         <div>
           <label className="label">Delivery address</label>
           <textarea
@@ -413,8 +708,17 @@ export default function CheckoutClient() {
             className="input-field min-h-20"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            placeholder="Street, landmark (e.g. Blue gate near the pharmacy)"
+            placeholder="Street, building, gate colour…"
           />
+          <div className="mt-3">
+            <label className="label">Landmark (optional)</label>
+            <input
+              className="input-field"
+              value={form.landmark}
+              onChange={(e) => setForm({ ...form, landmark: e.target.value })}
+              placeholder="e.g. Near the pharmacy / blue gate"
+            />
+          </div>
           <div className="mt-3 grid sm:grid-cols-2 gap-3">
             <div>
               <label className="label">District</label>
@@ -453,32 +757,17 @@ export default function CheckoutClient() {
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={useLiveLocation}>
-              Use my live location
+              Use my live location (GPS)
             </Button>
             {form.gpsLat && form.gpsLng && (
-              <span className="text-xs text-[var(--huza-green-dark)]">
-                Location pinned ✓
-              </span>
+              <span className="text-xs text-[var(--huza-green-dark)]">Location pinned ✓</span>
             )}
           </div>
           {locStatus && <p className="mt-1 text-xs text-[var(--huza-muted)]">{locStatus}</p>}
         </div>
+
         <div>
-          <label className="label">{t("deliveryZones")}</label>
-          <select
-            className="input-field"
-            value={zone}
-            onChange={(e) => setZone(e.target.value as DeliveryZoneKey)}
-          >
-            {(Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map((z) => (
-              <option key={z} value={z}>
-                {DELIVERY_ZONE_LABELS[z]} — {formatRwf(DELIVERY_FEES[z])}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="label">Estimated delivery</label>
+          <label className="label">When do you want delivery?</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {(
               [
@@ -510,6 +799,7 @@ export default function CheckoutClient() {
             />
           )}
         </div>
+
         <div>
           <label className="label">{t("instructions")}</label>
           <textarea
@@ -519,50 +809,11 @@ export default function CheckoutClient() {
             placeholder="e.g. Call me when you get to Sonatube"
           />
         </div>
-        <div>
-          <label className="label">{t("paymentMethod")}</label>
-          <div className="flex flex-wrap gap-3">
-            <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm">
-              <input
-                type="radio"
-                name="pay"
-                checked={form.paymentMethod === "MTN_MOMO"}
-                onChange={() => setForm({ ...form, paymentMethod: "MTN_MOMO" })}
-              />
-              {t("mtn")}
-            </label>
-            <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm">
-              <input
-                type="radio"
-                name="pay"
-                checked={form.paymentMethod === "AIRTEL_MONEY"}
-                onChange={() => setForm({ ...form, paymentMethod: "AIRTEL_MONEY" })}
-              />
-              {t("airtel")}
-            </label>
-            <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm opacity-60">
-              <input type="radio" name="pay" disabled />
-              {t("cardComingSoon")}
-            </label>
-          </div>
-        </div>
-        <div>
-          <label className="label">{t("paymentPhoneLabel")}</label>
-          <input
-            required
-            className="input-field"
-            value={form.paymentPhone}
-            onChange={(e) => setForm({ ...form, paymentPhone: e.target.value })}
-            placeholder="078xxxxxxx"
-            inputMode="tel"
-          />
-          <p className="mt-1 text-xs text-[var(--huza-muted)]">{t("paymentPhoneHint")}</p>
-        </div>
 
         <div className="rounded-xl bg-[var(--huza-mint)] p-4 text-sm space-y-1">
           <div className="flex justify-between">
             <span>{t("subtotal")}</span>
-            <span>{formatRwf(subtotal())}</span>
+            <span>{formatRwf(cartSubtotal)}</span>
           </div>
           <div className="flex justify-between">
             <span>{t("deliveryFee")}</span>
@@ -572,12 +823,15 @@ export default function CheckoutClient() {
             <span>{t("total")}</span>
             <span>{formatRwf(total)}</span>
           </div>
+          <p className="pt-1 text-xs text-[var(--huza-muted)]">
+            ETA for {DELIVERY_ZONE_LABELS[zone]}: {fulfillment.etaLabel}
+          </p>
         </div>
 
         {error && <p className="text-sm text-red-700">{error}</p>}
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? "Sending payment request..." : t("placeOrder")}
+        <Button type="submit" className="w-full" size="lg">
+          Continue to invoice
         </Button>
       </form>
     </div>

@@ -8,7 +8,7 @@ import { formatRwf, formatUnit, DELIVERY_FEES, DELIVERY_ZONE_LABELS, type Delive
 import { Button } from "@/components/ui/Button";
 import { useMemo, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { cartFulfillmentEta, productFulfillmentLabel } from "@/lib/delivery-eta";
+import { cartFulfillmentEta, productFulfillmentLabel, ZONE_ETA_LABELS } from "@/lib/delivery-eta";
 
 type DeliverySlot = "TODAY" | "TOMORROW" | "SCHEDULED";
 
@@ -96,19 +96,33 @@ export default function CartPage() {
         <aside className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 h-fit sticky top-24">
           <h2 className="font-semibold mb-4">Summary</h2>
           <label className="label">{t("deliveryZones")}</label>
-          <select
-            className="input-field mb-4"
-            value={zone}
-            onChange={(e) => setZone(e.target.value as DeliveryZoneKey)}
-          >
-            {(Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map((z) => (
-              <option key={z} value={z}>
-                {DELIVERY_ZONE_LABELS[z]} — {formatRwf(DELIVERY_FEES[z])}
-              </option>
-            ))}
-          </select>
+          <div className="mb-4 space-y-2">
+            {(Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map((z) => {
+              const selected = zone === z;
+              return (
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => setZone(z)}
+                  className={`w-full rounded-xl border px-3 py-2.5 text-left text-sm transition ${
+                    selected
+                      ? "border-[var(--huza-green)] bg-[var(--huza-mint)]"
+                      : "border-[var(--huza-line)] hover:border-[var(--huza-green)]"
+                  }`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-semibold">{DELIVERY_ZONE_LABELS[z]}</span>
+                    <span className="text-xs text-[var(--huza-muted)]">{formatRwf(DELIVERY_FEES[z])}</span>
+                  </span>
+                  <span className="mt-1 block text-xs font-semibold text-[var(--huza-green-dark)]">
+                    ETA {ZONE_ETA_LABELS[z]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-          <label className="label">Estimated delivery</label>
+          <label className="label">When do you want delivery?</label>
           <div className="mb-4 grid grid-cols-1 gap-2">
             {(
               [
@@ -143,7 +157,9 @@ export default function CartPage() {
           )}
           {!fulfillment.needsRestock && (
             <p className="mb-4 text-xs text-[var(--huza-muted)]">
-              {slot === "TODAY" ? t("inStockEtaHint") + " " + fulfillment.etaLabel : `ETA: ${fulfillment.etaLabel}`}
+              {slot === "TODAY"
+                ? `${t("inStockEtaHint")} ${fulfillment.etaLabel}`
+                : `ETA: ${fulfillment.etaLabel}`}
             </p>
           )}
 
@@ -163,7 +179,7 @@ export default function CartPage() {
           </div>
           <p className="mt-3 text-xs text-[var(--huza-muted)]">{t("noMiddleman")}</p>
           <Link href={`/checkout?zone=${zone}&slot=${slot}`} className="block mt-4">
-            <Button className="w-full">{t("checkout")}</Button>
+            <Button className="w-full">Proceed to checkout</Button>
           </Link>
         </aside>
       </div>
