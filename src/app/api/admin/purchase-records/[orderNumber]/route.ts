@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isAdminPortalRole } from "@/lib/rbac";
 import { buildPurchaseRecordPdf, loadOrderDocument } from "@/lib/documents/order-docs";
 import { pdfResponse } from "@/lib/documents/pdf";
 import { auditAdminAction } from "@/lib/audit";
@@ -11,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ orderNumber: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !isAdminPortalRole(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

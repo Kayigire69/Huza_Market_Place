@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isAdminPortalRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { OfferStatus, PurchaseOrderStatus, UnitType } from "@prisma/client";
@@ -16,7 +17,7 @@ function poNumber() {
  * - PO actions: receive | inspect_accept | inspect_reject | pay | cancel
  */
 function canProcure(role?: string) {
-  return role === "ADMIN" || role === "PROCUREMENT";
+  return role === "ADMIN" || role === "SUPER_ADMIN" || role === "PROCUREMENT";
 }
 
 export async function PATCH(req: Request) {

@@ -10,6 +10,9 @@ declare module "next-auth" {
       role?: string;
       supplierId?: string | null;
       supplierStatus?: string | null;
+      mustChangePassword?: boolean;
+      totpEnabled?: boolean;
+      isPrimarySuperAdmin?: boolean;
     };
   }
 }
@@ -20,5 +23,8 @@ declare module "next-auth/jwt" {
     role?: string;
     supplierId?: string | null;
     supplierStatus?: string | null;
+    mustChangePassword?: boolean;
+    totpEnabled?: boolean;
+    isPrimarySuperAdmin?: boolean;
   }
 }

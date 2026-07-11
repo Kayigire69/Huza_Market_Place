@@ -1,6 +1,9 @@
 /** Client-safe redirect helper (no server-only imports). */
-export function portalPathForRole(role?: string | null) {
+export function portalPathForRole(role?: string | null, opts?: { mustChangePassword?: boolean }) {
+  if (opts?.mustChangePassword) return "/auth/change-password";
+
   switch (role) {
+    case "SUPER_ADMIN":
     case "ADMIN":
       return "/admin";
     case "SUPPLIER":

@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { verifyTotp } from "./security";
 
 export { portalPathForRole } from "./auth-redirect";
 
@@ -16,11 +17,13 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         phoneOrEmail: { label: "Phone or Email", type: "text" },
         password: { label: "Password", type: "password" },
+        totpCode: { label: "2FA code", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.phoneOrEmail || !credentials.password) return null;
         const identifier = credentials.phoneOrEmail.trim();
         const password = credentials.password;
+        const totpCode = String(credentials.totpCode || "").trim();
 
         const user = await prisma.user.findFirst({
           where: {
@@ -47,6 +50,12 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
+        if (user.totpEnabled && user.totpSecret) {
+          if (!totpCode || !verifyTotp(totpCode, user.totpSecret)) {
+            return null;
+          }
+        }
+
         return {
           id: user.id,
           name: user.fullName,
@@ -54,23 +63,41 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           supplierId: user.supplier?.id ?? null,
           supplierStatus: user.supplier?.status ?? null,
+          mustChangePassword: user.mustChangePassword,
+          totpEnabled: user.totpEnabled,
+          isPrimarySuperAdmin: user.isPrimarySuperAdmin,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         const u = user as {
           id: string;
           role: string;
           supplierId?: string | null;
           supplierStatus?: string | null;
+          mustChangePassword?: boolean;
+          totpEnabled?: boolean;
+          isPrimarySuperAdmin?: boolean;
         };
         token.id = u.id;
         token.role = u.role;
         token.supplierId = u.supplierId;
         token.supplierStatus = u.supplierStatus;
+        token.mustChangePassword = Boolean(u.mustChangePassword);
+        token.totpEnabled = Boolean(u.totpEnabled);
+        token.isPrimarySuperAdmin = Boolean(u.isPrimarySuperAdmin);
+      }
+      // Allow client updateSession() after password change / 2FA toggle
+      if (trigger === "update" && session) {
+        if (typeof session.mustChangePassword === "boolean") {
+          token.mustChangePassword = session.mustChangePassword;
+        }
+        if (typeof session.totpEnabled === "boolean") {
+          token.totpEnabled = session.totpEnabled;
+        }
       }
       return token;
     },
@@ -82,6 +109,13 @@ export const authOptions: NextAuthOptions = {
           (token.supplierId as string | null) ?? null;
         (session.user as { supplierStatus?: string | null }).supplierStatus =
           (token.supplierStatus as string | null) ?? null;
+        (session.user as { mustChangePassword?: boolean }).mustChangePassword = Boolean(
+          token.mustChangePassword
+        );
+        (session.user as { totpEnabled?: boolean }).totpEnabled = Boolean(token.totpEnabled);
+        (session.user as { isPrimarySuperAdmin?: boolean }).isPrimarySuperAdmin = Boolean(
+          token.isPrimarySuperAdmin
+        );
       }
       return session;
     },

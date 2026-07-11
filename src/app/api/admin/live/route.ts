@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isAdminPortalRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
 /** Live admin feed — poll every ~15–30s for new orders, payments, alerts. */
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !isAdminPortalRole(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

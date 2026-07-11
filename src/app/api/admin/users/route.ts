@@ -5,22 +5,27 @@ import { Role } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
+import { canManageStaff, isSuperAdmin } from "@/lib/rbac";
 
-const STAFF_ROLES: Role[] = ["ADMIN", "WAREHOUSE", "DELIVERY", "PROCUREMENT", "SUPPORT"];
+/** Roles Super Admin may create for employees (not Super Admin by default). */
+const EMPLOYEE_ROLES: Role[] = ["ADMIN", "WAREHOUSE", "DELIVERY", "PROCUREMENT", "SUPPORT"];
 
-async function requireAdmin() {
+async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") return null;
+  if (!session?.user || !canManageStaff(session.user.role)) return null;
   return session;
 }
 
-/** List staff accounts — never share one admin login across shifts. */
+/** List staff — Super Admin only. Normal Admin cannot see Employee Management. */
 export async function GET() {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const session = await requireSuperAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
 
   const staff = await prisma.user.findMany({
-    where: { role: { in: STAFF_ROLES } },
+    where: {
+      role: { in: [...EMPLOYEE_ROLES, Role.SUPER_ADMIN] },
+      deletedAt: null,
+    },
     select: {
       id: true,
       fullName: true,
@@ -28,6 +33,9 @@ export async function GET() {
       phone: true,
       role: true,
       isActive: true,
+      isPrimarySuperAdmin: true,
+      totpEnabled: true,
+      mustChangePassword: true,
       createdAt: true,
     },
     orderBy: [{ role: "asc" }, { fullName: "asc" }],
@@ -36,24 +44,33 @@ export async function GET() {
   return NextResponse.json({ staff });
 }
 
-/** Create a personal staff login for shift accountability. */
+/** Create a personal staff login — Super Admin only. */
 export async function POST(req: Request) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const session = await requireSuperAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
 
   const body = await req.json();
   const fullName = String(body.fullName || "").trim();
   const email = String(body.email || "").trim().toLowerCase() || null;
   const phone = String(body.phone || "").trim();
-  const role = String(body.role || "ADMIN") as Role;
+  let role = String(body.role || "ADMIN") as Role;
   const password = String(body.password || "");
+  const promoteSuperAdmin = Boolean(body.promoteSuperAdmin);
 
   if (!fullName || phone.length < 8) {
     return NextResponse.json({ error: "Full name and phone are required" }, { status: 400 });
   }
-  if (!STAFF_ROLES.includes(role)) {
-    return NextResponse.json({ error: "Invalid staff role" }, { status: 400 });
+
+  if (promoteSuperAdmin) {
+    // Deliberate second Super Admin — only an existing Super Admin can do this
+    role = Role.SUPER_ADMIN;
+  } else if (!EMPLOYEE_ROLES.includes(role)) {
+    return NextResponse.json(
+      { error: "Invalid employee role. Use promoteSuperAdmin to create another Super Admin." },
+      { status: 400 }
+    );
   }
+
   if (password.length < 8) {
     return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
   }
@@ -75,6 +92,8 @@ export async function POST(req: Request) {
       role,
       passwordHash: await bcrypt.hash(password, 10),
       isActive: true,
+      mustChangePassword: true,
+      isPrimarySuperAdmin: false,
     },
     select: {
       id: true,
@@ -83,15 +102,16 @@ export async function POST(req: Request) {
       phone: true,
       role: true,
       isActive: true,
+      isPrimarySuperAdmin: true,
       createdAt: true,
     },
   });
 
   await auditAdminAction(req, session, {
-    action: "staff.create",
+    action: role === "SUPER_ADMIN" ? "staff.create_super_admin" : "staff.create",
     entity: "User",
     entityId: user.id,
-    details: `Created ${user.role} account for ${user.fullName} (${user.email || user.phone})`,
+    details: `Created ${user.role} for ${user.fullName} (${user.email || user.phone})`,
     after: {
       fullName: user.fullName,
       email: user.email,
@@ -103,32 +123,101 @@ export async function POST(req: Request) {
   return NextResponse.json(user, { status: 201 });
 }
 
-/** Activate / deactivate a staff account (never delete history). */
+/**
+ * Update staff — Super Admin only.
+ * Guards: cannot deactivate/delete/demote primary Super Admin; cannot target self destructively.
+ */
 export async function PATCH(req: Request) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const session = await requireSuperAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
 
   const body = await req.json();
   const id = String(body.id || "");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  if (id === session.user.id) {
-    return NextResponse.json({ error: "You cannot deactivate your own account" }, { status: 400 });
-  }
-
   const before = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, fullName: true, email: true, phone: true, role: true, isActive: true },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      isPrimarySuperAdmin: true,
+    },
   });
-  if (!before || !STAFF_ROLES.includes(before.role)) {
+  if (!before) {
     return NextResponse.json({ error: "Staff user not found" }, { status: 404 });
+  }
+
+  // Protect primary Super Admin and any Super Admin from normal Admin paths
+  // (this route is already Super-Admin-only, but still block dangerous self/primary ops)
+  if (before.isPrimarySuperAdmin) {
+    if (body.isActive === false) {
+      return NextResponse.json(
+        { error: "The primary Super Admin account cannot be deactivated." },
+        { status: 400 }
+      );
+    }
+    if (body.role && body.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "The primary Super Admin role cannot be changed." },
+        { status: 400 }
+      );
+    }
+    if (body.delete) {
+      return NextResponse.json(
+        { error: "The primary Super Admin account cannot be deleted." },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (before.role === "SUPER_ADMIN" && id === session.user.id && body.isActive === false) {
+    return NextResponse.json(
+      { error: "You cannot deactivate your own Super Admin account." },
+      { status: 400 }
+    );
+  }
+
+  if (body.delete) {
+    if (before.role === "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Super Admin accounts cannot be deleted. Deactivate instead if needed." },
+        { status: 400 }
+      );
+    }
+    const user = await prisma.user.update({
+      where: { id },
+      data: { isActive: false, deletedAt: new Date() },
+    });
+    await auditAdminAction(req, session, {
+      action: "staff.soft_delete",
+      entity: "User",
+      entityId: id,
+      details: `Soft-deleted ${before.fullName}`,
+      before,
+      after: { isActive: false, deletedAt: true },
+    });
+    return NextResponse.json({ ok: true, id: user.id });
+  }
+
+  const nextRole =
+    body.role && (EMPLOYEE_ROLES.includes(body.role) || body.role === "SUPER_ADMIN")
+      ? (body.role as Role)
+      : undefined;
+
+  // Only Super Admin can promote to Super Admin (deliberate checkbox on create; here require explicit)
+  if (nextRole === "SUPER_ADMIN" && !isSuperAdmin(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const user = await prisma.user.update({
     where: { id },
     data: {
       ...(body.isActive !== undefined ? { isActive: Boolean(body.isActive) } : {}),
-      ...(body.role && STAFF_ROLES.includes(body.role) ? { role: body.role as Role } : {}),
+      ...(nextRole ? { role: nextRole } : {}),
     },
     select: {
       id: true,
@@ -137,6 +226,7 @@ export async function PATCH(req: Request) {
       phone: true,
       role: true,
       isActive: true,
+      isPrimarySuperAdmin: true,
       createdAt: true,
     },
   });

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { isAdminPortalRole } from "@/lib/rbac";
 import { loadAdminWorkspace } from "@/services/admin-data.service";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function CustomersPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (session.user.role !== "ADMIN") redirect("/");
+  if (!isAdminPortalRole(session.user.role)) redirect("/");
   const { customers } = await loadAdminWorkspace();
 
   return (

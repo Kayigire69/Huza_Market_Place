@@ -1,13 +1,12 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { isAdminPortalRole, isSuperAdmin, isSuperAdminOnlyPath } from "@/lib/rbac";
 
 /**
  * Staff & partner portals are never advertised on the customer storefront.
  * Middleware enforces role checks so guessing a URL is not enough.
  *
- * Public exceptions on the farmer portal:
- * - /farmer (login wall for partners)
- * - /farmer/register (unlisted dual registration — not linked from customer nav)
+ * Super Admin exclusive: /admin/staff, /admin/audit, /admin/settings, /admin/security
  */
 const STAFF_PREFIXES = [
   "/admin",
@@ -32,42 +31,65 @@ function isPublicFarmerEntry(pathname: string) {
   );
 }
 
+function isAuthExempt(pathname: string) {
+  return (
+    pathname === "/auth/change-password" ||
+    pathname.startsWith("/auth/change-password/") ||
+    pathname === "/auth/forgot-password" ||
+    pathname.startsWith("/auth/forgot-password/") ||
+    pathname === "/auth/reset-password" ||
+    pathname.startsWith("/auth/reset-password/") ||
+    pathname === "/auth/login" ||
+    pathname.startsWith("/api/auth/")
+  );
+}
+
 export default withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
-    const role = req.nextauth.token?.role as string | undefined;
+    const token = req.nextauth.token;
+    const role = token?.role as string | undefined;
+
+    // Force temporary-password holders to change before using the app
+    if (token?.mustChangePassword && !isAuthExempt(pathname) && !pathname.startsWith("/api/auth")) {
+      if (!pathname.startsWith("/api/")) {
+        return NextResponse.redirect(new URL("/auth/change-password", req.url));
+      }
+    }
 
     if (isStaffPath(pathname)) {
       const allowed: Record<string, string[]> = {
-        "/admin": ["ADMIN"],
-        "/warehouse": ["WAREHOUSE", "ADMIN"],
-        "/procurement": ["PROCUREMENT", "ADMIN"],
-        "/delivery-portal": ["DELIVERY", "ADMIN"],
+        "/admin": ["ADMIN", "SUPER_ADMIN"],
+        "/warehouse": ["WAREHOUSE", "ADMIN", "SUPER_ADMIN"],
+        "/procurement": ["PROCUREMENT", "ADMIN", "SUPER_ADMIN"],
+        "/delivery-portal": ["DELIVERY", "ADMIN", "SUPER_ADMIN"],
       };
       const match = STAFF_PREFIXES.find((p) => pathname === p || pathname.startsWith(`${p}/`));
-      const roles = match ? allowed[match] : ["ADMIN"];
+      const roles = match ? allowed[match] : ["ADMIN", "SUPER_ADMIN"];
+
       if (!role || !roles.includes(role)) {
         const login = new URL("/auth/login", req.url);
         login.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(login);
       }
+
+      // Employee Management / Audit / System Settings — Super Admin only
+      if (pathname.startsWith("/admin") && isSuperAdminOnlyPath(pathname) && !isSuperAdmin(role)) {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+
       return NextResponse.next();
     }
 
     if (isFarmerPath(pathname) && !isPublicFarmerEntry(pathname)) {
-      // Nested farmer routes (future) require SUPPLIER or ADMIN
-      if (role !== "SUPPLIER" && role !== "ADMIN") {
+      if (role !== "SUPPLIER" && !isAdminPortalRole(role)) {
         const login = new URL("/auth/login", req.url);
         login.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(login);
       }
     }
 
-    // Logged-in customer who hits /farmer → keep them out of the partner dashboard area
-    // (landing/register stay reachable so partners can switch accounts)
-    if (pathname === "/farmer" && role && role !== "SUPPLIER" && role !== "ADMIN") {
-      // Page-level guard also redirects; middleware soft-blocks authenticated customers
-      // from treating /farmer as their home. Allow through so page can redirect cleanly.
+    if (pathname === "/farmer" && role && role !== "SUPPLIER" && !isAdminPortalRole(role)) {
       return NextResponse.next();
     }
 
@@ -78,10 +100,7 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
 
-        // Unlisted partner entry points — login wall / register without session
         if (isPublicFarmerEntry(pathname)) return true;
-
-        // Legacy /supplier → page redirects to /farmer
         if (pathname === "/supplier" || pathname.startsWith("/supplier/")) return true;
 
         if (isStaffPath(pathname) || (isFarmerPath(pathname) && !isPublicFarmerEntry(pathname))) {
@@ -104,5 +123,6 @@ export const config = {
     "/farmer/:path*",
     "/supplier",
     "/supplier/:path*",
+    "/auth/change-password",
   ],
 };
