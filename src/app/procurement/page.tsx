@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatRwf } from "@/lib/utils";
 import { ProcurementClient } from "./ProcurementClient";
+import { PortalCopyright } from "@/components/portals/PortalCopyright";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,7 @@ export default async function ProcurementPage() {
         compareGroups={compareGroups}
         messages={messages}
       />
+      <PortalCopyright suffix="Procurement" />
     </div>
   );
 }

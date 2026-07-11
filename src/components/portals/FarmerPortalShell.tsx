@@ -97,7 +97,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
             ) : (
               <Link
                 href="/auth/login?callbackUrl=/farmer"
-                className="rounded-lg bg-[var(--huza-green)] px-3 py-1.5 text-xs font-semibold text-white"
+                className="rounded-lg bg-[var(--huza-orange)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--huza-orange-dark)]"
               >
                 {t("farmerLogin")}
               </Link>
@@ -110,7 +110,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
 
       <footer className="relative z-10 mt-16 border-t border-[var(--huza-line)]/70 bg-white/85 py-6 text-center text-xs text-[var(--huza-muted)] backdrop-blur-sm">
         <p>
-          © {new Date().getFullYear()} Youth Huza · {t("farmerPortal")}
+          © {new Date().getFullYear()} Youth Huza · {t("farmerPortal")}. {t("allRightsReserved")}
         </p>
       </footer>
     </div>

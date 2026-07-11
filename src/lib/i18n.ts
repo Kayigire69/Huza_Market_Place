@@ -235,8 +235,6 @@ const en: Dict = {
     "Customers never see this portal in the public menu. Farm identities stay internal to Huza.",
   newFarmerApplication: "New farmer application",
   selectFarmingType: "Choose your farmer type to continue",
-  farmingTypeChooserHint:
-    "Same portal — two paths. Organic farms complete the full dossier. Other farms use a short application with ID, products, and the Huza purchase agreement.",
   organicFarmerPath: "Organic products",
   organicFarmerPathHint:
     "Full registration: farm details, documents, organic certification, then the complete farmer dossier after login.",

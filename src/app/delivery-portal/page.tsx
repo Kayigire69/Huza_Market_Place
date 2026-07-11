@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DeliveryPortalClient } from "./DeliveryPortalClient";
+import { PortalCopyright } from "@/components/portals/PortalCopyright";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ export default async function DeliveryPortalPage() {
         Your assigned runs — update status and capture proof of delivery.
       </p>
       <DeliveryPortalClient deliveries={deliveries} />
+      <PortalCopyright suffix="Delivery" />
     </div>
   );
 }

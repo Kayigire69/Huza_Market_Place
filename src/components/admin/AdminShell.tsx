@@ -213,7 +213,9 @@ export function AdminShell({
             ))}
             <div className="mt-auto border-t border-[var(--huza-line)] pt-4 text-xs text-[var(--huza-muted)]">
               <p>HUZA Admin Portal</p>
-              <p>Version 1.0 · © {new Date().getFullYear()} Youth Huza</p>
+              <p>
+                Version 1.0 · © {new Date().getFullYear()} Youth Huza. All rights reserved.
+              </p>
             </div>
           </nav>
         </aside>
