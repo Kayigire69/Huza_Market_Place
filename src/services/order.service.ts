@@ -14,6 +14,7 @@ import { enqueueAnalytics, enqueueJob } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 import { generateOrderNumber, getDeliveryFee } from "@/services/settings.service";
 import { writeAuditLog } from "@/lib/audit";
+import { notifyAdmins } from "@/lib/notify-admins";
 import {
   cartFulfillmentEta,
   formatBackorderEta,
@@ -22,10 +23,39 @@ import {
 } from "@/lib/delivery-eta";
 import type { DeliveryZoneKey } from "@/lib/utils";
 
+function resolveUnitCost(product: {
+  purchasePrice: number | null;
+  farmGatePrice: number | null;
+  pricePerUnit: number | null;
+  price: number;
+}) {
+  if (product.purchasePrice != null && product.purchasePrice > 0) return product.purchasePrice;
+  if (product.farmGatePrice != null && product.farmGatePrice > 0) return product.farmGatePrice;
+  if (product.pricePerUnit != null && product.pricePerUnit > 0) return product.pricePerUnit;
+  // Fallback estimate when cost not yet set — ~65% of retail for internal margin visibility
+  return Math.round(product.price * 0.65);
+}
+
+async function nextReceiptNumber(year: number) {
+  const prefix = `RCP-${year}-`;
+  const latest = await prisma.order.findFirst({
+    where: { receiptNumber: { startsWith: prefix } },
+    orderBy: { receiptNumber: "desc" },
+    select: { receiptNumber: true },
+  });
+  const last = latest?.receiptNumber ? Number(latest.receiptNumber.slice(prefix.length)) : 0;
+  const n = Number.isFinite(last) ? last + 1 : 1;
+  return `${prefix}${String(n).padStart(6, "0")}`;
+}
+
 export const createOrderSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   phone: z.string().min(8, "Enter a valid phone number (e.g. 078xxxxxxx)"),
   address: z.string().min(5, "Delivery address is required"),
+  deliveryDistrict: z.string().optional(),
+  deliverySector: z.string().optional(),
+  deliveryCell: z.string().optional(),
+  deliveryVillage: z.string().optional(),
   deliveryZone: z.enum(["KIGALI", "KAMONYI_RUYENZI", "BUGESERA_NYAMATA"]),
   deliverySlot: z.enum(["TODAY", "TOMORROW", "SCHEDULED"]).optional(),
   scheduledFor: z.string().optional(),
@@ -102,6 +132,9 @@ export const orderService = {
         needsRestock = true;
       }
       const lineTotal = Math.round(product.price * item.quantity);
+      const unitCostPrice = resolveUnitCost(product);
+      const costTotal = Math.round(unitCostPrice * item.quantity);
+      const marginTotal = lineTotal - costTotal;
       subtotal += lineTotal;
       return {
         productId: product.id,
@@ -109,6 +142,9 @@ export const orderService = {
         quantity: item.quantity,
         unitPrice: product.price,
         lineTotal,
+        unitCostPrice,
+        costTotal,
+        marginTotal,
         allowBackorder: available < item.quantity,
       };
     });
@@ -136,6 +172,7 @@ export const orderService = {
     const deliveryFee = await getDeliveryFee(data.deliveryZone);
     const total = subtotal + deliveryFee;
     const orderNumber = await generateOrderNumber();
+    const receiptNumber = await nextReceiptNumber(new Date().getFullYear());
     const payPhone = data.paymentPhone!;
     const estimatedMinutes = needsRestock
       ? fulfillment.estimatedMinutes
@@ -171,10 +208,15 @@ export const orderService = {
       return tx.order.create({
         data: {
           orderNumber,
+          receiptNumber,
           userId,
           guestName: data.fullName,
           guestPhone: data.phone,
           deliveryAddress: data.address,
+          deliveryDistrict: data.deliveryDistrict || null,
+          deliverySector: data.deliverySector || null,
+          deliveryCell: data.deliveryCell || null,
+          deliveryVillage: data.deliveryVillage || null,
           deliveryZone: data.deliveryZone as DeliveryZone,
           deliveryFee,
           gpsLat: data.gpsLat ? Number(data.gpsLat) : null,
@@ -227,7 +269,13 @@ export const orderService = {
       action: "order.create_pending",
       entity: "Order",
       entityId: order.id,
-      details: `${orderNumber} · ${total} RWF · ${data.paymentMethod}`,
+      details: `${orderNumber} · ${receiptNumber} · ${total} RWF · ${data.paymentMethod}`,
+    });
+
+    await notifyAdmins({
+      type: "ORDER_CONFIRMATION",
+      title: "New order received",
+      body: `${orderNumber} · ${data.fullName} · ${total} RWF · Pending payment`,
     });
 
     // Auto-release reservation if unpaid after 10 minutes

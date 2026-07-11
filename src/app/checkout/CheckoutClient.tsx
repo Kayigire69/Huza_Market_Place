@@ -51,6 +51,10 @@ export default function CheckoutClient() {
     fullName: "",
     phone: "",
     address: "",
+    deliveryDistrict: "",
+    deliverySector: "",
+    deliveryCell: "",
+    deliveryVillage: "",
     gpsLat: "",
     gpsLng: "",
     instructions: "",
@@ -403,14 +407,50 @@ export default function CheckoutClient() {
           </div>
         </div>
         <div>
-          <label className="label">Delivery location</label>
+          <label className="label">Delivery address</label>
           <textarea
             required
             className="input-field min-h-20"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            placeholder="Street, sector, landmark (e.g. near Sonatube)"
+            placeholder="Street, landmark (e.g. Blue gate near the pharmacy)"
           />
+          <div className="mt-3 grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="label">District</label>
+              <input
+                className="input-field"
+                value={form.deliveryDistrict}
+                onChange={(e) => setForm({ ...form, deliveryDistrict: e.target.value })}
+                placeholder="e.g. Kicukiro"
+              />
+            </div>
+            <div>
+              <label className="label">Sector</label>
+              <input
+                className="input-field"
+                value={form.deliverySector}
+                onChange={(e) => setForm({ ...form, deliverySector: e.target.value })}
+                placeholder="Optional"
+              />
+            </div>
+            <div>
+              <label className="label">Cell (optional)</label>
+              <input
+                className="input-field"
+                value={form.deliveryCell}
+                onChange={(e) => setForm({ ...form, deliveryCell: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Village (optional)</label>
+              <input
+                className="input-field"
+                value={form.deliveryVillage}
+                onChange={(e) => setForm({ ...form, deliveryVillage: e.target.value })}
+              />
+            </div>
+          </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={useLiveLocation}>
               Use my live location

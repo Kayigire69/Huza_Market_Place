@@ -6,9 +6,15 @@ export async function loadOrderDocument(orderNumber: string) {
   return prisma.order.findUnique({
     where: { orderNumber },
     include: {
-      items: { include: { product: true } },
+      items: {
+        include: {
+          product: { select: { nameEn: true, unit: true, stockQty: true, location: true } },
+          supplier: { select: { businessName: true, farmingType: true } },
+        },
+      },
       payment: true,
       delivery: true,
+      statusLog: { orderBy: { createdAt: "asc" } },
       user: { select: { fullName: true, phone: true, email: true } },
     },
   });
@@ -32,14 +38,27 @@ function money(n: number) {
   return formatRwf(n);
 }
 
-/** Formal tax-style invoice PDF for the customer. */
+function deliveryBlock(order: OrderDoc) {
+  const bits = [
+    order.deliveryAddress,
+    order.deliveryVillage,
+    order.deliveryCell,
+    order.deliverySector,
+    order.deliveryDistrict,
+    zoneLabel(order.deliveryZone),
+  ].filter(Boolean);
+  return bits.join(", ");
+}
+
+/** Formal invoice PDF for the customer (no supplier/cost data). */
 export async function buildInvoicePdf(order: OrderDoc): Promise<Buffer> {
   return renderPdf(
     (doc) => {
       drawBrandHeader(doc, "INVOICE");
 
       doc.fillColor(BRAND.ink).font("Helvetica").fontSize(10);
-      doc.text(`Invoice / Order: ${order.orderNumber}`);
+      doc.text(`Order: ${order.orderNumber}`);
+      if (order.receiptNumber) doc.text(`Receipt: ${order.receiptNumber}`);
       doc.text(`Date: ${order.createdAt.toLocaleString()}`);
       doc.text(`Status: ${order.status}`);
       doc.moveDown(0.6);
@@ -49,8 +68,7 @@ export async function buildInvoicePdf(order: OrderDoc): Promise<Buffer> {
       if (order.user?.email) doc.text(`Email: ${order.user.email}`);
       doc.moveDown(0.4);
       doc.font("Helvetica-Bold").text("Deliver to");
-      doc.font("Helvetica").text(order.deliveryAddress);
-      doc.text(`Zone: ${zoneLabel(order.deliveryZone)}`);
+      doc.font("Helvetica").text(deliveryBlock(order));
       if (order.estimatedDelivery) doc.text(`ETA: ${order.estimatedDelivery}`);
       doc.moveDown(1);
 
@@ -74,8 +92,7 @@ export async function buildInvoicePdf(order: OrderDoc): Promise<Buffer> {
 
       doc.font("Helvetica").fontSize(9).fillColor(BRAND.ink);
       for (const item of order.items) {
-        const y = doc.y;
-        if (y > doc.page.height - 120) {
+        if (doc.y > doc.page.height - 120) {
           doc.addPage();
           doc.y = doc.page.margins.top;
         }
@@ -107,14 +124,13 @@ export async function buildInvoicePdf(order: OrderDoc): Promise<Buffer> {
       };
       row("Subtotal", money(order.subtotal));
       if (order.discountAmt > 0) row("Discount", `-${money(order.discountAmt)}`);
-      row("Delivery", money(order.deliveryFee));
+      row("Delivery fee", money(order.deliveryFee));
       row("Total", money(order.total), true);
 
       doc.moveDown(0.6);
       doc.font("Helvetica").fontSize(10).fillColor(BRAND.ink);
-      doc.text(
-        `Payment: ${order.payment?.method || "—"} · ${order.payment?.status || "—"}`
-      );
+      doc.text(`Payment method: ${order.payment?.method || "—"}`);
+      doc.text(`Payment status: ${order.payment?.status || "—"}`);
       if (order.payment?.transactionRef) {
         doc.text(`Reference: ${order.payment.transactionRef}`);
       }
@@ -128,62 +144,159 @@ export async function buildInvoicePdf(order: OrderDoc): Promise<Buffer> {
   );
 }
 
-/** Compact payment receipt PDF for the customer. */
+/**
+ * Customer receipt PDF — public fields only:
+ * receipt number, products, delivery fee, total, payment method, order status.
+ */
 export async function buildReceiptPdf(order: OrderDoc): Promise<Buffer> {
   return renderPdf(
     (doc) => {
-      drawBrandHeader(doc, "PAYMENT RECEIPT");
+      drawBrandHeader(doc, "CUSTOMER RECEIPT");
 
-      doc.fillColor(BRAND.ink).font("Helvetica-Bold").fontSize(11);
-      doc.text(`Receipt for order ${order.orderNumber}`);
-      doc.moveDown(0.5);
+      doc.fillColor(BRAND.ink).font("Helvetica-Bold").fontSize(12);
+      doc.text(order.receiptNumber || order.orderNumber);
       doc.font("Helvetica").fontSize(10);
-      doc.text(`Issued: ${new Date().toLocaleString()}`);
-      doc.text(`Order date: ${order.createdAt.toLocaleString()}`);
+      doc.text(`Order: ${order.orderNumber}`);
+      doc.text(`Date: ${order.createdAt.toLocaleString()}`);
+      doc.text(`Order status: ${order.status}`);
+      doc.moveDown(0.5);
       doc.text(`Customer: ${customerName(order)}`);
       doc.text(`Phone: ${customerPhone(order)}`);
+      doc.text(`Delivery: ${deliveryBlock(order)}`);
       doc.moveDown(0.8);
 
       const boxTop = doc.y;
-      doc.roundedRect(doc.page.margins.left, boxTop, 280, 88, 8).fill(BRAND.mint);
+      doc.roundedRect(doc.page.margins.left, boxTop, 300, 72, 8).fill(BRAND.mint);
       doc.fillColor(BRAND.ink).font("Helvetica").fontSize(9);
-      doc.text("Amount paid", doc.page.margins.left + 14, boxTop + 12);
+      doc.text("Total paid", doc.page.margins.left + 14, boxTop + 12);
       doc.font("Helvetica-Bold").fontSize(18).fillColor(BRAND.green);
       doc.text(money(order.payment?.amount ?? order.total), doc.page.margins.left + 14, boxTop + 28);
       doc.font("Helvetica").fontSize(9).fillColor(BRAND.ink);
       doc.text(
         `${order.payment?.method || "—"} · ${order.payment?.status || "—"}`,
         doc.page.margins.left + 14,
-        boxTop + 56
+        boxTop + 52
       );
-      if (order.payment?.verifiedAt) {
-        doc.text(
-          `Confirmed: ${order.payment.verifiedAt.toLocaleString()}`,
-          doc.page.margins.left + 14,
-          boxTop + 70
-        );
-      }
-      doc.y = boxTop + 100;
+      doc.y = boxTop + 88;
 
-      doc.font("Helvetica-Bold").fontSize(10).text("Items");
+      doc.font("Helvetica-Bold").fontSize(10).text("Products");
       doc.font("Helvetica").fontSize(9);
       for (const item of order.items) {
         doc.text(
           `• ${item.product.nameEn} × ${item.quantity} ${formatUnit(item.product.unit)} — ${money(item.lineTotal)}`
         );
       }
-      doc.moveDown(0.6);
-      doc.text(`Delivery to: ${order.deliveryAddress} (${zoneLabel(order.deliveryZone)})`);
+      doc.moveDown(0.5);
+      doc.text(`Subtotal: ${money(order.subtotal)}`);
+      doc.text(`Delivery fee: ${money(order.deliveryFee)}`);
+      doc.font("Helvetica-Bold").text(`Total: ${money(order.total)}`);
+      doc.font("Helvetica").moveDown(0.4);
       if (order.payment?.transactionRef) {
         doc.text(`Transaction ref: ${order.payment.transactionRef}`);
       }
-      if (order.payment?.phoneNumber) {
-        doc.text(`Paid from: ${order.payment.phoneNumber}`);
+
+      drawFooter(
+        doc,
+        "This receipt is for the customer. Supplier costs and margins are never shown here. EBM-ready document id: " +
+          (order.receiptNumber || order.orderNumber)
+      );
+    },
+    { info: { Title: `Receipt ${order.receiptNumber || order.orderNumber}` } }
+  );
+}
+
+/**
+ * Internal purchase record — HUZA staff only.
+ * Supplier, purchase price, selling price, margin, warehouse/inventory notes.
+ */
+export async function buildPurchaseRecordPdf(order: OrderDoc): Promise<Buffer> {
+  const costSum = order.items.reduce((s, i) => s + (i.costTotal ?? 0), 0);
+  const marginSum = order.items.reduce((s, i) => s + (i.marginTotal ?? i.lineTotal - (i.costTotal ?? 0)), 0);
+
+  return renderPdf(
+    (doc) => {
+      drawBrandHeader(doc, "INTERNAL PURCHASE RECORD — CONFIDENTIAL");
+
+      doc.fillColor("#8a1c1c").font("Helvetica-Bold").fontSize(9);
+      doc.text("HUZA STAFF ONLY — never share with customers");
+      doc.fillColor(BRAND.ink).font("Helvetica").fontSize(10);
+      doc.moveDown(0.4);
+      doc.text(`Order: ${order.orderNumber}`);
+      if (order.receiptNumber) doc.text(`Customer receipt: ${order.receiptNumber}`);
+      doc.text(`Date: ${order.createdAt.toLocaleString()}`);
+      doc.text(`Customer: ${customerName(order)} · ${customerPhone(order)}`);
+      doc.text(`Delivery: ${deliveryBlock(order)}`);
+      doc.text(`Order status: ${order.status} · Payment: ${order.payment?.status || "—"}`);
+      doc.moveDown(0.8);
+
+      doc.font("Helvetica-Bold").text("Line economics");
+      doc.font("Helvetica").fontSize(8);
+      doc.moveDown(0.3);
+
+      const left = doc.page.margins.left;
+      const usable = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      const widths = [110, 90, 55, 55, 55, 55, 55];
+      const headers = ["Product", "Supplier", "Qty", "Cost", "Sell", "Margin", "Stock"];
+      const hy = doc.y;
+      doc.rect(left, hy - 2, usable, 16).fill("#fde8e8");
+      doc.fillColor(BRAND.ink).font("Helvetica-Bold");
+      let x = left;
+      headers.forEach((h, i) => {
+        doc.text(h, x + 2, hy + 1, { width: widths[i] - 4 });
+        x += widths[i];
+      });
+      doc.y = hy + 18;
+      doc.font("Helvetica");
+
+      for (const item of order.items) {
+        if (doc.y > doc.page.height - 80) {
+          doc.addPage();
+          doc.y = doc.page.margins.top;
+        }
+        const cost = item.unitCostPrice ?? 0;
+        const sell = item.unitPrice;
+        const margin = item.marginTotal ?? item.lineTotal - (item.costTotal ?? 0);
+        const y = doc.y;
+        const cells = [
+          item.product.nameEn,
+          item.supplier.businessName,
+          `${item.quantity}${formatUnit(item.product.unit)}`,
+          money(cost),
+          money(sell),
+          money(margin),
+          String(item.product.stockQty),
+        ];
+        let cx = left;
+        cells.forEach((c, i) => {
+          doc.text(c, cx + 2, y, { width: widths[i] - 4, ellipsis: true });
+          cx += widths[i];
+        });
+        doc.y = y + 14;
       }
 
-      drawFooter(doc, "This receipt confirms payment to Youth Huza for your HUZA FRESH order.");
+      doc.moveDown(0.8);
+      doc.font("Helvetica").fontSize(10);
+      doc.text(`Goods cost (ex-delivery): ${money(costSum)}`);
+      doc.text(`Customer product revenue: ${money(order.subtotal)}`);
+      doc.text(`Delivery fee charged: ${money(order.deliveryFee)}`);
+      doc.font("Helvetica-Bold").text(`Gross product margin: ${money(marginSum)}`);
+      doc.font("Helvetica").moveDown(0.5);
+      doc.text(
+        `Inventory: SALE movements posted on payment confirm for order ${order.orderNumber}.`
+      );
+      if (order.delivery?.status) {
+        doc.text(`Warehouse / delivery status: ${order.delivery.status}`);
+      }
+      if (order.items[0]?.product.location) {
+        doc.text(`Primary stock location hint: ${order.items[0].product.location}`);
+      }
+
+      drawFooter(
+        doc,
+        "Internal Youth Huza record · Supports inventory & financial management · Future RRA EBM can attach to receiptNumber"
+      );
     },
-    { info: { Title: `Receipt ${order.orderNumber}` } }
+    { info: { Title: `Purchase record ${order.orderNumber}` } }
   );
 }
 
@@ -224,10 +337,12 @@ export function buildInvoiceHtml(order: OrderDoc): string {
 <body>
   <h1>HUZA FRESH</h1>
   <div class="sub">Powered by Youth Huza</div>
-  <p style="margin-top:24px"><strong>Invoice</strong> ${escapeHtml(order.orderNumber)}<br/>
+  <p style="margin-top:24px"><strong>Invoice</strong> ${escapeHtml(order.orderNumber)}
+  ${order.receiptNumber ? `<br/>Receipt: ${escapeHtml(order.receiptNumber)}` : ""}<br/>
   Date: ${order.createdAt.toLocaleString()}<br/>
+  Status: ${escapeHtml(order.status)}<br/>
   Customer: ${escapeHtml(customerName(order))} · ${escapeHtml(customerPhone(order))}<br/>
-  Delivery: ${escapeHtml(order.deliveryAddress)} (${escapeHtml(zoneLabel(order.deliveryZone))})
+  Delivery: ${escapeHtml(deliveryBlock(order))}
   </p>
   <table>
     <thead>
@@ -238,7 +353,7 @@ export function buildInvoiceHtml(order: OrderDoc): string {
   <div class="totals">
     <div><span>Subtotal</span><span>${money(order.subtotal)}</span></div>
     ${order.discountAmt > 0 ? `<div><span>Discount</span><span>-${money(order.discountAmt)}</span></div>` : ""}
-    <div><span>Delivery</span><span>${money(order.deliveryFee)}</span></div>
+    <div><span>Delivery fee</span><span>${money(order.deliveryFee)}</span></div>
     <div style="font-weight:bold;font-size:16px;border-top:2px solid #0b5c34;padding-top:8px">
       <span>Total</span><span>${money(order.total)}</span>
     </div>
