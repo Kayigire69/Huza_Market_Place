@@ -602,7 +602,7 @@ async function main() {
       {
         name: "Mugisha Patrick",
         role: "Restaurant owner",
-        commentEn: "Reliable suppliers and fair prices. Ordering for my kitchen is finally simple.",
+        commentEn: "Reliable farmers and fair prices. Ordering for my kitchen is finally simple.",
         commentFr: "Fournisseurs fiables et prix justes. Commander pour ma cuisine est enfin simple.",
         commentRw: "Abatanga serivisi bizewe n'ibiciro byiza. Gutumiza ku gikoni cyanjye byoroshye.",
         rating: 5,
@@ -801,7 +801,7 @@ async function main() {
   console.log("  alice@huza.rw / password123");
   console.log("  john@huza.rw / password123");
   console.log("Customer: customer@example.com / password123");
-  console.log("Supplier: greenvalley@farm.rw / password123");
+  console.log("Farmer: greenvalley@farm.rw / password123");
 }
 
 main()

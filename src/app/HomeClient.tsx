@@ -289,23 +289,20 @@ export function HomePage({
         <h2 className="section-title mb-6">{t("deliveryCoverage")}</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { zone: t("zoneKigali"), fee: "5,000 RWF", time: t("about45min"), icon: MapPin },
-            { zone: t("zoneKamonyi"), fee: "5,000 RWF", time: t("about75min"), icon: MapPin },
-            { zone: t("zoneBugesera"), fee: "5,000 RWF", time: t("about75min"), icon: MapPin },
+            { zone: t("zoneKigali"), time: t("about45min"), icon: MapPin },
+            { zone: t("zoneKamonyi"), time: t("about75min"), icon: MapPin },
+            { zone: t("zoneBugesera"), time: t("about75min"), icon: MapPin },
           ].map((z) => (
             <div key={z.zone} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
               <z.icon className="size-6 text-[var(--huza-green)]" />
               <h3 className="mt-3 font-semibold">{z.zone}</h3>
-              <p className="mt-1 text-sm text-[var(--huza-muted)]">
-                {t("deliveryFeeLabel")} {z.fee}
-              </p>
               <p className="mt-1 text-sm text-[var(--huza-muted)] inline-flex items-center gap-1">
-                <Clock className="size-3.5" /> {z.time}
+                <Clock className="size-3.5" /> {t("deliveryEta")}: {z.time}
               </p>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-sm text-[var(--huza-muted)]">{t("deliveryScheduleHint")}</p>
+        <p className="mt-3 text-sm text-[var(--huza-muted)]">{t("deliveryFeeAtCheckoutHint")}</p>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">

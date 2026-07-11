@@ -197,7 +197,7 @@ export async function buildReceiptPdf(order: OrderDoc): Promise<Buffer> {
 
       drawFooter(
         doc,
-        "This receipt is for the customer. Supplier costs and margins are never shown here. EBM-ready document id: " +
+        "This receipt is for the customer. Farmer costs and margins are never shown here. EBM-ready document id: " +
           (order.receiptNumber || order.orderNumber)
       );
     },
@@ -207,7 +207,7 @@ export async function buildReceiptPdf(order: OrderDoc): Promise<Buffer> {
 
 /**
  * Internal purchase record — HUZA staff only.
- * Supplier, purchase price, selling price, margin, warehouse/inventory notes.
+ * Farmer, purchase price, selling price, margin, warehouse/inventory notes.
  */
 export async function buildPurchaseRecordPdf(order: OrderDoc): Promise<Buffer> {
   const costSum = order.items.reduce((s, i) => s + (i.costTotal ?? 0), 0);
@@ -236,7 +236,7 @@ export async function buildPurchaseRecordPdf(order: OrderDoc): Promise<Buffer> {
       const left = doc.page.margins.left;
       const usable = doc.page.width - doc.page.margins.left - doc.page.margins.right;
       const widths = [110, 90, 55, 55, 55, 55, 55];
-      const headers = ["Product", "Supplier", "Qty", "Cost", "Sell", "Margin", "Stock"];
+      const headers = ["Product", "Farmer", "Qty", "Cost", "Sell", "Margin", "Stock"];
       const hy = doc.y;
       doc.rect(left, hy - 2, usable, 16).fill("#fde8e8");
       doc.fillColor(BRAND.ink).font("Helvetica-Bold");
