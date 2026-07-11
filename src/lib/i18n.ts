@@ -270,7 +270,6 @@ const en: Dict = {
   standardProductNotOrganicNote:
     "This account is for non-organic crops. Products are submitted without an organic badge.",
   farmerLogin: "Farmer login",
-  farmersPortalSellBadge: "Youth Huza · Sell to Huza",
   farmerLandingBody: "Register your farm so Youth Huza can buy your produce for HUZA FRESH. Huza field agents visit farms to help you register and list products with photos. Huza does not place online purchase orders here — agents work with you on the ground. Customers shop only on the storefront.",
   customerStorefront: "← Customer storefront",
   demoFarmerLogins: "Demo farmer logins",
