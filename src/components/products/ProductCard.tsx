@@ -9,6 +9,7 @@ import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Eye, Heart, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import { productFulfillmentLabel } from "@/lib/delivery-eta";
 
 export type ProductCardData = {
   id: string;
@@ -44,7 +45,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         : product.category.nameEn
     : null;
   const image = product.images[0]?.url ?? "/logo.svg";
-  const available = product.stockQty > 0;
+  const fulfillment = productFulfillmentLabel(product.stockQty);
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -126,13 +127,16 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </div>
         <p className="mt-1 text-xs text-[var(--huza-muted)]">
           ★ {product.ratingAvg.toFixed(1)} ·{" "}
-          {available
-            ? product.stockQty <= 5
+          {fulfillment.inStock
+            ? fulfillment.stockLabel === "Low stock"
               ? t("lowStock")
               : t("inStock")
-            : t("outOfStock")}
+            : t("preparingStock")}
         </p>
-        <Button className="mt-3 w-full" size="sm" disabled={!available} onClick={addToCart}>
+        <p className="mt-0.5 text-xs font-medium text-[var(--huza-green-dark)]">
+          {t("arrivesIn")} {fulfillment.etaLabel}
+        </p>
+        <Button className="mt-3 w-full" size="sm" onClick={addToCart}>
           {t("addToCart")}
         </Button>
       </div>
@@ -165,13 +169,22 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                   </span>
                 </p>
                 <p className="mt-2 text-sm text-[var(--huza-muted)]">
-                  {available ? t("inStock") : t("outOfStock")} · ★ {product.ratingAvg.toFixed(1)}
+                  {fulfillment.inStock ? t("inStock") : t("preparingStock")} · ★{" "}
+                  {product.ratingAvg.toFixed(1)}
+                </p>
+                <p className="mt-1 text-sm font-medium text-[var(--huza-green-dark)]">
+                  {t("arrivesIn")} {fulfillment.etaLabel}
                 </p>
                 {product.originDistrict && (
                   <p className="mt-2 text-sm">Origin: {product.originDistrict}</p>
                 )}
                 <div className="mt-4 flex flex-col gap-2">
-                  <Button disabled={!available} onClick={() => { addToCart(); setQuick(false); }}>
+                  <Button
+                    onClick={() => {
+                      addToCart();
+                      setQuick(false);
+                    }}
+                  >
                     {t("addToCart")}
                   </Button>
                   <Link href={`/products/${product.id}`} className="text-center text-sm font-semibold text-[var(--huza-green)]">

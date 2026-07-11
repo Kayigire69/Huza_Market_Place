@@ -46,14 +46,21 @@ export const productRepository = {
    * Hold stock for a pending payment (does not reduce physical stockQty).
    * Uses conditional update to prevent overselling races.
    */
-  async reserveStock(tx: Prisma.TransactionClient, productId: string, quantity: number) {
+  /**
+   * Hold demand for a pending payment.
+   * When `allowBackorder` is true, reservedQty may exceed stockQty (6–12h restock path).
+   */
+  async reserveStock(
+    tx: Prisma.TransactionClient,
+    productId: string,
+    quantity: number,
+    options?: { allowBackorder?: boolean }
+  ) {
     const updated = await tx.product.updateMany({
       where: {
         id: productId,
         deletedAt: null,
         isActive: true,
-        // available = stockQty - reservedQty >= quantity
-        // Prisma can't express column math in where easily — check after read
       },
       data: { reservedQty: { increment: quantity } },
     });
@@ -61,8 +68,7 @@ export const productRepository = {
       throw new Error("Unable to reserve stock");
     }
     const product = await tx.product.findUniqueOrThrow({ where: { id: productId } });
-    if (product.reservedQty > product.stockQty) {
-      // Roll back this reservation within the same transaction
+    if (!options?.allowBackorder && product.reservedQty > product.stockQty) {
       await tx.product.update({
         where: { id: productId },
         data: { reservedQty: { decrement: quantity } },
@@ -72,13 +78,16 @@ export const productRepository = {
     return product;
   },
 
-  /** Payment confirmed — convert reservation into a sale */
+  /** Payment confirmed — convert reservation into a sale (stock floored at 0) */
   async commitReservation(tx: Prisma.TransactionClient, productId: string, quantity: number) {
+    const product = await tx.product.findUniqueOrThrow({ where: { id: productId } });
+    const nextStock = Math.max(0, product.stockQty - quantity);
+    const nextReserved = Math.max(0, product.reservedQty - quantity);
     return tx.product.update({
       where: { id: productId },
       data: {
-        stockQty: { decrement: quantity },
-        reservedQty: { decrement: quantity },
+        stockQty: nextStock,
+        reservedQty: nextReserved,
       },
     });
   },
@@ -118,7 +127,8 @@ export const productRepository = {
       supplier: true,
       category: true,
     };
-    const active = { isActive: true, deletedAt: null, stockQty: { gt: 0 } };
+    // Include zero-stock items — storefront shows a 6–12h arrival window instead of hiding them
+    const active = { isActive: true, deletedAt: null };
     const [shopProducts, featured, bestSellers, freshToday] = await Promise.all([
       prisma.product.findMany({
         where: active,

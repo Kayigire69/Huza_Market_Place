@@ -45,16 +45,18 @@ export const useCart = create<CartState>()(
       items: [],
       addItem: (item, qty = 1) => {
         const existing = get().items.find((i) => i.productId === item.productId);
+        // Zero stock = restock path (6–12h) — still allow ordering up to a sensible cap
+        const maxQty = item.stockQty > 0 ? item.stockQty : Math.max(99, qty);
         if (existing) {
           set({
             items: get().items.map((i) =>
               i.productId === item.productId
-                ? { ...i, quantity: Math.min(i.stockQty, i.quantity + qty) }
+                ? { ...i, quantity: Math.min(maxQty, i.quantity + qty), stockQty: item.stockQty }
                 : i
             ),
           });
         } else {
-          set({ items: [...get().items, { ...item, quantity: Math.min(item.stockQty, qty) }] });
+          set({ items: [...get().items, { ...item, quantity: Math.min(maxQty, qty) }] });
         }
         void get().syncToServer();
       },
@@ -68,11 +70,11 @@ export const useCart = create<CartState>()(
           return;
         }
         set({
-          items: get().items.map((i) =>
-            i.productId === productId
-              ? { ...i, quantity: Math.min(i.stockQty, quantity) }
-              : i
-          ),
+          items: get().items.map((i) => {
+            if (i.productId !== productId) return i;
+            const maxQty = i.stockQty > 0 ? i.stockQty : 99;
+            return { ...i, quantity: Math.min(maxQty, quantity) };
+          }),
         });
         void get().syncToServer();
       },

@@ -9,6 +9,7 @@ import { productDescription, productName, categoryName } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { MessageCircle, Minus, Plus, Share2 } from "lucide-react";
 import { pushRecentlyViewed } from "@/lib/recently-viewed";
+import { productFulfillmentLabel } from "@/lib/delivery-eta";
 
 type Product = {
   id: string;
@@ -62,13 +63,16 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const shareText = encodeURIComponent(`${name} on HUZA FRESH — ${formatRwf(product.price)}`);
 
   const available = Math.max(0, product.stockQty - (product.reservedQty || 0));
+  const fulfillment = productFulfillmentLabel(product.stockQty, product.reservedQty || 0);
   const availabilityLabel = useMemo(() => {
     if (product.availability === "COMING_SOON") return "Coming soon";
-    if (product.availability === "TEMPORARILY_UNAVAILABLE") return "Temporarily unavailable";
-    if (available <= 0 || product.availability === "OUT_OF_STOCK") return t("outOfStock");
+    if (product.availability === "TEMPORARILY_UNAVAILABLE") return t("preparingStock");
+    if (!fulfillment.inStock || product.availability === "OUT_OF_STOCK") {
+      return t("preparingStock");
+    }
     if (available <= 5 || product.availability === "LOW_STOCK") return t("lowStock");
     return t("inStock");
-  }, [available, product.availability, t]);
+  }, [available, fulfillment.inStock, product.availability, t]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-10">
@@ -134,8 +138,14 @@ export function ProductDetailClient({ product }: { product: Product }) {
         </p>
         <p className="mt-2 text-sm">
           {t("availability")}: <strong>{availabilityLabel}</strong>
-          {available > 0 ? ` · ${product.stockQty} in stock` : ""}
+          {fulfillment.inStock ? ` · ${available} ready now` : ""}
         </p>
+        <p className="mt-1 text-sm font-semibold text-[var(--huza-green-dark)]">
+          {t("deliveryEta")}: {fulfillment.etaLabel}
+        </p>
+        {!fulfillment.inStock && (
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">{t("restockEtaHint")}</p>
+        )}
         {product.originDistrict && (
           <p className="mt-1 text-sm text-[var(--huza-muted)]">
             Origin: <strong className="text-[var(--huza-ink)]">{product.originDistrict}</strong>
@@ -160,7 +170,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
             <span className="w-10 text-center font-semibold">{qty}</span>
             <button
               className="rounded-lg border border-[var(--huza-line)] p-2"
-              onClick={() => setQty((q) => Math.min(available, q + 1))}
+              onClick={() =>
+                setQty((q) => Math.min(fulfillment.inStock ? Math.max(available, 1) : 99, q + 1))
+              }
               aria-label="Increase"
             >
               <Plus className="size-4" />
@@ -171,7 +183,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
         <Button
           className="mt-6 w-full sm:w-auto"
           size="lg"
-          disabled={product.stockQty <= 0}
           onClick={() =>
             addItem(
               {

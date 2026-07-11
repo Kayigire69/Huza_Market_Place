@@ -85,10 +85,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Ada ya uwasilishaji ni 5,000 RWF kwa maeneo yote (Kigali, Kamonyi/Ruyenzi, Bugesera/Nyamata).",
   },
   deliveryTime: {
-    en: "Typical ETA: about 45 minutes in Kigali, and about 75 minutes for Kamonyi (Ruyenzi) or Bugesera (Nyamata), depending on traffic and order volume.",
-    fr: "Délai typique : environ 45 min à Kigali, et environ 75 min pour Kamonyi (Ruyenzi) ou Bugesera (Nyamata), selon le trafic et le volume.",
-    rw: "Igihe gisanzwe: hafi iminota 45 i Kigali, n'iminota 75 i Kamonyi (Ruyenzi) cyangwa Bugesera (Nyamata), bitewe n'imihanda n'ibicuruzwa.",
-    sw: "Muda wa kawaida: takriban dakika 45 Kigali, na dakika 75 Kamonyi (Ruyenzi) au Bugesera (Nyamata), kulingana na msongamano na maagizo.",
+    en: "In stock: about 45 minutes in Kigali, about 75 minutes for Kamonyi (Ruyenzi) or Bugesera (Nyamata). If we need to prepare fresh stock for your order, delivery is within 6–12 hours.",
+    fr: "En stock : ~45 min à Kigali, ~75 min pour Kamonyi (Ruyenzi) ou Bugesera (Nyamata). Si nous devons préparer le stock, livraison sous 6–12 heures.",
+    rw: "Birahari: ~45 min i Kigali, ~75 min Kamonyi (Ruyenzi) cyangwa Bugesera (Nyamata). Niba dukeneye guteza ububiko, dutanga mu masaha 6–12.",
+    sw: "Ipo: dakika ~45 Kigali, ~75 Kamonyi (Ruyenzi) au Bugesera (Nyamata). Ikiwa tunahitaji kuandaa hisa, uwasilishaji ni ndani ya saa 6–12.",
   },
 
   // 4 Payment
@@ -163,10 +163,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Bidhaa zilizoandikwa Organic huthibitishwa na Huza. Angalia beji na maelezo kwenye ukurasa wa bidhaa.",
   },
   stock: {
-    en: "Availability shows as In stock, Low stock, Out of stock, Coming soon, or Temporarily unavailable. Low stock means limited quantity — order soon.",
-    fr: "Disponibilité : En stock, Stock bas, Rupture, Bientôt disponible ou Temporairement indisponible. Stock bas = quantité limitée.",
-    rw: "Kuboneka: Birahari, Bike bisigaye, Byarangiye, Biza vuba cyangwa Ntibiboneka. Bike bisigaye = byihutire gutumiza.",
-    sw: "Upatikanaji: Ipo, Imebaki kidogo, Imeisha, Inakuja hivi karibuni, au Haipatikani kwa sasa. Imebaki kidogo = agiza haraka.",
+    en: "In-stock items typically arrive in about 45 minutes in Kigali or about 75 minutes for Kamonyi/Bugesera. If an item needs fresh stock, we still take your order and deliver within 6–12 hours — we never show products as unavailable.",
+    fr: "Les articles en stock arrivent en ~45 min à Kigali ou ~75 min pour Kamonyi/Bugesera. Si un article doit être approvisionné, nous prenons quand même la commande et livrons en 6–12 heures — jamais « indisponible ».",
+    rw: "Ibicuruzwa bihari bisanzwe bigera mu minota ~45 i Kigali cyangwa ~75 Kamonyi/Bugesera. Niba bikeneye gutezwa, tubakira ubutumire kandi dutanga mu masaha 6–12 — ntitubwira ko ntibihari.",
+    sw: "Bidhaa zilizopo kwa kawaida hufika katika dakika ~45 Kigali au ~75 Kamonyi/Bugesera. Ikiwa bidhaa inahitaji hisa mpya, bado tunaichukua oda na kuwasilisha ndani ya saa 6–12 — hatuonyeshi « haipatikani ».",
   },
 
   // 7 Returns / refunds
