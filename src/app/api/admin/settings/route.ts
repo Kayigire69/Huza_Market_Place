@@ -65,12 +65,13 @@ export async function PATCH(req: Request) {
   }
 
   if (action === "zone") {
-    const { id, feeRwf, labelEn, isActive, etaMinutes } = body as {
+    const { id, feeRwf, labelEn, isActive, etaMinutes, etaLabelEn } = body as {
       id?: string;
       feeRwf?: number;
       labelEn?: string;
       isActive?: boolean;
       etaMinutes?: number;
+      etaLabelEn?: string;
     };
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
     const updated = await prisma.deliveryZoneConfig.update({
@@ -80,13 +81,14 @@ export async function PATCH(req: Request) {
         ...(labelEn !== undefined ? { labelEn: String(labelEn) } : {}),
         ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
         ...(etaMinutes !== undefined ? { etaMinutes: Number(etaMinutes) } : {}),
+        ...(etaLabelEn !== undefined ? { etaLabelEn: String(etaLabelEn) } : {}),
       },
     });
     await auditAdminAction(req, session, {
       action: "delivery_zone.update",
       entity: "DeliveryZoneConfig",
       entityId: id,
-      details: JSON.stringify({ feeRwf, labelEn, isActive, etaMinutes }),
+      details: JSON.stringify({ feeRwf, labelEn, isActive, etaMinutes, etaLabelEn }),
     });
     return NextResponse.json(updated);
   }

@@ -773,9 +773,9 @@ async function main() {
 
   await prisma.deliveryZoneConfig.createMany({
     data: [
-      { id: "zone-kigali", code: "KIGALI", labelEn: "Kigali", labelFr: "Kigali", labelRw: "Kigali", feeRwf: 5000, etaMinutes: 45, sortOrder: 1 },
-      { id: "zone-kamonyi", code: "KAMONYI_RUYENZI", labelEn: "Kamonyi (Ruyenzi)", labelFr: "Kamonyi (Ruyenzi)", labelRw: "Kamonyi (Ruyenzi)", feeRwf: 5000, etaMinutes: 75, sortOrder: 2 },
-      { id: "zone-bugesera", code: "BUGESERA_NYAMATA", labelEn: "Bugesera (Nyamata)", labelFr: "Bugesera (Nyamata)", labelRw: "Bugesera (Nyamata)", feeRwf: 5000, etaMinutes: 75, sortOrder: 3 },
+      { id: "zone-kigali", code: "KIGALI", labelEn: "Kigali", labelFr: "Kigali", labelRw: "Kigali", feeRwf: 5000, etaMinutes: 90, etaLabelEn: "45–90 minutes", sortOrder: 1 },
+      { id: "zone-kamonyi", code: "KAMONYI_RUYENZI", labelEn: "Kamonyi (Ruyenzi)", labelFr: "Kamonyi (Ruyenzi)", labelRw: "Kamonyi (Ruyenzi)", feeRwf: 5000, etaMinutes: 180, etaLabelEn: "2–3 hours", sortOrder: 2 },
+      { id: "zone-bugesera", code: "BUGESERA_NYAMATA", labelEn: "Bugesera (Nyamata)", labelFr: "Bugesera (Nyamata)", labelRw: "Bugesera (Nyamata)", feeRwf: 5000, etaMinutes: 180, etaLabelEn: "2–3 hours", sortOrder: 3 },
     ],
   });
 

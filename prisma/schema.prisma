@@ -975,6 +975,8 @@ model DeliveryZoneConfig {
   labelRw          String   @default("")
   feeRwf           Int
   etaMinutes       Int      @default(60)
+  /** Customer-facing range, e.g. "45–90 minutes" or "2–3 hours" */
+  etaLabelEn       String   @default("")
   isActive         Boolean  @default(true)
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())

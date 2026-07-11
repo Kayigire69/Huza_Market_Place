@@ -1,10 +1,20 @@
 import type { DeliveryZoneKey } from "@/lib/utils";
 
-/** Typical door-to-door minutes when items are in Huza stock */
+/**
+ * Typical door-to-door minutes (upper bound) when items are in Huza stock.
+ * Used for scheduling / estimatedMinutes on Delivery records.
+ */
 export const ZONE_ETA_MINUTES: Record<DeliveryZoneKey, number> = {
-  KIGALI: 45,
-  KAMONYI_RUYENZI: 75,
-  BUGESERA_NYAMATA: 75,
+  KIGALI: 90,
+  KAMONYI_RUYENZI: 180,
+  BUGESERA_NYAMATA: 180,
+};
+
+/** Customer-facing ETA ranges for the three delivery destinations */
+export const ZONE_ETA_LABELS: Record<DeliveryZoneKey, string> = {
+  KIGALI: "45–90 minutes",
+  KAMONYI_RUYENZI: "2–3 hours",
+  BUGESERA_NYAMATA: "2–3 hours",
 };
 
 /** When Huza must source / restock before dispatch */
@@ -15,8 +25,7 @@ export function isInStock(stockQty: number, reservedQty = 0): boolean {
 }
 
 export function formatZoneEta(zone: DeliveryZoneKey): string {
-  const mins = ZONE_ETA_MINUTES[zone];
-  return `About ${mins} minutes`;
+  return ZONE_ETA_LABELS[zone] || "45–90 minutes";
 }
 
 export function formatBackorderEta(): string {
