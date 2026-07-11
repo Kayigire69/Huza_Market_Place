@@ -93,10 +93,10 @@ const replies: Record<string, Record<Locale, string>> = {
 
   // 4 Payment
   payment: {
-    en: "Pay Youth Huza with MTN MoMo, Airtel Money, or Cash on Delivery. After checkout, approve the MoMo/Airtel prompt on your phone (or pay the rider for COD). Card payments are coming soon.",
-    fr: "Payez Youth Huza via MTN MoMo, Airtel Money ou paiement à la livraison. Approuvez l’invite MoMo/Airtel sur votre téléphone (ou payez le livreur pour COD). Les cartes arrivent bientôt.",
-    rw: "Ishyura Youth Huza ukoresheje MTN MoMo, Airtel Money cyangwa amafaranga iyo bagutegereje. Emera ubutumire bwa MoMo/Airtel kuri telefoni yawe. Amakarita aza vuba.",
-    sw: "Lipa Youth Huza kwa MTN MoMo, Airtel Money, au pesa taslimu wakati wa uwasilishaji. Idhinisha ombi la MoMo/Airtel kwenye simu yako. Malipo ya kadi yanakuja hivi karibuni.",
+    en: "Pay Youth Huza with MTN MoMo or Airtel Money. After checkout, approve the payment prompt on your phone. Bank card payments are coming soon — Cash on Delivery is not available.",
+    fr: "Payez Youth Huza via MTN MoMo ou Airtel Money. Après la commande, approuvez l’invite sur votre téléphone. Les cartes bancaires arrivent bientôt — le paiement à la livraison n’est pas disponible.",
+    rw: "Ishyura Youth Huza ukoresheje MTN MoMo cyangwa Airtel Money. Nyuma yo gutumiza, emera ubutumire kuri telefoni yawe. Amakarita ya banki aza vuba — nta kwishyura amafaranga iyo bagutegereje.",
+    sw: "Lipa Youth Huza kwa MTN MoMo au Airtel Money. Baada ya kuagiza, idhinisha ombi kwenye simu yako. Malipo ya kadi ya benki yanakuja hivi karibuni — hakuna malipo taslimu wakati wa uwasilishaji.",
   },
   momo: {
     en: "For MTN MoMo or Airtel Money, enter the phone that will receive the payment prompt. Approve it on that phone within a few minutes. Stock is reserved for about 10 minutes while we wait.",
@@ -104,11 +104,17 @@ const replies: Record<string, Record<Locale, string>> = {
     rw: "Ku MTN MoMo cyangwa Airtel Money, andika telefoni izakira ubutumire. Emera mu minota mike. Ububiko buzigamwa hafi iminota 10.",
     sw: "Kwa MTN MoMo au Airtel Money, weka simu itakayopokea ombi. Idhinisha ndani ya dakika chache. Hisa huhifadhiwa kwa takriban dakika 10.",
   },
+  card: {
+    en: "Bank card payments are coming soon on HUZA FRESH. Today please pay with MTN MoMo or Airtel Money.",
+    fr: "Les paiements par carte bancaire arrivent bientôt sur HUZA FRESH. Aujourd’hui, payez avec MTN MoMo ou Airtel Money.",
+    rw: "Kwishyura n'ikarita ya banki biza vuba kuri HUZA FRESH. Uyu munsi shyiramo MTN MoMo cyangwa Airtel Money.",
+    sw: "Malipo ya kadi ya benki yanakuja hivi karibuni kwenye HUZA FRESH. Leo lipa kwa MTN MoMo au Airtel Money.",
+  },
   cod: {
-    en: "Cash on Delivery (COD): your order is confirmed immediately. Pay the Youth Huza rider in cash when your produce arrives.",
-    fr: "Paiement à la livraison (COD) : votre commande est confirmée tout de suite. Payez le livreur Youth Huza en espèces à la réception.",
-    rw: "Amafaranga iyo bagutegereje (COD): igicuruzwa cyemezwa ako kanya. Wishyura umutangaji wa Youth Huza amafaranga iyo ibicuruzwa bigera.",
-    sw: "Pesa taslimu wakati wa uwasilishaji (COD): agizo lako linathibitishwa mara moja. Lipa mpiganaji wa Youth Huza kwa pesa taslimu bidhaa zinapofika.",
+    en: "Cash on Delivery is not available. Please pay with MTN MoMo or Airtel Money at checkout. Bank cards are coming soon.",
+    fr: "Le paiement à la livraison n’est pas disponible. Payez avec MTN MoMo ou Airtel Money. Les cartes bancaires arrivent bientôt.",
+    rw: "Nta kwishyura amafaranga iyo bagutegereje. Shyiramo MTN MoMo cyangwa Airtel Money. Amakarita ya banki aza vuba.",
+    sw: "Hakuna malipo taslimu wakati wa uwasilishaji. Lipa kwa MTN MoMo au Airtel Money. Kadi za benki zinakuja hivi karibuni.",
   },
 
   // 5 Tracking / orders
@@ -244,10 +250,10 @@ const replies: Record<string, Record<Locale, string>> = {
   },
 
   fallback: {
-    en: "Thanks! I can help with: opening hours & closing time, days we work, delivery zones/fees/ETA, payments (MoMo/Airtel/COD), tracking (HZ-… numbers), products & prices, refunds, account, farmers portal, contact, and more. Ask in EN, FR, RW, or SW — or call +250 788 000 000.",
-    fr: "Merci ! Je peux aider pour : horaires & fermeture, jours d’ouverture, livraison (zones/frais/délais), paiements, suivi (HZ-…), produits & prix, remboursements, compte, agriculteurs, contact. EN/FR/RW/SW — ou +250 788 000 000.",
-    rw: "Murakoze! Nshobora kugufasha ku: amasaha n'igifungo, iminsi dukora, gutanga, kwishyura, gukurikirana (HZ-…), ibicuruzwa, gusubizwa, konti, abahinzi, twandikire. EN/FR/RW/SW — cyangwa +250 788 000 000.",
-    sw: "Asante! Naweza kusaidia kuhusu: saa za kufungua/kufunga, siku za kazi, uwasilishaji, malipo, ufuatiliaji (HZ-…), bidhaa na bei, marejesho, akaunti, wakulima, mawasiliano. EN/FR/RW/SW — au +250 788 000 000.",
+    en: "Thanks! I can help with: opening hours & closing time, days we work, delivery zones/fees/ETA, payments (MoMo/Airtel — card soon), tracking (HZ-… numbers), products & prices, refunds, account, farmers portal, contact, and more. Ask in EN, FR, RW, or SW — or call +250 788 000 000.",
+    fr: "Merci ! Je peux aider pour : horaires & fermeture, jours d’ouverture, livraison (zones/frais/délais), paiements (MoMo/Airtel — carte bientôt), suivi (HZ-…), produits & prix, remboursements, compte, agriculteurs, contact. EN/FR/RW/SW — ou +250 788 000 000.",
+    rw: "Murakoze! Nshobora kugufasha ku: amasaha n'igifungo, iminsi dukora, gutanga, kwishyura (MoMo/Airtel — ikarita vuba), gukurikirana (HZ-…), ibicuruzwa, gusubizwa, konti, abahinzi, twandikire. EN/FR/RW/SW — cyangwa +250 788 000 000.",
+    sw: "Asante! Naweza kusaidia kuhusu: saa za kufungua/kufunga, siku za kazi, uwasilishaji, malipo (MoMo/Airtel — kadi hivi karibuni), ufuatiliaji (HZ-…), bidhaa na bei, marejesho, akaunti, wakulima, mawasiliano. EN/FR/RW/SW — au +250 788 000 000.",
   },
 };
 
@@ -284,8 +290,12 @@ const intentRules: { intent: Intent; pattern: RegExp }[] = [
       /\bhours\b|horaire|amasaha|business hours|working hours|open daily|ouvert|mufunguye|saa za|operating hours|what time|à quelles heures/,
   },
   {
+    intent: "card",
+    pattern: /card|carte|ikarita|kadi|visa|mastercard|bank card|credit card|debit/,
+  },
+  {
     intent: "cod",
-    pattern: /\bcod\b|cash on delivery|paiement à la livraison|amafaranga iyo|pesa taslimu|pay.*(rider|driver|cash)/,
+    pattern: /\bcod\b|cash on delivery|paiement à la livraison|amafaranga iyo|pesa taslimu|pay.*(rider|driver|cash)|cash payment/,
   },
   {
     intent: "momo",
