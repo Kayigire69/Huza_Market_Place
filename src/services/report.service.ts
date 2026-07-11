@@ -270,7 +270,7 @@ async function fetchReportData(
           `Purchase orders: ${pos.length}`,
           `Paid/received value: ${money(spent)}`,
         ],
-        headers: ["PO", "Supplier", "Product", "Qty", "Amount", "Status"],
+        headers: ["PO", "Farmer", "Product", "Qty", "Amount", "Status"],
         widths: [85, 110, 120, 50, 70, 70],
         rows: pos.map((p) => [
           p.poNumber,
