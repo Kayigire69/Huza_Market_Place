@@ -18,7 +18,7 @@ export default function AboutPage() {
         </p>
         <p>
           Farms that want to sell produce <em>to</em> Youth Huza use the separate{" "}
-          <strong className="text-[var(--huza-ink)]">Supplier Procurement Portal</strong>. After
+          <strong className="text-[var(--huza-ink)]">Farmers Portal</strong>. After
           verification and purchase, stock is listed on HUZA FRESH under Youth Huza.
         </p>
         <p>

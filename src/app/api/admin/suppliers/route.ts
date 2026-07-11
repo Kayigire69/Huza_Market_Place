@@ -100,11 +100,11 @@ export async function PATCH(req: Request) {
       userId: supplier.userId,
       type: "SUPPLIER_STATUS",
       channel: "IN_APP",
-      title: `Supplier ${action}`,
+      title: `Farmer ${action}`,
       body:
         action === "reject"
           ? `Your application was rejected: ${reason || "See admin notes"}`
-          : `Your supplier account is now ${status}.`,
+          : `Your farmer account is now ${status}.`,
     },
   });
 

@@ -108,7 +108,7 @@ export async function PATCH(req: Request) {
         stockLogs: {
           create: {
             change: Math.floor(qty),
-            reason: `Purchased from supplier offer ${offer.id}`,
+            reason: `Purchased from farmer offer ${offer.id}`,
           },
         },
       },

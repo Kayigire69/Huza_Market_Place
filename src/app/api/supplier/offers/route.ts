@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supplier = await prisma.supplier.findUnique({ where: { userId: session.user.id } });
-  if (!supplier) return NextResponse.json({ error: "Supplier profile not found" }, { status: 404 });
+  if (!supplier) return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
   if (supplier.status !== "APPROVED" && session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Partner not approved yet" }, { status: 403 });
   }

@@ -71,17 +71,17 @@ export function SupportChat() {
           guestName: name,
           guestPhone: phone,
           locale,
-          body: text || (locale === "fr" ? "Bonjour" : locale === "rw" ? "Muraho" : locale === "sw" ? "Habari" : "Hello"),
+          body: text || t("hello"),
         }),
       });
       const data = await readJson(res);
       if (!res.ok) {
-        setError(String(data.error || "Could not start chat"));
+        setError(String(data.error || t("couldNotStartChat")));
         return;
       }
       const id = String(data.threadId || "");
       if (!id) {
-        setError("Chat started but no session id was returned");
+        setError(t("couldNotStartChat"));
         return;
       }
       setThreadId(id);
@@ -90,7 +90,7 @@ export function SupportChat() {
       setText("");
       setStarted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not start chat");
+      setError(err instanceof Error ? err.message : t("couldNotStartChat"));
     } finally {
       setSending(false);
     }
@@ -110,18 +110,18 @@ export function SupportChat() {
       });
       const data = await readJson(res);
       if (res.status === 404 || data.code === "THREAD_MISSING") {
-        setError("Chat session expired. Starting a new chat…");
+        setError(t("chatExpired"));
         resetChat();
         return;
       }
       if (!res.ok) {
-        setError(String(data.error || "Failed to send message"));
+        setError(String(data.error || t("failedToSend")));
         return;
       }
       setMessages(Array.isArray(data.messages) ? (data.messages as Msg[]) : []);
       setText("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message");
+      setError(err instanceof Error ? err.message : t("failedToSend"));
     } finally {
       setSending(false);
     }
@@ -133,7 +133,7 @@ export function SupportChat() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--huza-green)] text-white shadow-lg hover:bg-[var(--huza-green-dark)]"
-        aria-label="Customer support chat"
+        aria-label={t("support")}
       >
         {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
       </button>
@@ -142,8 +142,8 @@ export function SupportChat() {
         <div className="fixed bottom-24 right-5 z-50 flex h-[420px] w-[min(100vw-2rem,360px)] flex-col overflow-hidden rounded-2xl border border-[var(--huza-line)] bg-white shadow-2xl">
           <div className="bg-[var(--huza-green-dark)] px-4 py-3 text-white flex items-start justify-between gap-2">
             <div>
-              <p className="font-semibold">Youth Huza Support</p>
-              <p className="text-xs text-[#C8E8D4]">EN · FR · RW · SW — products, orders, delivery, payments</p>
+              <p className="font-semibold">{t("supportTitle")}</p>
+              <p className="text-xs text-[#C8E8D4]">{t("supportSubtitle")}</p>
             </div>
             {started && (
               <button
@@ -151,16 +151,14 @@ export function SupportChat() {
                 onClick={resetChat}
                 className="text-[10px] uppercase tracking-wide text-[#C8E8D4] hover:text-white"
               >
-                New chat
+                {t("newChat")}
               </button>
             )}
           </div>
 
           {!started ? (
             <form onSubmit={startChat} className="flex flex-1 flex-col gap-3 p-4">
-              <p className="text-sm text-[var(--huza-muted)]">
-                Ask in English, French, Kinyarwanda, or Kiswahili about orders, delivery, payments, or products.
-              </p>
+              <p className="text-sm text-[var(--huza-muted)]">{t("supportIntro")}</p>
               <input
                 className="input-field"
                 placeholder={t("fullName")}
@@ -177,13 +175,13 @@ export function SupportChat() {
               />
               <textarea
                 className="input-field min-h-20"
-                placeholder="How can we help? / Comment pouvons-nous aider ? / Twagufasha gute?"
+                placeholder={t("howCanWeHelp")}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
               {error && <p className="text-sm text-red-700">{error}</p>}
               <Button type="submit" className="mt-auto" disabled={sending}>
-                {sending ? "Starting…" : "Start chat"}
+                {sending ? t("starting") : t("startChat")}
               </Button>
             </form>
           ) : (
@@ -208,10 +206,10 @@ export function SupportChat() {
                   className="input-field"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Type a message..."
+                  placeholder={t("typeMessage")}
                   disabled={sending}
                 />
-                <Button type="submit" size="sm" aria-label="Send" disabled={sending || !text.trim()}>
+                <Button type="submit" size="sm" aria-label={t("send")} disabled={sending || !text.trim()}>
                   <Send className="size-4" />
                 </Button>
               </form>

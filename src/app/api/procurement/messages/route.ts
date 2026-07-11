@@ -27,7 +27,7 @@ export async function GET(req: Request) {
   } else if (session.user.role === "SUPPLIER") {
     const supplier = await supplierForUser(session.user.id);
     if (!supplier) {
-      return NextResponse.json({ error: "Supplier profile not found" }, { status: 404 });
+      return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
     }
     supplierId = supplier.id;
   } else {
@@ -65,12 +65,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "supplierId required" }, { status: 400 });
     }
     const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
-    if (!supplier) return NextResponse.json({ error: "Supplier not found" }, { status: 404 });
+    if (!supplier) return NextResponse.json({ error: "Farmer not found" }, { status: 404 });
     notifyUserId = supplier.userId;
   } else if (session.user.role === "SUPPLIER") {
     const supplier = await supplierForUser(session.user.id);
     if (!supplier) {
-      return NextResponse.json({ error: "Supplier profile not found" }, { status: 404 });
+      return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
     }
     supplierId = supplier.id;
     senderRole = "SUPPLIER";

@@ -19,7 +19,7 @@ export function Footer() {
                 HUZA FRESH
               </p>
               <p className="text-xs uppercase tracking-[0.16em] text-[var(--huza-gold)]">
-                Powered by Youth Huza
+                {t("poweredBy")}
               </p>
             </div>
           </div>
@@ -44,53 +44,53 @@ export function Footer() {
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">Explore</h3>
+          <h3 className="font-semibold text-white mb-3">{t("explore")}</h3>
           <ul className="space-y-2 text-sm text-[#C8E8D4]">
             <li>
               <Link href="/about" className="hover:text-white">
-                About Youth Huza
+                {t("aboutYouthHuza")}
               </Link>
             </li>
             <li>
               <Link href="/faq" className="hover:text-white">
-                FAQ
+                {t("faq")}
               </Link>
             </li>
             <li>
               <Link href="/contact" className="hover:text-white">
-                Contact Us
+                {t("contactUs")}
               </Link>
             </li>
             <li>
               <Link href="/track" className="hover:text-white">
-                Track order
+                {t("trackOrder")}
               </Link>
             </li>
             <li>
               <Link href="/wishlist" className="hover:text-white">
-                Wishlist
+                {t("wishlist")}
               </Link>
             </li>
             <li>
               <Link href="/farmer" className="hover:text-white">
-                {t("supplierPortal")}
+                {t("farmerPortal")}
               </Link>
-              <p className="mt-1 text-[11px] text-[#8FBF9F]">Farmers Portal — sell produce to Huza</p>
+              <p className="mt-1 text-[11px] text-[#8FBF9F]">{t("farmersPortalHint")}</p>
             </li>
           </ul>
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">Legal & social</h3>
+          <h3 className="font-semibold text-white mb-3">{t("legalSocial")}</h3>
           <ul className="space-y-2 text-sm text-[#C8E8D4] mb-4">
             <li>
               <Link href="/privacy" className="hover:text-white">
-                Privacy Policy
+                {t("privacyPolicy")}
               </Link>
             </li>
             <li>
               <Link href="/terms" className="hover:text-white">
-                Terms &amp; Conditions
+                {t("termsConditions")}
               </Link>
             </li>
             <li>{t("deliveryZones")}</li>
@@ -131,10 +131,10 @@ export function Footer() {
           HUZA FRESH
         </p>
         <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--huza-gold)]">
-          Powered by Youth Huza
+          {t("poweredBy")}
         </p>
         <p className="mt-3 text-xs text-[#A8D4B8]">
-          © {new Date().getFullYear()} Youth Huza. All rights reserved.
+          © {new Date().getFullYear()} Youth Huza. {t("allRightsReserved")}
         </p>
       </div>
     </footer>

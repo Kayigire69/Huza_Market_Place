@@ -74,7 +74,7 @@ export default async function ProcurementPage() {
       </p>
       <h1 className="section-title mt-1">Procurement</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-2">
-        Review offers, create purchase orders, compare ask prices, and message suppliers.
+        Review offers, create purchase orders, compare ask prices, and message farmers.
       </p>
       <p className="text-sm text-[var(--huza-muted)] mb-8">
         Open POs:{" "}
