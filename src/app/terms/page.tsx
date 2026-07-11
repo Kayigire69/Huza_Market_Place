@@ -12,8 +12,10 @@ export default function TermsPage() {
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Orders &amp; payment.</strong> You buy from
-          Youth Huza on HUZA FRESH. Orders are confirmed after mobile money approval paid to
-          Youth Huza. Prices are in RWF. Delivery fees apply by zone.
+          Youth Huza on HUZA FRESH. Pay with <strong className="text-[var(--huza-ink)]">MTN MoMo</strong> or{" "}
+          <strong className="text-[var(--huza-ink)]">Airtel Money</strong> only — approve the prompt on
+          your phone. Bank card payments are coming soon. Cash on Delivery is not available. Prices
+          are in RWF. Delivery fees apply by zone.
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Delivery.</strong> Youth Huza delivers orders we
