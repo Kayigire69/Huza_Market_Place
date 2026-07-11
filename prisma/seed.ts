@@ -567,6 +567,8 @@ async function main() {
             url,
             alt: data.nameEn,
             sortOrder: i,
+            kind: "STOREFRONT" as const,
+            isCover: i === 0,
           })),
         },
         stockLogs: {

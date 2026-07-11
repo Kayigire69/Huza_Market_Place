@@ -142,8 +142,10 @@ export async function POST(req: Request) {
       images: {
         create: imageUrls.map((url, i) => ({
           url,
-          alt: `${body.nameEn} photo ${i + 1}`,
+          alt: `${body.nameEn} inspection ${i + 1}`,
           sortOrder: i,
+          kind: "INSPECTION" as const,
+          isCover: false,
         })),
       },
       stockLogs: {

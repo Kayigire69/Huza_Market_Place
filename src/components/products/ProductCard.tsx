@@ -24,7 +24,7 @@ export type ProductCardData = {
   availableDistricts?: string[];
   originDistrict?: string | null;
   nutritionalInfo?: string | null;
-  images: { url: string }[];
+  images: { url: string; isCover?: boolean }[];
   supplier?: { id: string };
   category?: { nameEn: string; nameFr: string; nameRw: string; slug: string };
 };
@@ -44,7 +44,8 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         ? product.category.nameRw
         : product.category.nameEn
     : null;
-  const image = product.images[0]?.url ?? "/logo.svg";
+  const image =
+    product.images.find((i) => i.isCover)?.url ?? product.images[0]?.url ?? "/logo.svg";
   const fulfillment = productFulfillmentLabel(product.stockQty);
 
   const toggleWishlist = async (e: React.MouseEvent) => {

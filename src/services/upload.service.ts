@@ -2,7 +2,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 
-export type UploadFolder = "products" | "profiles" | "documents";
+export type UploadFolder = "products" | "storefront" | "profiles" | "documents";
 
 const ALLOWED = new Set([
   "image/jpeg",
