@@ -406,105 +406,141 @@ export function FarmerPortalClient({
               </div>
             )}
 
-            <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">{t("productionInformation")}</h3>
-              <input
-                name="totalQuantityHarvested"
-                className="input-field"
-                placeholder={t("totalQuantityHarvested")}
-                required={isOrganicFarmer}
-              />
-              <select name="qualityGeneral" className="input-field" required={isOrganicFarmer}>
-                <option value="">{t("qualityInGeneral")}</option>
-                {QUALITY_LEVELS.map((q) => (
-                  <option key={q} value={q}>
-                    {t(qualityLabelKey[q])}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="stockQty"
-                type="number"
-                className="input-field"
-                placeholder={t("availableStockQty")}
-                required={!isOrganicFarmer}
-              />
-            </div>
-
-            <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">{t("sales")}</h3>
-              <select name="priceUnit" className="input-field" defaultValue="kg">
-                {PRICE_UNITS.map((u) => (
-                  <option key={u} value={u}>
-                    {t("pricePer")} {u}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="pricePerUnit"
-                type="number"
-                className="input-field"
-                placeholder={t("priceRwf")}
-                required
-              />
-              <input
-                name="totalKgsBoughtByHuza"
-                type="number"
-                step="0.1"
-                className="input-field"
-                placeholder={t("totalKgsBoughtByHuza")}
-                defaultValue={0}
-              />
-            </div>
-
-            <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">{t("paymentOptions")}</h3>
-              <select name="paymentOption" className="input-field" required>
-                <option value="">{t("selectPaymentOption")}</option>
-                {PAYMENT_OPTIONS.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {t(paymentLabelKey[p.value])}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="farmGatePrice"
-                type="number"
-                className="input-field"
-                placeholder={t("farmGatePrice")}
-              />
-              <input
-                name="priceUponDelivery"
-                type="number"
-                className="input-field"
-                placeholder={t("priceUponDelivery")}
-              />
-              <input
-                name="priceAfterSale"
-                type="number"
-                className="input-field"
-                placeholder={t("priceAfterSale")}
-              />
-              <div>
-                <label className="label">{t("proofOfPayment")}</label>
-                <input name="proofOfPayment" type="file" accept="image/*,application/pdf" className="input-field" />
-              </div>
-            </div>
-
-            <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-              <h3 className="text-sm font-semibold">{t("comments")}</h3>
-              <textarea
-                name="farmerComments"
-                className="input-field min-h-20"
-                placeholder={t("commentsForHuza")}
-              />
-            </div>
-
             {isOrganicFarmer ? (
-              <label className="flex items-center gap-2 text-sm">
-                <input name="isOrganic" type="checkbox" defaultChecked /> {t("organic")}
-              </label>
+              <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
+                <h3 className="text-sm font-semibold">{t("productionInformation")}</h3>
+                <input
+                  name="totalQuantityHarvested"
+                  className="input-field"
+                  placeholder={t("totalQuantityHarvested")}
+                  required
+                />
+                <select name="qualityGeneral" className="input-field" required>
+                  <option value="">{t("qualityInGeneral")}</option>
+                  {QUALITY_LEVELS.map((q) => (
+                    <option key={q} value={q}>
+                      {t(qualityLabelKey[q])}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="stockQty"
+                  type="number"
+                  className="input-field"
+                  placeholder={t("availableStockQty")}
+                />
+              </div>
             ) : (
+              <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
+                <h3 className="text-sm font-semibold">{t("simpleProductDetails")}</h3>
+                <p className="text-xs text-[var(--huza-muted)]">{t("standardProductFormHint")}</p>
+                <input
+                  name="stockQty"
+                  type="number"
+                  className="input-field"
+                  placeholder={t("availableStockQty")}
+                  required
+                />
+                <select name="priceUnit" className="input-field" defaultValue="kg">
+                  {PRICE_UNITS.map((u) => (
+                    <option key={u} value={u}>
+                      {t("pricePer")} {u}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="pricePerUnit"
+                  type="number"
+                  className="input-field"
+                  placeholder={t("priceRwf")}
+                  required
+                />
+              </div>
+            )}
+
+            {isOrganicFarmer && (
+              <>
+                <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
+                  <h3 className="text-sm font-semibold">{t("sales")}</h3>
+                  <select name="priceUnit" className="input-field" defaultValue="kg">
+                    {PRICE_UNITS.map((u) => (
+                      <option key={u} value={u}>
+                        {t("pricePer")} {u}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="pricePerUnit"
+                    type="number"
+                    className="input-field"
+                    placeholder={t("priceRwf")}
+                    required
+                  />
+                  <input
+                    name="totalKgsBoughtByHuza"
+                    type="number"
+                    step="0.1"
+                    className="input-field"
+                    placeholder={t("totalKgsBoughtByHuza")}
+                    defaultValue={0}
+                  />
+                </div>
+
+                <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
+                  <h3 className="text-sm font-semibold">{t("paymentOptions")}</h3>
+                  <select name="paymentOption" className="input-field" required>
+                    <option value="">{t("selectPaymentOption")}</option>
+                    {PAYMENT_OPTIONS.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {t(paymentLabelKey[p.value])}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="farmGatePrice"
+                    type="number"
+                    className="input-field"
+                    placeholder={t("farmGatePrice")}
+                  />
+                  <input
+                    name="priceUponDelivery"
+                    type="number"
+                    className="input-field"
+                    placeholder={t("priceUponDelivery")}
+                  />
+                  <input
+                    name="priceAfterSale"
+                    type="number"
+                    className="input-field"
+                    placeholder={t("priceAfterSale")}
+                  />
+                  <div>
+                    <label className="label">{t("proofOfPayment")}</label>
+                    <input
+                      name="proofOfPayment"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
+                  <h3 className="text-sm font-semibold">{t("comments")}</h3>
+                  <textarea
+                    name="farmerComments"
+                    className="input-field min-h-20"
+                    placeholder={t("commentsForHuza")}
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 text-sm">
+                  <input name="isOrganic" type="checkbox" defaultChecked /> {t("organic")}
+                </label>
+              </>
+            )}
+
+            {!isOrganicFarmer && (
               <p className="text-xs text-[var(--huza-muted)] rounded-lg bg-[var(--huza-mint)] px-3 py-2">
                 {t("standardProductNotOrganicNote")}
               </p>

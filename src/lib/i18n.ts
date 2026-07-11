@@ -239,12 +239,12 @@ const en: Dict = {
   selectFarmingType: "Choose your farmer type to continue",
   organicFarmerPath: "Organic products",
   organicFarmerPathHint:
-    "Full registration: farm details, documents, organic certification, then the complete farmer dossier after login.",
+    "Full dossier after login: personal info, field details, chemicals, production, sales, payment options, and proof.",
   standardFarmerPath: "Other crops (non-organic)",
   standardFarmerPathHint:
-    "Shorter registration: your name, national ID, products you offer, and how Huza will buy from you.",
+    "Short form only: name, national ID, phone, products you offer, and the Huza purchase agreement — no organic dossier.",
   standardRegistrationHint:
-    "Only your identity, products, and the purchase agreement with Huza. No full organic dossier.",
+    "Simple application only. You will not fill field chemicals, harvest quality, or payment-option dossier sections.",
   changeFarmingType: "Change type",
   productsOfferedLabel: "Products / crops you offer to Huza",
   productsOfferedPlaceholder: "e.g. Tomatoes, cabbage, Irish potatoes — quantities if known",
@@ -258,7 +258,7 @@ const en: Dict = {
   optional: "optional",
   huzaAgreementTab: "Huza agreement",
   standardAgreementIntro:
-    "Your short partner profile on file with Youth Huza.",
+    "Your short partner profile on file with Youth Huza. Non-organic farmers do not complete the organic dossier.",
   huzaTermsAccepted: "Huza purchase terms accepted at registration.",
   huzaTermsPending: "Purchase terms not marked yet — contact Huza staff.",
   standardAgreementEditHint:
@@ -266,9 +266,12 @@ const en: Dict = {
   howItWorksStandardBody:
     "Submit products with photos → Huza reviews and buys → stock is listed on HUZA FRESH under Youth Huza (your farm name stays private).",
   submitProductHintStandard:
-    "List the crop/product and photos. No organic dossier fields — Huza reviews before buying.",
+    "List the crop/product, photos, stock quantity, and asking price only. No organic field or payment dossier.",
   standardProductNotOrganicNote:
     "This account is for non-organic crops. Products are submitted without an organic badge.",
+  simpleProductDetails: "Product details",
+  standardProductFormHint:
+    "Keep it simple: available quantity and your asking price. The full organic dossier is not required.",
   farmerLogin: "Farmer login",
   farmerLandingBody: "Register your farm so Youth Huza can buy your produce for HUZA FRESH. Huza field agents visit farms to help you register and list products with photos. Huza does not place online purchase orders here — agents work with you on the ground. Customers shop only on the storefront.",
   customerStorefront: "← Customer storefront",
@@ -282,7 +285,8 @@ const en: Dict = {
   howItWorks: "How it works:",
   howItWorksBody: "Fill in Farmer information (personal, field, production, sales, payment, comments) → after approval, submit each product with photos and crop details → Huza reviews that dossier to accept or reject products → accepted stock is sold on HUZA FRESH under Youth Huza.",
   pendingApprovalBanner: "Your application is pending. Complete the Farmer information tab first. A Huza agent may visit your farm. Product listing unlocks after approval.",
-  dossierIntro: "Complete all sections below. Huza uses this information when accepting or rejecting your products.",
+  dossierIntro:
+    "Organic farms only — complete every section: personal information, field information, production, sales, payment options, proof of payment, and comments.",
   farmerPersonalInfo: "Farmer personal information",
   farmBusinessName: "Farm / business name",
   idNumber: "ID number",
@@ -632,7 +636,8 @@ const fr: Dict = {
   howItWorks: "Comment ça marche :",
   howItWorksBody: "Remplissez Informations agriculteur → après approbation, soumettez chaque produit avec photos → Huza accepte ou refuse → le stock accepté est vendu sur HUZA FRESH sous Youth Huza.",
   pendingApprovalBanner: "Votre demande est en attente. Complétez d'abord Informations agriculteur. Un agent Huza peut visiter votre ferme. La liste de produits s'ouvre après approbation.",
-  dossierIntro: "Complétez toutes les sections. Huza utilise ces infos pour accepter ou refuser vos produits.",
+  dossierIntro:
+    "Fermes biologiques uniquement — complétez chaque section : infos personnelles, champ, production, ventes, options de paiement, preuve de paiement et commentaires.",
   farmerPersonalInfo: "Informations personnelles de l'agriculteur",
   farmBusinessName: "Nom de la ferme / entreprise",
   idNumber: "Numéro d'identité",
@@ -982,7 +987,8 @@ const rw: Dict = {
   howItWorks: "Uko bikora:",
   howItWorksBody: "Uzuza Amakuru y'umuhinzi → nyuma yo kwemererwa, ohereza buri gicuruzwa n'amafoto → Huza yemera cyangwa yanga → ibyemewe bigurishwa kuri HUZA FRESH.",
   pendingApprovalBanner: "Ubusabe bwawe burategereje. Banza uzuze Amakuru y'umuhinzi. Umukozi wa Huza ashobora gusura umurima. Gushyira ibicuruzwa bifungura nyuma yo kwemererwa.",
-  dossierIntro: "Uzuza ibice byose hepfo. Huza ikoresha aya makuru mu kwemera cyangwa kwanga ibicuruzwa byawe.",
+  dossierIntro:
+    "Abahinzi b'ibinyabuzima gusa — uzuza ibice byose: amakuru y'umuntu, umurima, umusaruro, igurisha, ubwishyu, ibimenyetso by'ubwishyu n'ibitekerezo.",
   farmerPersonalInfo: "Amakuru yihariye y'umuhinzi",
   farmBusinessName: "Izina ry'umurima / ubucuruzi",
   idNumber: "Numero y'irangamuntu",
@@ -1332,7 +1338,8 @@ const sw: Dict = {
   howItWorks: "Inavyofanya kazi:",
   howItWorksBody: "Jaza Taarifa za mkulima → baada ya idhini, wasilisha kila bidhaa na picha → Huza inakubali au kukataa → hisa zinazokubaliwa zinauzwa kwenye HUZA FRESH chini ya Youth Huza.",
   pendingApprovalBanner: "Ombi lako linasubiri. Kamilisha kwanza Taarifa za mkulima. Wakala wa Huza anaweza kutembelea shamba lako. Kuorodhesha bidhaa kunafunguka baada ya idhini.",
-  dossierIntro: "Kamilisha sehemu zote hapa chini. Huza hutumia taarifa hizi kukubali au kukataa bidhaa zako.",
+  dossierIntro:
+    "Mashamba ya kikaboni pekee — kamilisha kila sehemu: taarifa binafsi, shamba, uzalishaji, mauzo, chaguo za malipo, uthibitisho wa malipo, na maoni.",
   farmerPersonalInfo: "Taarifa binafsi za mkulima",
   farmBusinessName: "Jina la shamba / biashara",
   idNumber: "Nambari ya kitambulisho",
