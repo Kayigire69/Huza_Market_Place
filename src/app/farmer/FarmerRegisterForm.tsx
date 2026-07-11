@@ -60,16 +60,15 @@ export function FarmerRegisterForm() {
 
   if (!farmingType) {
     return (
-      <div className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6 text-left">
-        <h2 className="font-semibold text-lg">{t("farmerRegistration")}</h2>
-        <p className="text-sm text-[var(--huza-muted)]">{t("farmingTypeChooserHint")}</p>
-        <div className="grid gap-3 sm:grid-cols-2">
+      <div className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6">
+        <h2 className="text-center font-semibold text-lg">{t("farmerRegistration")}</h2>
+        <div className="grid gap-3 sm:grid-cols-2 text-left">
           <button
             type="button"
             onClick={() => setFarmingType("ORGANIC")}
-            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
+            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-orange)] hover:bg-[#fff8ef]"
           >
-            <Leaf className="size-7 text-[var(--huza-green)]" />
+            <Leaf className="size-7 text-[var(--huza-orange)]" />
             <p className="mt-3 font-semibold">{t("organicFarmerPath")}</p>
             <p className="mt-2 text-xs text-[var(--huza-muted)] leading-relaxed">
               {t("organicFarmerPathHint")}
@@ -78,9 +77,9 @@ export function FarmerRegisterForm() {
           <button
             type="button"
             onClick={() => setFarmingType("STANDARD")}
-            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
+            className="rounded-2xl border border-[var(--huza-line)] p-5 text-left transition hover:border-[var(--huza-orange)] hover:bg-[#fff8ef]"
           >
-            <Sprout className="size-7 text-[var(--huza-green)]" />
+            <Sprout className="size-7 text-[var(--huza-orange)]" />
             <p className="mt-3 font-semibold">{t("standardFarmerPath")}</p>
             <p className="mt-2 text-xs text-[var(--huza-muted)] leading-relaxed">
               {t("standardFarmerPathHint")}
@@ -89,7 +88,10 @@ export function FarmerRegisterForm() {
         </div>
         <p className="text-center text-sm text-[var(--huza-muted)]">
           {t("alreadyRegistered")}{" "}
-          <Link href="/auth/login?callbackUrl=/farmer" className="font-semibold text-[var(--huza-green)]">
+          <Link
+            href="/auth/login?callbackUrl=/farmer"
+            className="font-semibold text-[var(--huza-orange-dark)]"
+          >
             {t("farmerLogin")}
           </Link>
         </p>
@@ -115,7 +117,7 @@ export function FarmerRegisterForm() {
         </div>
         <button
           type="button"
-          className="text-xs font-semibold text-[var(--huza-green)]"
+          className="text-xs font-semibold text-[var(--huza-orange-dark)]"
           onClick={() => setFarmingType(null)}
         >
           {t("changeFarmingType")}
@@ -276,7 +278,10 @@ export function FarmerRegisterForm() {
       </Button>
       <p className="text-center text-sm text-[var(--huza-muted)]">
         {t("alreadyRegistered")}{" "}
-        <Link href="/auth/login?callbackUrl=/farmer" className="font-semibold text-[var(--huza-green)]">
+        <Link
+          href="/auth/login?callbackUrl=/farmer"
+          className="font-semibold text-[var(--huza-orange-dark)]"
+        >
           {t("farmerLogin")}
         </Link>
       </p>

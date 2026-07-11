@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { WarehouseClient } from "./WarehouseClient";
+import { PortalCopyright } from "@/components/portals/PortalCopyright";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,7 @@ export default async function WarehousePage() {
         movements={movements}
         locations={locations}
       />
+      <PortalCopyright suffix="Warehouse" />
     </div>
   );
 }
