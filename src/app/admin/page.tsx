@@ -142,6 +142,26 @@ export default async function AdminPage() {
     take: 50,
   });
 
+  const [catalogProducts, recentMovements] = await Promise.all([
+    prisma.product.findMany({
+      where: { deletedAt: null },
+      include: {
+        category: true,
+        supplier: { select: { id: true, businessName: true, farmingType: true } },
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      },
+      orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
+      take: 120,
+    }),
+    prisma.stockMovement.findMany({
+      include: {
+        product: { select: { id: true, nameEn: true, stockQty: true, unit: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    }),
+  ]);
+
   const stats = {
     customers,
     suppliers,
@@ -160,19 +180,20 @@ export default async function AdminPage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <h1 className="section-title">Administration dashboard</h1>
       <p className="mt-2 text-[var(--huza-muted)] mb-4">
-        Manage HUZA FRESH — retailer storefront, farmer approval, and procurement.
+        Youth Huza staff workspace — prices, stock, farmers, orders, and homepage offers. Use the
+        left menu so multiple people can work in parallel; every action is audited.
       </p>
 
       <div className="mb-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { href: "/admin#suppliers", title: "Farmer Approval", desc: "Review farmer dossiers & approve" },
-          { href: "/admin#products", title: "Product review", desc: "Accept or reject farmer products" },
-          { href: "/admin#procurement", title: "Procurement", desc: "POs, receive, inspect, pay" },
-          { href: "/warehouse", title: "Warehouse", desc: "Receive goods, pack orders" },
-          { href: "/procurement", title: "Procurement officer", desc: "Offers, POs, messages" },
-          { href: "/delivery-portal", title: "Delivery portal", desc: "Assign & track drivers" },
+          { href: "/admin#catalog", title: "Prices & listings", desc: "Edit retail prices Huza sells at" },
+          { href: "/admin#inventory", title: "Stock in / out", desc: "Manual + automatic stock ledger" },
+          { href: "/admin#promos", title: "Special offers", desc: "Publish homepage offer cards" },
+          { href: "/admin#suppliers", title: "Farmer approval", desc: "Review organic & standard farmers" },
+          { href: "/admin#products", title: "Product review", desc: "Accept or reject farmer listings" },
+          { href: "/admin#procurement", title: "Procurement", desc: "Buy from farms into Huza stock" },
           { href: "/admin#orders", title: "Customer orders", desc: "Orders sold by Youth Huza" },
-          { href: "/admin#payments", title: "Payments", desc: "Customer & farmer payments" },
+          { href: "/warehouse", title: "Warehouse portal", desc: "Receive, pack, dispatch" },
         ].map((a) => (
           <a
             key={a.title}
@@ -267,6 +288,7 @@ export default async function AdminPage() {
       </div>
 
       <AdminClient
+        adminName={session.user.name}
         pendingSuppliers={pendingSuppliers}
         allSuppliers={allSuppliers}
         pendingFarmerProducts={pendingFarmerProducts}
@@ -284,6 +306,11 @@ export default async function AdminPage() {
         auditLogs={auditLogs}
         procurementOffers={procurementOffers}
         purchaseOrders={purchaseOrders}
+        catalogProducts={catalogProducts}
+        recentMovements={recentMovements.map((m) => ({
+          ...m,
+          createdAt: m.createdAt.toISOString(),
+        }))}
       />
     </div>
   );

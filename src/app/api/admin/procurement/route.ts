@@ -105,12 +105,24 @@ export async function PATCH(req: Request) {
         images: {
           create: [{ url: "/images/products/mushroom.svg", alt: offer.title }],
         },
-        stockLogs: {
-          create: {
-            change: Math.floor(qty),
-            reason: `Purchased from farmer offer ${offer.id}`,
-          },
-        },
+      },
+    });
+
+    // Automatic stock ledger (RECEIVE) when Huza purchases into inventory
+    await prisma.stockHistory.create({
+      data: {
+        productId: product.id,
+        change: Math.floor(qty),
+        reason: `Purchased from farmer offer ${offer.id}`,
+      },
+    });
+    await prisma.stockMovement.create({
+      data: {
+        productId: product.id,
+        type: "RECEIVE",
+        quantity: Math.floor(qty),
+        reason: `Purchased from farmer offer ${offer.id}`,
+        actorId: session.user.id,
       },
     });
 
@@ -203,6 +215,23 @@ async function handlePoAction(
         receivedAt: now,
         notes: body.notes || po.notes,
       };
+      // Auto stock-in only when first receiving (not already in warehouse from purchase)
+      if (
+        po.productId &&
+        po.quantity > 0 &&
+        po.status !== PurchaseOrderStatus.RECEIVED &&
+        po.status !== PurchaseOrderStatus.ACCEPTED &&
+        po.status !== PurchaseOrderStatus.PAID
+      ) {
+        const { stockService } = await import("@/services/stock.service");
+        await stockService.stockIn(
+          po.productId,
+          Math.floor(po.quantity),
+          `PO ${po.poNumber} received into warehouse`,
+          session.user.id,
+          "RECEIVE"
+        );
+      }
       break;
     case "inspect_accept":
       data = {

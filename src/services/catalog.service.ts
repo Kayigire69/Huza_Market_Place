@@ -12,16 +12,28 @@ type HomeCatalog = Awaited<ReturnType<typeof productRepository.findHomeLists>> &
 
 /**
  * Homepage / bestsellers catalog with Redis caching when available.
+ * Special offers come from admin-posted Promotion rows (not hardcoded).
  */
 export const catalogService = {
   async getHomeCatalog(): Promise<HomeCatalog> {
     const cached = await cacheGet<HomeCatalog>(CacheKeys.homeCatalog);
     if (cached) return cached;
 
+    const now = new Date();
     const [lists, categories, promotions, testimonials, status] = await Promise.all([
       productRepository.findHomeLists(16),
       prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
-      prisma.promotion.findMany({ where: { isActive: true }, take: 3 }),
+      prisma.promotion.findMany({
+        where: {
+          isActive: true,
+          AND: [
+            { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+            { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
+          ],
+        },
+        orderBy: [{ isFlashSale: "desc" }, { createdAt: "desc" }],
+        take: 12,
+      }),
       prisma.testimonial.findMany({ where: { isFeatured: true }, take: 3 }),
       getBusinessStatus(),
     ]);
