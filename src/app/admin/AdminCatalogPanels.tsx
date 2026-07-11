@@ -68,7 +68,7 @@ export function AdminCatalogPanel({
   };
 
   return (
-    <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
+    <div className="admin-panel p-5 space-y-4">
       <div>
         <h2 className="font-semibold text-lg">Catalog &amp; prices</h2>
         <p className="text-sm text-[var(--huza-muted)] mt-1">
@@ -208,7 +208,7 @@ export function AdminInventoryPanel({
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
-      <form onSubmit={submit} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+      <form onSubmit={submit} className="admin-panel p-5 space-y-3">
         <h2 className="font-semibold text-lg">Stock in / stock out</h2>
         <p className="text-sm text-[var(--huza-muted)]">
           Manual adjustments for warehouse corrections. Customer sales and PO receives also create
@@ -252,7 +252,7 @@ export function AdminInventoryPanel({
         </Button>
       </form>
 
-      <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+      <div className="admin-panel p-5">
         <h2 className="font-semibold text-lg mb-3">Recent stock movements</h2>
         <p className="text-xs text-[var(--huza-muted)] mb-3">
           Includes automatic SALE / RECEIVE rows from checkout and warehouse — plus admin

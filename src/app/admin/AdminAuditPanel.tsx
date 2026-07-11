@@ -26,9 +26,9 @@ function pretty(value: unknown) {
 
 export function AdminAuditPanel({ logs }: { logs: AuditRow[] }) {
   return (
-    <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+    <div className="admin-panel p-5 space-y-3">
       <div>
-        <h2 className="font-semibold">Accountability audit log</h2>
+        <h2 className="admin-panel-title text-xl">Accountability audit log</h2>
         <p className="mt-1 text-sm text-[var(--huza-muted)]">
           Every important admin action is tied to a personal staff account, timestamp, and IP. If
           Alice and John share one password, you cannot tell who made a mistake — so they must not.

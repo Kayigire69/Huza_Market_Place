@@ -247,7 +247,7 @@ export function AdminClient(props: {
   return (
     <div className={hideWorkspaceNav ? "space-y-4" : "grid lg:grid-cols-[240px_1fr] gap-6 items-start"}>
       {!hideWorkspaceNav && (
-      <aside className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 sticky top-24 space-y-5">
+      <aside className="admin-panel sticky top-24 space-y-5 p-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--huza-green)]">
             Admin workspaces
@@ -268,10 +268,10 @@ export function AdminClient(props: {
                   type="button"
                   id={t.id}
                   onClick={() => selectTab(t.id)}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium ${
+                  className={`w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${
                     activeTab === t.id
-                      ? "bg-[var(--huza-green)] text-white"
-                      : "hover:bg-[var(--huza-mint)] text-[var(--huza-ink)]"
+                      ? "bg-[var(--huza-green)] text-white shadow-[0_8px_18px_rgba(11,92,52,0.22)]"
+                      : "text-[var(--huza-ink)] hover:bg-[var(--huza-mint)]"
                   }`}
                 >
                   {t.label}
@@ -296,14 +296,14 @@ export function AdminClient(props: {
 
       <div className="min-w-0">
       {msg && (
-        <p className="mb-4 rounded-xl bg-[var(--huza-mint)] px-4 py-2 text-sm text-[var(--huza-green-dark)]">
+        <p className="mb-4 rounded-xl border border-[var(--huza-line)] bg-[var(--huza-mint)] px-4 py-2.5 text-sm font-medium text-[var(--huza-green-dark)]">
           {msg}
         </p>
       )}
 
       {activeTab === "overview" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 space-y-4">
-          <h2 className="font-semibold text-lg">Team playbook</h2>
+        <div className="admin-panel space-y-4 p-6">
+          <h2 className="admin-panel-title">Team playbook</h2>
           <p className="text-sm text-[var(--huza-muted)]">
             Several staff can use admin at the same time. Use the left menu so each person stays in
             their lane — audit log records who did what.
@@ -371,7 +371,7 @@ export function AdminClient(props: {
 
       {activeTab === "procurement" && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+          <div className="admin-panel p-5 space-y-3">
             <h2 className="font-semibold mb-1">Procurement Management</h2>
             <p className="text-sm text-[var(--huza-muted)] mb-4">
               Review farm offers, negotiate wholesale price, purchase into Huza stock, then manage
@@ -450,7 +450,7 @@ export function AdminClient(props: {
             )}
           </div>
 
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+          <div className="admin-panel p-5 space-y-3">
             <h2 className="font-semibold mb-1">Purchase orders</h2>
             <p className="text-sm text-[var(--huza-muted)] mb-4">
               Record receipt, quality inspection, and farmer payment.
@@ -531,7 +531,7 @@ export function AdminClient(props: {
 
       {activeTab === "suppliers" && (
         <div className="space-y-6">
-          <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+          <section className="admin-panel p-5">
             <h2 className="font-semibold mb-1">Farmer Approval (Module 10)</h2>
             <p className="text-sm text-[var(--huza-muted)] mb-4">
               Review farmer applications. Organic farms use the full dossier; standard (non-organic)
@@ -745,7 +745,7 @@ export function AdminClient(props: {
               ))
             )}
           </section>
-          <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+          <section className="admin-panel p-5">
             <h2 className="font-semibold mb-4">All farmers</h2>
             <div className="space-y-2">
               {props.allSuppliers.map((s) => (
@@ -784,7 +784,7 @@ export function AdminClient(props: {
       )}
 
       {activeTab === "products" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
+        <div className="admin-panel p-5 space-y-4">
           <h2 className="font-semibold mb-1">Product review</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-4">
             Farmer photos are for inspection only. Upload HUZA storefront images (cover + gallery)
@@ -899,7 +899,7 @@ export function AdminClient(props: {
       )}
 
       {activeTab === "orders" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+        <div className="admin-panel p-5 space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h2 className="font-semibold">Order management</h2>
@@ -999,7 +999,7 @@ export function AdminClient(props: {
       )}
 
       {activeTab === "delivery" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+        <div className="admin-panel p-5 space-y-3">
           <h2 className="font-semibold mb-2">Delivery management</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-4">
             Youth Huza delivers directly — assign your delivery personnel here.
@@ -1030,33 +1030,58 @@ export function AdminClient(props: {
       )}
 
       {activeTab === "payments" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-          <h2 className="font-semibold mb-2">Payment management</h2>
-          {props.payments.map((p) => (
-            <div key={String(p.id)} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--huza-line)] p-3">
-              <div>
-                <p className="font-medium">
-                  {(p.order as { orderNumber?: string })?.orderNumber} · {String(p.method)}
-                </p>
-                <p className="text-sm text-[var(--huza-muted)]">
-                  {formatRwf(Number(p.amount))} · {String(p.status)} · {String(p.phoneNumber)}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => paymentAction(String(p.id), "confirm")}>
-                  Confirm
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => paymentAction(String(p.id), "refund")}>
-                  Refund
-                </Button>
-              </div>
-            </div>
-          ))}
+        <div className="admin-panel space-y-4 p-5 sm:p-6">
+          <div>
+            <h2 className="admin-panel-title">Payment management</h2>
+            <p className="admin-panel-sub">
+              Confirm MoMo / Airtel collections and issue refunds for HUZA FRESH orders.
+            </p>
+          </div>
+          <div className="space-y-2.5">
+            {props.payments.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[var(--huza-line)] px-4 py-8 text-center text-sm text-[var(--huza-muted)]">
+                No payments in this workspace yet.
+              </p>
+            ) : (
+              props.payments.map((p) => {
+                const status = String(p.status);
+                const statusClass =
+                  status === "CONFIRMED" || status === "VERIFIED"
+                    ? "admin-status admin-status-ok"
+                    : status === "PENDING" || status === "INITIATED"
+                      ? "admin-status admin-status-warn"
+                      : "admin-status admin-status-muted";
+                return (
+                  <div key={String(p.id)} className="admin-row">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold tracking-tight">
+                          {(p.order as { orderNumber?: string })?.orderNumber} · {String(p.method)}
+                        </p>
+                        <span className={statusClass}>{status}</span>
+                      </div>
+                      <p className="mt-1 text-sm text-[var(--huza-muted)]">
+                        {formatRwf(Number(p.amount))} · {String(p.phoneNumber)}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => paymentAction(String(p.id), "confirm")}>
+                        Confirm
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => paymentAction(String(p.id), "refund")}>
+                        Refund
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
       {activeTab === "reviews" && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+        <div className="admin-panel p-5 space-y-3">
           <h2 className="font-semibold mb-2">Reviews & ratings</h2>
           <p className="text-sm text-[var(--huza-muted)]">Bad comments can be deleted or hidden.</p>
           {props.reviews.map((r) => (
@@ -1093,7 +1118,7 @@ export function AdminClient(props: {
 
       {activeTab === "hours" && (
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+          <div className="admin-panel p-5">
             <h2 className="font-semibold mb-3">Business hours (default 6:00–21:00)</h2>
             {props.businessHours.map((h) => (
               <p key={String(h.id)} className="text-sm py-1">
@@ -1102,7 +1127,7 @@ export function AdminClient(props: {
               </p>
             ))}
           </div>
-          <form onSubmit={setEmergency} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+          <form onSubmit={setEmergency} className="admin-panel p-5 space-y-3">
             <h2 className="font-semibold">Emergency closure</h2>
             {props.emergency.length > 0 && (
               <p className="text-sm text-red-700">

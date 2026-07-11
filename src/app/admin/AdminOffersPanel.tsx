@@ -86,7 +86,7 @@ export function AdminOffersPanel({
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
-      <form onSubmit={createPromo} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+      <form onSubmit={createPromo} className="admin-panel p-5 space-y-3">
         <h2 className="font-semibold text-lg">Post a special offer</h2>
         <p className="text-sm text-[var(--huza-muted)]">
           Offers appear on the HUZA FRESH homepage in the Special offers section — each card is
