@@ -31,6 +31,14 @@ enum AvailabilityStatus {
   CLOSED
 }
 
+enum ProductAvailability {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+  COMING_SOON
+  TEMPORARILY_UNAVAILABLE
+}
+
 enum OrderStatus {
   PENDING
   PAID
@@ -149,6 +157,8 @@ model User {
   loyaltyPoints Int       @default(0)
   referralCode  String?   @unique
   referredBy    String?
+  isActive      Boolean   @default(true)
+  deletedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -281,6 +291,8 @@ model Category {
   description String?
   imageUrl    String?
   sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  deletedAt   DateTime?
   products    Product[]
   offers      SupplierOffer[]
 }
@@ -302,7 +314,12 @@ model Product {
   price         Int
   unit          UnitType @default(KG)
   stockQty      Int      @default(0)
+  /// Held for pending (unpaid) orders — available = stockQty - reservedQty
+  reservedQty   Int      @default(0)
   lowStockAt    Int      @default(5)
+  /// Manual override; when null, derived from stock levels
+  availability  ProductAvailability?
+  deletedAt     DateTime?
   barcode       String?
   isOrganic     Boolean  @default(false)
   isFeatured    Boolean  @default(false)
@@ -885,5 +902,65 @@ model BackgroundJob {
 
   @@index([status, runAfter])
   @@index([type])
+}
+
+model DeliveryZoneConfig {
+  id               String   @id @default(cuid())
+  code             String   @unique
+  labelEn          String
+  labelFr          String   @default("")
+  labelRw          String   @default("")
+  feeRwf           Int
+  etaMinutes       Int      @default(60)
+  isActive         Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model WebsiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model OrderSequence {
+  year      Int @id
+  lastValue Int @default(0)
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  source    String
+  message   String
+  stack     String?
+  path      String?
+  userId    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([source])
+}
+
+model HomepageBanner {
+  id          String   @id @default(cuid())
+  titleEn     String
+  titleFr     String   @default("")
+  titleRw     String   @default("")
+  subtitleEn  String?
+  subtitleFr  String?
+  subtitleRw  String?
+  imageUrl    String?
+  ctaLabel    String?
+  ctaHref     String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 

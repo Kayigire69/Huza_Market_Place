@@ -7,12 +7,13 @@ import {
   PaymentStatus,
 } from "@prisma/client";
 import { getBusinessStatus } from "@/lib/business-hours";
-import { DELIVERY_FEES, generateOrderNumber } from "@/lib/utils";
 import { initiateMobileMoneyPayment, normalizeMsisdn } from "@/lib/payments/mobile-money";
 import { prisma } from "@/lib/prisma";
-import { productRepository } from "@/repositories/product.repository";
+import { productRepository, availableQty } from "@/repositories/product.repository";
 import { enqueueAnalytics, enqueueJob, enqueueSms } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
+import { generateOrderNumber, getDeliveryFee } from "@/services/settings.service";
+import { writeAuditLog } from "@/lib/audit";
 
 export const createOrderSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -89,8 +90,9 @@ export const orderService = {
     let subtotal = 0;
     const lineItems = data.items.map((item) => {
       const product = productMap[item.productId];
-      if (product.stockQty < item.quantity) {
-        throw new Error(`Insufficient stock for ${product.nameEn}`);
+      const available = availableQty(product.stockQty, product.reservedQty);
+      if (available < item.quantity) {
+        throw new Error(`Insufficient stock for ${product.nameEn} (${available} available)`);
       }
       const lineTotal = Math.round(product.price * item.quantity);
       subtotal += lineTotal;
@@ -104,38 +106,58 @@ export const orderService = {
     });
 
     const merchant = huzaPayee();
-    const deliveryFee = DELIVERY_FEES[data.deliveryZone as keyof typeof DELIVERY_FEES];
+    const deliveryFee = await getDeliveryFee(data.deliveryZone);
     const total = subtotal + deliveryFee;
-    const orderNumber = generateOrderNumber();
+    const orderNumber = await generateOrderNumber();
     const isCod = data.paymentMethod === "CASH_ON_DELIVERY";
     const payPhone = isCod ? data.phone : data.paymentPhone!;
 
-    // Step 1 — create pending order + reserve stock (fast path)
+    // Step 1 — create pending order
+    // MoMo: reserve stock (reservedQty↑). COD: sell immediately (stockQty↓).
     const order = await prisma.$transaction(async (tx) => {
       for (const item of lineItems) {
-        const updated = await productRepository.decrementStock(tx, item.productId, item.quantity);
-        await tx.stockHistory.create({
-          data: {
-            productId: item.productId,
-            change: -item.quantity,
-            reason: `Order ${orderNumber}`,
-          },
-        });
-        await tx.stockMovement.create({
-          data: {
-            productId: item.productId,
-            type: "SALE",
-            quantity: -Math.floor(item.quantity),
-            reason: `Order ${orderNumber}`,
-          },
-        });
-        if (updated.stockQty <= updated.lowStockAt) {
-          await tx.notification.create({
+        if (isCod) {
+          const updated = await productRepository.sellNow(tx, item.productId, item.quantity);
+          await tx.stockHistory.create({
             data: {
-              type: "LOW_STOCK",
-              channel: "IN_APP",
-              title: "Low stock alert",
-              body: `Product ${updated.nameEn} is low (${updated.stockQty} left).`,
+              productId: item.productId,
+              change: -item.quantity,
+              reason: `Order ${orderNumber} (COD sale)`,
+            },
+          });
+          await tx.stockMovement.create({
+            data: {
+              productId: item.productId,
+              type: "SALE",
+              quantity: -Math.floor(item.quantity),
+              reason: `Order ${orderNumber}`,
+            },
+          });
+          if (updated.stockQty <= updated.lowStockAt) {
+            await tx.notification.create({
+              data: {
+                type: "LOW_STOCK",
+                channel: "IN_APP",
+                title: "Low stock alert",
+                body: `Product ${updated.nameEn} is low (${updated.stockQty} left).`,
+              },
+            });
+          }
+        } else {
+          const updated = await productRepository.reserveStock(tx, item.productId, item.quantity);
+          await tx.stockHistory.create({
+            data: {
+              productId: item.productId,
+              change: 0,
+              reason: `Reserved ${item.quantity} for pending order ${orderNumber}`,
+            },
+          });
+          await tx.stockMovement.create({
+            data: {
+              productId: item.productId,
+              type: "ADJUST",
+              quantity: 0,
+              reason: `Reservation ${orderNumber} (+${item.quantity} reserved; available ${availableQty(updated.stockQty, updated.reservedQty)})`,
             },
           });
         }
@@ -170,7 +192,7 @@ export const orderService = {
               payeeName: merchant.name,
               providerMessage: isCod
                 ? "Cash on delivery — collect from customer"
-                : "Payment request queued — approve on your phone when prompted",
+                : "Payment request queued — stock reserved for 10 minutes",
             },
           },
           delivery: {
@@ -185,7 +207,7 @@ export const orderService = {
                 status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
                 note: isCod
                   ? "Order placed — cash on delivery"
-                  : "Pending order created — awaiting payment verification",
+                  : "Pending order — stock reserved awaiting payment",
               },
             ],
           },
@@ -193,6 +215,24 @@ export const orderService = {
         include: { payment: true },
       });
     });
+
+    await writeAuditLog({
+      actorId: userId,
+      actorName: data.fullName,
+      action: isCod ? "order.create_cod" : "order.create_pending",
+      entity: "Order",
+      entityId: order.id,
+      details: `${orderNumber} · ${total} RWF · ${data.paymentMethod}`,
+    });
+
+    // MoMo: auto-release reservation if unpaid after 10 minutes
+    if (!isCod && order.payment?.id) {
+      await enqueueJob(
+        "PAYMENT_VERIFY",
+        { paymentId: order.payment.id, orderNumber, expireIfPending: true },
+        { runAfter: new Date(Date.now() + 10 * 60 * 1000), maxAttempts: 3 }
+      );
+    }
 
     await cacheDel(CacheKeys.homeCatalog);
     await enqueueAnalytics("order.created", {
@@ -252,6 +292,21 @@ export const orderService = {
         data: {
           status: PaymentStatus.FAILED,
           providerMessage: payErr instanceof Error ? payErr.message : "Payment request failed",
+        },
+      });
+      // Release reservation if MoMo initiation fails
+      await prisma.$transaction(async (tx) => {
+        for (const item of lineItems) {
+          await productRepository.releaseReservation(tx, item.productId, item.quantity);
+        }
+      });
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: OrderStatus.CANCELLED,
+          statusLog: {
+            create: { status: OrderStatus.CANCELLED, note: "Payment initiation failed" },
+          },
         },
       });
       throw payErr;

@@ -185,6 +185,36 @@ export default async function AdminPage() {
         ))}
       </div>
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          {
+            color: "bg-red-50 border-red-200 text-red-800",
+            label: "New / pending orders",
+            value: stats.pendingOrders,
+          },
+          {
+            color: "bg-amber-50 border-amber-200 text-amber-900",
+            label: "Products low stock",
+            value: stats.lowStock,
+          },
+          {
+            color: "bg-emerald-50 border-emerald-200 text-emerald-900",
+            label: "Revenue (all confirmed)",
+            value: formatRwf(stats.revenue),
+          },
+          {
+            color: "bg-sky-50 border-sky-200 text-sky-900",
+            label: "Farmer applications",
+            value: pendingSuppliers.length,
+          },
+        ].map((a) => (
+          <div key={a.label} className={`rounded-2xl border p-4 ${a.color}`}>
+            <p className="text-xs font-medium opacity-80">{a.label}</p>
+            <p className="mt-1 text-xl font-bold">{a.value}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {[
           { label: "Customers", value: stats.customers },
@@ -205,6 +235,35 @@ export default async function AdminPage() {
             <p className="mt-1 text-xl font-bold text-[var(--huza-green-dark)]">{s.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Simple bar chart: top sellers by rating count */}
+      <div className="mb-8 rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+        <h2 className="font-semibold text-[var(--huza-green-dark)] mb-4">Top-selling products</h2>
+        <div className="space-y-3">
+          {topProducts.length === 0 ? (
+            <p className="text-sm text-[var(--huza-muted)]">No best sellers flagged yet.</p>
+          ) : (
+            topProducts.map((p) => {
+              const max = Math.max(...topProducts.map((x) => x.ratingCount || 1), 1);
+              const pct = Math.round(((p.ratingCount || 0) / max) * 100);
+              return (
+                <div key={p.id}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>{p.nameEn}</span>
+                    <span className="text-[var(--huza-muted)]">{p.ratingCount} reviews</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-[var(--huza-mint)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[var(--huza-green)]"
+                      style={{ width: `${Math.max(pct, 8)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       <AdminClient

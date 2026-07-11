@@ -33,7 +33,7 @@ export default async function ProductDetailPage({
     },
   });
 
-  if (!product || !product.isActive) notFound();
+  if (!product || !product.isActive || product.deletedAt) notFound();
 
   const [fbt, recommended] = await Promise.all([
     getFrequentlyBoughtTogether(product.id, 4),

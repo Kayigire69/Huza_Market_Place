@@ -32,8 +32,10 @@ export function formatUnit(unit: string): string {
 }
 
 export function generateOrderNumber(): string {
-  const n = Math.floor(1000 + Math.random() * 9000);
-  return `HUZA-${Date.now().toString().slice(-6)}${n}`;
+  // Sync fallback — prefer await generateOrderNumber() from settings.service in services
+  const year = new Date().getFullYear();
+  const n = Math.floor(1 + Math.random() * 999999);
+  return `HZ-${year}-${String(n).padStart(6, "0")}`;
 }
 
 export function cn(...parts: Array<string | false | null | undefined>): string {

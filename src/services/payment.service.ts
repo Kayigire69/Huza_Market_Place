@@ -6,6 +6,7 @@ import { productRepository } from "@/repositories/product.repository";
 import { prisma } from "@/lib/prisma";
 import { enqueueAnalytics, enqueueEmail, enqueueSms } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
+import { writeAuditLog } from "@/lib/audit";
 
 export const paymentService = {
   async confirmPayment(paymentId: string) {
@@ -21,6 +22,28 @@ export const paymentService = {
       externalId: payment.externalId || payment.id,
     });
 
+    // Commit reservations → physical stock sale
+    await prisma.$transaction(async (tx) => {
+      for (const item of payment.order.items) {
+        await productRepository.commitReservation(tx, item.productId, item.quantity);
+        await tx.stockHistory.create({
+          data: {
+            productId: item.productId,
+            change: -item.quantity,
+            reason: `Payment confirmed — ${payment.order.orderNumber}`,
+          },
+        });
+        await tx.stockMovement.create({
+          data: {
+            productId: item.productId,
+            type: "SALE",
+            quantity: -Math.floor(item.quantity),
+            reason: `Order ${payment.order.orderNumber}`,
+          },
+        });
+      }
+    });
+
     const updated = await paymentRepository.markConfirmed(payment.id, disbursed.message);
 
     const nextStatus = payment.order.scheduledFor ? OrderStatus.PENDING : OrderStatus.CONFIRMED;
@@ -32,6 +55,13 @@ export const paymentService = {
         : "Mobile money approved — payment confirmed to Youth Huza",
       OrderStatus.READY_FOR_PICKUP
     );
+
+    await writeAuditLog({
+      action: "payment.confirm",
+      entity: "Payment",
+      entityId: payment.id,
+      details: `${payment.order.orderNumber} · ${payment.amount} RWF`,
+    });
 
     await cacheDel(CacheKeys.homeCatalog);
 
@@ -47,7 +77,6 @@ export const paymentService = {
       });
     }
 
-    // Outbound messaging happens in the background — customer already got a fast response
     await enqueueSms(
       payment.phoneNumber,
       `HUZA FRESH: Payment of ${payment.amount} RWF for ${payment.order.orderNumber} confirmed.`
@@ -70,23 +99,38 @@ export const paymentService = {
 
   async failPayment(paymentId: string, reason: string) {
     const payment = await paymentRepository.findById(paymentId);
-    if (!payment || payment.status === "CONFIRMED") return payment;
+    if (!payment || payment.status === "CONFIRMED" || payment.status === "FAILED") return payment;
 
     await paymentRepository.markFailed(paymentId, reason);
     await orderRepository.updateStatus(payment.orderId, OrderStatus.CANCELLED, reason);
 
-    // Restore reserved stock
+    // Release reservation (physical stockQty unchanged)
     await prisma.$transaction(async (tx) => {
       for (const item of payment.order.items) {
-        await productRepository.incrementStock(tx, item.productId, item.quantity);
+        await productRepository.releaseReservation(tx, item.productId, item.quantity);
         await tx.stockHistory.create({
           data: {
             productId: item.productId,
-            change: item.quantity,
-            reason: `Payment failed — ${payment.order.orderNumber}`,
+            change: 0,
+            reason: `Reservation released — ${payment.order.orderNumber}: ${reason}`,
+          },
+        });
+        await tx.stockMovement.create({
+          data: {
+            productId: item.productId,
+            type: "ADJUST",
+            quantity: 0,
+            reason: `Released reservation ${payment.order.orderNumber}`,
           },
         });
       }
+    });
+
+    await writeAuditLog({
+      action: "payment.fail",
+      entity: "Payment",
+      entityId: payment.id,
+      details: `${payment.order.orderNumber} · ${reason}`,
     });
 
     await cacheDel(CacheKeys.homeCatalog);
@@ -98,12 +142,17 @@ export const paymentService = {
     return payment;
   },
 
-  /** Poll provider (or no-op in demo) and confirm/fail as needed */
-  async verifyPendingPayment(paymentId: string) {
+  /** Poll provider (or expire unpaid reservations after 10 min) */
+  async verifyPendingPayment(paymentId: string, opts?: { expireIfPending?: boolean }) {
     const payment = await paymentRepository.findById(paymentId);
     if (!payment) return { status: "NOT_FOUND" as const };
     if (payment.status === "CONFIRMED") return { status: "CONFIRMED" as const };
     if (payment.status === "FAILED") return { status: "FAILED" as const };
+
+    if (opts?.expireIfPending) {
+      await this.failPayment(payment.id, "Payment timed out after 10 minutes — stock reservation released");
+      return { status: "FAILED" as const };
+    }
 
     if (
       payment.method === "MTN_MOMO" &&
@@ -128,7 +177,6 @@ export const paymentService = {
     const order = await orderRepository.findByIdOrNumber(opts);
     if (!order?.payment) return null;
 
-    // Kick a background verify when still pending (non-blocking for callers that enqueue)
     if (order.payment.status === "PENDING") {
       await this.verifyPendingPayment(order.payment.id);
     }
