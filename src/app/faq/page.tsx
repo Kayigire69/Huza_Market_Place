@@ -40,9 +40,9 @@ const fallback: Faq[] = [
     questionEn: "What are the delivery fees?",
     questionFr: "Quels sont les frais de livraison ?",
     questionRw: "Amafaranga yo gutanga ni angahe?",
-    answerEn: "All delivery zones: 5,000 RWF.",
-    answerFr: "Toutes les zones : 5 000 RWF.",
-    answerRw: "All delivery zones: 5,000 RWF.",
+    answerEn: "Delivery fee depends on your destination and is shown at checkout when you are about to pay.",
+    answerFr: "Les frais de livraison dépendent de votre destination et s'affichent au paiement.",
+    answerRw: "Amafaranga yo gutanga aherekeye aho bigenewe kandi agaragara igihe wishyura.",
   },
 ];
 

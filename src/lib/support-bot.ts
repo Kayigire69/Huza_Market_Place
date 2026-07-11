@@ -73,22 +73,22 @@ const replies: Record<string, Record<Locale, string>> = {
 
   // 3 Delivery
   delivery: {
-    en: "Youth Huza delivers to Kigali, Kamonyi (Ruyenzi), and Bugesera (Nyamata). Flat delivery fee: 5,000 RWF. At checkout choose Today, Tomorrow, or Scheduled delivery and share your address or live location.",
-    fr: "Youth Huza livre à Kigali, Kamonyi (Ruyenzi) et Bugesera (Nyamata). Tarif unique : 5 000 RWF. Choisissez Aujourd’hui, Demain ou Planifié et partagez votre adresse ou position.",
-    rw: "Youth Huza itanga i Kigali, Kamonyi (Ruyenzi), na Bugesera (Nyamata). Igiciro kimwe: 5,000 RWF. Hitamo Uyu munsi, Ejo cyangwa Iteganyijwe hanyuma ushyire aderesi cyangwa aho uri.",
-    sw: "Youth Huza inawasilisha Kigali, Kamonyi (Ruyenzi), na Bugesera (Nyamata). Ada ya kawaida: 5,000 RWF. Chagua Leo, Kesho, au Ratiba, kisha shiriki anwani au eneo lako.",
+    en: "Youth Huza delivers to Kigali, Kamonyi (Ruyenzi), and Bugesera (Nyamata). Choose Today, Tomorrow, or Scheduled at checkout and share your address or live location. Delivery fee appears when you are about to pay.",
+    fr: "Youth Huza livre à Kigali, Kamonyi (Ruyenzi) et Bugesera (Nyamata). Choisissez Aujourd’hui, Demain ou Planifié et partagez votre adresse. Les frais s’affichent au paiement.",
+    rw: "Youth Huza itanga i Kigali, Kamonyi (Ruyenzi), na Bugesera (Nyamata). Hitamo Uyu munsi, Ejo cyangwa Iteganyijwe hanyuma ushyire aderesi. Amafaranga yo gutanga agaragara igihe wishyura.",
+    sw: "Youth Huza inawasilisha Kigali, Kamonyi (Ruyenzi), na Bugesera (Nyamata). Chagua Leo, Kesho, au Ratiba, kisha shiriki anwani. Ada inaonekana wakati wa malipo.",
   },
   deliveryFee: {
-    en: "Delivery is a flat 5,000 RWF for all covered zones (Kigali, Kamonyi/Ruyenzi, Bugesera/Nyamata).",
-    fr: "La livraison coûte 5 000 RWF pour toutes les zones couvertes (Kigali, Kamonyi/Ruyenzi, Bugesera/Nyamata).",
-    rw: "Gutanga ni 5,000 RWF ku turere twose (Kigali, Kamonyi/Ruyenzi, Bugesera/Nyamata).",
-    sw: "Ada ya uwasilishaji ni 5,000 RWF kwa maeneo yote (Kigali, Kamonyi/Ruyenzi, Bugesera/Nyamata).",
+    en: "Delivery fee is calculated for your destination and shown at checkout before you pay (same flat fee for Kigali, Kamonyi/Ruyenzi, and Bugesera/Nyamata).",
+    fr: "Les frais de livraison s’affichent au paiement selon votre destination (tarif unique pour Kigali, Kamonyi/Ruyenzi et Bugesera/Nyamata).",
+    rw: "Amafaranga yo gutanga agaragara igihe wishyura hashinzwe aho bigenewe (igiciro kimwe kuri Kigali, Kamonyi/Ruyenzi na Bugesera/Nyamata).",
+    sw: "Ada ya uwasilishaji inaonekana wakati wa malipo kulingana na eneo lako (ada sawa kwa Kigali, Kamonyi/Ruyenzi, na Bugesera/Nyamata).",
   },
   deliveryTime: {
-    en: "In stock: about 45 minutes in Kigali, about 75 minutes for Kamonyi (Ruyenzi) or Bugesera (Nyamata). If we need to prepare fresh stock for your order, delivery is within 6–12 hours.",
-    fr: "En stock : ~45 min à Kigali, ~75 min pour Kamonyi (Ruyenzi) ou Bugesera (Nyamata). Si nous devons préparer le stock, livraison sous 6–12 heures.",
-    rw: "Birahari: ~45 min i Kigali, ~75 min Kamonyi (Ruyenzi) cyangwa Bugesera (Nyamata). Niba dukeneye guteza ububiko, dutanga mu masaha 6–12.",
-    sw: "Ipo: dakika ~45 Kigali, ~75 Kamonyi (Ruyenzi) au Bugesera (Nyamata). Ikiwa tunahitaji kuandaa hisa, uwasilishaji ni ndani ya saa 6–12.",
+    en: "In stock: 45–90 minutes in Kigali, 2–3 hours for Kamonyi (Ruyenzi) or Bugesera (Nyamata). If we need to prepare fresh stock, delivery is within 6–12 hours.",
+    fr: "En stock : 45–90 min à Kigali, 2–3 h pour Kamonyi (Ruyenzi) ou Bugesera (Nyamata). Si nous devons préparer le stock, livraison sous 6–12 heures.",
+    rw: "Birahari: iminota 45–90 i Kigali, amasaha 2–3 Kamonyi (Ruyenzi) cyangwa Bugesera (Nyamata). Niba dukeneye guteza ububiko, dutanga mu masaha 6–12.",
+    sw: "Ipo: dakika 45–90 Kigali, saa 2–3 Kamonyi (Ruyenzi) au Bugesera (Nyamata). Ikiwa tunahitaji kuandaa hisa, uwasilishaji ni ndani ya saa 6–12.",
   },
 
   // 4 Payment
@@ -145,10 +145,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Vinjari Bidhaa au Kategoria (matunda, mboga, maziwa, nyama…). Bei huwekwa na Youth Huza. Tafuta kwa jina au kategoria.",
   },
   prices: {
-    en: "All prices on HUZA FRESH are in Rwandan Francs (RWF) and already include Youth Huza’s retail pricing. Delivery is shown separately at checkout (5,000 RWF).",
-    fr: "Tous les prix sur HUZA FRESH sont en francs rwandais (RWF) et correspondent au tarif de détail Youth Huza. La livraison (5 000 RWF) s’affiche au paiement.",
-    rw: "Ibiciro byose kuri HUZA FRESH ni mu mafaranga y'u Rwanda (RWF). Amafaranga yo gutanga (5,000 RWF) agaragara iyo wishyura.",
-    sw: "Bei zote kwenye HUZA FRESH ni kwa Faranga za Rwanda (RWF). Ada ya uwasilishaji (5,000 RWF) inaonekana wakati wa kulipa.",
+    en: "All prices on HUZA FRESH are in Rwandan Francs (RWF) and already include Youth Huza’s retail pricing. Delivery fee is shown separately at checkout before you pay.",
+    fr: "Tous les prix sur HUZA FRESH sont en francs rwandais (RWF) et correspondent au tarif de détail Youth Huza. Les frais de livraison s’affichent au paiement.",
+    rw: "Ibiciro byose kuri HUZA FRESH ni mu mafaranga y'u Rwanda (RWF). Amafaranga yo gutanga agaragara iyo wishyura.",
+    sw: "Bei zote kwenye HUZA FRESH ni kwa Faranga za Rwanda (RWF). Ada ya uwasilishaji inaonekana wakati wa kulipa.",
   },
   quality: {
     en: "Youth Huza inspects produce before it reaches your cart. You buy from HUZA FRESH — one brand, one quality standard — not from individual farm names on the storefront.",
@@ -225,10 +225,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Bei na ada zote ni kwa Faranga za Rwanda (RWF).",
   },
   minimumOrder: {
-    en: "There is no special minimum order amount — add what you need to the cart. Delivery fee (5,000 RWF) applies per order to covered zones.",
-    fr: "Pas de montant minimum spécial — ajoutez ce dont vous avez besoin. Frais de livraison (5 000 RWF) par commande dans les zones couvertes.",
-    rw: "Nta giciro gito giteganyijwe — shyira mu gakapu ibyo ukeneye. Amafaranga yo gutanga (5,000 RWF) ku gicuruzwa cyose.",
-    sw: "Hakuna kiwango cha chini maalum — weka unachohitaji kikapuni. Ada ya uwasilishaji (5,000 RWF) kwa kila agizo.",
+    en: "There is no special minimum order amount — add what you need to the cart. Delivery fee applies per order and is shown at checkout for covered zones.",
+    fr: "Pas de montant minimum spécial — ajoutez ce dont vous avez besoin. Les frais de livraison s’affichent au paiement dans les zones couvertes.",
+    rw: "Nta giciro gito giteganyijwe — shyira mu gakapu ibyo ukeneye. Amafaranga yo gutanga agaragara igihe wishyura.",
+    sw: "Hakuna kiwango cha chini maalum — weka unachohitaji kikapuni. Ada ya uwasilishaji inaonekana wakati wa malipo.",
   },
   promo: {
     en: "Promotions and flash sales appear on the home page when active. Promo codes can be validated in checkout when offered (e.g. seasonal campaigns).",
