@@ -94,16 +94,22 @@ export function AdminClient(props: {
   catalogProducts?: AnyObj[];
   recentMovements?: AnyObj[];
   adminName?: string | null;
+  /** When set, only this module is shown (used by /admin/* routes + AdminShell). */
+  forcedTab?: Tab;
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(props.forcedTab || "overview");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
+    if (props.forcedTab) {
+      setTab(props.forcedTab);
+      return;
+    }
     const hash = window.location.hash.replace("#", "") as Tab;
     const valid = WORKSPACES.flatMap((w) => w.tabs.map((t) => t.id));
     if (valid.includes(hash)) setTab(hash);
-  }, []);
+  }, [props.forcedTab]);
 
   const refresh = () => router.refresh();
   const done = (message: string) => {
@@ -112,9 +118,13 @@ export function AdminClient(props: {
   };
 
   const selectTab = (t: Tab) => {
+    if (props.forcedTab) return;
     setTab(t);
     window.history.replaceState(null, "", `#${t}`);
   };
+
+  const activeTab = props.forcedTab || tab;
+  const hideWorkspaceNav = Boolean(props.forcedTab);
 
   const supplierAction = async (
     id: string,
@@ -225,7 +235,8 @@ export function AdminClient(props: {
   };
 
   return (
-    <div className="grid lg:grid-cols-[240px_1fr] gap-6 items-start">
+    <div className={hideWorkspaceNav ? "space-y-4" : "grid lg:grid-cols-[240px_1fr] gap-6 items-start"}>
+      {!hideWorkspaceNav && (
       <aside className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 sticky top-24 space-y-5">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--huza-green)]">
@@ -248,7 +259,7 @@ export function AdminClient(props: {
                   id={t.id}
                   onClick={() => selectTab(t.id)}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium ${
-                    tab === t.id
+                    activeTab === t.id
                       ? "bg-[var(--huza-green)] text-white"
                       : "hover:bg-[var(--huza-mint)] text-[var(--huza-ink)]"
                   }`}
@@ -271,6 +282,7 @@ export function AdminClient(props: {
           </a>
         </div>
       </aside>
+      )}
 
       <div className="min-w-0">
       {msg && (
@@ -279,7 +291,7 @@ export function AdminClient(props: {
         </p>
       )}
 
-      {tab === "overview" && (
+      {activeTab === "overview" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 space-y-4">
           <h2 className="font-semibold text-lg">Team playbook</h2>
           <p className="text-sm text-[var(--huza-muted)]">
@@ -328,14 +340,14 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "catalog" && (
+      {activeTab === "catalog" && (
         <AdminCatalogPanel
           products={(props.catalogProducts || []) as never}
           onDone={done}
         />
       )}
 
-      {tab === "inventory" && (
+      {activeTab === "inventory" && (
         <AdminInventoryPanel
           products={(props.catalogProducts || props.lowStock || []) as never}
           movements={(props.recentMovements || []) as never}
@@ -343,11 +355,11 @@ export function AdminClient(props: {
         />
       )}
 
-      {tab === "promos" && (
+      {activeTab === "promos" && (
         <AdminOffersPanel promotions={props.promotions as never} onDone={done} />
       )}
 
-      {tab === "procurement" && (
+      {activeTab === "procurement" && (
         <div className="space-y-6">
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
             <h2 className="font-semibold mb-1">Procurement Management</h2>
@@ -507,7 +519,7 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "suppliers" && (
+      {activeTab === "suppliers" && (
         <div className="space-y-6">
           <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-1">Farmer Approval (Module 10)</h2>
@@ -761,7 +773,7 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "products" && (
+      {activeTab === "products" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
           <h2 className="font-semibold mb-1">Product review</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-4">
@@ -872,19 +884,76 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "orders" && (
+      {activeTab === "orders" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-          <h2 className="font-semibold mb-2">Order management</h2>
-          {props.orders.map((o) => (
-            <div key={String(o.id)} className="rounded-xl border border-[var(--huza-line)] p-3">
-              <div className="flex flex-wrap justify-between gap-2">
-                <p className="font-semibold">{String(o.orderNumber)}</p>
-                <span className="text-xs bg-[var(--huza-mint)] px-2 py-1 rounded-full">{String(o.status)}</span>
-              </div>
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="font-semibold">Order management</h2>
               <p className="text-sm text-[var(--huza-muted)]">
-                {formatRwf(Number(o.total))} · {String(o.deliveryZone)} ·{" "}
-                {String(o.guestName || "Account order")}
+                Full order screen — prepare only after payment is confirmed. Customer receipt and
+                internal purchase record are separate documents.
               </p>
+            </div>
+          </div>
+          {props.orders.map((o) => {
+            const items = (o.items as AnyObj[] | undefined) || [];
+            const payment = o.payment as AnyObj | undefined;
+            return (
+            <div key={String(o.id)} id={`order-${String(o.orderNumber)}`} className="rounded-xl border border-[var(--huza-line)] p-4 space-y-2">
+              <div className="flex flex-wrap justify-between gap-2">
+                <div>
+                  <p className="font-mono font-semibold text-[var(--huza-green-dark)]">{String(o.orderNumber)}</p>
+                  {o.receiptNumber ? (
+                    <p className="text-xs text-[var(--huza-muted)]">Receipt {String(o.receiptNumber)}</p>
+                  ) : null}
+                </div>
+                <span className="text-xs bg-[var(--huza-mint)] px-2 py-1 rounded-full h-fit">{String(o.status)}</span>
+              </div>
+              <p className="text-sm">
+                <strong>{String(o.guestName || "Account order")}</strong>
+                {o.guestPhone ? ` · ${String(o.guestPhone)}` : ""}
+              </p>
+              <p className="text-sm text-[var(--huza-muted)]">
+                {String(o.deliveryAddress)}
+                {o.deliveryDistrict ? ` · ${String(o.deliveryDistrict)}` : ""}
+                {" · "}
+                {String(o.deliveryZone)}
+              </p>
+              <ul className="text-sm text-[var(--huza-muted)]">
+                {items.slice(0, 6).map((i) => (
+                  <li key={String(i.id)}>
+                    {String((i.product as AnyObj | undefined)?.nameEn || "Item")} × {String(i.quantity)} —{" "}
+                    {formatRwf(Number(i.lineTotal))}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-sm">
+                Subtotal {formatRwf(Number(o.subtotal))} · Delivery {formatRwf(Number(o.deliveryFee))} ·{" "}
+                <strong>Total {formatRwf(Number(o.total))}</strong>
+              </p>
+              <p className="text-xs text-[var(--huza-muted)]">
+                Payment: {String(payment?.method || "—")} · {String(payment?.status || "—")}
+              </p>
+              <div className="flex flex-wrap gap-3 text-sm pt-1">
+                <a
+                  className="font-semibold text-[var(--huza-green)]"
+                  href={`/api/receipts/${encodeURIComponent(String(o.orderNumber))}?format=pdf`}
+                >
+                  Customer receipt PDF
+                </a>
+                <a
+                  className="font-semibold text-[var(--huza-green)]"
+                  href={`/api/invoices/${encodeURIComponent(String(o.orderNumber))}?format=pdf`}
+                >
+                  Invoice PDF
+                </a>
+                <a
+                  className="font-semibold text-red-800"
+                  href={`/api/admin/purchase-records/${encodeURIComponent(String(o.orderNumber))}`}
+                >
+                  Internal purchase record
+                </a>
+              </div>
               <select
                 className="input-field mt-2 max-w-xs"
                 defaultValue={String(o.status)}
@@ -910,11 +979,12 @@ export function AdminClient(props: {
                 ))}
               </select>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {tab === "delivery" && (
+      {activeTab === "delivery" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
           <h2 className="font-semibold mb-2">Delivery management</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-4">
@@ -945,7 +1015,7 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "payments" && (
+      {activeTab === "payments" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
           <h2 className="font-semibold mb-2">Payment management</h2>
           {props.payments.map((p) => (
@@ -971,7 +1041,7 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "reviews" && (
+      {activeTab === "reviews" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
           <h2 className="font-semibold mb-2">Reviews & ratings</h2>
           <p className="text-sm text-[var(--huza-muted)]">Bad comments can be deleted or hidden.</p>
@@ -1007,7 +1077,7 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "hours" && (
+      {activeTab === "hours" && (
         <div className="grid md:grid-cols-2 gap-4">
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-3">Business hours (default 6:00–21:00)</h2>
@@ -1031,9 +1101,9 @@ export function AdminClient(props: {
         </div>
       )}
 
-      {tab === "reports" && <AdminReportsPanel snapshot={props} />}
+      {activeTab === "reports" && <AdminReportsPanel snapshot={props} />}
 
-      {tab === "audit" && (
+      {activeTab === "audit" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
           <h2 className="font-semibold mb-2">Admin audit logs</h2>
           <p className="text-sm text-[var(--huza-muted)] mb-3">

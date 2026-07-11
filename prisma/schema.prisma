@@ -329,6 +329,8 @@ model Product {
   /// Origin district (e.g. Nyabihu) — never supplier name
   originDistrict  String?
   price         Int
+  /// Latest wholesale / farm-gate cost Huza pays (internal — never shown to customers)
+  purchasePrice Int?
   unit          UnitType @default(KG)
   stockQty      Int      @default(0)
   /// Held for pending (unpaid) orders — available = stockQty - reservedQty
@@ -418,10 +420,16 @@ model Favorite {
 model Order {
   id                   String        @id @default(cuid())
   orderNumber          String        @unique
+  /// Customer-facing receipt number (generated at order create; EBM-ready later)
+  receiptNumber        String?       @unique
   userId               String?
   guestName            String?
   guestPhone           String?
   deliveryAddress      String
+  deliveryDistrict     String?
+  deliverySector       String?
+  deliveryCell         String?
+  deliveryVillage      String?
   deliveryZone         DeliveryZone
   deliveryFee          Int
   gpsLat               Float?
@@ -453,8 +461,13 @@ model OrderItem {
   productId  String
   supplierId String
   quantity   Float
+  /// Retail unit price charged to the customer
   unitPrice  Int
   lineTotal  Int
+  /// Wholesale cost Huza paid (snapshot at sale — internal purchase record)
+  unitCostPrice Int?
+  costTotal     Int?
+  marginTotal   Int?
 
   order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product  Product  @relation(fields: [productId], references: [id])

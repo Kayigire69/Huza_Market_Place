@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { enqueueAnalytics, enqueueEmail, enqueueSms } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 import { writeAuditLog } from "@/lib/audit";
+import { notifyAdmins } from "@/lib/notify-admins";
 
 export const paymentService = {
   async confirmPayment(paymentId: string) {
@@ -77,15 +78,24 @@ export const paymentService = {
       });
     }
 
+    await notifyAdmins({
+      type: "PAYMENT_CONFIRMATION",
+      title: "Payment received",
+      body: `${payment.order.orderNumber} · ${payment.amount} RWF · Paid — ready to prepare`,
+    });
+
     await enqueueSms(
       payment.phoneNumber,
       `HUZA FRESH: Payment of ${payment.amount} RWF for ${payment.order.orderNumber} confirmed.`
     );
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const receiptLink = `${baseUrl}/api/receipts/${payment.order.orderNumber}?format=pdf`;
+    const invoiceLink = `${baseUrl}/api/invoices/${payment.order.orderNumber}?format=pdf`;
     if (payment.order.guestPhone || payment.order.userId) {
       await enqueueEmail(
         `${payment.order.guestPhone || "customer"}@notify.huza.local`,
         `Payment confirmed — ${payment.order.orderNumber}`,
-        `Your payment of ${payment.amount} RWF was confirmed. Youth Huza is preparing your order.`
+        `Your payment of ${payment.amount} RWF was confirmed. Youth Huza is preparing your order.\n\nDownload receipt: ${receiptLink}\nDownload invoice: ${invoiceLink}`
       );
     }
     await enqueueAnalytics("payment.confirmed", {

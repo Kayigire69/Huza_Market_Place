@@ -8,14 +8,22 @@ import { Footer } from "@/components/layout/Footer";
 import { SupportChat } from "@/components/SupportChat";
 import { CartHydrator } from "@/components/CartHydrator";
 
-/** Customer shop chrome — never shown on private partner portals */
+/** Customer shop chrome — never shown on private partner / staff portals */
 function isPartnerPortal(pathname: string | null) {
   if (!pathname) return false;
   return (
     pathname === "/farmer" ||
     pathname.startsWith("/farmer/") ||
     pathname === "/supplier" ||
-    pathname.startsWith("/supplier/")
+    pathname.startsWith("/supplier/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/warehouse" ||
+    pathname.startsWith("/warehouse/") ||
+    pathname === "/procurement" ||
+    pathname.startsWith("/procurement/") ||
+    pathname === "/delivery-portal" ||
+    pathname.startsWith("/delivery-portal/")
   );
 }
 

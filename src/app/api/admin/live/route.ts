@@ -1,15 +1,14 @@
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { AdminDashboardClient } from "@/components/admin/AdminDashboardClient";
 
-export const dynamic = "force-dynamic";
-
-export default async function AdminDashboardPage() {
+/** Live admin feed — poll every ~15–30s for new orders, payments, alerts. */
+export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/auth/login");
-  if (session.user.role !== "ADMIN") redirect("/");
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -22,16 +21,16 @@ export default async function AdminDashboardPage() {
     outForDelivery,
     deliveredToday,
     revenueToday,
-    lowStockCount,
+    lowStock,
     pendingSuppliers,
     recentOrders,
     notifications,
-    lowStockPreview,
-    topProducts,
   ] = await Promise.all([
     prisma.order.count({ where: { createdAt: { gte: startOfDay } } }),
     prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.count({ where: { status: { in: ["PAID", "CONFIRMED"] } } }),
+    prisma.order.count({
+      where: { status: { in: ["PAID", "CONFIRMED"] } },
+    }),
     prisma.order.count({ where: { status: { in: ["PREPARING", "PACKED"] } } }),
     prisma.order.count({ where: { status: "OUT_FOR_DELIVERY" } }),
     prisma.order.count({
@@ -49,7 +48,10 @@ export default async function AdminDashboardPage() {
     }),
     prisma.supplier.count({ where: { status: "PENDING" } }),
     prisma.order.findMany({
-      include: { payment: true, items: true },
+      include: {
+        payment: true,
+        items: { include: { product: { select: { nameEn: true } } } },
+      },
       orderBy: { createdAt: "desc" },
       take: 12,
     }),
@@ -58,21 +60,10 @@ export default async function AdminDashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 12,
     }),
-    prisma.product.findMany({
-      where: { isActive: true, deletedAt: null, stockQty: { lte: 5 } },
-      orderBy: { stockQty: "asc" },
-      take: 6,
-      select: { nameEn: true, stockQty: true, unit: true },
-    }),
-    prisma.product.findMany({
-      where: { isBestSeller: true },
-      orderBy: { ratingCount: "desc" },
-      take: 5,
-      select: { nameEn: true, ratingCount: true },
-    }),
   ]);
 
-  const initial = {
+  return NextResponse.json({
+    generatedAt: new Date().toISOString(),
     counts: {
       todayOrders,
       pendingPayment,
@@ -81,7 +72,7 @@ export default async function AdminDashboardPage() {
       outForDelivery,
       deliveredToday,
       revenueToday: revenueToday._sum.total ?? 0,
-      lowStock: lowStockCount,
+      lowStock,
       pendingSuppliers,
     },
     recentOrders: recentOrders.map((o) => ({
@@ -89,31 +80,21 @@ export default async function AdminDashboardPage() {
       orderNumber: o.orderNumber,
       receiptNumber: o.receiptNumber,
       customer: o.guestName || "Customer",
+      phone: o.guestPhone,
       total: o.total,
       status: o.status,
       paymentStatus: o.payment?.status ?? null,
-      createdAt: o.createdAt.toISOString(),
+      paymentMethod: o.payment?.method ?? null,
+      createdAt: o.createdAt,
+      itemCount: o.items.length,
     })),
     notifications: notifications.map((n) => ({
       id: n.id,
       title: n.title,
       body: n.body,
-      createdAt: n.createdAt.toISOString(),
+      type: n.type,
+      createdAt: n.createdAt,
+      isRead: n.isRead,
     })),
-  };
-
-  return (
-    <AdminDashboardClient
-      initial={initial}
-      lowStockPreview={lowStockPreview.map((p) => ({
-        name: p.nameEn,
-        stockQty: p.stockQty,
-        unit: p.unit,
-      }))}
-      topProducts={topProducts.map((p) => ({
-        name: p.nameEn,
-        soldHint: p.ratingCount,
-      }))}
-    />
-  );
+  });
 }
