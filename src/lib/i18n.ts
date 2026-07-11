@@ -254,11 +254,11 @@ const en: Dict = {
   huzaPurchaseAgreementHint:
     "Describe the buying arrangement you accept with Youth Huza (price basis, pickup, payment timing).",
   agreeHuzaBuyTerms:
-    "I agree that Youth Huza buys from me under the arrangement described above, and that customers buy only from HUZA FRESH — not from me directly.",
+    "I agree that Youth Huza buys from me under the arrangement described above.",
   optional: "optional",
   huzaAgreementTab: "Huza agreement",
   standardAgreementIntro:
-    "Your short partner profile on file with Youth Huza. Customers never see your name on the shop.",
+    "Your short partner profile on file with Youth Huza.",
   huzaTermsAccepted: "Huza purchase terms accepted at registration.",
   huzaTermsPending: "Purchase terms not marked yet — contact Huza staff.",
   standardAgreementEditHint:
