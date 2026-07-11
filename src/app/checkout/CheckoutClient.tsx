@@ -471,12 +471,12 @@ export default function CheckoutClient() {
             </label>
             <label className="flex items-center gap-2 rounded-lg border border-[var(--huza-line)] px-3 py-2 text-sm opacity-60">
               <input type="radio" name="pay" disabled />
-              Card (coming soon)
+              {t("cardComingSoon")}
             </label>
           </div>
         </div>
         <div>
-          <label className="label">Phone that will receive the payment prompt</label>
+          <label className="label">{t("paymentPhoneLabel")}</label>
           <input
             required
             className="input-field"
@@ -485,10 +485,7 @@ export default function CheckoutClient() {
             placeholder="078xxxxxxx"
             inputMode="tel"
           />
-          <p className="mt-1 text-xs text-[var(--huza-muted)]">
-            Enter the phone that will approve MoMo/Airtel. Payment goes to Youth Huza. Bank card
-            payments are coming soon.
-          </p>
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">{t("paymentPhoneHint")}</p>
         </div>
 
         <div className="rounded-xl bg-[var(--huza-mint)] p-4 text-sm space-y-1">

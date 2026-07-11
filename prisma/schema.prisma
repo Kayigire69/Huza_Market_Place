@@ -57,7 +57,9 @@ enum OrderStatus {
 enum PaymentMethod {
   MTN_MOMO
   AIRTEL_MONEY
+  /// Legacy — not offered at customer checkout (COD is disabled)
   CASH_ON_DELIVERY
+  /// Reserved for future bank-card checkout
   CARD
 }
 

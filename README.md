@@ -23,7 +23,7 @@ Inspired by the clean ordering experience of [KFC Rwanda](https://www.kfc.rw/): 
 | 4 Categories | Done |
 | 5 Search & filters | Done |
 | 6 Shopping cart | Done |
-| 7 Guest checkout (MTN / Airtel) | Done |
+| 7 Guest checkout (MoMo / Airtel; card later — no COD) | Done |
 | 8 Customer account | Done |
 | 9 Supplier portal | Done |
 | 10 Supplier approval | Done (admin) |
@@ -158,9 +158,11 @@ Open [http://localhost:3000](http://localhost:3000).
 - Customer support chat · FAQ · Contact · About · Privacy · Terms
 - Branding: **HUZA FRESH** — Powered by Youth Huza
 
-## Mobile Money payments (MTN / Airtel)
+## Payments (MTN MoMo / Airtel — card later)
 
-After **Place order**, Huza sends a **request-to-pay** to the customer’s phone (the usual pending approval + PIN). When approved, money is credited to the **seller’s MoMo / Airtel number** (primary supplier on the order).
+Customer checkout accepts **MTN MoMo** and **Airtel Money** only. **Bank card** is reserved for a future release. **Cash on Delivery is not available.**
+
+After **Place order**, HUZA FRESH sends a **request-to-pay** to the customer’s phone (pending approval + PIN). When approved, money is credited to **Youth Huza** (merchant MoMo / Airtel).
 
 | Mode | What happens |
 |------|----------------|

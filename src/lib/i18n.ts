@@ -66,6 +66,10 @@ const en: Dict = {
   paymentMethod: "Payment method",
   mtn: "MTN Mobile Money",
   airtel: "Airtel Money",
+  cardComingSoon: "Bank card (coming soon)",
+  paymentPhoneLabel: "Phone that will receive the payment prompt",
+  paymentPhoneHint:
+    "Enter the phone that will approve MoMo or Airtel. Payment goes to Youth Huza. Bank card payments are coming soon — Cash on Delivery is not available.",
   placeOrder: "Place order",
   login: "Log in",
   register: "Register",
@@ -406,6 +410,10 @@ const fr: Dict = {
   paymentMethod: "Mode de paiement",
   mtn: "MTN Mobile Money",
   airtel: "Airtel Money",
+  cardComingSoon: "Carte bancaire (bientôt)",
+  paymentPhoneLabel: "Téléphone qui recevra l’invite de paiement",
+  paymentPhoneHint:
+    "Entrez le numéro qui approuvera MoMo ou Airtel. Le paiement va à Youth Huza. Les cartes bancaires arrivent bientôt — le paiement à la livraison n’est pas disponible.",
   placeOrder: "Passer la commande",
   login: "Connexion",
   register: "S'inscrire",
@@ -746,6 +754,10 @@ const rw: Dict = {
   paymentMethod: "Uburyo bwo kwishyura",
   mtn: "MTN Mobile Money",
   airtel: "Airtel Money",
+  cardComingSoon: "Ikarita ya banki (iza vuba)",
+  paymentPhoneLabel: "Telefone izakira ubutumire bwo kwishyura",
+  paymentPhoneHint:
+    "Andika telefone izemera MoMo cyangwa Airtel. Kwishyura kujya kuri Youth Huza. Amakarita ya banki aza vuba — nta kwishyura amafaranga iyo bagutegereje.",
   placeOrder: "Ohereza gucuruza",
   login: "Injira",
   register: "Iyandikishe",
@@ -1086,6 +1098,10 @@ const sw: Dict = {
   paymentMethod: "Njia ya malipo",
   mtn: "MTN Mobile Money",
   airtel: "Airtel Money",
+  cardComingSoon: "Kadi ya benki (inakuja hivi karibuni)",
+  paymentPhoneLabel: "Simu itakayopokea ombi la malipo",
+  paymentPhoneHint:
+    "Weka simu itakayoidhinisha MoMo au Airtel. Malipo yanaenda kwa Youth Huza. Kadi za benki zinakuja hivi karibuni — hakuna malipo taslimu wakati wa uwasilishaji.",
   placeOrder: "Weka agizo",
   login: "Ingia",
   register: "Jisajili",
