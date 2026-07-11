@@ -97,7 +97,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
             ) : (
               <Link
                 href="/auth/login?callbackUrl=/farmer"
-                className="rounded-lg bg-[var(--huza-orange)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--huza-orange-dark)]"
+                className="rounded-lg bg-[var(--huza-green)] px-3 py-1.5 text-xs font-bold text-white hover:bg-[var(--huza-green-dark)]"
               >
                 {t("farmerLogin")}
               </Link>
