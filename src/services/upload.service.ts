@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import sharp from "sharp";
 
 export type UploadFolder = "products" | "storefront" | "profiles" | "documents";
 
@@ -13,6 +14,7 @@ const ALLOWED = new Set([
 ]);
 
 const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_EDGE = 1600;
 
 function cloudinaryConfigured() {
   return Boolean(
@@ -39,18 +41,42 @@ function extFor(type: string) {
   return "jpg";
 }
 
+async function compressImage(file: File): Promise<{ buffer: Buffer; mime: string; ext: string }> {
+  const input = Buffer.from(await file.arrayBuffer());
+  if (file.type === "application/pdf" || file.type === "image/gif") {
+    return { buffer: input, mime: file.type, ext: extFor(file.type) };
+  }
+
+  try {
+    const pipeline = sharp(input, { failOn: "none" })
+      .rotate()
+      .resize({
+        width: MAX_IMAGE_EDGE,
+        height: MAX_IMAGE_EDGE,
+        fit: "inside",
+        withoutEnlargement: true,
+      });
+
+    // Prefer webp for local storefront assets — smaller payloads for next/image.
+    const buffer = await pipeline.webp({ quality: 78 }).toBuffer();
+    return { buffer, mime: "image/webp", ext: "webp" };
+  } catch {
+    return { buffer: input, mime: file.type, ext: extFor(file.type) };
+  }
+}
+
 async function uploadLocal(file: File, folder: UploadFolder): Promise<string> {
   const dir = path.join(process.cwd(), "public", "uploads", folder);
   await mkdir(dir, { recursive: true });
-  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extFor(file.type)}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, name), buffer);
+  const compressed = await compressImage(file);
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${compressed.ext}`;
+  await writeFile(path.join(dir, name), compressed.buffer);
   return `/uploads/${folder}/${name}`;
 }
 
 async function uploadCloudinary(file: File, folder: UploadFolder): Promise<string> {
   ensureCloudinary();
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const compressed = await compressImage(file);
   const resourceType = file.type === "application/pdf" ? "raw" : "image";
   const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -67,7 +93,7 @@ async function uploadCloudinary(file: File, folder: UploadFolder): Promise<strin
         else resolve(res as { secure_url: string });
       }
     );
-    stream.end(buffer);
+    stream.end(compressed.buffer);
   });
   return result.secure_url;
 }

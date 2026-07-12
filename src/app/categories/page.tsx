@@ -1,14 +1,25 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CategoriesClient } from "./CategoriesClient";
+import { cacheGet, cacheSet } from "@/lib/redis";
 
 export const revalidate = 120;
 
+const CACHE_KEY = "huza:categories:list";
+
 export default async function CategoriesPage() {
-  const categories = await prisma.category.findMany({
-    orderBy: { sortOrder: "asc" },
-    include: { _count: { select: { products: true } } },
-  });
+  type Row = Awaited<ReturnType<typeof prisma.category.findMany>>[number] & {
+    _count: { products: number };
+  };
+
+  let categories = await cacheGet<Row[]>(CACHE_KEY);
+  if (!categories) {
+    categories = await prisma.category.findMany({
+      orderBy: { sortOrder: "asc" },
+      include: { _count: { select: { products: true } } },
+    });
+    await cacheSet(CACHE_KEY, categories, 120);
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">

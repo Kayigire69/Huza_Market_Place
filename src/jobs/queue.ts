@@ -1,4 +1,4 @@
-import { cacheDel, cacheGet, cacheSet, getRedis, CacheKeys } from "@/lib/redis";
+import { cacheDel, cacheGet, cacheSet, ensureRedis, CacheKeys } from "@/lib/redis";
 import { jobRepository, type JobType } from "@/repositories/job.repository";
 import type { Prisma } from "@prisma/client";
 
@@ -16,14 +16,11 @@ export async function enqueueJob(
     maxAttempts: opts?.maxAttempts,
   });
 
-  const redis = getRedis();
-  if (redis) {
-    try {
-      if (redis.status !== "ready") await redis.connect().catch(() => null);
-      await redis.lpush(REDIS_QUEUE, job.id);
-    } catch {
-      /* DB job row is enough */
-    }
+  try {
+    const redis = await ensureRedis();
+    if (redis) await redis.lpush(REDIS_QUEUE, job.id);
+  } catch {
+    /* DB job row is enough */
   }
 
   return job;

@@ -5,6 +5,7 @@
 import Redis from "ioredis";
 
 let client: Redis | null | undefined;
+let connectPromise: Promise<Redis | null> | null = null;
 const memory = new Map<string, { exp: number; value: string }>();
 
 export function isRedisEnabled(): boolean {
@@ -19,6 +20,7 @@ export function getRedis(): Redis | null {
         maxRetriesPerRequest: 2,
         lazyConnect: true,
         enableOfflineQueue: false,
+        connectTimeout: 2500,
       });
       client.on("error", (err) => {
         console.warn("[redis]", err.message);
@@ -29,6 +31,23 @@ export function getRedis(): Redis | null {
     }
   }
   return client;
+}
+
+/** Single shared connect — avoids reconnect storms on every cacheGet. */
+export async function ensureRedis(): Promise<Redis | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  if (redis.status === "ready") return redis;
+  if (!connectPromise) {
+    connectPromise = redis
+      .connect()
+      .then(() => redis)
+      .catch(() => null)
+      .finally(() => {
+        connectPromise = null;
+      });
+  }
+  return connectPromise;
 }
 
 function memoryGet<T>(key: string): T | null {
@@ -54,10 +73,9 @@ function memorySet(key: string, value: unknown, ttlSeconds: number) {
 }
 
 export async function cacheGet<T>(key: string): Promise<T | null> {
-  const redis = getRedis();
+  const redis = await ensureRedis();
   if (redis) {
     try {
-      if (redis.status !== "ready") await redis.connect().catch(() => null);
       const raw = await redis.get(key);
       if (raw) return JSON.parse(raw) as T;
     } catch {
@@ -69,10 +87,9 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
 
 export async function cacheSet(key: string, value: unknown, ttlSeconds = 60): Promise<void> {
   memorySet(key, value, ttlSeconds);
-  const redis = getRedis();
+  const redis = await ensureRedis();
   if (!redis) return;
   try {
-    if (redis.status !== "ready") await redis.connect().catch(() => null);
     await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
   } catch {
     /* ignore cache write failures */
@@ -81,10 +98,9 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds = 60): Pr
 
 export async function cacheDel(key: string): Promise<void> {
   memory.delete(key);
-  const redis = getRedis();
+  const redis = await ensureRedis();
   if (!redis) return;
   try {
-    if (redis.status !== "ready") await redis.connect().catch(() => null);
     await redis.del(key);
   } catch {
     /* ignore */

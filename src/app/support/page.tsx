@@ -3,8 +3,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SupportCenterClient } from "./SupportCenterClient";
 
-export const dynamic = "force-dynamic";
-
 export default async function SupportPage() {
   const session = await getServerSession(authOptions);
   let userPhone: string | null = null;

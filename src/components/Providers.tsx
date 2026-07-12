@@ -50,7 +50,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [pathname, partner]);
 
   return (
-    <SessionProvider refetchOnWindowFocus={false} refetchWhenOffline={false}>
+    <SessionProvider
+      refetchOnWindowFocus={false}
+      refetchWhenOffline={false}
+      refetchInterval={0}
+    >
       <LocaleProvider>
         <RoutePrefetcher routes={prefetchRoutes} />
         {!partner && <CartHydrator />}
