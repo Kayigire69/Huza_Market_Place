@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 
 export default function ForgotPasswordPage() {
   const [msg, setMsg] = useState("");
+  const [recoveryLink, setRecoveryLink] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -14,6 +15,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
     setMsg("");
+    setRecoveryLink("");
     const form = new FormData(e.currentTarget);
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -24,6 +26,9 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Request failed");
       setMsg(data.message || "If that email is registered, a reset link has been sent.");
+      if (typeof data.recoveryLink === "string" && data.recoveryLink) {
+        setRecoveryLink(data.recoveryLink);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -48,6 +53,13 @@ export default function ForgotPasswordPage() {
         </div>
         {error && <p className="text-sm text-red-700">{error}</p>}
         {msg && <p className="text-sm text-emerald-800">{msg}</p>}
+        {recoveryLink && (
+          <p className="break-all rounded-xl bg-[var(--huza-mint)] px-3 py-2 text-sm">
+            <a href={recoveryLink} className="font-semibold text-[var(--huza-green-dark)] underline">
+              Open reset link
+            </a>
+          </p>
+        )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Sending…" : "Send reset link"}
         </Button>
