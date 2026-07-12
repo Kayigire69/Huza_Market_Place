@@ -1,10 +1,11 @@
 /**
- * Redis client with graceful fallback.
- * When REDIS_URL is unset, all ops no-op / return null so local/dev still works.
+ * Cache with Redis when available, otherwise an in-process memory fallback.
+ * Keeps local/dev fast even when REDIS_URL is unset.
  */
 import Redis from "ioredis";
 
 let client: Redis | null | undefined;
+const memory = new Map<string, { exp: number; value: string }>();
 
 export function isRedisEnabled(): boolean {
   return Boolean(process.env.REDIS_URL);
@@ -30,19 +31,44 @@ export function getRedis(): Redis | null {
   return client;
 }
 
-export async function cacheGet<T>(key: string): Promise<T | null> {
-  const redis = getRedis();
-  if (!redis) return null;
+function memoryGet<T>(key: string): T | null {
+  const hit = memory.get(key);
+  if (!hit) return null;
+  if (hit.exp <= Date.now()) {
+    memory.delete(key);
+    return null;
+  }
   try {
-    if (redis.status !== "ready") await redis.connect().catch(() => null);
-    const raw = await redis.get(key);
-    return raw ? (JSON.parse(raw) as T) : null;
+    return JSON.parse(hit.value) as T;
   } catch {
+    memory.delete(key);
     return null;
   }
 }
 
+function memorySet(key: string, value: unknown, ttlSeconds: number) {
+  memory.set(key, {
+    exp: Date.now() + Math.max(1, ttlSeconds) * 1000,
+    value: JSON.stringify(value),
+  });
+}
+
+export async function cacheGet<T>(key: string): Promise<T | null> {
+  const redis = getRedis();
+  if (redis) {
+    try {
+      if (redis.status !== "ready") await redis.connect().catch(() => null);
+      const raw = await redis.get(key);
+      if (raw) return JSON.parse(raw) as T;
+    } catch {
+      /* fall through to memory */
+    }
+  }
+  return memoryGet<T>(key);
+}
+
 export async function cacheSet(key: string, value: unknown, ttlSeconds = 60): Promise<void> {
+  memorySet(key, value, ttlSeconds);
   const redis = getRedis();
   if (!redis) return;
   try {
@@ -54,6 +80,7 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds = 60): Pr
 }
 
 export async function cacheDel(key: string): Promise<void> {
+  memory.delete(key);
   const redis = getRedis();
   if (!redis) return;
   try {
@@ -67,6 +94,8 @@ export async function cacheDel(key: string): Promise<void> {
 export const CacheKeys = {
   homeCatalog: "huza:home:catalog",
   bestSellers: "huza:home:bestsellers",
+  productsList: (key: string) => `huza:products:${key}`,
   cart: (userId: string) => `huza:cart:${userId}`,
   session: (sid: string) => `huza:session:${sid}`,
+  adminLiveLite: (userId: string) => `huza:admin:live:lite:${userId}`,
 } as const;

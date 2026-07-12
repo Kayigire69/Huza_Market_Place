@@ -1,7 +1,8 @@
 import { HomePage } from "./HomeClient";
 import { catalogService } from "@/services/catalog.service";
 
-export const dynamic = "force-dynamic";
+/** Cache home for a short window — catalogService also caches in Redis/memory. */
+export const revalidate = 60;
 
 export default async function Page() {
   const {

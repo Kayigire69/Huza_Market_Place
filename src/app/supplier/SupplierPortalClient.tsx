@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf, formatUnit } from "@/lib/utils";
@@ -99,7 +99,7 @@ export function SupplierPortalClient({
   const [messages, setMessages] = useState<ProcurementMsg[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
-  const refresh = () => router.refresh();
+  const refresh = () => startTransition(() => router.refresh());
   const purchaseOrders = supplier.purchaseOrders || [];
   const paidOrders = purchaseOrders.filter((po) => po.status === "PAID");
   const schedulable = purchaseOrders.filter(

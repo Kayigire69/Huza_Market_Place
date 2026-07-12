@@ -2,25 +2,13 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { isAdminPortalRole, isSuperAdmin } from "@/lib/rbac";
-import { loadAdminWorkspace } from "@/services/admin-data.service";
+import {
+  loadAdminWorkspaceForTab,
+  type AdminWorkspaceTab,
+} from "@/services/admin-data.service";
 import { AdminClient } from "./AdminClient";
 
-type Tab =
-  | "overview"
-  | "suppliers"
-  | "products"
-  | "catalog"
-  | "inventory"
-  | "procurement"
-  | "orders"
-  | "delivery"
-  | "payments"
-  | "reviews"
-  | "promos"
-  | "hours"
-  | "reports"
-  | "audit"
-  | "staff";
+type Tab = AdminWorkspaceTab;
 
 const SUPER_ONLY_TABS: Tab[] = ["staff", "audit", "hours"];
 
@@ -33,7 +21,7 @@ export async function renderAdminModule(forcedTab: Tab) {
     redirect("/admin");
   }
 
-  const data = await loadAdminWorkspace();
+  const data = await loadAdminWorkspaceForTab(forcedTab);
 
   return (
     <AdminClient

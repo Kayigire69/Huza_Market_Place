@@ -229,7 +229,7 @@ export function AdminShell({
       }
     };
     load();
-    const id = setInterval(load, 15_000);
+    const id = setInterval(load, 20_000);
     return () => {
       cancelled = true;
       clearInterval(id);

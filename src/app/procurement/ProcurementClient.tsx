@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
@@ -69,7 +69,7 @@ export function ProcurementClient({
   const [loading, setLoading] = useState(false);
   const [threadSupplierId, setThreadSupplierId] = useState(suppliers[0]?.id || "");
 
-  const refresh = () => router.refresh();
+  const refresh = () => startTransition(() => router.refresh());
 
   const offerAction = async (
     offerId: string,
