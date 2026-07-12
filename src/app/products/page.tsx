@@ -3,10 +3,30 @@ import { prisma } from "@/lib/prisma";
 import { ProductFilters } from "@/components/products/ProductFilters";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Prisma } from "@prisma/client";
-
-export const dynamic = "force-dynamic";
+import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+type ProductsPayload = {
+  products: Awaited<ReturnType<typeof fetchProducts>>;
+  categories: Awaited<ReturnType<typeof prisma.category.findMany>>;
+};
+
+async function fetchProducts(where: Prisma.ProductWhereInput) {
+  return prisma.product.findMany({
+    where,
+    include: {
+      images: {
+        where: { kind: "STOREFRONT" },
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        take: 2,
+      },
+      supplier: { select: { id: true } },
+      category: true,
+    },
+    orderBy: [{ isFeatured: "desc" }, { ratingAvg: "desc" }],
+  });
+}
 
 export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
@@ -44,22 +64,31 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     ...(inStock ? { stockQty: { gt: 0 } } : {}),
   };
 
-  const [products, categories] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: {
-        images: {
-          where: { kind: "STOREFRONT" },
-          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-          take: 2,
-        },
-        supplier: { select: { id: true } },
-        category: true,
-      },
-      orderBy: [{ isFeatured: "desc" }, { ratingAvg: "desc" }],
-    }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
-  ]);
+  const listKey = CacheKeys.productsList(
+    JSON.stringify({
+      q,
+      category,
+      minPrice: minPrice ?? null,
+      maxPrice: maxPrice ?? null,
+      organic,
+      best,
+      featured,
+      newArrivals,
+      inStock,
+    })
+  );
+
+  let payload = await cacheGet<ProductsPayload>(listKey);
+  if (!payload) {
+    const [products, categories] = await Promise.all([
+      fetchProducts(where),
+      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    ]);
+    payload = { products, categories };
+    await cacheSet(listKey, payload, 20);
+  }
+
+  const { products, categories } = payload;
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">

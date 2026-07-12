@@ -309,6 +309,7 @@ export function AdminShell({
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch
                       onClick={() => setOpen(false)}
                       className={`admin-nav-link ${active ? "is-active" : ""}`}
                     >

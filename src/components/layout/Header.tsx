@@ -147,6 +147,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               className={cn(
                 "pb-1 border-b-2 border-transparent hover:text-[var(--huza-green)]",
                 pathname === item.href && "border-[var(--huza-green)] text-[var(--huza-green-dark)]"
