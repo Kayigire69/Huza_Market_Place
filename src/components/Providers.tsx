@@ -1,12 +1,12 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { LocaleProvider } from "@/lib/locale-context";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { SupportChat } from "@/components/SupportChat";
 import { CartHydrator } from "@/components/CartHydrator";
 import {
   RoutePrefetcher,
@@ -14,6 +14,11 @@ import {
   ADMIN_PREFETCH,
   FARMER_PREFETCH,
 } from "@/components/navigation/RoutePrefetcher";
+
+const SupportChat = dynamic(
+  () => import("@/components/SupportChat").then((m) => m.SupportChat),
+  { ssr: false }
+);
 
 /** Customer shop chrome — never shown on private partner / staff portals */
 function isPartnerPortal(pathname: string | null) {
@@ -45,7 +50,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [pathname, partner]);
 
   return (
-    <SessionProvider>
+    <SessionProvider refetchOnWindowFocus={false} refetchWhenOffline={false}>
       <LocaleProvider>
         <RoutePrefetcher routes={prefetchRoutes} />
         {!partner && <CartHydrator />}

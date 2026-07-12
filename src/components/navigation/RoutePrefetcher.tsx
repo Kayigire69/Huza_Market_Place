@@ -45,16 +45,9 @@ export function RoutePrefetcher({ routes }: { routes: string[] }) {
 }
 
 export const STOREFRONT_PREFETCH = [
-  "/",
   "/products",
   "/categories",
   "/cart",
-  "/checkout",
-  "/track",
-  "/support",
-  "/about",
-  "/wishlist",
-  "/account",
   "/delivery-info",
 ];
 
@@ -62,18 +55,10 @@ export const ADMIN_PREFETCH = [
   "/admin",
   "/admin/orders",
   "/admin/products",
-  "/admin/inventory",
-  "/admin/delivery",
-  "/admin/customers",
-  "/admin/suppliers",
-  "/admin/procurement",
   "/admin/payments",
-  "/admin/offers",
-  "/admin/reports",
-  "/admin/staff",
-  "/admin/audit",
-  "/admin/settings",
-  "/admin/security",
+  "/admin/delivery",
+  "/admin/suppliers",
+  "/admin/inventory",
 ];
 
-export const FARMER_PREFETCH = ["/farmer", "/farmer/register", "/auth/login"];
+export const FARMER_PREFETCH = ["/farmer", "/auth/login"];
