@@ -1,10 +1,9 @@
-"use client";
-
 import Image, { type ImageProps } from "next/image";
 
 /**
  * Prefer next/image for compression, resizing, and lazy loading.
  * Local /uploads and Cloudinary/remote URLs all go through the optimizer.
+ * Server-compatible (no client boundary) so product grids stay lighter.
  */
 export function OptimizedImage({
   src,

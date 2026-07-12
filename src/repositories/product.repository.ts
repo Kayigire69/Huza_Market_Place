@@ -19,11 +19,47 @@ export function deriveAvailability(
   return "IN_STOCK";
 }
 
+/** Columns needed by ProductCard — avoids loading farmer dossier / long descriptions. */
+export const productCardSelect = {
+  id: true,
+  nameEn: true,
+  nameFr: true,
+  nameRw: true,
+  price: true,
+  unit: true,
+  stockQty: true,
+  isOrganic: true,
+  ratingAvg: true,
+  availableDistricts: true,
+  originDistrict: true,
+  nutritionalInfo: true,
+  images: {
+    where: { kind: "STOREFRONT" as const },
+    orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
+    take: 2,
+    select: { url: true, isCover: true },
+  },
+  supplier: { select: { id: true } },
+  category: {
+    select: { nameEn: true, nameFr: true, nameRw: true, slug: true },
+  },
+} satisfies Prisma.ProductSelect;
+
 export const productRepository = {
   async findActiveByIds(ids: string[]) {
     return prisma.product.findMany({
       where: { id: { in: ids }, isActive: true, deletedAt: null },
-      include: { supplier: true },
+      select: {
+        id: true,
+        supplierId: true,
+        price: true,
+        stockQty: true,
+        reservedQty: true,
+        purchasePrice: true,
+        farmGatePrice: true,
+        pricePerUnit: true,
+        nameEn: true,
+      },
     });
   },
 
@@ -42,10 +78,6 @@ export const productRepository = {
     });
   },
 
-  /**
-   * Hold stock for a pending payment (does not reduce physical stockQty).
-   * Uses conditional update to prevent overselling races.
-   */
   /**
    * Hold demand for a pending payment.
    * When `allowBackorder` is true, reservedQty may exceed stockQty (6–12h restock path).
@@ -121,15 +153,7 @@ export const productRepository = {
     });
   },
 
-  async findHomeLists(take = 16) {
-    const include = {
-      images: {
-        where: { kind: "STOREFRONT" as const },
-        orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
-      },
-      supplier: { select: { id: true } },
-      category: true,
-    };
+  async findHomeLists(take = 8) {
     // Active products that have at least one HUZA storefront image
     const active = {
       isActive: true,
@@ -139,23 +163,23 @@ export const productRepository = {
     const [shopProducts, featured, bestSellers, freshToday] = await Promise.all([
       prisma.product.findMany({
         where: active,
-        include,
+        select: productCardSelect,
         orderBy: [{ updatedAt: "desc" }],
         take,
       }),
       prisma.product.findMany({
         where: { ...active, isFeatured: true },
-        include,
+        select: productCardSelect,
         take: 8,
       }),
       prisma.product.findMany({
         where: { ...active, isBestSeller: true },
-        include,
+        select: productCardSelect,
         take: 8,
       }),
       prisma.product.findMany({
         where: { ...active, isNewArrival: true },
-        include,
+        select: productCardSelect,
         orderBy: { createdAt: "desc" },
         take: 8,
       }),

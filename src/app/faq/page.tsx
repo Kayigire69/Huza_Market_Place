@@ -1,19 +1,10 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
+import { FaqClient, type FaqItem } from "./FaqClient";
 
-import { useEffect, useState } from "react";
-import { useLocale } from "@/lib/locale-context";
+export const revalidate = 300;
 
-type Faq = {
-  id: string;
-  questionEn: string;
-  questionFr: string;
-  questionRw: string;
-  answerEn: string;
-  answerFr: string;
-  answerRw: string;
-};
-
-const fallback: Faq[] = [
+const fallback: FaqItem[] = [
   {
     id: "1",
     questionEn: "Who delivers my order?",
@@ -40,50 +31,33 @@ const fallback: Faq[] = [
     questionEn: "What are the delivery fees?",
     questionFr: "Quels sont les frais de livraison ?",
     questionRw: "Amafaranga yo gutanga ni angahe?",
-    answerEn: "Delivery fee depends on your destination and is shown at checkout when you are about to pay.",
+    answerEn:
+      "Delivery fee depends on your destination and is shown at checkout when you are about to pay.",
     answerFr: "Les frais de livraison dépendent de votre destination et s'affichent au paiement.",
     answerRw: "Amafaranga yo gutanga aherekeye aho bigenewe kandi agaragara igihe wishyura.",
   },
 ];
 
-export default function FaqPage() {
-  const { locale } = useLocale();
-  const [faqs, setFaqs] = useState<Faq[]>(fallback);
+export default async function FaqPage() {
+  let items = await cacheGet<FaqItem[]>(CacheKeys.faqList);
+  if (!items) {
+    const rows = await prisma.faqItem.findMany({
+      where: { isPublished: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    items = rows.length
+      ? rows.map((r) => ({
+          id: r.id,
+          questionEn: r.questionEn,
+          questionFr: r.questionFr,
+          questionRw: r.questionRw,
+          answerEn: r.answerEn,
+          answerFr: r.answerFr,
+          answerRw: r.answerRw,
+        }))
+      : fallback;
+    await cacheSet(CacheKeys.faqList, items, 300);
+  }
 
-  useEffect(() => {
-    fetch("/api/faq")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.items?.length) setFaqs(d.items);
-      })
-      .catch(() => undefined);
-  }, []);
-
-  const q = (f: Faq) =>
-    locale === "fr" ? f.questionFr : locale === "rw" ? f.questionRw : f.questionEn;
-  const a = (f: Faq) =>
-    locale === "fr" ? f.answerFr : locale === "rw" ? f.answerRw : f.answerEn;
-
-  return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12">
-      <h1 className="section-title">FAQ</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Common questions about HUZA FRESH, powered by Youth Huza.
-      </p>
-      <div className="space-y-4">
-        {faqs.map((f) => (
-          <details
-            key={f.id}
-            className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 group"
-          >
-            <summary className="cursor-pointer font-semibold list-none flex justify-between gap-3">
-              {q(f)}
-              <span className="text-[var(--huza-green)] group-open:rotate-45 transition">+</span>
-            </summary>
-            <p className="mt-3 text-sm text-[var(--huza-muted)] leading-relaxed">{a(f)}</p>
-          </details>
-        ))}
-      </div>
-    </div>
-  );
+  return <FaqClient items={items.length ? items : fallback} />;
 }

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { hashToken, randomToken } from "@/lib/security";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { enqueueEmail } from "@/jobs/queue";
 
 /** Request a password reset link (works for Super Admin and any user with email). */
 export async function POST(req: Request) {
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
       isActive: true,
       deletedAt: null,
     },
+    select: { id: true, email: true, fullName: true },
   });
 
   if (user?.email) {
@@ -40,21 +42,23 @@ export async function POST(req: Request) {
 
     const base = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const link = `${base}/auth/reset-password/${raw}`;
+    const subject = "Reset your HUZA account password";
+    const text = `Hello ${user.fullName},\n\nReset your password using this link (valid 1 hour):\n${link}\n\nIf you did not request this, ignore this email.`;
 
-    const sent = await sendEmail({
-      to: user.email,
-      subject: "Reset your HUZA account password",
-      text: `Hello ${user.fullName},\n\nReset your password using this link (valid 1 hour):\n${link}\n\nIf you did not request this, ignore this email.`,
-    });
-
-    // When email is console-only (no Resend key), return the link so local recovery works.
-    if (sent.mode === "console") {
-      return NextResponse.json({
-        ok: true,
-        message:
-          "Email is not configured on this server, so here is your one-time reset link (valid 1 hour):",
-        recoveryLink: link,
-      });
+    // Production mail provider: queue so the HTTP response stays fast.
+    if (process.env.RESEND_API_KEY) {
+      await enqueueEmail(user.email, subject, text);
+    } else {
+      // Console-only mode: keep sync send so local recoveryLink still works.
+      const sent = await sendEmail({ to: user.email, subject, text });
+      if (sent.mode === "console") {
+        return NextResponse.json({
+          ok: true,
+          message:
+            "Email is not configured on this server, so here is your one-time reset link (valid 1 hour):",
+          recoveryLink: link,
+        });
+      }
     }
   }
 

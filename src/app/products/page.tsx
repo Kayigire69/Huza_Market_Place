@@ -19,14 +19,29 @@ type ProductsPayload = {
 async function fetchProducts(where: Prisma.ProductWhereInput, skip: number, take: number) {
   return prisma.product.findMany({
     where,
-    include: {
+    select: {
+      id: true,
+      nameEn: true,
+      nameFr: true,
+      nameRw: true,
+      price: true,
+      unit: true,
+      stockQty: true,
+      isOrganic: true,
+      ratingAvg: true,
+      availableDistricts: true,
+      originDistrict: true,
+      nutritionalInfo: true,
       images: {
         where: { kind: "STOREFRONT" },
         orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
         take: 2,
+        select: { url: true, isCover: true },
       },
       supplier: { select: { id: true } },
-      category: true,
+      category: {
+        select: { nameEn: true, nameFr: true, nameRw: true, slug: true },
+      },
     },
     orderBy: [{ isFeatured: "desc" }, { ratingAvg: "desc" }],
     skip,

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, startTransition, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf } from "@/lib/utils";
@@ -281,15 +282,15 @@ export function AdminClient(props: {
           </div>
         ))}
         <div className="border-t border-[var(--huza-line)] pt-3 space-y-1 text-xs">
-          <a href="/warehouse" className="block text-[var(--huza-green)] font-semibold">
+          <Link href="/warehouse" className="block text-[var(--huza-green)] font-semibold">
             Warehouse portal →
-          </a>
-          <a href="/procurement" className="block text-[var(--huza-green)] font-semibold">
+          </Link>
+          <Link href="/procurement" className="block text-[var(--huza-green)] font-semibold">
             Procurement portal →
-          </a>
-          <a href="/delivery-portal" className="block text-[var(--huza-green)] font-semibold">
+          </Link>
+          <Link href="/delivery-portal" className="block text-[var(--huza-green)] font-semibold">
             Delivery portal →
-          </a>
+          </Link>
         </div>
       </aside>
       )}

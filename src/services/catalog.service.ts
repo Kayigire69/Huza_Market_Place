@@ -21,7 +21,7 @@ export const catalogService = {
 
     const now = new Date();
     const [lists, categories, promotions, testimonials, status] = await Promise.all([
-      productRepository.findHomeLists(16),
+      productRepository.findHomeLists(8),
       prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
       prisma.promotion.findMany({
         where: {

@@ -14,10 +14,31 @@ export default async function AccountPage() {
     where: { id: session.user.id },
     include: {
       addresses: true,
-      favorites: { include: { product: { include: { images: true } } } },
+      favorites: {
+        take: 24,
+        orderBy: { createdAt: "desc" },
+        include: {
+          product: {
+            select: {
+              id: true,
+              nameEn: true,
+              images: {
+                where: { kind: "STOREFRONT" },
+                take: 1,
+                select: { url: true },
+              },
+            },
+          },
+        },
+      },
       orders: {
         orderBy: { createdAt: "desc" },
-        include: { items: { include: { product: true } }, payment: true },
+        include: {
+          items: {
+            include: { product: { select: { id: true, nameEn: true } } },
+          },
+          payment: true,
+        },
         take: 20,
       },
       notifications: { orderBy: { createdAt: "desc" }, take: 10 },

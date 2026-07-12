@@ -1,27 +1,15 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { ProductCard, type ProductCardData } from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/Button";
+import { productCardSelect } from "@/repositories/product.repository";
 
-export default function WishlistPage() {
-  const { data: session, status } = useSession();
-  const [items, setItems] = useState<ProductCardData[]>([]);
+export default async function WishlistPage() {
+  const session = await getServerSession(authOptions);
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
-    fetch("/api/wishlist")
-      .then((r) => r.json())
-      .then((d) => setItems((d.items || []).map((i: { product: ProductCardData }) => i.product)));
-  }, [status]);
-
-  if (status === "loading") {
-    return <div className="p-10 text-center">Loading…</div>;
-  }
-
-  if (!session) {
+  if (!session?.user?.id) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <h1 className="section-title">Wishlist</h1>
@@ -32,6 +20,16 @@ export default function WishlistPage() {
       </div>
     );
   }
+
+  const favorites = await prisma.favorite.findMany({
+    where: { userId: session.user.id },
+    include: { product: { select: productCardSelect } },
+    orderBy: { createdAt: "desc" },
+    take: 48,
+  });
+  const items = favorites
+    .map((f) => f.product)
+    .filter((p): p is NonNullable<typeof p> => Boolean(p)) as ProductCardData[];
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
