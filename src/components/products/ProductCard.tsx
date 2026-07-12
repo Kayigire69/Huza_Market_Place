@@ -7,7 +7,6 @@ import { formatRwf, formatUnit } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Eye, Heart, X } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { productFulfillmentLabel } from "@/lib/delivery-eta";
 
@@ -32,8 +31,8 @@ export type ProductCardData = {
 export function ProductCard({ product }: { product: ProductCardData }) {
   const { locale, t } = useLocale();
   const addItem = useCart((s) => s.addItem);
-  const { data: session } = useSession();
   const [wish, setWish] = useState(false);
+  const [wishBusy, setWishBusy] = useState(false);
   const [quick, setQuick] = useState(false);
   const name =
     locale === "fr" ? product.nameFr : locale === "rw" ? product.nameRw : product.nameEn;
@@ -51,16 +50,22 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!session?.user) {
-      window.location.href = "/auth/login";
-      return;
+    if (wishBusy) return;
+    setWishBusy(true);
+    try {
+      const res = await fetch("/api/wishlist", {
+        method: wish ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+      if (res.status === 401) {
+        window.location.href = "/auth/login";
+        return;
+      }
+      if (res.ok) setWish(!wish);
+    } finally {
+      setWishBusy(false);
     }
-    const res = await fetch("/api/wishlist", {
-      method: wish ? "DELETE" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id }),
-    });
-    if (res.ok) setWish(!wish);
   };
 
   const addToCart = () =>
@@ -97,7 +102,8 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         <button
           type="button"
           onClick={toggleWishlist}
-          className="absolute right-3 top-3 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+          disabled={wishBusy}
+          className="absolute right-3 top-3 rounded-full bg-white/90 p-2 shadow hover:bg-white disabled:opacity-60"
           aria-label="Wishlist"
         >
           <Heart className={`size-4 ${wish ? "fill-red-500 text-red-500" : "text-[var(--huza-ink)]"}`} />

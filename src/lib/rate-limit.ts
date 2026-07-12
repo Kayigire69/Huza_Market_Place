@@ -2,7 +2,7 @@
  * Simple sliding-window rate limiter.
  * Uses Redis when REDIS_URL is set; otherwise in-memory Map (per process).
  */
-import { getRedis } from "@/lib/redis";
+import { ensureRedis } from "@/lib/redis";
 
 type Bucket = { count: number; resetAt: number };
 const memory = new Map<string, Bucket>();
@@ -13,12 +13,11 @@ export async function rateLimit(opts: {
   windowMs: number;
 }): Promise<{ ok: boolean; remaining: number; retryAfterMs: number }> {
   const { key, limit, windowMs } = opts;
-  const redis = getRedis();
   const now = Date.now();
+  const redis = await ensureRedis();
 
   if (redis) {
     try {
-      if (redis.status !== "ready") await redis.connect().catch(() => null);
       const redisKey = `rl:${key}`;
       const count = await redis.incr(redisKey);
       if (count === 1) await redis.pexpire(redisKey, windowMs);

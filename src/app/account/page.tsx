@@ -6,8 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { formatRwf } from "@/lib/utils";
 import { AccountActions } from "./AccountActions";
 
-export const dynamic = "force-dynamic";
-
 export default async function AccountPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/auth/login");
