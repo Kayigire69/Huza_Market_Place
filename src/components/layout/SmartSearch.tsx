@@ -16,17 +16,26 @@ export function SmartSearch({ className = "" }: { className?: string }) {
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const query = q.trim();
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
     const ctrl = new AbortController();
     const timer = setTimeout(async () => {
-      const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(q)}`, {
-        signal: ctrl.signal,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data.suggestions || []);
-        setOpen(true);
+      try {
+        const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(query)}`, {
+          signal: ctrl.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data.suggestions || []);
+          setOpen(true);
+        }
+      } catch {
+        /* aborted or network */
       }
-    }, 200);
+    }, 250);
     return () => {
       clearTimeout(timer);
       ctrl.abort();

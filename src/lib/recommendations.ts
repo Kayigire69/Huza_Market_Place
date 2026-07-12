@@ -135,18 +135,9 @@ export async function getSmartRecommendations(opts: {
 /** Lightweight search suggestions from products and categories (no supplier names for shoppers) */
 export async function getSearchSuggestions(q: string, take = 8) {
   const query = q.trim();
-  if (query.length < 1) {
-    const popular = await prisma.product.findMany({
-      where: { isActive: true, isBestSeller: true },
-      select: { id: true, nameEn: true, nameFr: true, nameRw: true },
-      take,
-    });
-    return popular.map((p) => ({
-      type: "product" as const,
-      id: p.id,
-      label: p.nameEn,
-      href: `/products/${p.id}`,
-    }));
+  // Empty/short queries used to hit Postgres on every page load via the header search.
+  if (query.length < 2) {
+    return [];
   }
 
   const [products, categories] = await Promise.all([

@@ -41,8 +41,10 @@ export function SupportChat() {
   };
 
   useEffect(() => {
+    // Defer restore until the user opens chat — avoids API work on every page.
+    if (!open) return;
     const saved = localStorage.getItem("huza-support-thread");
-    if (!saved) return;
+    if (!saved || threadId) return;
     setThreadId(saved);
     setStarted(true);
     fetch(`/api/support?threadId=${encodeURIComponent(saved)}`)
@@ -56,7 +58,7 @@ export function SupportChat() {
       })
       .catch(() => resetChat());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [open]);
 
   const startChat = async (e: FormEvent) => {
     e.preventDefault();

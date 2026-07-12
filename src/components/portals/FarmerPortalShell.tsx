@@ -7,10 +7,10 @@ import { useLocale } from "@/lib/locale-context";
 import { locales, localeLabels, type Locale } from "@/lib/i18n";
 
 const CROP_BACKGROUNDS = [
-  "/images/hero/hero-crops.png",
-  "/images/hero/hero-greenhouse.png",
-  "/images/hero/hero-goods.png",
-  "/images/hero/hero-shoppers.png",
+  "/images/hero/hero-crops.jpg",
+  "/images/hero/hero-greenhouse.jpg",
+  "/images/hero/hero-goods.jpg",
+  "/images/hero/hero-shoppers.jpg",
 ];
 
 /**
