@@ -41,11 +41,21 @@ export async function POST(req: Request) {
     const base = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const link = `${base}/auth/reset-password/${raw}`;
 
-    await sendEmail({
+    const sent = await sendEmail({
       to: user.email,
       subject: "Reset your HUZA account password",
       text: `Hello ${user.fullName},\n\nReset your password using this link (valid 1 hour):\n${link}\n\nIf you did not request this, ignore this email.`,
     });
+
+    // When email is console-only (no Resend key), return the link so local recovery works.
+    if (sent.mode === "console") {
+      return NextResponse.json({
+        ok: true,
+        message:
+          "Email is not configured on this server, so here is your one-time reset link (valid 1 hour):",
+        recoveryLink: link,
+      });
+    }
   }
 
   return NextResponse.json({

@@ -1,14 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { getSession, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { portalPathForRole } from "@/lib/auth-redirect";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const { update } = useSession();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -30,10 +28,9 @@ export default function ChangePasswordPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not change password");
 
-      await update({ mustChangePassword: false });
-      const session = await getSession();
-      const role = session?.user?.role;
-      router.push(portalPathForRole(role, { mustChangePassword: false }));
+      // Sign out so the next login uses the new password cleanly.
+      await signOut({ redirect: false });
+      router.push("/auth/login?reset=1");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
@@ -46,8 +43,9 @@ export default function ChangePasswordPage() {
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">Change your password</h1>
       <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
-        For security, you must set a new password before continuing. After this, even the developer
-        will not know your password.
+        Enter the temporary password, then choose a new one. After you save,{" "}
+        <strong className="text-[var(--huza-ink)]">Huza@2026! will stop working</strong> — only your
+        new password will sign you in.
       </p>
       <form
         onSubmit={onSubmit}
@@ -61,6 +59,7 @@ export default function ChangePasswordPage() {
             required
             className="input-field"
             autoComplete="current-password"
+            placeholder="Huza@2026!"
           />
         </div>
         <div>
@@ -87,7 +86,7 @@ export default function ChangePasswordPage() {
         </div>
         {error && <p className="text-sm text-red-700">{error}</p>}
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Saving…" : "Save new password"}
+          {loading ? "Saving…" : "Save new password & continue"}
         </Button>
       </form>
     </div>

@@ -59,7 +59,7 @@ export default function LoginForm() {
       <h1 className="section-title text-center">{t("login")}</h1>
       {sp.get("reset") === "1" && (
         <p className="mt-2 text-center text-sm text-emerald-800">
-          Password updated. Sign in with your new password.
+          Password updated. Sign in with your <strong>new</strong> password (not the temporary one).
         </p>
       )}
       <form
