@@ -30,6 +30,21 @@ const DEFAULT_SLIDES: HeroSlide[] = [
     alt: "Baskets of farm goods and pantry staples",
     caption: "Produce, dairy, and pantry goods",
   },
+  {
+    src: "/images/hero/hero-mobile-payment.png",
+    alt: "Customers paying with mobile money on a phone",
+    caption: "Pay easily with mobile money",
+  },
+  {
+    src: "/images/hero/hero-delivery-receive.png",
+    alt: "Customer receiving a fresh produce delivery",
+    caption: "Fresh delivery to your door",
+  },
+  {
+    src: "/images/hero/hero-fresh-store.png",
+    alt: "Shoppers in a large store of fresh products",
+    caption: "A full hall of fresh products",
+  },
 ];
 
 export function HeroGallery({
