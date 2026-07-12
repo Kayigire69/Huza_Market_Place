@@ -70,12 +70,12 @@ export function AdminDashboardClient({
   useEffect(() => {
     const id = setInterval(async () => {
       try {
-        const res = await fetch("/api/admin/live");
+        const res = await fetch("/api/admin/live?full=1");
         if (res.ok) setData(await res.json());
       } catch {
         /* ignore */
       }
-    }, 15_000);
+    }, 30_000);
     return () => clearInterval(id);
   }, []);
 

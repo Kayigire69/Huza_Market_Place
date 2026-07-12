@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listDeliveryZones } from "@/services/settings.service";
 import { formatRwf } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export default async function DeliveryInfoPage() {
   const zones = await listDeliveryZones();

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatUnit } from "@/lib/utils";
@@ -44,7 +44,7 @@ export function WarehouseClient({
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const refresh = () => router.refresh();
+  const refresh = () => startTransition(() => router.refresh());
 
   const callApi = async (body: Record<string, unknown>, method: "POST" | "PATCH" = "POST") => {
     setLoading(true);

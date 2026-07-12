@@ -52,13 +52,19 @@ export async function getOrdersLast7Days() {
   });
 }
 
-/** Top products by units sold from paid/confirmed+ order items. */
+/** Top products by units sold from paid/confirmed+ order items (recent window). */
 export async function getTopProductsBySales(take = 5) {
+  const since = new Date();
+  since.setDate(since.getDate() - 90);
+
   const items = await prisma.orderItem.groupBy({
     by: ["productId"],
     _sum: { quantity: true, lineTotal: true },
     where: {
-      order: { status: { notIn: ["CANCELLED", "REFUNDED", "PENDING"] } },
+      order: {
+        status: { notIn: ["CANCELLED", "REFUNDED", "PENDING"] },
+        createdAt: { gte: since },
+      },
     },
     orderBy: { _sum: { quantity: "desc" } },
     take,
@@ -84,11 +90,17 @@ export async function getTopProductsBySales(take = 5) {
   });
 }
 
-/** Sales totals grouped by product category (real order lines). */
+/** Sales totals grouped by product category (real order lines, recent window). */
 export async function getSalesByCategory(take = 8) {
+  const since = new Date();
+  since.setDate(since.getDate() - 90);
+
   const lines = await prisma.orderItem.findMany({
     where: {
-      order: { status: { notIn: ["CANCELLED", "REFUNDED", "PENDING"] } },
+      order: {
+        status: { notIn: ["CANCELLED", "REFUNDED", "PENDING"] },
+        createdAt: { gte: since },
+      },
     },
     select: {
       quantity: true,
@@ -111,6 +123,57 @@ export async function getSalesByCategory(take = 8) {
   return Array.from(map.values())
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, take);
+}
+
+/** Lightweight counts + recent list for admin chrome polling. */
+export async function getAdminLiveLite() {
+  const startOfDay = startOfLocalDay();
+  const [
+    todayOrders,
+    pendingPayment,
+    paidReady,
+    preparing,
+    outForDelivery,
+    deliveredToday,
+    revenueToday,
+    lowStockCount,
+    pendingFarmers,
+  ] = await Promise.all([
+    prisma.order.count({ where: { createdAt: { gte: startOfDay } } }),
+    prisma.order.count({ where: { status: "PENDING" } }),
+    prisma.order.count({ where: { status: { in: ["PAID", "CONFIRMED"] } } }),
+    prisma.order.count({ where: { status: { in: ["PREPARING", "PACKED"] } } }),
+    prisma.order.count({ where: { status: "OUT_FOR_DELIVERY" } }),
+    prisma.order.count({
+      where: { status: "DELIVERED", updatedAt: { gte: startOfDay } },
+    }),
+    prisma.order.aggregate({
+      _sum: { total: true },
+      where: {
+        createdAt: { gte: startOfDay },
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+      },
+    }),
+    prisma.product.count({
+      where: { isActive: true, deletedAt: null, stockQty: { lte: 5 } },
+    }),
+    prisma.supplier.count({ where: { status: "PENDING" } }),
+  ]);
+
+  return {
+    counts: {
+      todayOrders,
+      pendingPayment,
+      paidReady,
+      preparing,
+      outForDelivery,
+      deliveredToday,
+      revenueToday: revenueToday._sum.total ?? 0,
+      lowStock: lowStockCount,
+      pendingFarmers,
+      pendingSuppliers: pendingFarmers,
+    },
+  };
 }
 
 export async function getAdminDashboardAnalytics() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf } from "@/lib/utils";
@@ -116,7 +116,7 @@ export function AdminClient(props: {
     if (valid.includes(hash)) setTab(hash);
   }, [props.forcedTab]);
 
-  const refresh = () => router.refresh();
+  const refresh = () => startTransition(() => router.refresh());
   const done = (message: string) => {
     setMsg(message);
     refresh();

@@ -51,6 +51,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
         images: {
           where: { kind: "STOREFRONT" },
           orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+          take: 2,
         },
         supplier: { select: { id: true } },
         category: true,

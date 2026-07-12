@@ -66,23 +66,31 @@ export function HeroGallery({
 
   return (
     <div className="absolute inset-0 overflow-hidden" aria-hidden={false}>
-      {slides.map((slide, i) => (
-        <div
-          key={slide.src}
-          className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${
-            i === index ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <Image
-            src={slide.src}
-            alt={slide.alt}
-            fill
-            priority={i === 0}
-            className={`object-cover ${i === index ? "animate-hero-ken" : ""}`}
-            sizes="100vw"
-          />
-        </div>
-      ))}
+      {slides.map((slide, i) => {
+        const isActive = i === index;
+        const isNear =
+          isActive ||
+          i === (index + 1) % slides.length ||
+          i === (index - 1 + slides.length) % slides.length;
+        if (!isNear) return null;
+        return (
+          <div
+            key={slide.src}
+            className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${
+              isActive ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <Image
+              src={slide.src}
+              alt={slide.alt}
+              fill
+              priority={i === 0}
+              className={`object-cover ${isActive ? "animate-hero-ken" : ""}`}
+              sizes="100vw"
+            />
+          </div>
+        );
+      })}
       <div className="absolute inset-0 hero-media-overlay" />
       <div className="absolute bottom-6 left-0 right-0 z-10 flex justify-center gap-2 px-4">
         {slides.map((slide, i) => (

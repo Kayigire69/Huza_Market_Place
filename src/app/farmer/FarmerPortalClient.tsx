@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, startTransition, useEffect, useState } from "react";
 import Image from "next/image";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { useRouter } from "next/navigation";
@@ -114,7 +114,7 @@ export function FarmerPortalClient({
         { key: "inventory", label: t("inventoryTab") },
       ];
 
-  const refresh = () => router.refresh();
+  const refresh = () => startTransition(() => router.refresh());
   const approved = farmer.status === "APPROVED";
 
   useEffect(() => {

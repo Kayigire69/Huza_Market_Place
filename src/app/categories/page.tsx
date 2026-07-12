@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CategoriesClient } from "./CategoriesClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export default async function CategoriesPage() {
   const categories = await prisma.category.findMany({
