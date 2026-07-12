@@ -41,12 +41,35 @@ export default async function ProductDetailPage({
   if (!payload) {
     const product = await prisma.product.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        supplierId: true,
+        categoryId: true,
+        nameEn: true,
+        nameFr: true,
+        nameRw: true,
+        descriptionEn: true,
+        descriptionFr: true,
+        descriptionRw: true,
+        price: true,
+        unit: true,
+        stockQty: true,
+        reservedQty: true,
+        availability: true,
+        isOrganic: true,
+        isActive: true,
+        deletedAt: true,
+        ratingAvg: true,
+        ratingCount: true,
+        location: true,
+        originDistrict: true,
+        nutritionalInfo: true,
+        availableDistricts: true,
         images: {
           where: { kind: "STOREFRONT" },
           orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+          select: { id: true, url: true, alt: true, isCover: true, sortOrder: true },
         },
-        supplier: true,
         category: true,
         reviews: {
           where: { isHidden: false },

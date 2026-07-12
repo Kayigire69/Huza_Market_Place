@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { productCardSelect } from "@/repositories/product.repository";
 
 /** Products often purchased in the same order as the given product */
 export async function getFrequentlyBoughtTogether(productId: string, take = 4) {
@@ -16,14 +17,7 @@ export async function getFrequentlyBoughtTogether(productId: string, take = 4) {
         id: { not: productId },
         images: { some: { kind: "STOREFRONT" } },
       },
-      include: {
-        images: {
-          where: { kind: "STOREFRONT" },
-          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-        },
-        supplier: true,
-        category: true,
-      },
+      select: productCardSelect,
       take,
     });
   }
@@ -47,28 +41,14 @@ export async function getFrequentlyBoughtTogether(productId: string, take = 4) {
         id: { not: productId },
         images: { some: { kind: "STOREFRONT" } },
       },
-      include: {
-        images: {
-          where: { kind: "STOREFRONT" },
-          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-        },
-        supplier: true,
-        category: true,
-      },
+      select: productCardSelect,
       take,
     });
   }
 
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, isActive: true, images: { some: { kind: "STOREFRONT" } } },
-    include: {
-      images: {
-        where: { kind: "STOREFRONT" },
-        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-      },
-      supplier: true,
-      category: true,
-    },
+    select: productCardSelect,
   });
 
   return ids
@@ -93,14 +73,7 @@ export async function getSmartRecommendations(opts: {
           images: { some: { kind: "STOREFRONT" } },
           ...exclude,
         },
-        include: {
-          images: {
-            where: { kind: "STOREFRONT" },
-            orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-          },
-          supplier: true,
-          category: true,
-        },
+        select: productCardSelect,
         orderBy: [{ ratingAvg: "desc" }, { isBestSeller: "desc" }],
         take,
       })
@@ -117,14 +90,7 @@ export async function getSmartRecommendations(opts: {
         ? { id: { notIn: [opts.productId, ...sameCategory.map((p) => p.id)] } }
         : {}),
     },
-    include: {
-      images: {
-        where: { kind: "STOREFRONT" },
-        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-      },
-      supplier: true,
-      category: true,
-    },
+    select: productCardSelect,
     orderBy: { ratingAvg: "desc" },
     take: take - sameCategory.length,
   });

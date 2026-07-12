@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { productCardSelect } from "@/repositories/product.repository";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -10,9 +11,10 @@ export async function GET() {
   const items = await prisma.favorite.findMany({
     where: { userId: session.user.id },
     include: {
-      product: { include: { images: true, supplier: true, category: true } },
+      product: { select: productCardSelect },
     },
     orderBy: { createdAt: "desc" },
+    take: 48,
   });
 
   return NextResponse.json({ items });

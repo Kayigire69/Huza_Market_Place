@@ -272,11 +272,12 @@ export const orderService = {
       details: `${orderNumber} · ${receiptNumber} · ${total} RWF · ${data.paymentMethod}`,
     });
 
-    await notifyAdmins({
+    // Do not block the customer response on admin inbox writes.
+    void notifyAdmins({
       type: "ORDER_CONFIRMATION",
       title: "New order received",
       body: `${orderNumber} · ${data.fullName} · ${total} RWF · Pending payment`,
-    });
+    }).catch(() => undefined);
 
     // Auto-release reservation if unpaid after 10 minutes
     if (order.payment?.id) {

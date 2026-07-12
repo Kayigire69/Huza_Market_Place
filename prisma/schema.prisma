@@ -417,6 +417,15 @@ model Product {
   batches    StockBatch[]
   movements  StockMovement[]
   goodsReceiptItems GoodsReceiptItem[]
+
+  @@index([isActive, deletedAt])
+  @@index([categoryId])
+  @@index([isFeatured, isActive])
+  @@index([isBestSeller, isActive])
+  @@index([isNewArrival, isActive])
+  @@index([stockQty])
+  @@index([nameEn])
+  @@index([ratingAvg])
 }
 
 model ProductImage {
@@ -449,6 +458,7 @@ model Favorite {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
+  @@index([userId, createdAt])
 }
 
 model Order {
@@ -487,6 +497,10 @@ model Order {
   delivery  Delivery?
   statusLog OrderStatusLog[]
   returns   ReturnRequest[]
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -506,6 +520,9 @@ model OrderItem {
   order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product  Product  @relation(fields: [productId], references: [id])
   supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model OrderStatusLog {
@@ -593,6 +610,9 @@ model Review {
   product   Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
   supplier  Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   repliedBy User?     @relation("ReviewReplies", fields: [repliedById], references: [id])
+
+  @@index([productId, isHidden])
+  @@index([userId])
 }
 
 model StockHistory {
