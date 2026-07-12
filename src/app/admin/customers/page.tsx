@@ -4,8 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { isAdminPortalRole } from "@/lib/rbac";
 import { loadAdminCustomers } from "@/services/admin-data.service";
 
-export const dynamic = "force-dynamic";
-
 export default async function CustomersPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");

@@ -46,8 +46,8 @@ export const catalogService = {
       isOpen: status.isOpen,
     };
 
-    await cacheSet(CacheKeys.homeCatalog, payload, 60);
-    await cacheSet(CacheKeys.bestSellers, lists.bestSellers, 60);
+    await cacheSet(CacheKeys.homeCatalog, payload, 90);
+    await cacheSet(CacheKeys.bestSellers, lists.bestSellers, 90);
     return payload;
   },
 

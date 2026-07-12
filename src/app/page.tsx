@@ -2,7 +2,7 @@ import { HomePage } from "./HomeClient";
 import { catalogService } from "@/services/catalog.service";
 
 /** Cache home for a short window — catalogService also caches in Redis/memory. */
-export const revalidate = 60;
+export const revalidate = 90;
 
 export default async function Page() {
   const {
