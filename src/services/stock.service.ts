@@ -1,5 +1,7 @@
 import type { Prisma, StockMovementType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { notifyAdmins } from "@/lib/notify-admins";
+import { availableQty } from "@/repositories/product.repository";
 
 type Tx = Prisma.TransactionClient;
 
@@ -11,6 +13,23 @@ export type StockAdjustInput = {
   reason: string;
   actorId?: string | null;
 };
+
+async function maybeNotifyLowStock(product: {
+  id: string;
+  nameEn: string;
+  stockQty: number;
+  reservedQty: number;
+  lowStockAt: number;
+}) {
+  const available = availableQty(product.stockQty, product.reservedQty);
+  if (available > 0 && available <= product.lowStockAt) {
+    void notifyAdmins({
+      type: "LOW_STOCK",
+      title: `Low stock: ${product.nameEn}`,
+      body: `Only ${available} units left (threshold ${product.lowStockAt}).`,
+    });
+  }
+}
 
 /**
  * Central stock ledger: always writes StockMovement + StockHistory together.
@@ -61,8 +80,9 @@ export const stockService = {
       return updated;
     };
 
-    if (tx) return run(tx);
-    return prisma.$transaction(run);
+    const updated = tx ? await run(tx) : await prisma.$transaction(run);
+    await maybeNotifyLowStock(updated);
+    return updated;
   },
 
   async stockIn(

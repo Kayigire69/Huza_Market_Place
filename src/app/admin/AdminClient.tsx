@@ -11,6 +11,7 @@ import { AdminOffersPanel } from "./AdminOffersPanel";
 import { AdminReportsPanel } from "./AdminReportsPanel";
 import { AdminStaffPanel } from "./AdminStaffPanel";
 import { AdminAuditPanel } from "./AdminAuditPanel";
+import { AdminDeliveryZonesPanel } from "./AdminDeliveryZonesPanel";
 
 type AnyObj = Record<string, unknown>;
 
@@ -70,10 +71,10 @@ const WORKSPACES: { title: string; hint: string; tabs: { id: Tab; label: string 
   },
   {
     title: "Marketing & settings",
-    hint: "Homepage offers and shop hours",
+    hint: "Homepage offers, shop hours, and delivery fees",
     tabs: [
       { id: "promos", label: "Special offers" },
-      { id: "hours", label: "Business hours" },
+      { id: "hours", label: "Hours & delivery" },
     ],
   },
 ];
@@ -1118,26 +1119,29 @@ export function AdminClient(props: {
       )}
 
       {activeTab === "hours" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="admin-panel p-5">
-            <h2 className="font-semibold mb-3">Business hours (default 6:00–21:00)</h2>
-            {props.businessHours.map((h) => (
-              <p key={String(h.id)} className="text-sm py-1">
-                Day {String(h.dayOfWeek)}: {String(h.openHour)}:00 – {String(h.closeHour)}:00
-                {h.isClosed ? " (closed)" : ""}
-              </p>
-            ))}
+        <div className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="admin-panel p-5">
+              <h2 className="font-semibold mb-3">Business hours (default 6:00–21:00)</h2>
+              {props.businessHours.map((h) => (
+                <p key={String(h.id)} className="text-sm py-1">
+                  Day {String(h.dayOfWeek)}: {String(h.openHour)}:00 – {String(h.closeHour)}:00
+                  {h.isClosed ? " (closed)" : ""}
+                </p>
+              ))}
+            </div>
+            <form onSubmit={setEmergency} className="admin-panel p-5 space-y-3">
+              <h2 className="font-semibold">Emergency closure</h2>
+              {props.emergency.length > 0 && (
+                <p className="text-sm text-red-700">
+                  Active: {String((props.emergency[0] as { reason?: string }).reason)}
+                </p>
+              )}
+              <input name="reason" placeholder="Reason" className="input-field" required />
+              <Button type="submit">Activate emergency closure</Button>
+            </form>
           </div>
-          <form onSubmit={setEmergency} className="admin-panel p-5 space-y-3">
-            <h2 className="font-semibold">Emergency closure</h2>
-            {props.emergency.length > 0 && (
-              <p className="text-sm text-red-700">
-                Active: {String((props.emergency[0] as { reason?: string }).reason)}
-              </p>
-            )}
-            <input name="reason" placeholder="Reason" className="input-field" required />
-            <Button type="submit">Activate emergency closure</Button>
-          </form>
+          <AdminDeliveryZonesPanel />
         </div>
       )}
 

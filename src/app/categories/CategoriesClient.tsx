@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
 import { categoryName } from "@/lib/i18n";
+import { ChevronRight } from "lucide-react";
 
 type Category = {
   id: string;
@@ -10,43 +12,49 @@ type Category = {
   nameEn: string;
   nameFr: string;
   nameRw: string;
+  imageUrl?: string | null;
   _count: { products: number };
 };
 
-const icons: Record<string, string> = {
-  fruits: "🥭",
-  vegetables: "🥬",
-  cereals: "🌾",
-  dairy: "🥛",
-  meat: "🥩",
-  poultry: "🐔",
-  fish: "🐟",
-  eggs: "🥚",
-  spices: "🌶️",
-  honey: "🍯",
-  "other-fresh": "🌿",
-};
-
 export function CategoriesClient({ categories }: { categories: Category[] }) {
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
 
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {categories.map((c) => (
         <Link
           key={c.id}
           href={`/products?category=${c.slug}`}
-          className="group rounded-2xl border border-[var(--huza-line)] bg-white p-6 hover:border-[var(--huza-green)] transition"
+          className="group relative overflow-hidden rounded-2xl ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
         >
-          <span className="text-3xl" aria-hidden>
-            {icons[c.slug] ?? "🛒"}
-          </span>
-          <h2 className="mt-3 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-green-dark)] group-hover:text-[var(--huza-green)]">
-            {categoryName(c, locale)}
-          </h2>
-          <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            {c._count.products} products
-          </p>
+          <div className="relative aspect-[16/10]">
+            {c.imageUrl ? (
+              <Image
+                src={c.imageUrl}
+                alt={categoryName(c, locale)}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--huza-green)] to-[var(--huza-green-dark)]" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
+              <div>
+                <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-white">
+                  {categoryName(c, locale)}
+                </h2>
+                <p className="mt-1 text-sm text-white/80">
+                  {c._count.products} {t("products").toLowerCase()}
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
+                {t("viewAll")}
+                <ChevronRight className="size-3.5" />
+              </span>
+            </div>
+          </div>
         </Link>
       ))}
     </div>

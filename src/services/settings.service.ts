@@ -1,37 +1,33 @@
 import { prisma } from "@/lib/prisma";
-import { DELIVERY_FEES, type DeliveryZoneKey } from "@/lib/utils";
+import { DELIVERY_FEES, type DeliveryZoneDto, type DeliveryZoneKey } from "@/lib/utils";
+import { ZONE_ETA_LABELS, ZONE_ETA_MINUTES } from "@/lib/delivery-eta";
 
-const FALLBACK_ZONES: {
-  code: DeliveryZoneKey;
-  labelEn: string;
-  feeRwf: number;
-  etaMinutes: number;
-  etaLabelEn: string;
-}[] = [
-  {
-    code: "KIGALI",
-    labelEn: "Kigali",
-    feeRwf: DELIVERY_FEES.KIGALI,
-    etaMinutes: 90,
-    etaLabelEn: "45–90 minutes",
-  },
-  {
-    code: "KAMONYI_RUYENZI",
-    labelEn: "Kamonyi (Ruyenzi)",
-    feeRwf: DELIVERY_FEES.KAMONYI_RUYENZI,
-    etaMinutes: 180,
-    etaLabelEn: "2–3 hours",
-  },
-  {
-    code: "BUGESERA_NYAMATA",
-    labelEn: "Bugesera (Nyamata)",
-    feeRwf: DELIVERY_FEES.BUGESERA_NYAMATA,
-    etaMinutes: 180,
-    etaLabelEn: "2–3 hours",
-  },
-];
+const FALLBACK_ZONES: DeliveryZoneDto[] = (Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map(
+  (code) => ({
+    id: code,
+    code,
+    labelEn:
+      code === "KIGALI" ? "Kigali" : code === "KAMONYI_RUYENZI" ? "Kamonyi" : "Bugesera",
+    feeRwf: DELIVERY_FEES[code],
+    etaMinutes: ZONE_ETA_MINUTES[code],
+    etaLabelEn: ZONE_ETA_LABELS[code],
+  })
+);
 
-export async function listDeliveryZones() {
+export async function listDeliveryZones(): Promise<
+  Array<{
+    id: string;
+    code: string;
+    labelEn: string;
+    labelFr?: string;
+    labelRw?: string;
+    feeRwf: number;
+    etaMinutes: number;
+    etaLabelEn: string;
+    isActive?: boolean;
+    sortOrder?: number;
+  }>
+> {
   try {
     const rows = await prisma.deliveryZoneConfig.findMany({
       where: { isActive: true },
@@ -42,7 +38,7 @@ export async function listDeliveryZones() {
     /* table may not exist yet during migrate */
   }
   return FALLBACK_ZONES.map((z, i) => ({
-    id: z.code,
+    id: z.id,
     code: z.code,
     labelEn: z.labelEn,
     labelFr: z.labelEn,
@@ -52,8 +48,6 @@ export async function listDeliveryZones() {
     etaLabelEn: z.etaLabelEn,
     isActive: true,
     sortOrder: i,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   }));
 }
 
@@ -98,16 +92,12 @@ export async function setSetting(key: string, value: string) {
   });
 }
 
-/** Professional sequential order numbers: HZ-2026-000245 */
 export async function generateOrderNumber(): Promise<string> {
   const year = new Date().getFullYear();
-  const seq = await prisma.$transaction(async (tx) => {
-    const row = await tx.orderSequence.upsert({
-      where: { year },
-      create: { year, lastValue: 1 },
-      update: { lastValue: { increment: 1 } },
-    });
-    return row.lastValue;
+  const seq = await prisma.orderSequence.upsert({
+    where: { year },
+    create: { year, lastValue: 1 },
+    update: { lastValue: { increment: 1 } },
   });
-  return `HZ-${year}-${String(seq).padStart(6, "0")}`;
+  return `HZ-${year}-${String(seq.lastValue).padStart(6, "0")}`;
 }

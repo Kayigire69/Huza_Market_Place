@@ -101,6 +101,23 @@ h3,
   overflow: hidden;
 }
 
+.hero-home {
+  min-height: min(78vh, 640px);
+}
+
+@media (max-width: 640px) {
+  .hero-home {
+    min-height: min(70vh, 560px);
+  }
+}
+
+.home-surface {
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%, rgba(231, 246, 236, 0.9), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(197, 230, 210, 0.35), transparent 50%),
+    var(--huza-cream);
+}
+
 .animate-rise {
   animation: rise-in 0.7s ease-out both;
 }

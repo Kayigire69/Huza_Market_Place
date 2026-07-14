@@ -9,6 +9,8 @@ import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Eye, Heart, X } from "lucide-react";
 import { useState } from "react";
 import { productFulfillmentLabel } from "@/lib/delivery-eta";
+import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
+import { formatHarvestRelative } from "@/lib/utils";
 
 export type ProductCardData = {
   id: string;
@@ -18,11 +20,16 @@ export type ProductCardData = {
   price: number;
   unit: string;
   stockQty: number;
+  reservedQty?: number;
+  lowStockAt?: number;
   isOrganic: boolean;
   ratingAvg: number;
   availableDistricts?: string[];
   originDistrict?: string | null;
   nutritionalInfo?: string | null;
+  reviewStatus?: string | null;
+  reviewedAt?: Date | string | null;
+  harvestDate?: Date | string | null;
   images: { url: string; isCover?: boolean }[];
   supplier?: { id: string };
   category?: { nameEn: string; nameFr: string; nameRw: string; slug: string };
@@ -45,7 +52,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     : null;
   const image =
     product.images.find((i) => i.isCover)?.url ?? product.images[0]?.url ?? "/logo.svg";
-  const fulfillment = productFulfillmentLabel(product.stockQty);
+  const fulfillment = productFulfillmentLabel(
+    product.stockQty,
+    product.reservedQty || 0,
+    "KIGALI",
+    undefined,
+    product.lowStockAt ?? 5
+  );
+  const qualityChecked = !product.reviewStatus || product.reviewStatus === "APPROVED";
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,7 +82,8 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     }
   };
 
-  const addToCart = () =>
+  const addToCart = () => {
+    if (!fulfillment.inStock) return;
     addItem({
       productId: product.id,
       name,
@@ -79,6 +94,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       supplierName: "Youth Huza",
       stockQty: product.stockQty,
     });
+  };
 
   return (
     <article className="group flex flex-col">
@@ -97,6 +113,11 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         {product.isOrganic && (
           <span className="absolute left-3 top-3 bg-[var(--huza-green-dark)] text-white text-xs font-semibold px-2.5 py-1 rounded-md">
             {t("organic")}
+          </span>
+        )}
+        {qualityChecked && (
+          <span className={`absolute ${product.isOrganic ? "left-3 top-11" : "left-3 top-3"}`}>
+            <QualityCheckedBadge compact />
           </span>
         )}
         <button
@@ -134,17 +155,37 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </div>
         <p className="mt-1 text-xs text-[var(--huza-muted)]">
           ★ {product.ratingAvg.toFixed(1)} ·{" "}
-          {fulfillment.inStock
-            ? fulfillment.stockLabel === "Low stock"
-              ? t("lowStock")
-              : t("inStock")
-            : t("preparingStock")}
+          <span
+            className={
+              fulfillment.stockStatus === "OUT_OF_STOCK"
+                ? "text-red-700 font-semibold"
+                : fulfillment.stockStatus === "LOW_STOCK"
+                  ? "text-amber-700 font-semibold"
+                  : "text-[var(--huza-green-dark)] font-semibold"
+            }
+          >
+            {fulfillment.stockStatus === "OUT_OF_STOCK"
+              ? "Out of Stock"
+              : fulfillment.stockStatus === "LOW_STOCK"
+                ? t("lowStock")
+                : t("inStock")}
+          </span>
+          {fulfillment.onlyNLeft != null && (
+            <span className="text-amber-800"> · Only {fulfillment.onlyNLeft} left</span>
+          )}
         </p>
-        <p className="mt-0.5 text-xs font-medium text-[var(--huza-green-dark)]">
-          {t("arrivesIn")} {fulfillment.etaLabel}
-        </p>
-        <Button className="mt-3 w-full" size="sm" onClick={addToCart}>
-          {t("addToCart")}
+        {fulfillment.inStock && (
+          <p className="mt-0.5 text-xs font-medium text-[var(--huza-green-dark)]">
+            {t("arrivesIn")} {fulfillment.etaLabel}
+          </p>
+        )}
+        <Button
+          className="mt-3 w-full"
+          size="sm"
+          onClick={addToCart}
+          disabled={!fulfillment.inStock}
+        >
+          {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
         </Button>
       </div>
 
@@ -176,23 +217,37 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                   </span>
                 </p>
                 <p className="mt-2 text-sm text-[var(--huza-muted)]">
-                  {fulfillment.inStock ? t("inStock") : t("preparingStock")} · ★{" "}
+                  {fulfillment.stockLabel}
+                  {fulfillment.onlyNLeft != null ? ` · Only ${fulfillment.onlyNLeft} left` : ""} · ★{" "}
                   {product.ratingAvg.toFixed(1)}
                 </p>
-                <p className="mt-1 text-sm font-medium text-[var(--huza-green-dark)]">
-                  {t("arrivesIn")} {fulfillment.etaLabel}
-                </p>
+                {fulfillment.inStock && (
+                  <p className="mt-1 text-sm font-medium text-[var(--huza-green-dark)]">
+                    {t("arrivesIn")} {fulfillment.etaLabel}
+                  </p>
+                )}
+                {qualityChecked && (
+                  <div className="mt-2">
+                    <QualityCheckedBadge />
+                  </div>
+                )}
                 {product.originDistrict && (
                   <p className="mt-2 text-sm">Origin: {product.originDistrict}</p>
                 )}
+                {formatHarvestRelative(product.harvestDate) && (
+                  <p className="mt-1 text-sm text-[var(--huza-muted)]">
+                    Harvested: {formatHarvestRelative(product.harvestDate)}
+                  </p>
+                )}
                 <div className="mt-4 flex flex-col gap-2">
                   <Button
+                    disabled={!fulfillment.inStock}
                     onClick={() => {
                       addToCart();
                       setQuick(false);
                     }}
                   >
-                    {t("addToCart")}
+                    {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
                   </Button>
                   <Link href={`/products/${product.id}`} className="text-center text-sm font-semibold text-[var(--huza-green)]">
                     Full details →

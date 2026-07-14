@@ -114,6 +114,8 @@ export async function getSearchSuggestions(q: string, take = 8) {
           { nameEn: { contains: query, mode: "insensitive" } },
           { nameFr: { contains: query, mode: "insensitive" } },
           { nameRw: { contains: query, mode: "insensitive" } },
+          { descriptionEn: { contains: query, mode: "insensitive" } },
+          { keywords: { contains: query, mode: "insensitive" } },
         ],
       },
       select: { id: true, nameEn: true },

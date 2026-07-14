@@ -6,10 +6,10 @@ export const revalidate = 90;
 
 export default async function Page() {
   const {
-    shopProducts,
     featured,
     bestSellers,
     freshToday,
+    categoryPreviews,
     categories,
     promotions,
     testimonials,
@@ -18,10 +18,10 @@ export default async function Page() {
 
   return (
     <HomePage
-      shopProducts={shopProducts}
-      featured={featured.length ? featured : shopProducts.slice(0, 8)}
+      featured={featured}
       bestSellers={bestSellers}
-      freshToday={freshToday.length ? freshToday : shopProducts.slice(0, 8)}
+      freshToday={freshToday}
+      categoryPreviews={categoryPreviews}
       categories={categories}
       promotions={promotions}
       testimonials={testimonials}

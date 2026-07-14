@@ -20,9 +20,8 @@ export const catalogService = {
     if (cached) return cached;
 
     const now = new Date();
-    const [lists, categories, promotions, testimonials, status] = await Promise.all([
-      productRepository.findHomeLists(8),
-      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    const [lists, promotions, testimonials, status] = await Promise.all([
+      productRepository.findHomeLists(4),
       prisma.promotion.findMany({
         where: {
           isActive: true,
@@ -32,7 +31,7 @@ export const catalogService = {
           ],
         },
         orderBy: [{ isFlashSale: "desc" }, { createdAt: "desc" }],
-        take: 12,
+        take: 6,
       }),
       prisma.testimonial.findMany({ where: { isFeatured: true }, take: 3 }),
       getBusinessStatus(),
@@ -40,7 +39,7 @@ export const catalogService = {
 
     const payload: HomeCatalog = {
       ...lists,
-      categories,
+      categories: lists.categoryPreviews.map((c) => c.category),
       promotions,
       testimonials,
       isOpen: status.isOpen,
@@ -54,7 +53,7 @@ export const catalogService = {
   async getBestSellers() {
     const cached = await cacheGet(CacheKeys.bestSellers);
     if (cached) return cached;
-    const { bestSellers } = await productRepository.findHomeLists(8);
+    const { bestSellers } = await productRepository.findHomeLists(4);
     await cacheSet(CacheKeys.bestSellers, bestSellers, 60);
     return bestSellers;
   },

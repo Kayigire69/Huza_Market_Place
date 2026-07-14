@@ -4,12 +4,13 @@ import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { useCart } from "@/lib/cart-store";
-import { formatRwf, formatUnit } from "@/lib/utils";
+import { formatRwf, formatUnit, formatHarvestRelative } from "@/lib/utils";
 import { productDescription, productName, categoryName } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { MessageCircle, Minus, Plus, Share2 } from "lucide-react";
 import { pushRecentlyViewed } from "@/lib/recently-viewed";
 import { productFulfillmentLabel } from "@/lib/delivery-eta";
+import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
 
 type Product = {
   id: string;
@@ -23,6 +24,7 @@ type Product = {
   unit: string;
   stockQty: number;
   reservedQty?: number;
+  lowStockAt?: number;
   availability?: string | null;
   isOrganic: boolean;
   ratingAvg: number;
@@ -30,6 +32,9 @@ type Product = {
   location: string | null;
   originDistrict?: string | null;
   nutritionalInfo?: string | null;
+  reviewStatus?: string | null;
+  reviewedAt?: string | Date | null;
+  harvestDate?: string | Date | null;
   availableDistricts?: string[];
   images: { id: string; url: string; alt: string | null; isCover?: boolean }[];
   /** Internal only — not displayed on storefront */
@@ -40,7 +45,13 @@ type Product = {
   category: { nameEn: string; nameFr: string; nameRw: string; slug: string };
 };
 
-export function ProductDetailClient({ product }: { product: Product }) {
+export function ProductDetailClient({
+  product,
+  whatsappUrl = "https://wa.me/250788000000",
+}: {
+  product: Product;
+  whatsappUrl?: string;
+}) {
   const { locale, t } = useLocale();
   const addItem = useCart((s) => s.addItem);
   const [qty, setQty] = useState(1);
@@ -69,16 +80,37 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const shareText = encodeURIComponent(`${name} on HUZA FRESH — ${formatRwf(product.price)}`);
 
   const available = Math.max(0, product.stockQty - (product.reservedQty || 0));
-  const fulfillment = productFulfillmentLabel(product.stockQty, product.reservedQty || 0);
+  const fulfillment = productFulfillmentLabel(
+    product.stockQty,
+    product.reservedQty || 0,
+    "KIGALI",
+    undefined,
+    product.lowStockAt ?? 5
+  );
+  const qualityChecked = !product.reviewStatus || product.reviewStatus === "APPROVED";
+  const harvestLabel = formatHarvestRelative(product.harvestDate);
+  const inspectedLabel = product.reviewedAt
+    ? new Date(product.reviewedAt).toLocaleDateString()
+    : null;
+
   const availabilityLabel = useMemo(() => {
     if (product.availability === "COMING_SOON") return "Coming soon";
-    if (product.availability === "TEMPORARILY_UNAVAILABLE") return t("preparingStock");
     if (!fulfillment.inStock || product.availability === "OUT_OF_STOCK") {
-      return t("preparingStock");
+      return "Out of Stock";
     }
-    if (available <= 5 || product.availability === "LOW_STOCK") return t("lowStock");
+    if (available <= (product.lowStockAt ?? 5) || product.availability === "LOW_STOCK") {
+      return t("lowStock");
+    }
     return t("inStock");
-  }, [available, fulfillment.inStock, product.availability, t]);
+  }, [available, fulfillment.inStock, product.availability, product.lowStockAt, t]);
+
+  const waNumber = whatsappUrl.replace(/.*wa\.me\//, "").replace(/\D/g, "") || "250788000000";
+  const orderViaWhatsApp = () => {
+    const message = encodeURIComponent(
+      `Hello HUZA,\n\nI would like to order:\n\nProduct:\n${name}\n\nQuantity:\n${qty} ${formatUnit(product.unit)}\n\nPrice:\n${formatRwf(product.price)}/${formatUnit(product.unit)}\n\nPlease help me complete this order.\n\nThank you.`
+    );
+    window.open(`https://wa.me/${waNumber}?text=${message}`, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="grid lg:grid-cols-2 gap-10">
@@ -133,6 +165,14 @@ export function ProductDetailClient({ product }: { product: Product }) {
         <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold text-[var(--huza-green-dark)]">
           {name}
         </h1>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {qualityChecked && <QualityCheckedBadge />}
+          {product.isOrganic && (
+            <span className="inline-flex items-center rounded-md bg-[var(--huza-mint)] px-2.5 py-1 text-xs font-semibold text-[var(--huza-green-dark)]">
+              {t("organic")}
+            </span>
+          )}
+        </div>
         <p className="mt-2 text-sm text-[var(--huza-muted)]">
           ★ {product.ratingAvg.toFixed(1)} ({product.ratingCount} {t("reviews")})
         </p>
@@ -144,19 +184,33 @@ export function ProductDetailClient({ product }: { product: Product }) {
         </p>
         <p className="mt-2 text-sm">
           {t("availability")}: <strong>{availabilityLabel}</strong>
-          {fulfillment.inStock ? ` · ${available} ready now` : ""}
+          {fulfillment.onlyNLeft != null ? ` · Only ${fulfillment.onlyNLeft} units left` : ""}
+          {fulfillment.inStock && fulfillment.onlyNLeft == null ? ` · ${available} ready now` : ""}
         </p>
-        <p className="mt-1 text-sm font-semibold text-[var(--huza-green-dark)]">
-          {t("deliveryEta")}: {fulfillment.etaLabel}
-        </p>
-        {!fulfillment.inStock && (
-          <p className="mt-1 text-xs text-[var(--huza-muted)]">{t("restockEtaHint")}</p>
-        )}
-        {product.originDistrict && (
-          <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            Origin: <strong className="text-[var(--huza-ink)]">{product.originDistrict}</strong>
+        {fulfillment.inStock && (
+          <p className="mt-1 text-sm font-semibold text-[var(--huza-green-dark)]">
+            {t("deliveryEta")}: {fulfillment.etaLabel}
           </p>
         )}
+        <div className="mt-4 rounded-xl border border-[var(--huza-line)] bg-[var(--huza-mint)]/40 p-4 text-sm space-y-1">
+          <p className="font-semibold text-[var(--huza-green-dark)]">Product traceability</p>
+          {product.originDistrict && (
+            <p>
+              Origin: <strong>{product.originDistrict}</strong>
+            </p>
+          )}
+          {harvestLabel && (
+            <p>
+              Harvested: <strong>{harvestLabel}</strong>
+            </p>
+          )}
+          {inspectedLabel && (
+            <p>
+              Inspection date: <strong>{inspectedLabel}</strong>
+            </p>
+          )}
+          {qualityChecked && <p>Quality: <strong>HUZA Verified</strong></p>}
+        </div>
         {product.availableDistricts && product.availableDistricts.length > 0 && (
           <p className="mt-1 text-sm text-[var(--huza-muted)]">
             Delivery coverage: {product.availableDistricts.join(", ")}
@@ -177,36 +231,49 @@ export function ProductDetailClient({ product }: { product: Product }) {
             <button
               className="rounded-lg border border-[var(--huza-line)] p-2"
               onClick={() =>
-                setQty((q) => Math.min(fulfillment.inStock ? Math.max(available, 1) : 99, q + 1))
+                setQty((q) => Math.min(fulfillment.inStock ? Math.max(available, 1) : 1, q + 1))
               }
               aria-label="Increase"
+              disabled={!fulfillment.inStock}
             >
               <Plus className="size-4" />
             </button>
           </div>
         </div>
 
-        <Button
-          className="mt-6 w-full sm:w-auto"
-          size="lg"
-          onClick={() =>
-            addItem(
-              {
-                productId: product.id,
-                name,
-                price: product.price,
-                unit: product.unit,
-                imageUrl: product.images[0]?.url ?? "/logo.svg",
-                supplierId: product.supplier?.id ?? "",
-                supplierName: "Youth Huza",
-                stockQty: product.stockQty,
-              },
-              qty
-            )
-          }
-        >
-          {t("addToCart")}
-        </Button>
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <Button
+            className="w-full sm:w-auto"
+            size="lg"
+            disabled={!fulfillment.inStock}
+            onClick={() =>
+              addItem(
+                {
+                  productId: product.id,
+                  name,
+                  price: product.price,
+                  unit: product.unit,
+                  imageUrl: product.images[0]?.url ?? "/logo.svg",
+                  supplierId: product.supplier?.id ?? "",
+                  supplierName: "Youth Huza",
+                  stockQty: product.stockQty,
+                },
+                qty
+              )
+            }
+          >
+            {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
+          </Button>
+          <Button
+            className="w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebe57] text-white"
+            size="lg"
+            variant="secondary"
+            onClick={orderViaWhatsApp}
+          >
+            <MessageCircle className="size-4 mr-2 inline" />
+            Order via WhatsApp
+          </Button>
+        </div>
 
         <div className="mt-6">
           <p className="label">{t("share")}</p>
@@ -217,7 +284,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               rel="noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-3 py-2 text-sm font-semibold text-white"
             >
-              <MessageCircle className="size-4" /> WhatsApp
+              <MessageCircle className="size-4" /> Share on WhatsApp
             </a>
             <a
               href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}

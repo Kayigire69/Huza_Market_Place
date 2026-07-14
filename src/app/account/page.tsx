@@ -53,10 +53,24 @@ export default async function AccountPage() {
       <p className="mt-2 text-[var(--huza-muted)]">
         Welcome, {user.fullName}
       </p>
+      <div className="mt-4 flex flex-wrap gap-3 text-sm">
+        <a href="#orders" className="font-semibold text-[var(--huza-green)]">
+          Orders
+        </a>
+        <Link href="/wishlist" className="font-semibold text-[var(--huza-green)]">
+          Wishlist
+        </Link>
+        <a href="#addresses" className="font-semibold text-[var(--huza-green)]">
+          Addresses
+        </a>
+        <Link href="/track" className="font-semibold text-[var(--huza-green)]">
+          Track order
+        </Link>
+      </div>
 
       <div className="mt-8 grid lg:grid-cols-3 gap-6">
         <section className="lg:col-span-2 space-y-6">
-          <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+          <div id="orders" className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-4">Order history</h2>
             {user.orders.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No orders yet.</p>
@@ -149,7 +163,7 @@ export default async function AccountPage() {
           </div>
         </section>
 
-        <aside className="space-y-6">
+        <aside className="space-y-6" id="addresses">
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-3">Saved addresses</h2>
             {user.addresses.length === 0 ? (
@@ -182,7 +196,17 @@ export default async function AccountPage() {
             )}
           </div>
 
-          <AccountActions />
+          <AccountActions
+            fullName={user.fullName}
+            phone={user.phone}
+            loyaltyPoints={user.loyaltyPoints}
+            addresses={user.addresses.map((a) => ({
+              id: a.id,
+              label: a.label,
+              fullAddress: a.fullAddress,
+              district: a.district,
+            }))}
+          />
         </aside>
       </div>
     </div>

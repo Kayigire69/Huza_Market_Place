@@ -351,6 +351,10 @@ model Product {
   nutritionalInfo String?
   /// Origin district (e.g. Nyabihu) — never supplier name
   originDistrict  String?
+  /// Optional harvest date for storefront traceability
+  harvestDate     DateTime?
+  /// Search keywords / tags (comma or space separated)
+  keywords        String?
   price         Int
   /// Latest wholesale / farm-gate cost Huza pays (internal — never shown to customers)
   purchasePrice Int?

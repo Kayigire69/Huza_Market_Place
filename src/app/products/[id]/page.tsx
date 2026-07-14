@@ -10,6 +10,7 @@ import {
   getSmartRecommendations,
 } from "@/lib/recommendations";
 import { cacheGet, cacheSet } from "@/lib/redis";
+import { getSetting } from "@/services/settings.service";
 
 export const revalidate = 60;
 
@@ -65,6 +66,10 @@ export default async function ProductDetailPage({
         originDistrict: true,
         nutritionalInfo: true,
         availableDistricts: true,
+        reviewStatus: true,
+        reviewedAt: true,
+        harvestDate: true,
+        lowStockAt: true,
         images: {
           where: { kind: "STOREFRONT" },
           orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
@@ -96,6 +101,7 @@ export default async function ProductDetailPage({
       unit: product.unit,
       stockQty: product.stockQty,
       reservedQty: product.reservedQty,
+      lowStockAt: product.lowStockAt,
       availability: product.availability,
       isOrganic: product.isOrganic,
       ratingAvg: product.ratingAvg,
@@ -104,6 +110,9 @@ export default async function ProductDetailPage({
       originDistrict: product.originDistrict,
       nutritionalInfo: product.nutritionalInfo,
       availableDistricts: product.availableDistricts,
+      reviewStatus: product.reviewStatus,
+      reviewedAt: product.reviewedAt,
+      harvestDate: product.harvestDate,
       images: product.images,
       category: product.category,
       supplier: { id: product.supplierId },
@@ -134,10 +143,11 @@ export default async function ProductDetailPage({
   }
 
   const { storefrontProduct, fbt, recommended, reviews } = payload;
+  const whatsappUrl = await getSetting("whatsapp_url", "https://wa.me/250788000000");
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
-      <ProductDetailClient product={storefrontProduct} />
+      <ProductDetailClient product={storefrontProduct} whatsappUrl={whatsappUrl} />
 
       <section className="mt-14">
         <h2 className="section-title mb-6">Frequently bought together</h2>
