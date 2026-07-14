@@ -1,7 +1,10 @@
+/** Flat delivery fee for all HUZA destinations (Kigali, Kamonyi, Bugesera). */
+export const FLAT_DELIVERY_FEE_RWF = 5000;
+
 export const DELIVERY_FEES = {
-  KIGALI: 5000,
-  KAMONYI_RUYENZI: 5000,
-  BUGESERA_NYAMATA: 5000,
+  KIGALI: FLAT_DELIVERY_FEE_RWF,
+  KAMONYI_RUYENZI: FLAT_DELIVERY_FEE_RWF,
+  BUGESERA_NYAMATA: FLAT_DELIVERY_FEE_RWF,
 } as const;
 
 export type DeliveryZoneKey = keyof typeof DELIVERY_FEES;

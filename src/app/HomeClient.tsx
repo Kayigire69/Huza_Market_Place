@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Truck,
   MapPin,
+  Clock,
   ChevronRight,
   ShoppingBasket,
   BadgeCheck,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 import { resolveCategoryImage } from "@/lib/catalog-images";
+import { FLAT_DELIVERY_FEE_RWF, formatRwf } from "@/lib/utils";
 
 type Category = {
   id: string;
@@ -331,17 +333,32 @@ export function HomePage({
         </section>
       )}
 
-      {/* Delivery — zones only (no hardcoded minute estimates on cards) */}
+      {/* Delivery — flat fee + clear ETAs */}
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
         <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("deliveryCoverage")}</h2>
+        <div className="mb-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-4 py-3 text-sm sm:flex sm:items-center sm:justify-between">
+          <p className="font-semibold text-[var(--huza-green-dark)]">
+            {t("deliveryFeeLabel")}: {formatRwf(FLAT_DELIVERY_FEE_RWF)}
+          </p>
+          <p className="mt-1 text-xs text-[var(--huza-muted)] sm:mt-0">{t("flatDeliveryFeeHint")}</p>
+        </div>
         <div className="grid gap-2.5 sm:grid-cols-3">
-          {[t("zoneKigali"), t("zoneKamonyi"), t("zoneBugesera")].map((zone) => (
+          {[
+            { zone: t("zoneKigali"), time: t("about45min") },
+            { zone: t("zoneKamonyi"), time: t("about75min") },
+            { zone: t("zoneBugesera"), time: t("about75min") },
+          ].map((z) => (
             <div
-              key={zone}
+              key={z.zone}
               className="flex items-center gap-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-3.5 py-3"
             >
               <MapPin className="size-4 shrink-0 text-[var(--huza-green)]" aria-hidden />
-              <p className="truncate text-sm font-semibold">{zone}</p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{z.zone}</p>
+                <p className="inline-flex items-center gap-1 text-xs text-[var(--huza-muted)]">
+                  <Clock className="size-3" aria-hidden /> {z.time}
+                </p>
+              </div>
             </div>
           ))}
         </div>

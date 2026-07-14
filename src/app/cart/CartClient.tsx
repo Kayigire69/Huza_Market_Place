@@ -60,7 +60,7 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
                   </p>
                   <p className="mt-1 text-xs text-[var(--huza-muted)]">
                     {f.inStock
-                      ? `${f.stockLabel}${f.onlyNLeft ? ` · Only ${f.onlyNLeft} left` : ""} · ${t("arrivesIn")} ${f.etaLabel}`
+                      ? `${f.stockLabel}${f.onlyNLeft ? ` · Only ${f.onlyNLeft} left` : ""}`
                       : `${f.stockLabel}`}
                   </p>
                   <div className="mt-2 flex items-center gap-3">
@@ -114,10 +114,12 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="font-semibold">{z.labelEn}</span>
-                    <span className="text-xs text-[var(--huza-muted)]">{formatRwf(z.feeRwf)}</span>
+                    <span className="text-xs font-semibold text-[var(--huza-green-dark)]">
+                      {z.etaLabelEn}
+                    </span>
                   </span>
-                  <span className="mt-1 block text-xs font-semibold text-[var(--huza-green-dark)]">
-                    ETA {z.etaLabelEn}
+                  <span className="mt-1 block text-xs text-[var(--huza-muted)]">
+                    Delivery {formatRwf(fee)} (same for all areas)
                   </span>
                 </button>
               );

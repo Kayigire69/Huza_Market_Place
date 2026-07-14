@@ -1,5 +1,5 @@
 import {
-  DELIVERY_FEES,
+  FLAT_DELIVERY_FEE_RWF,
   type DeliveryZoneDto,
   type DeliveryZoneKey,
   isDeliveryZoneKey,
@@ -10,16 +10,16 @@ import {
  * Used for scheduling / estimatedMinutes on Delivery records.
  */
 export const ZONE_ETA_MINUTES: Record<DeliveryZoneKey, number> = {
-  KIGALI: 90,
-  KAMONYI_RUYENZI: 180,
-  BUGESERA_NYAMATA: 180,
+  KIGALI: 55,
+  KAMONYI_RUYENZI: 120,
+  BUGESERA_NYAMATA: 120,
 };
 
 /** Customer-facing ETA ranges for delivery destinations */
 export const ZONE_ETA_LABELS: Record<DeliveryZoneKey, string> = {
-  KIGALI: "45–90 minutes",
-  KAMONYI_RUYENZI: "2–3 hours",
-  BUGESERA_NYAMATA: "2–3 hours",
+  KIGALI: "45–60 minutes",
+  KAMONYI_RUYENZI: "About 2 hours",
+  BUGESERA_NYAMATA: "About 2 hours",
 };
 
 /** When Huza must source / restock before dispatch */
@@ -29,31 +29,19 @@ export function isInStock(stockQty: number, reservedQty = 0): boolean {
   return Math.max(0, stockQty - reservedQty) > 0;
 }
 
-export function formatZoneEta(zone: string, zones?: DeliveryZoneDto[]): string {
-  if (zones?.length) {
-    const match = zones.find((z) => z.code === zone);
-    if (match?.etaLabelEn) return match.etaLabelEn;
-  }
+export function formatZoneEta(zone: string, _zones?: DeliveryZoneDto[]): string {
   if (isDeliveryZoneKey(zone)) return ZONE_ETA_LABELS[zone];
-  return "45–90 minutes";
+  return ZONE_ETA_LABELS.KIGALI;
 }
 
-export function zoneEtaMinutes(zone: string, zones?: DeliveryZoneDto[]): number {
-  if (zones?.length) {
-    const match = zones.find((z) => z.code === zone);
-    if (match?.etaMinutes) return match.etaMinutes;
-  }
+export function zoneEtaMinutes(zone: string, _zones?: DeliveryZoneDto[]): number {
   if (isDeliveryZoneKey(zone)) return ZONE_ETA_MINUTES[zone];
-  return 90;
+  return ZONE_ETA_MINUTES.KIGALI;
 }
 
-export function zoneFee(zone: string, zones?: DeliveryZoneDto[]): number {
-  if (zones?.length) {
-    const match = zones.find((z) => z.code === zone);
-    if (match) return match.feeRwf;
-  }
-  if (isDeliveryZoneKey(zone)) return DELIVERY_FEES[zone];
-  return 5000;
+/** Flat 5,000 RWF for every destination. */
+export function zoneFee(_zone?: string, _zones?: DeliveryZoneDto[]): number {
+  return FLAT_DELIVERY_FEE_RWF;
 }
 
 export function formatBackorderEta(): string {
