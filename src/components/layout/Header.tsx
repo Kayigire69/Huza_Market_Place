@@ -234,9 +234,18 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile search — always available */}
-        <div className="pb-2.5 md:hidden">
+        {/* Mobile search + Categories — Tuma/Murukali shopping chrome */}
+        <div className="space-y-2 pb-2.5 md:hidden">
           <SmartSearch size="lg" />
+          <div className="flex items-center gap-2">
+            <CategoriesMenu variant="mobile" className="min-w-0 flex-1 [&_button]:rounded-full [&_button]:border [&_button]:border-[var(--huza-line)] [&_button]:bg-white [&_button]:px-3 [&_button]:py-2 [&_button]:text-sm [&_button]:font-semibold" />
+            <Link
+              href="/products?featured=1"
+              className="shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-[var(--huza-green-dark)]"
+            >
+              {t("specialOffers")}
+            </Link>
+          </div>
         </div>
 
         {/* Desktop secondary nav — shopping only */}
@@ -280,12 +289,9 @@ export function Header() {
                 ))}
               </select>
             </label>
-            <CategoriesMenu variant="mobile" onNavigate={() => setMenuOpen(false)} />
             {[
               { href: "/products?featured=1", label: t("specialOffers") },
               { href: "/track", label: t("trackOrder") },
-              { href: "/wishlist", label: t("wishlist") },
-              { href: "/support", label: t("support") },
             ].map((item) => (
               <Link
                 key={item.href}
