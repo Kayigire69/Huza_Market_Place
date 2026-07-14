@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  // Pin workspace root — parent folder had a stray lockfile that confused Next.js
+  outputFileTracingRoot: projectRoot,
   poweredByHeader: false,
   compress: true,
   images: {
