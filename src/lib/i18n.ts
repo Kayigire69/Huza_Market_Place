@@ -265,7 +265,7 @@ const en: Dict = {
   freshToday: "Fresh products today",
   flashSale: "Flash sale",
   freeDelivery: "Free delivery",
-  whyChooseHuza: "Why choose Huza",
+  whyChooseHuza: "Why Choose HUZA",
   qualityControlled: "Quality controlled",
   qualityControlledBody: "Youth Huza inspects produce before it reaches your cart.",
   oneDeliveryTeam: "One delivery team",
