@@ -36,15 +36,21 @@ function isPartnerPortal(pathname: string | null) {
   );
 }
 
-function hideMobileNav(pathname: string | null) {
+function isCheckout(pathname: string | null) {
   if (!pathname) return false;
   return pathname === "/checkout" || pathname.startsWith("/checkout/");
+}
+
+function hideMobileNav(pathname: string | null) {
+  return isCheckout(pathname);
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const partner = isPartnerPortal(pathname);
+  const checkout = isCheckout(pathname);
   const noMobileNav = hideMobileNav(pathname);
+  const storefrontChrome = !partner && !checkout;
   const [whatsappUrl, setWhatsappUrl] = useState("https://wa.me/250788000000");
   const prefetchRoutes = useMemo(() => {
     if (pathname?.startsWith("/admin")) return ADMIN_PREFETCH;
@@ -54,14 +60,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [pathname, partner]);
 
   useEffect(() => {
-    if (partner) return;
+    if (!storefrontChrome) return;
     fetch("/api/public/settings")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.whatsapp_url) setWhatsappUrl(data.whatsapp_url);
       })
       .catch(() => undefined);
-  }, [partner]);
+  }, [storefrontChrome]);
 
   return (
     <SessionProvider
@@ -72,17 +78,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <LocaleProvider>
         <RoutePrefetcher routes={prefetchRoutes} />
         {!partner && <CartHydrator />}
-        {!partner && <Header />}
+        {storefrontChrome && <Header />}
         <main
           className={
-            partner ? "min-h-screen" : noMobileNav ? "min-h-[70vh]" : "min-h-[70vh] pb-20 md:pb-0"
+            partner || checkout
+              ? "min-h-screen"
+              : noMobileNav
+                ? "min-h-[70vh]"
+                : "min-h-[70vh] pb-20 md:pb-0"
           }
         >
           {children}
         </main>
-        {!partner && <Footer />}
-        {!partner && !noMobileNav && <MobileBottomNav />}
-        {!partner && <WhatsAppFab href={whatsappUrl} />}
+        {storefrontChrome && <Footer />}
+        {storefrontChrome && !noMobileNav && <MobileBottomNav />}
+        {storefrontChrome && <WhatsAppFab href={whatsappUrl} />}
         {!partner && <ToastHost />}
       </LocaleProvider>
     </SessionProvider>

@@ -171,7 +171,7 @@ export const paymentService = {
     return payment;
   },
 
-  /** Poll provider (or expire unpaid reservations after 10 min) */
+  /** Poll provider (or expire unpaid reservations after MoMo prompt timeout) */
   async verifyPendingPayment(paymentId: string, opts?: { expireIfPending?: boolean }) {
     const payment = await paymentRepository.findById(paymentId);
     if (!payment) return { status: "NOT_FOUND" as const };
@@ -179,10 +179,14 @@ export const paymentService = {
     if (payment.status === "FAILED") return { status: "FAILED" as const };
 
     if (opts?.expireIfPending) {
-      await this.failPayment(payment.id, "Payment timed out after 10 minutes — stock reservation released");
+      await this.failPayment(
+        payment.id,
+        "Payment request expired after 3 minutes — stock reservation released"
+      );
       return { status: "FAILED" as const };
     }
 
+    // Live MTN: only the provider status (or callback) may confirm payment.
     if (
       payment.method === "MTN_MOMO" &&
       payment.externalId &&
@@ -196,6 +200,21 @@ export const paymentService = {
       if (providerStatus === "FAILED") {
         await this.failPayment(payment.id, "Customer declined or payment failed on phone");
         return { status: "FAILED" as const };
+      }
+      return { status: "PENDING" as const };
+    }
+
+    /**
+     * Demo / no live MoMo credentials: the *server* simulates a provider confirmation
+     * after a short delay. Customers never self-confirm in the browser.
+     */
+    const isDemoRef = Boolean(payment.transactionRef?.startsWith("DEMO-"));
+    if (isDemoRef) {
+      const ageMs = Date.now() - new Date(payment.createdAt).getTime();
+      const DEMO_CONFIRM_AFTER_MS = 12_000;
+      if (ageMs >= DEMO_CONFIRM_AFTER_MS) {
+        await this.confirmPayment(payment.id);
+        return { status: "CONFIRMED" as const };
       }
     }
 

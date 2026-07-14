@@ -73,13 +73,9 @@ export function ProductDetailClient({
     : cover;
 
   useEffect(() => {
-    pushRecentlyViewed({
-      id: product.id,
-      name,
-      price: product.price,
-      imageUrl: cover,
-    });
-  }, [product.id, name, product.price, cover]);
+    // Record this customer's real view (local device history → home section)
+    pushRecentlyViewed({ id: product.id });
+  }, [product.id]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = encodeURIComponent(`${name} on HUZA FRESH — ${formatRwf(product.price)}`);
