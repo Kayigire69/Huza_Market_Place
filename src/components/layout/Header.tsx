@@ -15,7 +15,7 @@ import {
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
-import { locales, type Locale } from "@/lib/i18n";
+import { locales, localeFlags, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { NAV_CATEGORIES } from "@/lib/nav-categories";
 import { SmartSearch } from "@/components/layout/SmartSearch";
@@ -139,12 +139,12 @@ export function Header() {
               id="header-lang"
               value={locale}
               onChange={(e) => setLocale(e.target.value as Locale)}
-              className="mr-1 cursor-pointer rounded-lg border-0 bg-transparent py-2 pl-2 pr-1 text-sm font-semibold text-[var(--huza-ink)] outline-none hover:bg-[var(--huza-mint)]"
+              className="mr-1 cursor-pointer rounded-lg border border-[var(--huza-line)] bg-white py-1.5 pl-2 pr-2 text-sm font-semibold text-[var(--huza-ink)] outline-none hover:bg-[var(--huza-mint)]"
               aria-label={t("language")}
             >
               {locales.map((l) => (
                 <option key={l} value={l}>
-                  {l.toUpperCase()}
+                  {localeFlags[l]} {l.toUpperCase()}
                 </option>
               ))}
             </select>

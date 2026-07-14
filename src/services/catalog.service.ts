@@ -6,23 +6,33 @@ import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 type HomeCatalog = Awaited<ReturnType<typeof productRepository.findHomeLists>> & {
   promotions: Awaited<ReturnType<typeof prisma.promotion.findMany>>;
   testimonials: Awaited<ReturnType<typeof prisma.testimonial.findMany>>;
+  customerReviews: {
+    id: string;
+    rating: number;
+    comment: string | null;
+    user: { fullName: string };
+    product: { nameEn: string } | null;
+  }[];
   isOpen: boolean;
 };
 
 /**
  * Homepage catalog with Redis caching when available.
- * Phase B: categories + popular + ready-to-eat (no N× category product strips).
  */
 export const catalogService = {
   async getHomeCatalog(): Promise<HomeCatalog> {
     const cached = await cacheGet<HomeCatalog>(CacheKeys.homeCatalog);
-    // Guard against older cache payloads missing the Phase B rails
-    if (cached?.popularNow && cached?.readyToEat && cached?.categories) {
+    if (
+      cached?.popularNow &&
+      cached?.readyToEat &&
+      cached?.categories &&
+      Array.isArray(cached.customerReviews)
+    ) {
       return cached;
     }
 
     const now = new Date();
-    const [lists, promotions, testimonials, status] = await Promise.all([
+    const [lists, promotions, testimonials, customerReviews, status] = await Promise.all([
       productRepository.findHomeLists(8),
       prisma.promotion.findMany({
         where: {
@@ -33,9 +43,26 @@ export const catalogService = {
           ],
         },
         orderBy: [{ isFlashSale: "desc" }, { createdAt: "desc" }],
-        take: 3,
+        take: 6,
       }),
       prisma.testimonial.findMany({ where: { isFeatured: true }, take: 3 }),
+      // Real customer reviews — admin-hidden and low ratings stay off the home page
+      prisma.review.findMany({
+        where: {
+          isHidden: false,
+          rating: { gte: 4 },
+          comment: { not: null },
+        },
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          user: { select: { fullName: true } },
+          product: { select: { nameEn: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      }),
       getBusinessStatus(),
     ]);
 
@@ -43,10 +70,10 @@ export const catalogService = {
       ...lists,
       promotions,
       testimonials,
+      customerReviews,
       isOpen: status.isOpen,
     };
 
-    // Bump cache key shape via short TTL; old cached payloads without popularNow expire soon
     await cacheSet(CacheKeys.homeCatalog, payload, 90);
     await cacheSet(CacheKeys.bestSellers, lists.bestSellers, 90);
     return payload;

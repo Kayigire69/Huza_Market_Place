@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Phone, Mail, MapPin } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 
 export function Footer() {
@@ -10,77 +9,44 @@ export function Footer() {
 
   return (
     <footer className="mt-20 border-t border-[var(--huza-line)] bg-[var(--huza-green-dark)] text-[#E8F5EE]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 grid gap-10 md:grid-cols-4">
-        <div className="md:col-span-1">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-5">
+        <div className="lg:col-span-1">
           <div className="flex items-center gap-3">
             <Image src="/logo.svg" alt="Youth Huza" width={48} height={48} />
             <div>
-              <p className="font-[family-name:var(--font-display)] text-xl font-bold">
-                HUZA FRESH
-              </p>
+              <p className="font-[family-name:var(--font-display)] text-xl font-bold">HUZA FRESH</p>
               <p className="text-xs uppercase tracking-[0.16em] text-[var(--huza-gold)]">
                 {t("poweredBy")}
               </p>
             </div>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-[#C8E8D4]">{t("footerAbout")}</p>
-          <p className="mt-3 text-sm font-medium text-[var(--huza-gold)]">{t("noMiddleman")}</p>
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">{t("contact")}</h3>
-          <ul className="space-y-2 text-sm text-[#C8E8D4]">
-            <li className="flex items-center gap-2">
-              <Phone className="size-4" /> +250 788 000 000
-            </li>
-            <li className="flex items-center gap-2">
-              <Mail className="size-4" /> hello@youthhuza.rw
-            </li>
-            <li className="flex items-start gap-2">
-              <MapPin className="size-4 mt-0.5" /> Kigali, Rwanda
-            </li>
-            <li>{t("hours")}</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="font-semibold text-white mb-3">{t("explore")}</h3>
+          <h3 className="mb-3 font-semibold text-white">{t("footerCompany")}</h3>
           <ul className="space-y-2 text-sm text-[#C8E8D4]">
             <li>
               <Link href="/about" className="hover:text-white">
-                {t("aboutYouthHuza")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/mission" className="hover:text-white">
-                Our Mission
-              </Link>
-            </li>
-            <li>
-              <Link href="/vision" className="hover:text-white">
-                Our Vision
-              </Link>
-            </li>
-            <li>
-              <Link href="/delivery-info" className="hover:text-white">
-                Delivery Information
-              </Link>
-            </li>
-            <li>
-              <Link href="/faq" className="hover:text-white">
-                {t("faq")}
+                {t("about")}
               </Link>
             </li>
             <li>
               <Link href="/contact" className="hover:text-white">
-                {t("contactUs")}
+                {t("contact")}
               </Link>
             </li>
             <li>
-              <Link href="/support" className="hover:text-white">
-                {t("support")}
+              <Link href="/contact" className="hover:text-white">
+                {t("careers")}
               </Link>
             </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="mb-3 font-semibold text-white">{t("footerCustomer")}</h3>
+          <ul className="space-y-2 text-sm text-[#C8E8D4]">
             <li>
               <Link href="/track" className="hover:text-white">
                 {t("trackOrder")}
@@ -91,12 +57,22 @@ export function Footer() {
                 {t("wishlist")}
               </Link>
             </li>
+            <li>
+              <Link href="/delivery-info" className="hover:text-white">
+                {t("deliveryInfo")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/faq" className="hover:text-white">
+                {t("faq")}
+              </Link>
+            </li>
           </ul>
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">{t("legalSocial")}</h3>
-          <ul className="space-y-2 text-sm text-[#C8E8D4] mb-4">
+          <h3 className="mb-3 font-semibold text-white">{t("footerLegal")}</h3>
+          <ul className="space-y-2 text-sm text-[#C8E8D4]">
             <li>
               <Link href="/privacy" className="hover:text-white">
                 {t("privacyPolicy")}
@@ -109,42 +85,49 @@ export function Footer() {
             </li>
             <li>
               <Link href="/refund-policy" className="hover:text-white">
-                Refund Policy
+                {t("refundPolicy")}
               </Link>
             </li>
-            <li>{t("deliveryZones")}</li>
-            <li>{t("kigali")}</li>
-            <li>{t("kamonyi")}</li>
-            <li>{t("bugesera")}</li>
           </ul>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/20"
-            >
-              Facebook
-            </a>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/20"
-            >
-              Instagram
-            </a>
-            <a
-              href="https://wa.me/250788000000"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/20"
-            >
-              WhatsApp
-            </a>
-          </div>
+        </div>
+
+        <div>
+          <h3 className="mb-3 font-semibold text-white">{t("followUs")}</h3>
+          <ul className="space-y-2 text-sm text-[#C8E8D4]">
+            <li>
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white"
+              >
+                Facebook
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white"
+              >
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://wa.me/250788000000"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white"
+              >
+                WhatsApp
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
+
       <div className="border-t border-white/10 py-5 text-center">
         <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-wide">
           HUZA FRESH
