@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Home, LayoutGrid, ShoppingCart, Package, User } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -12,6 +13,18 @@ export function MobileBottomNav() {
   const pathname = usePathname() || "/";
   const items = useCart((s) => s.items);
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
+  const [hash, setHash] = useState("");
+
+  useEffect(() => {
+    const sync = () => setHash(typeof window !== "undefined" ? window.location.hash : "");
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [pathname]);
+
+  const onAccount = pathname.startsWith("/account");
+  const onAuth = pathname.startsWith("/auth");
+  const onTrack = pathname.startsWith("/track");
 
   const tabs = [
     {
@@ -37,13 +50,13 @@ export function MobileBottomNav() {
       href: "/account#orders",
       label: t("orders"),
       icon: Package,
-      active: pathname.startsWith("/track"),
+      active: onTrack || (onAccount && hash === "#orders"),
     },
     {
       href: "/account",
       label: t("account"),
       icon: User,
-      active: pathname.startsWith("/account") || pathname.startsWith("/auth"),
+      active: onAuth || (onAccount && hash !== "#orders"),
     },
   ];
 

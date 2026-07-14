@@ -36,11 +36,11 @@ export function Header() {
         <div className="flex h-14 items-center gap-2 sm:h-16 sm:gap-6">
           <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="HUZA FRESH">
             <Image src="/logo.svg" alt="Youth Huza" width={36} height={36} className="sm:h-10 sm:w-10" priority />
-            <div className="hidden leading-tight sm:block">
-              <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-[var(--huza-green-dark)]">
+            <div className="min-w-0 leading-tight">
+              <p className="font-[family-name:var(--font-display)] text-[0.95rem] font-bold tracking-tight text-[var(--huza-green-dark)] sm:text-lg">
                 HUZA FRESH
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)]">
+              <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)] sm:block">
                 {t("poweredBy")}
               </p>
             </div>
