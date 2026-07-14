@@ -105,9 +105,11 @@ h3,
   min-height: min(78vh, 640px);
 }
 
+/* Mobile: keep hero under ~40% of viewport so shopping starts above the fold */
 @media (max-width: 640px) {
   .hero-home {
-    min-height: min(70vh, 560px);
+    min-height: min(42vh, 320px);
+    max-height: 360px;
   }
 }
 
