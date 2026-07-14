@@ -94,23 +94,52 @@ h3,
     linear-gradient(to top, rgba(10, 40, 24, 0.55) 0%, transparent 45%);
 }
 
+/* Legacy full-bleed hero kept for non-home pages if needed; home uses Phase 2 HeroSection */
 .hero-fullbleed {
   position: relative;
-  min-height: min(92vh, 760px);
+  min-height: 360px;
   color: white;
   overflow: hidden;
 }
 
 .hero-home {
-  min-height: min(78vh, 640px);
+  min-height: 360px;
+  max-height: 450px;
 }
 
-/* Mobile: keep hero under ~40% of viewport so shopping starts above the fold */
 @media (max-width: 640px) {
   .hero-home {
-    min-height: min(42vh, 320px);
-    max-height: 360px;
+    min-height: 220px;
+    max-height: 300px;
   }
+}
+
+@keyframes hero-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-fade-in {
+  animation: hero-fade-in 0.55s ease-out both;
+}
+
+@keyframes hero-promo-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-promo-fade {
+  animation: hero-promo-fade 0.4s ease-out both;
 }
 
 .home-surface {
