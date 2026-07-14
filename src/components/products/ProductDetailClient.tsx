@@ -12,6 +12,8 @@ import { pushRecentlyViewed } from "@/lib/recently-viewed";
 import { productFulfillmentLabel } from "@/lib/delivery-eta";
 import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
 import { resolveProductImage } from "@/lib/catalog-images";
+import { getPreparedMeta } from "@/lib/prepared-product-meta";
+import { useToastStore } from "@/components/ui/Toast";
 
 type Product = {
   id: string;
@@ -55,6 +57,7 @@ export function ProductDetailClient({
 }) {
   const { locale, t } = useLocale();
   const addItem = useCart((s) => s.addItem);
+  const showToast = useToastStore((s) => s.show);
   const [qty, setQty] = useState(1);
   const coverIdx = Math.max(
     0,
@@ -94,6 +97,8 @@ export function ProductDetailClient({
   const inspectedLabel = product.reviewedAt
     ? new Date(product.reviewedAt).toLocaleDateString()
     : null;
+
+  const prepared = getPreparedMeta(product);
 
   const availabilityLabel = useMemo(() => {
     if (product.availability === "COMING_SOON") return "Coming soon";
@@ -208,6 +213,35 @@ export function ProductDetailClient({
           )}
           {qualityChecked && <p>Quality: <strong>HUZA Verified</strong></p>}
         </div>
+
+        {prepared && (
+          <div className="mt-4 rounded-xl border border-[var(--huza-gold)]/50 bg-[#fff9ee] p-4 text-sm space-y-2">
+            <p className="font-semibold text-[var(--huza-green-dark)]">
+              🥤 {t("freshTodayBadge")} — {t("preparedDetails")}
+            </p>
+            <p>
+              <span className="text-[var(--huza-muted)]">{t("ingredients")}:</span>{" "}
+              <strong>{prepared.ingredients}</strong>
+            </p>
+            <p>
+              <span className="text-[var(--huza-muted)]">{t("bottleSize")}:</span>{" "}
+              <strong>{prepared.bottleSize}</strong>
+            </p>
+            <p>
+              <span className="text-[var(--huza-muted)]">{t("servingSize")}:</span>{" "}
+              <strong>{prepared.servingSize}</strong>
+            </p>
+            <p>
+              <span className="text-[var(--huza-muted)]">{t("storageInstructions")}:</span>{" "}
+              <strong>{prepared.storage}</strong>
+            </p>
+            <p>
+              <span className="text-[var(--huza-muted)]">{t("expiryInfo")}:</span>{" "}
+              <strong>{prepared.expiry}</strong>
+            </p>
+          </div>
+        )}
+
         {product.availableDistricts && product.availableDistricts.length > 0 && (
           <p className="mt-1 text-sm text-[var(--huza-muted)]">
             Delivery coverage: {product.availableDistricts.join(", ")}
@@ -243,7 +277,7 @@ export function ProductDetailClient({
             className="w-full sm:w-auto"
             size="lg"
             disabled={!fulfillment.inStock}
-            onClick={() =>
+            onClick={() => {
               addItem(
                 {
                   productId: product.id,
@@ -256,8 +290,9 @@ export function ProductDetailClient({
                   stockQty: product.stockQty,
                 },
                 qty
-              )
-            }
+              );
+              showToast(`✅ ${t("addedToCart")}`);
+            }}
           >
             <ShoppingCart className="size-5" aria-hidden />
             {fulfillment.inStock ? t("addToCart") : "Out of Stock"}

@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { Heart, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
-import { formatRwf, formatUnit } from "@/lib/utils";
+import { formatRwf, formatUnit, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
-import { Heart, ShoppingCart } from "lucide-react";
-import { useState } from "react";
 import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
 import { resolveProductImage } from "@/lib/catalog-images";
+import { isPreparedCategory } from "@/lib/prepared-product-meta";
+import { useToastStore } from "@/components/ui/Toast";
 
 export type ProductCardData = {
   id: string;
@@ -34,9 +36,37 @@ export type ProductCardData = {
   category?: { nameEn: string; nameFr: string; nameRw: string; slug: string };
 };
 
-export function ProductCard({ product }: { product: ProductCardData }) {
+function StarRow({ rating }: { rating: number }) {
+  const value = Math.max(0, Math.min(5, Math.round(rating || 5)));
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${value} out of 5 stars`}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={cn(
+            "size-3.5 sm:size-4",
+            i < value
+              ? "fill-[var(--huza-gold)] text-[var(--huza-gold)]"
+              : "fill-transparent text-[var(--huza-line)]"
+          )}
+          aria-hidden
+        />
+      ))}
+    </div>
+  );
+}
+
+export function ProductCard({
+  product,
+  variant = "auto",
+}: {
+  product: ProductCardData;
+  /** prepared = juices/salads “Freshly Prepared” look */
+  variant?: "auto" | "default" | "prepared";
+}) {
   const { locale, t } = useLocale();
   const addItem = useCart((s) => s.addItem);
+  const showToast = useToastStore((s) => s.show);
   const [wish, setWish] = useState(false);
   const [wishBusy, setWishBusy] = useState(false);
   const name =
@@ -46,6 +76,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const out = available <= 0;
   const lowStock = !out && available <= (product.lowStockAt ?? 5);
   const qualityChecked = !product.reviewStatus || product.reviewStatus === "APPROVED";
+  const prepared =
+    variant === "prepared" ||
+    (variant === "auto" && isPreparedCategory(product.category?.slug));
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -82,11 +115,23 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       supplierName: "Youth Huza",
       stockQty: product.stockQty,
     });
+    showToast(`✅ ${t("addedToCart")}`);
   };
 
   return (
-    <article className="group flex h-full flex-col">
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl">
+    <article
+      className={cn(
+        "group flex h-full flex-col",
+        prepared &&
+          "rounded-2xl border border-[var(--huza-line)] bg-gradient-to-b from-[#fffdf8] to-white p-2.5 shadow-[0_6px_20px_rgba(11,92,52,0.08)] ring-1 ring-[var(--huza-gold)]/35 sm:p-3"
+      )}
+    >
+      <div
+        className={cn(
+          "relative overflow-hidden",
+          prepared ? "rounded-xl" : "rounded-xl sm:rounded-2xl"
+        )}
+      >
         <Link href={`/products/${product.id}`} className="block">
           <div className="relative aspect-square bg-[var(--huza-mint)]">
             <OptimizedImage
@@ -106,18 +151,25 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         </Link>
 
-        {product.isOrganic && (
-          <span className="absolute left-2 top-2 rounded bg-[var(--huza-green-dark)] px-1.5 py-0.5 text-[9px] font-semibold text-white sm:left-3 sm:top-3 sm:px-2 sm:py-1 sm:text-xs">
-            {t("organic")}
+        {prepared ? (
+          <span className="absolute left-2 top-2 z-[1] inline-flex items-center gap-1 rounded-full bg-[#F97316] px-2 py-1 text-[10px] font-bold text-white shadow-sm sm:left-3 sm:top-3 sm:text-[11px]">
+            {product.category?.slug === "fresh-juices" ? "🥤" : "🥗"} {t("freshTodayBadge")}
           </span>
-        )}
-
-        {qualityChecked && (
-          <span
-            className={`absolute hidden sm:block ${product.isOrganic ? "left-3 top-11" : "left-3 top-3"}`}
-          >
-            <QualityCheckedBadge compact />
-          </span>
+        ) : (
+          <>
+            {product.isOrganic && (
+              <span className="absolute left-2 top-2 rounded bg-[var(--huza-green-dark)] px-1.5 py-0.5 text-[9px] font-semibold text-white sm:left-3 sm:top-3 sm:px-2 sm:py-1 sm:text-xs">
+                {t("organic")}
+              </span>
+            )}
+            {qualityChecked && (
+              <span
+                className={`absolute hidden sm:block ${product.isOrganic ? "left-3 top-11" : "left-3 top-3"}`}
+              >
+                <QualityCheckedBadge compact />
+              </span>
+            )}
+          </>
         )}
 
         <button
@@ -141,7 +193,11 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           {name}
         </Link>
 
-        <div className="mt-1 flex items-baseline gap-1.5 sm:gap-2">
+        <div className="mt-1.5">
+          <StarRow rating={product.ratingAvg > 0 ? product.ratingAvg : 5} />
+        </div>
+
+        <div className="mt-1.5 flex items-baseline gap-1.5 sm:gap-2">
           <span className="text-base font-bold text-[var(--huza-green-dark)] sm:text-lg">
             {formatRwf(product.price)}
           </span>
@@ -150,7 +206,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </span>
         </div>
 
-        {/* Spacer keeps Add to cart rows aligned across the grid */}
         <p
           className={`mt-1 text-[11px] sm:text-xs ${lowStock ? "font-medium text-amber-700" : "invisible"}`}
         >
@@ -159,7 +214,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
         <div className="mt-auto pt-2 sm:pt-3">
           <Button
-            className="hidden w-full gap-2 sm:inline-flex"
+            className={cn(
+              "hidden w-full gap-2 sm:inline-flex",
+              prepared && "bg-[#F97316] hover:bg-[#ea580c]"
+            )}
             size="sm"
             onClick={() => addToCart()}
             disabled={out}
@@ -172,7 +230,12 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             onClick={addToCart}
             disabled={out}
             aria-label={t("addToCart")}
-            className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--huza-green)] text-xs font-semibold text-white transition hover:bg-[var(--huza-green-dark)] disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+            className={cn(
+              "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-white transition disabled:pointer-events-none disabled:opacity-50 sm:hidden",
+              prepared
+                ? "bg-[#F97316] hover:bg-[#ea580c]"
+                : "bg-[var(--huza-green)] hover:bg-[var(--huza-green-dark)]"
+            )}
           >
             <ShoppingCart className="size-4" aria-hidden />
             {out ? t("outOfStock") : t("addToCart")}
