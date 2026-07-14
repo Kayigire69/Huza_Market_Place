@@ -10,13 +10,13 @@ import { HeroGallery } from "@/components/home/HeroGallery";
 import { categoryName } from "@/lib/i18n";
 import {
   ArrowRight,
-  Leaf,
   Truck,
-  ShieldCheck,
-  BadgeCheck,
   MapPin,
   Clock,
   ChevronRight,
+  ShoppingBasket,
+  BadgeCheck,
+  Bike,
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 
@@ -27,11 +27,6 @@ type Category = {
   nameFr: string;
   nameRw: string;
   imageUrl?: string | null;
-};
-
-type CategoryPreview = {
-  category: Category;
-  products: ProductCardData[];
 };
 
 type Promo = {
@@ -70,14 +65,14 @@ function SectionHeader({
   hint?: string;
 }) {
   return (
-    <div className="mb-5 flex items-end justify-between gap-3">
+    <div className="mb-4 flex items-end justify-between gap-3 sm:mb-5">
       <div className="min-w-0">
-        <h2 className="section-title">{title}</h2>
+        <h2 className="section-title text-[1.35rem] sm:text-[clamp(1.5rem,2.5vw,2rem)]">{title}</h2>
         {hint ? <p className="mt-1 text-sm text-[var(--huza-muted)]">{hint}</p> : null}
       </div>
       <Link
         href={href}
-        className="group inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-[var(--huza-green-dark)]"
+        className="group inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold text-[var(--huza-green-dark)]"
       >
         {viewAllLabel}
         <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
@@ -86,20 +81,28 @@ function SectionHeader({
   );
 }
 
+function ProductRail({ products }: { products: ProductCardData[] }) {
+  return (
+    <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+      {products.map((p) => (
+        <div key={p.id} className="w-[46%] shrink-0 snap-start sm:w-auto sm:shrink">
+          <ProductCard product={p} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function HomePage({
-  featured,
-  bestSellers,
-  freshToday,
-  categoryPreviews,
+  popularNow,
+  readyToEat,
   categories,
   promotions,
   testimonials,
   isOpen,
 }: {
-  featured: ProductCardData[];
-  bestSellers: ProductCardData[];
-  freshToday: ProductCardData[];
-  categoryPreviews: CategoryPreview[];
+  popularNow: ProductCardData[];
+  readyToEat: ProductCardData[];
   categories: Category[];
   promotions: Promo[];
   testimonials: Testimonial[];
@@ -115,12 +118,6 @@ export function HomePage({
   const comment = (x: Testimonial) =>
     locale === "fr" ? x.commentFr : locale === "rw" ? x.commentRw : x.commentEn;
 
-  // Homepage shows two category product strips; remaining categories via shop tiles + View all
-  const highlightSlugs = ["fresh-fruits", "fresh-vegetables"];
-  const highlightPreviews = categoryPreviews.filter((p) =>
-    highlightSlugs.includes(p.category.slug)
-  );
-
   const subscribe = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -133,46 +130,56 @@ export function HomePage({
     if (res.ok) (e.target as HTMLFormElement).reset();
   };
 
+  const howSteps = [
+    { n: "1", title: t("howStep1Title"), body: t("howStep1Body"), icon: ShoppingBasket },
+    { n: "2", title: t("howStep2Title"), body: t("howStep2Body"), icon: BadgeCheck },
+    { n: "3", title: t("howStep3Title"), body: t("howStep3Body"), icon: Bike },
+  ];
+
   return (
     <div className="home-surface">
       {!isOpen && (
-        <div className="bg-[var(--huza-gold)] text-[var(--huza-ink)] text-center text-sm font-medium py-2 px-4">
+        <div className="bg-[var(--huza-gold)] px-4 py-2 text-center text-sm font-medium text-[var(--huza-ink)]">
           {t("closedNotice")}
         </div>
       )}
 
       <section className="hero-fullbleed hero-home">
         <HeroGallery />
-        <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-24">
+        <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-24">
           <div className="animate-rise max-w-xl">
-            <div className="mb-5 flex items-center gap-3 sm:gap-4">
+            <div className="mb-3 flex items-center gap-2.5 sm:mb-5 sm:gap-4">
               <Image
                 src="/logo.svg"
                 alt="Youth Huza logo"
                 width={64}
                 height={64}
-                className="rounded-full shadow-lg ring-2 ring-white/35"
+                className="size-10 rounded-full shadow-lg ring-2 ring-white/35 sm:size-16"
                 priority
               />
-              <p className="font-[family-name:var(--font-display)] text-lg sm:text-2xl font-bold tracking-tight">
+              <p className="font-[family-name:var(--font-display)] text-base font-bold tracking-tight sm:text-2xl">
                 YOUTH HUZA
               </p>
             </div>
-            <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight">
+            <h1 className="font-[family-name:var(--font-display)] text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
               HUZA FRESH
             </h1>
-            <p className="mt-4 max-w-md text-base sm:text-lg text-[#E2F6EA] leading-relaxed">
+            <p className="mt-2 line-clamp-2 max-w-md text-sm leading-relaxed text-[#E2F6EA] sm:mt-4 sm:line-clamp-none sm:text-lg">
               {t("tagline")}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-3 sm:mt-8">
               <Link href="/products">
-                <Button size="lg" variant="secondary">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="px-5 py-2.5 text-sm sm:px-7 sm:py-3.5 sm:text-base"
+                >
                   {t("heroCta")} <ArrowRight className="size-4" />
                 </Button>
               </Link>
               <Link
                 href="/categories"
-                className="hidden sm:inline-flex items-center justify-center gap-2 rounded-xl border border-white/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
+                className="hidden items-center justify-center gap-2 rounded-xl border border-white/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/10 sm:inline-flex"
               >
                 {t("shopByCategory")}
               </Link>
@@ -181,37 +188,30 @@ export function HomePage({
         </div>
       </section>
 
-      <section className="border-b border-[var(--huza-line)] bg-white/80">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-4 sm:grid-cols-4 sm:gap-4 sm:px-6 sm:py-5">
-          {[
-            { icon: BadgeCheck, label: t("qualityControlled") },
-            { icon: Truck, label: t("oneDeliveryTeam") },
-            { icon: ShieldCheck, label: t("securePayments") },
-            { icon: Leaf, label: t("farmFreshStock") },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-2.5 text-sm text-[var(--huza-ink)]">
-              <item.icon className="size-5 shrink-0 text-[var(--huza-green)]" />
-              <span className="font-medium leading-snug">{item.label}</span>
-            </div>
-          ))}
-        </div>
+      {/* Compact trust strip — Murukali / Tuma style */}
+      <section className="border-b border-[var(--huza-line)] bg-white/90">
+        <p className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-2.5 text-center text-xs font-semibold text-[var(--huza-green-dark)] sm:text-sm">
+          <Truck className="size-3.5 shrink-0 text-[var(--huza-green)] sm:size-4" aria-hidden />
+          {t("trustStrip")}
+        </p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+      {/* 1. Categories first */}
+      <section className="mx-auto mt-8 max-w-7xl px-4 sm:mt-12 sm:px-6">
         <SectionHeader
           title={t("shopByCategory")}
           href="/categories"
           viewAllLabel={t("viewAll")}
           hint={t("shopByCategoryHint")}
         />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 sm:gap-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
           {categories.map((c) => (
             <Link
               key={c.id}
               href={`/products?category=${c.slug}`}
               className="group relative overflow-hidden rounded-2xl bg-[var(--huza-mint)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
             >
-              <div className="relative aspect-[4/5] sm:aspect-square">
+              <div className="relative aspect-square">
                 {c.imageUrl ? (
                   <Image
                     src={c.imageUrl}
@@ -223,8 +223,8 @@ export function HomePage({
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-[var(--huza-green)] to-[var(--huza-green-dark)]" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <p className="absolute inset-x-0 bottom-0 p-3 text-sm font-semibold text-white leading-snug">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                <p className="absolute inset-x-0 bottom-0 p-2.5 text-xs font-semibold leading-snug text-white sm:p-3 sm:text-sm">
                   {categoryName(c, locale)}
                 </p>
               </div>
@@ -233,78 +233,77 @@ export function HomePage({
         </div>
       </section>
 
-      {featured.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+      {/* 2. One popular rail */}
+      {popularNow.length > 0 && (
+        <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
           <SectionHeader
-            title={t("featured")}
-            href="/products?featured=1"
-            viewAllLabel={t("viewAll")}
-          />
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-            {featured.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {bestSellers.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
-          <SectionHeader
-            title={t("bestSellers")}
+            title={t("popularNow")}
             href="/products?best=1"
             viewAllLabel={t("viewAll")}
+            hint={t("popularNowHint")}
           />
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-            {bestSellers.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductRail products={popularNow} />
         </section>
       )}
 
-      {highlightPreviews.map(({ category, products }) =>
-        products.length > 0 ? (
-          <section key={category.id} className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
-            <SectionHeader
-              title={categoryName(category, locale)}
-              href={`/products?category=${category.slug}`}
-              viewAllLabel={t("viewAll")}
-            />
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-              {products.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </section>
-        ) : null
-      )}
-
-      {freshToday.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+      {/* 3. Ready to eat */}
+      {readyToEat.length > 0 && (
+        <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
           <SectionHeader
-            title={t("freshToday")}
-            href="/products?new=1"
+            title={t("readyToEat")}
+            href="/products?category=fruit-salads"
             viewAllLabel={t("viewAll")}
+            hint={t("readyToEatHint")}
           />
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4 sm:gap-5">
-            {freshToday.map((p) => (
-              <div key={p.id} className="w-[70%] shrink-0 snap-start sm:w-auto sm:shrink">
-                <ProductCard product={p} />
-              </div>
-            ))}
+          <ProductRail products={readyToEat} />
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(["fruit-salads", "fresh-juices"] as const).map((slug) => {
+              const cat = categories.find((c) => c.slug === slug);
+              if (!cat) return null;
+              return (
+                <Link
+                  key={slug}
+                  href={`/products?category=${slug}`}
+                  className="rounded-full border border-[var(--huza-line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--huza-green-dark)]"
+                >
+                  {categoryName(cat, locale)}
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
+
+      {/* 4. How Huza works */}
+      <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("howHuzaWorks")}</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {howSteps.map((step) => (
+            <div
+              key={step.n}
+              className="rounded-2xl border border-[var(--huza-line)] bg-white/90 p-4 sm:p-5"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--huza-mint)] text-sm font-bold text-[var(--huza-green-dark)]">
+                  {step.n}
+                </span>
+                <step.icon className="size-5 text-[var(--huza-green)]" aria-hidden />
+              </div>
+              <h3 className="mt-3 font-semibold text-[var(--huza-ink)]">{step.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--huza-muted)]">{step.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {promotions.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
-          <h2 className="section-title mb-5">{t("specialOffers")}</h2>
-          <div className="grid gap-3 md:grid-cols-3">
+        <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+          <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("specialOffers")}</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
             {promotions.slice(0, 3).map((p, i) => (
               <div
                 key={p.id}
-                className={`rounded-2xl p-5 sm:p-6 text-white ${
+                className={`rounded-2xl p-5 text-white ${
                   i % 2 === 0 ? "bg-[var(--huza-green-dark)]" : "bg-[#166B3F]"
                 }`}
               >
@@ -313,12 +312,12 @@ export function HomePage({
                     {t("flashSale")}
                   </span>
                 )}
-                <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold">
+                <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold sm:text-xl">
                   {promoTitle(p)}
                 </h3>
                 <p className="mt-2 text-sm text-[#C8E8D4]">{promoDesc(p)}</p>
                 {p.code && (
-                  <p className="mt-4 inline-block rounded-md bg-white/15 px-3 py-1 text-sm font-mono">
+                  <p className="mt-3 inline-block rounded-md bg-white/15 px-3 py-1 text-sm font-mono">
                     {p.code}
                     {p.discountPct ? ` · ${p.discountPct}%` : ""}
                     {p.freeDelivery ? ` · ${t("freeDelivery")}` : ""}
@@ -330,44 +329,45 @@ export function HomePage({
         </section>
       )}
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
-        <h2 className="section-title mb-5">{t("deliveryCoverage")}</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
+      {/* Delivery — compact */}
+      <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("deliveryCoverage")}</h2>
+        <div className="grid gap-2.5 sm:grid-cols-3">
           {[
-            { zone: t("zoneKigali"), time: t("about45min"), icon: MapPin },
-            { zone: t("zoneKamonyi"), time: t("about75min"), icon: MapPin },
-            { zone: t("zoneBugesera"), time: t("about75min"), icon: MapPin },
+            { zone: t("zoneKigali"), time: t("about45min") },
+            { zone: t("zoneKamonyi"), time: t("about75min") },
+            { zone: t("zoneBugesera"), time: t("about75min") },
           ].map((z) => (
             <div
               key={z.zone}
-              className="flex items-start gap-3 rounded-2xl border border-[var(--huza-line)] bg-white/90 p-4 sm:p-5"
+              className="flex items-center gap-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-3.5 py-3"
             >
-              <z.icon className="mt-0.5 size-5 text-[var(--huza-green)]" />
-              <div>
-                <h3 className="font-semibold">{z.zone}</h3>
-                <p className="mt-1 text-sm text-[var(--huza-muted)] inline-flex items-center gap-1">
-                  <Clock className="size-3.5" /> {t("deliveryEta")}: {z.time}
+              <MapPin className="size-4 shrink-0 text-[var(--huza-green)]" aria-hidden />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{z.zone}</p>
+                <p className="inline-flex items-center gap-1 text-xs text-[var(--huza-muted)]">
+                  <Clock className="size-3" /> {z.time}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-sm text-[var(--huza-muted)]">{t("deliveryFeeAtCheckoutHint")}</p>
+        <p className="mt-2.5 text-xs text-[var(--huza-muted)] sm:text-sm">{t("deliveryFeeAtCheckoutHint")}</p>
       </section>
 
       {testimonials.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
-          <h2 className="section-title mb-5">{t("testimonials")}</h2>
-          <div className="grid gap-4 md:grid-cols-3">
+        <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+          <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("testimonials")}</h2>
+          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 snap-x sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
             {testimonials.map((x) => (
               <blockquote
                 key={x.id}
-                className="rounded-2xl border border-[var(--huza-line)] bg-white/90 p-5"
+                className="w-[85%] shrink-0 snap-start rounded-2xl border border-[var(--huza-line)] bg-white/90 p-4 sm:w-auto"
               >
                 <p className="text-[var(--huza-gold)]">{"★".repeat(x.rating)}</p>
-                <p className="mt-3 text-sm leading-relaxed">&ldquo;{comment(x)}&rdquo;</p>
-                <footer className="mt-4">
-                  <p className="font-semibold text-sm">{x.name}</p>
+                <p className="mt-2 text-sm leading-relaxed">&ldquo;{comment(x)}&rdquo;</p>
+                <footer className="mt-3">
+                  <p className="text-sm font-semibold">{x.name}</p>
                   <p className="text-xs text-[var(--huza-muted)]">{x.role}</p>
                 </footer>
               </blockquote>
@@ -376,10 +376,10 @@ export function HomePage({
         </section>
       )}
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16 mb-8">
-        <div className="rounded-3xl bg-[var(--huza-green-dark)] text-white p-7 sm:p-10 grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
+      <section className="mx-auto mb-8 mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <div className="grid items-center gap-6 rounded-3xl bg-[var(--huza-green-dark)] p-6 text-white sm:gap-8 sm:p-10 md:grid-cols-[1.2fr_0.8fr]">
           <div>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold sm:text-3xl">
               {t("newsletter")}
             </h2>
             <p className="mt-2 text-sm text-[#C8E8D4]">{t("newsletterBody")}</p>

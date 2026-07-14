@@ -158,52 +158,56 @@ export const productRepository = {
     });
   },
 
-  async findHomeLists(take = 4) {
-    // Active products that have at least one HUZA storefront image
+  async findHomeLists(take = 8) {
     const active = {
       isActive: true,
       deletedAt: null,
       images: { some: { kind: "STOREFRONT" as const } },
     };
-    const [featured, bestSellers, freshToday, categories] = await Promise.all([
-      prisma.product.findMany({
-        where: { ...active, isFeatured: true },
-        select: productCardSelect,
-        take,
-      }),
+
+    const [categories, bestSellers, featured, readyToEat] = await Promise.all([
+      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
       prisma.product.findMany({
         where: { ...active, isBestSeller: true },
         select: productCardSelect,
         take,
       }),
       prisma.product.findMany({
-        where: { ...active, isNewArrival: true },
+        where: { ...active, isFeatured: true },
         select: productCardSelect,
-        orderBy: { createdAt: "desc" },
         take,
       }),
-      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+      prisma.product.findMany({
+        where: {
+          ...active,
+          category: { slug: { in: ["fruit-salads", "fresh-juices"] } },
+        },
+        select: productCardSelect,
+        orderBy: [{ isBestSeller: "desc" }, { isFeatured: "desc" }, { updatedAt: "desc" }],
+        take: 8,
+      }),
     ]);
 
-    // Curated category strips for homepage (4 each) — full lists live on /products
-    const categoryPreviews = await Promise.all(
-      categories.map(async (category) => {
-        const products = await prisma.product.findMany({
-          where: { ...active, categoryId: category.id },
-          select: productCardSelect,
-          orderBy: [{ isBestSeller: "desc" }, { isFeatured: "desc" }, { updatedAt: "desc" }],
-          take: 4,
-        });
-        return { category, products };
-      })
-    );
+    // One curated "Popular now" rail — prefer bestsellers, fill from featured
+    const seen = new Set<string>();
+    const popularNow: typeof bestSellers = [];
+    for (const p of [...bestSellers, ...featured]) {
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
+      popularNow.push(p);
+      if (popularNow.length >= take) break;
+    }
 
     return {
-      shopProducts: featured,
-      featured,
+      categories,
+      popularNow,
+      readyToEat,
       bestSellers,
-      freshToday,
-      categoryPreviews,
+      // kept for older callers / cache shape during transition
+      featured: popularNow.slice(0, 4),
+      freshToday: [],
+      shopProducts: popularNow,
+      categoryPreviews: [] as { category: (typeof categories)[number]; products: typeof bestSellers }[],
     };
   },
 };

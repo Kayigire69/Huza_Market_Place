@@ -1,12 +1,12 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { LocaleProvider } from "@/lib/locale-context";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { CartHydrator } from "@/components/CartHydrator";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
 import {
@@ -15,11 +15,6 @@ import {
   ADMIN_PREFETCH,
   FARMER_PREFETCH,
 } from "@/components/navigation/RoutePrefetcher";
-
-const SupportChat = dynamic(
-  () => import("@/components/SupportChat").then((m) => m.SupportChat),
-  { ssr: false }
-);
 
 /** Customer shop chrome — never shown on private partner / staff portals */
 function isPartnerPortal(pathname: string | null) {
@@ -71,9 +66,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <RoutePrefetcher routes={prefetchRoutes} />
         {!partner && <CartHydrator />}
         {!partner && <Header />}
-        <main className={partner ? "min-h-screen" : "min-h-[70vh]"}>{children}</main>
+        <main className={partner ? "min-h-screen" : "min-h-[70vh] pb-20 md:pb-0"}>{children}</main>
         {!partner && <Footer />}
-        {!partner && <SupportChat />}
+        {!partner && <MobileBottomNav />}
         {!partner && <WhatsAppFab href={whatsappUrl} />}
       </LocaleProvider>
     </SessionProvider>
