@@ -40,7 +40,7 @@ function IconButton({
       href={href}
       aria-label={label}
       className={cn(
-        "relative inline-flex size-10 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)] hover:text-[var(--huza-green-dark)]",
+        "relative inline-flex size-10 items-center justify-center rounded-full text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)] hover:text-[var(--huza-green-dark)]",
         className
       )}
     >
@@ -50,10 +50,11 @@ function IconButton({
 }
 
 /**
- * Phase 1 Navigation (locked design)
- * Desktop: logo · search · icons | Categories · Special Offers · Fresh Today
- * Mobile: logo · cart · account | search | swipe categories
- * Sticky compact: logo · search · cart · account (second row hidden)
+ * Phase 1 Navigation (locked design) — scroll-stable sticky.
+ *
+ * Only the top bar is sticky (fixed height). The second row / mobile
+ * category rail are NOT sticky — they leave the viewport naturally.
+ * No scroll listeners, no height/padding/shadow toggles → no shake.
  */
 export function Header() {
   const { t, locale, setLocale } = useLocale();
@@ -61,7 +62,6 @@ export function Header() {
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const { data: session } = useSession();
   const pathname = usePathname();
-  const [compact, setCompact] = useState(false);
   const [catsOpen, setCatsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [wishCount, setWishCount] = useState(0);
@@ -72,13 +72,6 @@ export function Header() {
     session?.user?.name?.trim().split(/\s+/)[0] ||
     session?.user?.email?.split("@")[0] ||
     "";
-
-  useEffect(() => {
-    const onScroll = () => setCompact(window.scrollY > 48);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     setCatsOpen(false);
@@ -120,9 +113,9 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white">
-      {/* ——— Top bar (always visible) ——— */}
-      <div className="border-b border-[var(--huza-line)]">
+    <header className="relative z-50 bg-white">
+      {/* ——— Sticky top bar ONLY — fixed heights, no scroll-driven class changes ——— */}
+      <div className="sticky top-0 z-50 border-b border-[var(--huza-line)] bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
           <Link
             href="/"
@@ -135,12 +128,10 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Desktop search */}
           <div className="mx-auto hidden min-w-0 flex-1 md:block md:max-w-2xl">
             <SmartSearch size="lg" />
           </div>
 
-          {/* Desktop icons */}
           <div className="ml-auto hidden items-center gap-0.5 md:flex">
             <label className="sr-only" htmlFor="header-lang">
               {t("language")}
@@ -159,29 +150,25 @@ export function Header() {
               ))}
             </select>
 
-            {!compact && (
-              <>
-                <IconButton href="/wishlist" label={t("wishlist")}>
-                  <Heart
-                    className={cn("size-5", wishCount > 0 && "fill-[#F97316] text-[#F97316]")}
-                  />
-                  {wishCount > 0 && (
-                    <span
-                      className={cn(
-                        "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold",
-                        BADGE
-                      )}
-                    >
-                      {wishCount > 9 ? "9+" : wishCount}
-                    </span>
+            <IconButton href="/wishlist" label={t("wishlist")}>
+              <Heart
+                className={cn("size-5", wishCount > 0 && "fill-[#F97316] text-[#F97316]")}
+              />
+              {wishCount > 0 && (
+                <span
+                  className={cn(
+                    "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold",
+                    BADGE
                   )}
-                </IconButton>
+                >
+                  {wishCount > 9 ? "9+" : wishCount}
+                </span>
+              )}
+            </IconButton>
 
-                <IconButton href="/track" label={t("trackOrder")}>
-                  <Package className="size-5" />
-                </IconButton>
-              </>
-            )}
+            <IconButton href="/track" label={t("trackOrder")}>
+              <Package className="size-5" />
+            </IconButton>
 
             <IconButton href="/cart" label={t("cart")}>
               <ShoppingCart className="size-5" />
@@ -197,14 +184,13 @@ export function Header() {
               )}
             </IconButton>
 
-            {/* Account */}
             <div className="relative" ref={accountRef}>
               <button
                 type="button"
                 onClick={() => setAccountOpen((v) => !v)}
                 aria-label={t("account")}
                 aria-expanded={accountOpen}
-                className="inline-flex items-center gap-1 rounded-full px-1.5 py-1.5 text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)]"
+                className="inline-flex items-center gap-1 rounded-full px-1.5 py-1.5 text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)]"
               >
                 <span className="inline-flex size-10 items-center justify-center">
                   <User className="size-5" />
@@ -280,7 +266,6 @@ export function Header() {
             </div>
           </div>
 
-          {/* Mobile: cart + account only */}
           <div className="ml-auto flex items-center gap-0.5 md:hidden">
             <IconButton href="/cart" label={t("cart")}>
               <ShoppingCart className="size-5" />
@@ -304,19 +289,14 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile search — always in sticky top */}
-        <div className="border-t border-[var(--huza-line)] px-3 py-2.5 md:hidden">
+        {/* Mobile search — fixed padding (part of sticky top) */}
+        <div className="h-[60px] border-t border-[var(--huza-line)] px-3 py-2 md:hidden">
           <SmartSearch size="lg" />
         </div>
       </div>
 
-      {/* ——— Second row: desktop shopping links (hidden when compact) ——— */}
-      <div
-        className={cn(
-          "hidden border-b border-[var(--huza-line)] bg-white md:block",
-          compact && "md:hidden"
-        )}
-      >
+      {/* ——— Not sticky: scrolls away naturally (no JS hide = no shake) ——— */}
+      <div className="hidden border-b border-[var(--huza-line)] bg-white md:block">
         <div className="relative mx-auto flex h-11 max-w-7xl items-center gap-6 px-3 sm:px-6">
           <div className="relative" ref={catsRef}>
             <button
@@ -324,7 +304,7 @@ export function Header() {
               onClick={() => setCatsOpen((v) => !v)}
               aria-expanded={catsOpen}
               className={cn(
-                "inline-flex h-9 items-center gap-2 rounded-full bg-[var(--huza-mint)] px-3.5 text-sm font-semibold text-[var(--huza-green-dark)] transition hover:bg-[#d8f0e0]",
+                "inline-flex h-9 items-center gap-2 rounded-full bg-[var(--huza-mint)] px-3.5 text-sm font-semibold text-[var(--huza-green-dark)] transition-colors hover:bg-[#d8f0e0]",
                 catsOpen && "ring-2 ring-[var(--huza-green)]/30"
               )}
             >
@@ -360,48 +340,45 @@ export function Header() {
 
           <Link
             href="/#special-offers"
-            className="text-sm font-medium text-[var(--huza-ink)] transition hover:text-[var(--huza-green)]"
+            className="text-sm font-medium text-[var(--huza-ink)] transition-colors hover:text-[var(--huza-green)]"
           >
             {t("specialOffers")}
           </Link>
 
           <Link
             href="/#fresh-today"
-            className="text-sm font-medium text-[var(--huza-ink)] transition hover:text-[var(--huza-green)]"
+            className="text-sm font-medium text-[var(--huza-ink)] transition-colors hover:text-[var(--huza-green)]"
           >
             {t("navFreshToday")}
           </Link>
         </div>
       </div>
 
-      {/* ——— Mobile category swipe (hidden when compact) ——— */}
-      {!compact && (
-        <div className="border-b border-[var(--huza-line)] bg-white md:hidden">
-          <div
-            className="-mx-0 flex gap-2 overflow-x-auto px-3 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            role="navigation"
-            aria-label={t("categories")}
-          >
-            {NAV_CATEGORIES.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/products?category=${c.slug}`}
-                className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl px-1 py-1 text-center transition active:bg-[var(--huza-mint)]"
+      <div className="border-b border-[var(--huza-line)] bg-white md:hidden">
+        <div
+          className="flex gap-2 overflow-x-auto px-3 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="navigation"
+          aria-label={t("categories")}
+        >
+          {NAV_CATEGORIES.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/products?category=${c.slug}`}
+              className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl px-1 py-1 text-center active:bg-[var(--huza-mint)]"
+            >
+              <span
+                className="flex size-11 items-center justify-center rounded-full bg-[var(--huza-mint)] text-xl"
+                aria-hidden
               >
-                <span
-                  className="flex size-11 items-center justify-center rounded-full bg-[var(--huza-mint)] text-xl"
-                  aria-hidden
-                >
-                  {c.emoji}
-                </span>
-                <span className="w-full truncate text-[10px] font-semibold leading-tight text-[var(--huza-ink)]">
-                  {catLabel(c)}
-                </span>
-              </Link>
-            ))}
-          </div>
+                {c.emoji}
+              </span>
+              <span className="w-full truncate text-[10px] font-semibold leading-tight text-[var(--huza-ink)]">
+                {catLabel(c)}
+              </span>
+            </Link>
+          ))}
         </div>
-      )}
+      </div>
     </header>
   );
 }
