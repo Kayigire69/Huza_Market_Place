@@ -7,7 +7,6 @@ export const revalidate = 90;
 export default async function Page() {
   const {
     categories,
-    categoryPreviews,
     popularNow,
     readyToEat,
     promotions,
@@ -18,7 +17,6 @@ export default async function Page() {
   return (
     <HomePage
       categories={categories}
-      categoryPreviews={categoryPreviews}
       popularNow={popularNow}
       readyToEat={readyToEat}
       promotions={promotions}

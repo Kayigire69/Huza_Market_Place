@@ -52,10 +52,11 @@ export const PRODUCT_IMAGE_BY_NAME_EN: Record<string, string> = {
 };
 
 export const CATEGORY_IMAGE_BY_SLUG: Record<string, string> = {
-  "fresh-fruits": "/images/catalog/mango.jpg",
+  /** Prefer real product photos (white-studio catalog shots), not AI collage cats */
+  "fresh-fruits": "/images/catalog/bananas.jpg",
   "fresh-vegetables": "/images/catalog/tomato.jpg",
   "fruit-seedlings": "/images/catalog/avocado-seedling.jpg",
-  "ornamental-plants": "/images/catalog/ornamental-plant.jpg",
+  "ornamental-plants": "/images/catalog/hibiscus.jpg",
   "fruit-salads": "/images/catalog/fruit-salad-cup.jpg",
   "fresh-juices": "/images/catalog/passion-juice.jpg",
 };
