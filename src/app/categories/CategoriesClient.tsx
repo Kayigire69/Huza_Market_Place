@@ -26,7 +26,7 @@ export function CategoriesClient({ categories }: { categories: Category[] }) {
         <Link
           key={c.id}
           href={`/products?category=${c.slug}`}
-          className="group relative overflow-hidden rounded-2xl ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
+          className="group relative overflow-hidden rounded-[22px] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
         >
           <div className="relative aspect-[16/10]">
             <Image
