@@ -96,19 +96,13 @@ export function HeroSection() {
               {t("heroSupport")}
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-5 sm:gap-3">
+            <div className="mt-4 sm:mt-5">
               <Link
                 href="/products"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--huza-green)] px-6 text-sm font-semibold text-white transition-colors hover:bg-[var(--huza-green-dark)] sm:h-[52px] sm:px-7 sm:text-[15px]"
               >
                 {t("heroCta")}
                 <ArrowRight className="size-4" aria-hidden />
-              </Link>
-              <Link
-                href="/#categories"
-                className="inline-flex h-12 items-center justify-center rounded-xl border border-[var(--huza-line)] bg-white px-6 text-sm font-semibold text-[var(--huza-green-dark)] transition-colors hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)] sm:h-[52px] sm:px-7 sm:text-[15px]"
-              >
-                {t("browseCategories")}
               </Link>
             </div>
 

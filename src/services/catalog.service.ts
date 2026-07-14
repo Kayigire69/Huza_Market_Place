@@ -17,7 +17,13 @@ export const catalogService = {
   async getHomeCatalog(): Promise<HomeCatalog> {
     const cached = await cacheGet<HomeCatalog>(CacheKeys.homeCatalog);
     // Guard against older cache payloads missing the Phase B rails
-    if (cached?.popularNow && cached?.readyToEat && cached?.categories) {
+    if (
+      cached?.popularNow &&
+      cached?.readyToEat &&
+      cached?.categories &&
+      Array.isArray(cached.categoryPreviews) &&
+      cached.categoryPreviews.length > 0
+    ) {
       return cached;
     }
 

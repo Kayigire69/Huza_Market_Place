@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 import { resolveCategoryImage } from "@/lib/catalog-images";
+import { productListEmoji } from "@/lib/product-emoji";
 import { FLAT_DELIVERY_FEE_RWF, formatRwf } from "@/lib/utils";
 
 type Category = {
@@ -27,6 +28,18 @@ type Category = {
   nameFr: string;
   nameRw: string;
   imageUrl?: string | null;
+};
+
+type CategoryProduct = {
+  id: string;
+  nameEn: string;
+  nameFr: string;
+  nameRw: string;
+};
+
+type CategoryPreview = {
+  category: Category;
+  products: CategoryProduct[];
 };
 
 type Promo = {
@@ -99,6 +112,7 @@ export function HomePage({
   popularNow,
   readyToEat,
   categories,
+  categoryPreviews = [],
   promotions,
   testimonials,
   isOpen,
@@ -106,12 +120,21 @@ export function HomePage({
   popularNow: ProductCardData[];
   readyToEat: ProductCardData[];
   categories: Category[];
+  categoryPreviews?: CategoryPreview[];
   promotions: Promo[];
   testimonials: Testimonial[];
   isOpen: boolean;
 }) {
   const { t, locale } = useLocale();
   const [newsletterMsg, setNewsletterMsg] = useState("");
+
+  const productName = (p: CategoryProduct) =>
+    locale === "fr" ? p.nameFr : locale === "rw" ? p.nameRw : p.nameEn;
+
+  const previews =
+    categoryPreviews.length > 0
+      ? categoryPreviews
+      : categories.map((category) => ({ category, products: [] as CategoryProduct[] }));
 
   const promoTitle = (p: Promo) =>
     locale === "fr" ? p.titleFr : locale === "rw" ? p.titleRw : p.titleEn;
@@ -160,27 +183,69 @@ export function HomePage({
           viewAllLabel={t("viewAll")}
           hint={t("shopByCategoryHint")}
         />
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
-          {categories.map((c) => (
-            <Link
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+          {previews.map(({ category: c, products }) => (
+            <article
               key={c.id}
-              href={`/products?category=${c.slug}`}
-              className="group relative overflow-hidden rounded-[22px] bg-[var(--huza-mint)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
+              className="overflow-hidden rounded-[22px] border border-[var(--huza-line)] bg-white shadow-[0_4px_16px_rgba(11,92,52,0.06)]"
             >
-              <div className="relative aspect-square">
+              <Link
+                href={`/products?category=${c.slug}`}
+                className="group relative block aspect-[16/10] overflow-hidden bg-[var(--huza-mint)]"
+              >
                 <Image
                   src={resolveCategoryImage(c.slug, c.imageUrl)}
                   alt={categoryName(c, locale)}
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                <p className="absolute inset-x-0 bottom-0 p-2.5 text-xs font-semibold leading-snug text-white sm:p-3 sm:text-sm">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <p className="absolute inset-x-0 bottom-0 p-3 text-base font-bold text-white sm:p-4 sm:text-lg">
                   {categoryName(c, locale)}
                 </p>
+              </Link>
+
+              <div className="p-3.5 sm:p-4">
+                <Link
+                  href={`/products?category=${c.slug}`}
+                  className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--huza-green)] text-sm font-semibold text-white transition-colors hover:bg-[var(--huza-green-dark)]"
+                >
+                  {t("orderNow")}
+                  <ArrowRight className="size-4" aria-hidden />
+                </Link>
+
+                {products.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
+                      {t("allCategoryProducts")}
+                    </p>
+                    <ul className="mt-1.5 space-y-1">
+                      {products.map((p) => (
+                        <li key={p.id}>
+                          <Link
+                            href={`/products/${p.id}`}
+                            className="flex items-center gap-2 rounded-lg px-1 py-1 text-sm text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)] hover:text-[var(--huza-green-dark)]"
+                          >
+                            <span className="w-5 shrink-0 text-center text-sm" aria-hidden>
+                              {productListEmoji(p.nameEn)}
+                            </span>
+                            <span className="truncate">{productName(p)}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={`/products?category=${c.slug}`}
+                      className="mt-2 inline-flex items-center gap-0.5 text-xs font-semibold text-[var(--huza-green-dark)]"
+                    >
+                      {t("viewAll")}
+                      <ChevronRight className="size-3.5" />
+                    </Link>
+                  </div>
+                )}
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       </section>
