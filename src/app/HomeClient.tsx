@@ -12,13 +12,13 @@ import {
   ArrowRight,
   Truck,
   MapPin,
-  Clock,
   ChevronRight,
   ShoppingBasket,
   BadgeCheck,
   Bike,
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
+import { resolveCategoryImage } from "@/lib/catalog-images";
 
 type Category = {
   id: string;
@@ -83,10 +83,12 @@ function SectionHeader({
 
 function ProductRail({ products }: { products: ProductCardData[] }) {
   return (
-    <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+    <div className="-mx-4 flex items-stretch gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
       {products.map((p) => (
-        <div key={p.id} className="w-[46%] shrink-0 snap-start sm:w-auto sm:shrink">
-          <ProductCard product={p} />
+        <div key={p.id} className="flex w-[46%] shrink-0 snap-start sm:w-auto sm:shrink">
+          <div className="w-full">
+            <ProductCard product={p} />
+          </div>
         </div>
       ))}
     </div>
@@ -212,17 +214,13 @@ export function HomePage({
               className="group relative overflow-hidden rounded-2xl bg-[var(--huza-mint)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
             >
               <div className="relative aspect-square">
-                {c.imageUrl ? (
-                  <Image
-                    src={c.imageUrl}
-                    alt={categoryName(c, locale)}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--huza-green)] to-[var(--huza-green-dark)]" />
-                )}
+                <Image
+                  src={resolveCategoryImage(c.slug, c.imageUrl)}
+                  alt={categoryName(c, locale)}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
                 <p className="absolute inset-x-0 bottom-0 p-2.5 text-xs font-semibold leading-snug text-white sm:p-3 sm:text-sm">
                   {categoryName(c, locale)}
@@ -264,7 +262,7 @@ export function HomePage({
                 <Link
                   key={slug}
                   href={`/products?category=${slug}`}
-                  className="rounded-full border border-[var(--huza-line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--huza-green-dark)]"
+                  className="rounded-lg border border-[var(--huza-line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--huza-green-dark)] transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
                 >
                   {categoryName(cat, locale)}
                 </Link>
@@ -301,9 +299,10 @@ export function HomePage({
           <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("specialOffers")}</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             {promotions.slice(0, 3).map((p, i) => (
-              <div
+              <Link
                 key={p.id}
-                className={`rounded-2xl p-5 text-white ${
+                href="/products"
+                className={`rounded-2xl p-5 text-white transition hover:brightness-110 ${
                   i % 2 === 0 ? "bg-[var(--huza-green-dark)]" : "bg-[#166B3F]"
                 }`}
               >
@@ -323,32 +322,26 @@ export function HomePage({
                     {p.freeDelivery ? ` · ${t("freeDelivery")}` : ""}
                   </p>
                 )}
-              </div>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--huza-gold)]">
+                  {t("heroCta")} <ArrowRight className="size-4" />
+                </span>
+              </Link>
             ))}
           </div>
         </section>
       )}
 
-      {/* Delivery — compact */}
+      {/* Delivery — zones only (no hardcoded minute estimates on cards) */}
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
         <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("deliveryCoverage")}</h2>
         <div className="grid gap-2.5 sm:grid-cols-3">
-          {[
-            { zone: t("zoneKigali"), time: t("about45min") },
-            { zone: t("zoneKamonyi"), time: t("about75min") },
-            { zone: t("zoneBugesera"), time: t("about75min") },
-          ].map((z) => (
+          {[t("zoneKigali"), t("zoneKamonyi"), t("zoneBugesera")].map((zone) => (
             <div
-              key={z.zone}
+              key={zone}
               className="flex items-center gap-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-3.5 py-3"
             >
               <MapPin className="size-4 shrink-0 text-[var(--huza-green)]" aria-hidden />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{z.zone}</p>
-                <p className="inline-flex items-center gap-1 text-xs text-[var(--huza-muted)]">
-                  <Clock className="size-3" /> {z.time}
-                </p>
-              </div>
+              <p className="truncate text-sm font-semibold">{zone}</p>
             </div>
           ))}
         </div>

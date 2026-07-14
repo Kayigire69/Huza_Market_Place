@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
-import { formatRwf, formatUnit, formatHarvestRelative } from "@/lib/utils";
+import { formatRwf, formatUnit } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
-import { Eye, Heart, Plus, X } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { useState } from "react";
-import { productFulfillmentLabel } from "@/lib/delivery-eta";
 import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
+import { resolveProductImage } from "@/lib/catalog-images";
 
 export type ProductCardData = {
   id: string;
@@ -39,27 +39,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const addItem = useCart((s) => s.addItem);
   const [wish, setWish] = useState(false);
   const [wishBusy, setWishBusy] = useState(false);
-  const [quick, setQuick] = useState(false);
   const name =
     locale === "fr" ? product.nameFr : locale === "rw" ? product.nameRw : product.nameEn;
-  const categoryName = product.category
-    ? locale === "fr"
-      ? product.category.nameFr
-      : locale === "rw"
-        ? product.category.nameRw
-        : product.category.nameEn
-    : null;
-  const image =
-    product.images.find((i) => i.isCover)?.url ?? product.images[0]?.url ?? "/logo.svg";
-  const fulfillment = productFulfillmentLabel(
-    product.stockQty,
-    product.reservedQty || 0,
-    "KIGALI",
-    undefined,
-    product.lowStockAt ?? 5
-  );
+  const image = resolveProductImage(product.nameEn, product.images);
+  const available = Math.max(0, product.stockQty - (product.reservedQty || 0));
+  const out = available <= 0;
+  const lowStock = !out && available <= (product.lowStockAt ?? 5);
   const qualityChecked = !product.reviewStatus || product.reviewStatus === "APPROVED";
-  const out = !fulfillment.inStock;
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -99,7 +85,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   };
 
   return (
-    <article className="group flex flex-col">
+    <article className="group flex h-full flex-col">
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl">
         <Link href={`/products/${product.id}`} className="block">
           <div className="relative aspect-square bg-[var(--huza-mint)]">
@@ -126,7 +112,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </span>
         )}
 
-        {/* Quality badge: desktop only — keeps mobile cards clean */}
         {qualityChecked && (
           <span
             className={`absolute hidden sm:block ${product.isOrganic ? "left-3 top-11" : "left-3 top-3"}`}
@@ -142,28 +127,21 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 shadow hover:bg-white disabled:opacity-60 sm:right-3 sm:top-3 sm:p-2"
           aria-label={t("wishlist")}
         >
-          <Heart className={`size-3.5 sm:size-4 ${wish ? "fill-red-500 text-red-500" : "text-[var(--huza-ink)]"}`} />
-        </button>
-
-        {/* Quick view: tablet/desktop only */}
-        <button
-          type="button"
-          onClick={() => setQuick(true)}
-          className="absolute bottom-2 right-2 hidden items-center gap-1 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-semibold shadow hover:bg-white sm:inline-flex sm:bottom-3 sm:right-3"
-        >
-          <Eye className="size-3.5" /> {t("quickView")}
+          <Heart
+            className={`size-3.5 sm:size-4 ${wish ? "fill-red-500 text-red-500" : "text-[var(--huza-ink)]"}`}
+          />
         </button>
       </div>
 
       <div className="flex flex-1 flex-col pt-2 sm:pt-3">
         <Link
           href={`/products/${product.id}`}
-          className="line-clamp-2 text-sm font-semibold leading-snug text-[var(--huza-ink)] hover:text-[var(--huza-green)] sm:text-[0.95rem]"
+          className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug text-[var(--huza-ink)] hover:text-[var(--huza-green)] sm:min-h-[2.75rem] sm:text-[0.95rem]"
         >
           {name}
         </Link>
 
-        <div className="mt-1 flex items-baseline gap-1.5 sm:mt-1.5 sm:gap-2">
+        <div className="mt-1 flex items-baseline gap-1.5 sm:gap-2">
           <span className="text-base font-bold text-[var(--huza-green-dark)] sm:text-lg">
             {formatRwf(product.price)}
           </span>
@@ -172,30 +150,21 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </span>
         </div>
 
-        {/* Rating + ETA: desktop only */}
-        <p className="mt-1 hidden text-xs text-[var(--huza-muted)] sm:block">
-          ★ {product.ratingAvg.toFixed(1)}
-          {fulfillment.inStock && (
-            <>
-              {" · "}
-              <span className="font-medium text-[var(--huza-green-dark)]">
-                {t("arrivesIn")} {fulfillment.etaLabel}
-              </span>
-            </>
-          )}
-          {fulfillment.stockStatus === "LOW_STOCK" && (
-            <span className="font-semibold text-amber-700"> · {t("lowStock")}</span>
-          )}
+        {/* Spacer keeps Add to cart rows aligned across the grid */}
+        <p
+          className={`mt-1 text-[11px] sm:text-xs ${lowStock ? "font-medium text-amber-700" : "invisible"}`}
+        >
+          {t("lowStock")}
         </p>
 
-        {/* Mobile: compact add; Desktop: full-width button */}
-        <div className="mt-2 flex items-center gap-2 sm:mt-3">
+        <div className="mt-auto pt-2 sm:pt-3">
           <Button
-            className="hidden w-full sm:inline-flex"
+            className="hidden w-full gap-2 sm:inline-flex"
             size="sm"
             onClick={() => addToCart()}
             disabled={out}
           >
+            <ShoppingCart className="size-4" aria-hidden />
             {out ? t("outOfStock") : t("addToCart")}
           </Button>
           <button
@@ -203,89 +172,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             onClick={addToCart}
             disabled={out}
             aria-label={t("addToCart")}
-            className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-[var(--huza-green)] text-xs font-semibold text-white transition hover:bg-[var(--huza-green-dark)] disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+            className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--huza-green)] text-xs font-semibold text-white transition hover:bg-[var(--huza-green-dark)] disabled:pointer-events-none disabled:opacity-50 sm:hidden"
           >
-            <Plus className="size-4" aria-hidden />
+            <ShoppingCart className="size-4" aria-hidden />
             {out ? t("outOfStock") : t("addToCart")}
           </button>
         </div>
       </div>
-
-      {quick && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setQuick(false)}
-        >
-          <div
-            className="relative w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="absolute right-3 top-3 rounded-full p-1 hover:bg-[var(--huza-mint)]"
-              onClick={() => setQuick(false)}
-              aria-label={t("close")}
-            >
-              <X className="size-4" />
-            </button>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--huza-mint)]">
-                <OptimizedImage src={image} alt={name} fill className="object-cover" sizes="80vw" />
-              </div>
-              <div>
-                {categoryName && <p className="text-xs text-[var(--huza-muted)]">{categoryName}</p>}
-                <h3 className="text-lg font-semibold">{name}</h3>
-                <p className="mt-2 text-xl font-bold text-[var(--huza-green-dark)]">
-                  {formatRwf(product.price)}{" "}
-                  <span className="text-sm font-medium text-[var(--huza-muted)]">
-                    / {formatUnit(product.unit)}
-                  </span>
-                </p>
-                <p className="mt-2 text-sm text-[var(--huza-muted)]">
-                  {fulfillment.stockLabel}
-                  {fulfillment.onlyNLeft != null ? ` · Only ${fulfillment.onlyNLeft} left` : ""} · ★{" "}
-                  {product.ratingAvg.toFixed(1)}
-                </p>
-                {fulfillment.inStock && (
-                  <p className="mt-1 text-sm font-medium text-[var(--huza-green-dark)]">
-                    {t("arrivesIn")} {fulfillment.etaLabel}
-                  </p>
-                )}
-                {qualityChecked && (
-                  <div className="mt-2">
-                    <QualityCheckedBadge />
-                  </div>
-                )}
-                {product.originDistrict && (
-                  <p className="mt-2 text-sm">Origin: {product.originDistrict}</p>
-                )}
-                {formatHarvestRelative(product.harvestDate) && (
-                  <p className="mt-1 text-sm text-[var(--huza-muted)]">
-                    Harvested: {formatHarvestRelative(product.harvestDate)}
-                  </p>
-                )}
-                <div className="mt-4 flex flex-col gap-2">
-                  <Button
-                    disabled={out}
-                    onClick={() => {
-                      addToCart();
-                      setQuick(false);
-                    }}
-                  >
-                    {out ? t("outOfStock") : t("addToCart")}
-                  </Button>
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="text-center text-sm font-semibold text-[var(--huza-green)]"
-                  >
-                    {t("fullDetails")} →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </article>
   );
 }
