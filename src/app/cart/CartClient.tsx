@@ -114,12 +114,9 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="font-semibold">{z.labelEn}</span>
-                    <span className="text-xs font-semibold text-[var(--huza-green-dark)]">
-                      {z.etaLabelEn}
-                    </span>
                   </span>
                   <span className="mt-1 block text-xs text-[var(--huza-muted)]">
-                    Delivery {formatRwf(fee)} (same for all areas)
+                    {formatRwf(fee)} delivery
                   </span>
                 </button>
               );
@@ -153,19 +150,11 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
               </label>
             ))}
           </div>
-          <p className="mb-2 text-sm font-semibold text-[var(--huza-green-dark)]">
-            {t("deliveryEta")}: {fulfillment.etaLabel}
+          <p className="mb-4 text-xs text-[var(--huza-muted)]">
+            {fulfillment.needsRestock
+              ? t("restockEtaHint")
+              : `${t("deliveryFee")}: ${formatRwf(fee)} · same for all areas`}
           </p>
-          {fulfillment.needsRestock && (
-            <p className="mb-4 text-xs text-[var(--huza-muted)]">{t("restockEtaHint")}</p>
-          )}
-          {!fulfillment.needsRestock && (
-            <p className="mb-4 text-xs text-[var(--huza-muted)]">
-              {slot === "TODAY"
-                ? `${t("inStockEtaHint")} ${fulfillment.etaLabel}`
-                : `ETA: ${fulfillment.etaLabel}`}
-            </p>
-          )}
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
