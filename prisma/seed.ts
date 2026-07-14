@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { PrismaClient, Role, SupplierStatus, AvailabilityStatus, UnitType, DeliveryZone, OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
