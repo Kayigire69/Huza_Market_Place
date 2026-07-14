@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
 import { categoryName } from "@/lib/i18n";
 import { ChevronRight } from "lucide-react";
+import { resolveCategoryImage } from "@/lib/catalog-images";
 
 type Category = {
   id: string;
@@ -28,17 +29,13 @@ export function CategoriesClient({ categories }: { categories: Category[] }) {
           className="group relative overflow-hidden rounded-2xl ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
         >
           <div className="relative aspect-[16/10]">
-            {c.imageUrl ? (
-              <Image
-                src={c.imageUrl}
-                alt={categoryName(c, locale)}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--huza-green)] to-[var(--huza-green-dark)]" />
-            )}
+            <Image
+              src={resolveCategoryImage(c.slug, c.imageUrl)}
+              alt={categoryName(c, locale)}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition duration-500 group-hover:scale-105"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
               <div>

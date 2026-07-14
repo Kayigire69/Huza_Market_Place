@@ -11,39 +11,19 @@ export type HeroSlide = {
 
 const DEFAULT_SLIDES: HeroSlide[] = [
   {
-    src: "/images/hero/hero-crops.jpg",
-    alt: "Fresh farm crops and vegetables",
+    src: "/images/hero/hero-farm.svg",
+    alt: "Fresh produce sourced from verified farms",
     caption: "Seasonal crops from verified farms",
   },
   {
-    src: "/images/hero/hero-shoppers.jpg",
-    alt: "Shoppers with a cart of fresh produce",
+    src: "/images/hero/hero-fresh.svg",
+    alt: "Fresh everyday shopping with HUZA FRESH",
     caption: "Everyday shopping, farm-fresh quality",
   },
   {
-    src: "/images/hero/hero-greenhouse.jpg",
-    alt: "Greenhouse filled with growing crops",
-    caption: "Greenhouses growing Huza stock",
-  },
-  {
-    src: "/images/hero/hero-goods.jpg",
-    alt: "Baskets of farm goods and pantry staples",
-    caption: "Produce, dairy, and pantry goods",
-  },
-  {
-    src: "/images/hero/hero-mobile-payment.jpg",
-    alt: "Customers paying with mobile money on a phone",
-    caption: "Pay easily with mobile money",
-  },
-  {
-    src: "/images/hero/hero-delivery-receive.jpg",
-    alt: "Customer receiving a fresh produce delivery",
+    src: "/images/hero/hero-delivery.svg",
+    alt: "Delivery of fresh produce to your door",
     caption: "Fresh delivery to your door",
-  },
-  {
-    src: "/images/hero/hero-fresh-store.jpg",
-    alt: "Shoppers in a large store of fresh products",
-    caption: "A full hall of fresh products",
   },
 ];
 

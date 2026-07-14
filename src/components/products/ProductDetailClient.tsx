@@ -7,10 +7,11 @@ import { useCart } from "@/lib/cart-store";
 import { formatRwf, formatUnit, formatHarvestRelative } from "@/lib/utils";
 import { productDescription, productName, categoryName } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
-import { MessageCircle, Minus, Plus, Share2 } from "lucide-react";
+import { MessageCircle, Minus, Plus, Share2, ShoppingCart } from "lucide-react";
 import { pushRecentlyViewed } from "@/lib/recently-viewed";
 import { productFulfillmentLabel } from "@/lib/delivery-eta";
 import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
+import { resolveProductImage } from "@/lib/catalog-images";
 
 type Product = {
   id: string;
@@ -63,18 +64,19 @@ export function ProductDetailClient({
   const [lightbox, setLightbox] = useState(false);
   const name = productName(product, locale);
   const description = productDescription(product, locale);
-  const image = product.images[active]?.url ?? "/logo.svg";
+  const cover = resolveProductImage(product.nameEn, product.images);
+  const image = product.images[active]
+    ? resolveProductImage(product.nameEn, [product.images[active]])
+    : cover;
 
   useEffect(() => {
-    const cover =
-      product.images.find((i) => i.isCover)?.url ?? product.images[0]?.url ?? "/logo.svg";
     pushRecentlyViewed({
       id: product.id,
       name,
       price: product.price,
       imageUrl: cover,
     });
-  }, [product.id, name, product.price, product.images]);
+  }, [product.id, name, product.price, cover]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = encodeURIComponent(`${name} on HUZA FRESH — ${formatRwf(product.price)}`);
@@ -187,11 +189,6 @@ export function ProductDetailClient({
           {fulfillment.onlyNLeft != null ? ` · Only ${fulfillment.onlyNLeft} units left` : ""}
           {fulfillment.inStock && fulfillment.onlyNLeft == null ? ` · ${available} ready now` : ""}
         </p>
-        {fulfillment.inStock && (
-          <p className="mt-1 text-sm font-semibold text-[var(--huza-green-dark)]">
-            {t("deliveryEta")}: {fulfillment.etaLabel}
-          </p>
-        )}
         <div className="mt-4 rounded-xl border border-[var(--huza-line)] bg-[var(--huza-mint)]/40 p-4 text-sm space-y-1">
           <p className="font-semibold text-[var(--huza-green-dark)]">Product traceability</p>
           {product.originDistrict && (
@@ -253,7 +250,7 @@ export function ProductDetailClient({
                   name,
                   price: product.price,
                   unit: product.unit,
-                  imageUrl: product.images[0]?.url ?? "/logo.svg",
+                  imageUrl: cover,
                   supplierId: product.supplier?.id ?? "",
                   supplierName: "Youth Huza",
                   stockQty: product.stockQty,
@@ -262,6 +259,7 @@ export function ProductDetailClient({
               )
             }
           >
+            <ShoppingCart className="size-5" aria-hidden />
             {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
           </Button>
           <Button
