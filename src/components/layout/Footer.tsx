@@ -10,10 +10,10 @@ export function Footer() {
 
   return (
     <footer className="mt-20 border-t border-[var(--huza-line)] bg-[var(--huza-green-dark)] text-[#E8F5EE]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 grid gap-10 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-1">
           <div className="flex items-center gap-3">
-            <Image src="/logo.svg" alt="Youth Huza" width={48} height={48} />
+            <Image src="/logo.svg" alt="HUZA FRESH" width={48} height={48} />
             <div>
               <p className="font-[family-name:var(--font-display)] text-xl font-bold">
                 HUZA FRESH
@@ -28,23 +28,7 @@ export function Footer() {
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">{t("contact")}</h3>
-          <ul className="space-y-2 text-sm text-[#C8E8D4]">
-            <li className="flex items-center gap-2">
-              <Phone className="size-4" /> +250 788 000 000
-            </li>
-            <li className="flex items-center gap-2">
-              <Mail className="size-4" /> hello@youthhuza.rw
-            </li>
-            <li className="flex items-start gap-2">
-              <MapPin className="size-4 mt-0.5" /> Kigali, Rwanda
-            </li>
-            <li>{t("hours")}</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="font-semibold text-white mb-3">{t("explore")}</h3>
+          <h3 className="mb-3 font-semibold text-white">{t("aboutUs")}</h3>
           <ul className="space-y-2 text-sm text-[#C8E8D4]">
             <li>
               <Link href="/about" className="hover:text-white">
@@ -53,22 +37,12 @@ export function Footer() {
             </li>
             <li>
               <Link href="/mission" className="hover:text-white">
-                Our Mission
+                {t("ourMission")}
               </Link>
             </li>
             <li>
               <Link href="/vision" className="hover:text-white">
-                Our Vision
-              </Link>
-            </li>
-            <li>
-              <Link href="/delivery-info" className="hover:text-white">
-                Delivery Information
-              </Link>
-            </li>
-            <li>
-              <Link href="/faq" className="hover:text-white">
-                {t("faq")}
+                {t("ourVision")}
               </Link>
             </li>
             <li>
@@ -77,8 +51,29 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/faq" className="hover:text-white">
+                {t("faq")}
+              </Link>
+            </li>
+            <li>
               <Link href="/support" className="hover:text-white">
                 {t("support")}
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="mb-3 font-semibold text-white">{t("shop")}</h3>
+          <ul className="space-y-2 text-sm text-[#C8E8D4]">
+            <li>
+              <Link href="/categories" className="hover:text-white">
+                {t("categories")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/products?featured=1" className="hover:text-white">
+                {t("specialOffers")}
               </Link>
             </li>
             <li>
@@ -91,12 +86,37 @@ export function Footer() {
                 {t("wishlist")}
               </Link>
             </li>
+            <li>
+              <Link href="/delivery-info" className="hover:text-white">
+                {t("deliveryInfo")}
+              </Link>
+            </li>
+            <li className="pt-2 text-xs uppercase tracking-wide text-[#A8D4B8]">
+              {t("deliveryZones")}
+            </li>
+            <li>{t("kigali")}</li>
+            <li>{t("kamonyi")}</li>
+            <li>{t("bugesera")}</li>
           </ul>
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">{t("legalSocial")}</h3>
-          <ul className="space-y-2 text-sm text-[#C8E8D4] mb-4">
+          <h3 className="mb-3 font-semibold text-white">{t("contact")}</h3>
+          <ul className="mb-5 space-y-2 text-sm text-[#C8E8D4]">
+            <li className="flex items-center gap-2">
+              <Phone className="size-4 shrink-0" /> +250 788 000 000
+            </li>
+            <li className="flex items-center gap-2">
+              <Mail className="size-4 shrink-0" /> hello@youthhuza.rw
+            </li>
+            <li className="flex items-start gap-2">
+              <MapPin className="mt-0.5 size-4 shrink-0" /> Kigali, Rwanda
+            </li>
+            <li>{t("hours")}</li>
+          </ul>
+
+          <h3 className="mb-3 font-semibold text-white">{t("legal")}</h3>
+          <ul className="mb-4 space-y-2 text-sm text-[#C8E8D4]">
             <li>
               <Link href="/privacy" className="hover:text-white">
                 {t("privacyPolicy")}
@@ -109,13 +129,9 @@ export function Footer() {
             </li>
             <li>
               <Link href="/refund-policy" className="hover:text-white">
-                Refund Policy
+                {t("refundPolicy")}
               </Link>
             </li>
-            <li>{t("deliveryZones")}</li>
-            <li>{t("kigali")}</li>
-            <li>{t("kamonyi")}</li>
-            <li>{t("bugesera")}</li>
           </ul>
           <div className="flex flex-wrap gap-3">
             <a

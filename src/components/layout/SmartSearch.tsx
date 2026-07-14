@@ -82,7 +82,7 @@ export function SmartSearch({
           className={cn(
             "w-full border border-[var(--huza-line)] bg-white text-[var(--huza-ink)] outline-none transition placeholder:text-[var(--huza-muted)] focus:border-[var(--huza-green)] focus:ring-2 focus:ring-[var(--huza-green)]/15",
             large
-              ? "rounded-full py-3 pl-11 pr-4 text-[15px] shadow-sm"
+              ? "rounded-full py-2.5 pl-11 pr-4 text-[15px] shadow-sm sm:py-3"
               : "rounded-full py-2.5 pl-10 pr-4 text-sm"
           )}
           autoComplete="off"

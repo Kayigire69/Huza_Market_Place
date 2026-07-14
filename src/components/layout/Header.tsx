@@ -16,7 +16,7 @@ import {
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
-import { locales, type Locale } from "@/lib/i18n";
+import { locales, localeFlags, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { SmartSearch } from "@/components/layout/SmartSearch";
 import { CategoriesMenu } from "@/components/layout/CategoriesMenu";
@@ -44,7 +44,7 @@ function IconBtn({
       href={href}
       aria-label={label}
       className={cn(
-        "inline-flex size-10 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)]",
+        "inline-flex size-9 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)] sm:size-10",
         className
       )}
     >
@@ -77,39 +77,39 @@ export function Header() {
           compact ? "max-h-0 overflow-hidden opacity-0" : "max-h-10 opacity-100"
         )}
       >
-        <p className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-3 py-1.5 text-xs font-semibold text-[var(--huza-green-dark)] sm:px-6 sm:text-[13px]">
+        <p className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-3 py-1 text-xs font-semibold text-[var(--huza-green-dark)] sm:px-6">
           <Truck className="size-3.5 shrink-0" />
           {t("deliveryBanner")}
         </p>
       </div>
 
-      <div className="mx-auto max-w-7xl px-3 sm:px-6">
-        {/* Main shopping row */}
+      <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
+        {/* Main shopping row — compact height so products show sooner */}
         <div
           className={cn(
-            "flex items-center gap-3 transition-[height] duration-200",
-            compact ? "h-14" : "h-14 sm:h-[4.25rem]"
+            "flex items-center gap-2 transition-[height] duration-200 sm:gap-3",
+            compact ? "h-12" : "h-12 sm:h-14"
           )}
         >
           <Link
             href="/"
-            className="mr-1 flex shrink-0 items-center gap-2.5 sm:mr-3"
+            className="mr-0.5 flex shrink-0 items-center gap-2 sm:mr-2 sm:gap-2.5"
             aria-label="HUZA FRESH home"
           >
             <Image
               src="/logo.svg"
               alt="HUZA FRESH"
-              width={40}
-              height={40}
-              className="h-9 w-9 sm:h-10 sm:w-10"
+              width={36}
+              height={36}
+              className="h-8 w-8 sm:h-9 sm:w-9"
               priority
             />
             <div className="hidden leading-tight min-[420px]:block">
-              <p className="font-[family-name:var(--font-display)] text-base font-bold tracking-tight text-[var(--huza-green-dark)] sm:text-lg">
+              <p className="font-[family-name:var(--font-display)] text-[15px] font-bold tracking-tight text-[var(--huza-green-dark)] sm:text-base">
                 HUZA FRESH
               </p>
               {!compact && (
-                <p className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--huza-green)] sm:block">
+                <p className="hidden text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--huza-green)] sm:block">
                   {t("poweredBy")}
                 </p>
               )}
@@ -135,15 +135,16 @@ export function Header() {
                 id="huza-lang"
                 value={locale}
                 onChange={(e) => setLocale(e.target.value as Locale)}
-                className="h-10 appearance-none rounded-full border border-[var(--huza-line)] bg-white py-0 pl-3 pr-8 text-sm font-semibold text-[var(--huza-ink)] outline-none hover:border-[var(--huza-green)]"
+                aria-label={t("language")}
+                className="h-9 appearance-none rounded-full border border-[var(--huza-line)] bg-white py-0 pl-2.5 pr-7 text-sm font-semibold text-[var(--huza-ink)] outline-none hover:border-[var(--huza-green)]"
               >
                 {locales.map((l) => (
                   <option key={l} value={l}>
-                    {LOCALE_SHORT[l]}
+                    {localeFlags[l]} {LOCALE_SHORT[l]}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 size-3.5 text-[var(--huza-muted)]" />
+              <ChevronDown className="pointer-events-none absolute right-2 size-3.5 text-[var(--huza-muted)]" />
             </div>
 
             <IconBtn
@@ -165,11 +166,11 @@ export function Header() {
             <Link
               href="/cart"
               aria-label={t("cart")}
-              className="relative inline-flex size-10 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)]"
+              className="relative inline-flex size-9 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)] sm:size-10"
             >
               <ShoppingCart className="size-5" />
               {count > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-4 translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full bg-[var(--huza-gold)] px-1 text-[10px] font-bold leading-none text-[var(--huza-ink)] ring-2 ring-[rgba(247,251,248,0.96)]">
+                <span className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-[var(--huza-gold)] px-1 text-[10px] font-bold leading-none text-[var(--huza-ink)] ring-2 ring-[rgba(247,251,248,0.96)]">
                   {count > 99 ? "99+" : count}
                 </span>
               )}
@@ -180,7 +181,7 @@ export function Header() {
                 <Link
                   href="/account"
                   aria-label={t("account")}
-                  className="inline-flex size-10 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)]"
+                  className="inline-flex size-9 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)] sm:size-10"
                 >
                   <User className="size-5" />
                 </Link>
@@ -224,7 +225,7 @@ export function Header() {
 
             <button
               type="button"
-              className="inline-flex size-10 items-center justify-center rounded-full hover:bg-[var(--huza-mint)] md:hidden"
+              className="inline-flex size-9 items-center justify-center rounded-full hover:bg-[var(--huza-mint)] sm:size-10 md:hidden"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={t("menu")}
               aria-expanded={menuOpen}
@@ -254,7 +255,7 @@ export function Header() {
             "hidden items-center gap-5 border-t border-[var(--huza-line)]/80 text-sm font-semibold transition-[max-height,opacity,padding] duration-200 md:flex",
             compact
               ? "max-h-0 overflow-hidden border-0 py-0 opacity-0"
-              : "max-h-12 py-2.5 opacity-100"
+              : "max-h-11 py-2 opacity-100"
           )}
         >
           <CategoriesMenu variant="desktop" />
@@ -284,7 +285,7 @@ export function Header() {
               >
                 {locales.map((l) => (
                   <option key={l} value={l}>
-                    {LOCALE_SHORT[l]}
+                    {localeFlags[l]} {LOCALE_SHORT[l]}
                   </option>
                 ))}
               </select>
