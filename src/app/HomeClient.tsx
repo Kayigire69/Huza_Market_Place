@@ -81,13 +81,19 @@ function SectionHeader({
   );
 }
 
-function ProductRail({ products }: { products: ProductCardData[] }) {
+function ProductRail({
+  products,
+  variant = "auto",
+}: {
+  products: ProductCardData[];
+  variant?: "auto" | "default" | "prepared";
+}) {
   return (
     <div className="-mx-4 flex items-stretch gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
       {products.map((p) => (
         <div key={p.id} className="flex w-[46%] shrink-0 snap-start sm:w-auto sm:shrink">
           <div className="w-full">
-            <ProductCard product={p} />
+            <ProductCard product={p} variant={variant} />
           </div>
         </div>
       ))}
@@ -193,47 +199,46 @@ export function HomePage({
         </div>
       </section>
 
-      {/* 2. One popular rail — anchor for header "Fresh Today" */}
+      {/* 2. Best Sellers */}
       {popularNow.length > 0 && (
         <section
           id="fresh-today"
           className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
         >
           <SectionHeader
-            title={t("popularNow")}
+            title={t("bestSellers")}
             href="/products?best=1"
             viewAllLabel={t("viewAll")}
-            hint={t("popularNowHint")}
+            hint={t("bestSellersHint")}
           />
           <ProductRail products={popularNow} />
         </section>
       )}
 
-      {/* 3. Ready to eat */}
+      {/* 3. Freshly Prepared — unique juices & salads section */}
       {readyToEat.length > 0 && (
-        <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-          <SectionHeader
-            title={t("readyToEat")}
-            href="/products?category=fruit-salads"
-            viewAllLabel={t("viewAll")}
-            hint={t("readyToEatHint")}
-          />
-          <ProductRail products={readyToEat} />
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(["fruit-salads", "fresh-juices"] as const).map((slug) => {
-              const cat = categories.find((c) => c.slug === slug);
-              if (!cat) return null;
-              return (
-                <Link
-                  key={slug}
-                  href={`/products?category=${slug}`}
-                  className="rounded-lg border border-[var(--huza-line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--huza-green-dark)] transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
-                >
-                  {categoryName(cat, locale)}
-                </Link>
-              );
-            })}
+        <section
+          id="freshly-prepared"
+          className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
+        >
+          <div className="mb-4 rounded-2xl border border-[var(--huza-gold)]/40 bg-gradient-to-r from-[#fff8e8] to-[var(--huza-mint)]/50 px-4 py-4 sm:mb-5 sm:px-5">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="section-title text-[1.35rem] sm:text-[clamp(1.5rem,2.5vw,2rem)]">
+                  {t("freshlyPrepared")}
+                </h2>
+                <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("freshlyPreparedToday")}</p>
+              </div>
+              <Link
+                href="/products?category=fruit-salads"
+                className="group inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold text-[var(--huza-green-dark)]"
+              >
+                {t("viewAll")}
+                <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
+              </Link>
+            </div>
           </div>
+          <ProductRail products={readyToEat} variant="prepared" />
         </section>
       )}
 

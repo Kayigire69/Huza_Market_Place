@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { CartHydrator } from "@/components/CartHydrator";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
+import { ToastHost } from "@/components/ui/Toast";
 import {
   RoutePrefetcher,
   STOREFRONT_PREFETCH,
@@ -82,6 +83,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {!partner && <Footer />}
         {!partner && !noMobileNav && <MobileBottomNav />}
         {!partner && <WhatsAppFab href={whatsappUrl} />}
+        {!partner && <ToastHost />}
       </LocaleProvider>
     </SessionProvider>
   );
