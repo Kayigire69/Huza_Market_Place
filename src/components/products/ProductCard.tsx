@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
-import { formatRwf, formatUnit } from "@/lib/utils";
+import { formatRwf, formatUnit, formatHarvestRelative } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
-import { Eye, Heart, X } from "lucide-react";
+import { Eye, Heart, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { productFulfillmentLabel } from "@/lib/delivery-eta";
 import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
-import { formatHarvestRelative } from "@/lib/utils";
 
 export type ProductCardData = {
   id: string;
@@ -60,6 +59,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     product.lowStockAt ?? 5
   );
   const qualityChecked = !product.reviewStatus || product.reviewStatus === "APPROVED";
+  const out = !fulfillment.inStock;
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -82,8 +82,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     }
   };
 
-  const addToCart = () => {
-    if (!fulfillment.inStock) return;
+  const addToCart = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (out) return;
     addItem({
       productId: product.id,
       name,
@@ -98,99 +100,122 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
   return (
     <article className="group flex flex-col">
-      <div className="relative block overflow-hidden rounded-2xl">
-        <Link href={`/products/${product.id}`}>
-          <div className="aspect-[4/3] bg-[var(--huza-mint)] relative">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl">
+        <Link href={`/products/${product.id}`} className="block">
+          <div className="relative aspect-square bg-[var(--huza-mint)]">
             <OptimizedImage
               src={image}
               alt={name}
               fill
               className="object-cover transition duration-500 group-hover:scale-105"
-              sizes="(max-width:768px) 50vw, 25vw"
+              sizes="(max-width:768px) 45vw, 22vw"
             />
+            {out && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/45">
+                <span className="rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700 sm:text-xs">
+                  {t("outOfStock")}
+                </span>
+              </div>
+            )}
           </div>
         </Link>
+
         {product.isOrganic && (
-          <span className="absolute left-3 top-3 bg-[var(--huza-green-dark)] text-white text-xs font-semibold px-2.5 py-1 rounded-md">
+          <span className="absolute left-2 top-2 rounded bg-[var(--huza-green-dark)] px-1.5 py-0.5 text-[9px] font-semibold text-white sm:left-3 sm:top-3 sm:px-2 sm:py-1 sm:text-xs">
             {t("organic")}
           </span>
         )}
+
+        {/* Quality badge: desktop only — keeps mobile cards clean */}
         {qualityChecked && (
-          <span className={`absolute ${product.isOrganic ? "left-3 top-11" : "left-3 top-3"}`}>
+          <span
+            className={`absolute hidden sm:block ${product.isOrganic ? "left-3 top-11" : "left-3 top-3"}`}
+          >
             <QualityCheckedBadge compact />
           </span>
         )}
+
         <button
           type="button"
           onClick={toggleWishlist}
           disabled={wishBusy}
-          className="absolute right-3 top-3 rounded-full bg-white/90 p-2 shadow hover:bg-white disabled:opacity-60"
-          aria-label="Wishlist"
+          className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 shadow hover:bg-white disabled:opacity-60 sm:right-3 sm:top-3 sm:p-2"
+          aria-label={t("wishlist")}
         >
-          <Heart className={`size-4 ${wish ? "fill-red-500 text-red-500" : "text-[var(--huza-ink)]"}`} />
+          <Heart className={`size-3.5 sm:size-4 ${wish ? "fill-red-500 text-red-500" : "text-[var(--huza-ink)]"}`} />
         </button>
+
+        {/* Quick view: tablet/desktop only */}
         <button
           type="button"
           onClick={() => setQuick(true)}
-          className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-semibold shadow hover:bg-white"
+          className="absolute bottom-2 right-2 hidden items-center gap-1 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-semibold shadow hover:bg-white sm:inline-flex sm:bottom-3 sm:right-3"
         >
           <Eye className="size-3.5" /> Quick view
         </button>
       </div>
-      <div className="pt-3 flex flex-col flex-1">
-        {categoryName && (
-          <p className="text-[10px] uppercase tracking-wide text-[var(--huza-muted)]">{categoryName}</p>
-        )}
+
+      <div className="flex flex-1 flex-col pt-2 sm:pt-3">
         <Link
           href={`/products/${product.id}`}
-          className="font-semibold text-[var(--huza-ink)] hover:text-[var(--huza-green)]"
+          className="line-clamp-2 text-sm font-semibold leading-snug text-[var(--huza-ink)] hover:text-[var(--huza-green)] sm:text-[0.95rem]"
         >
           {name}
         </Link>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-lg font-bold text-[var(--huza-green-dark)]">
+
+        <div className="mt-1 flex items-baseline gap-1.5 sm:mt-1.5 sm:gap-2">
+          <span className="text-base font-bold text-[var(--huza-green-dark)] sm:text-lg">
             {formatRwf(product.price)}
           </span>
-          <span className="text-sm text-[var(--huza-muted)]">/ {formatUnit(product.unit)}</span>
-        </div>
-        <p className="mt-1 text-xs text-[var(--huza-muted)]">
-          ★ {product.ratingAvg.toFixed(1)} ·{" "}
-          <span
-            className={
-              fulfillment.stockStatus === "OUT_OF_STOCK"
-                ? "text-red-700 font-semibold"
-                : fulfillment.stockStatus === "LOW_STOCK"
-                  ? "text-amber-700 font-semibold"
-                  : "text-[var(--huza-green-dark)] font-semibold"
-            }
-          >
-            {fulfillment.stockStatus === "OUT_OF_STOCK"
-              ? "Out of Stock"
-              : fulfillment.stockStatus === "LOW_STOCK"
-                ? t("lowStock")
-                : t("inStock")}
+          <span className="text-xs text-[var(--huza-muted)] sm:text-sm">
+            / {formatUnit(product.unit)}
           </span>
-          {fulfillment.onlyNLeft != null && (
-            <span className="text-amber-800"> · Only {fulfillment.onlyNLeft} left</span>
+        </div>
+
+        {/* Rating + ETA: desktop only */}
+        <p className="mt-1 hidden text-xs text-[var(--huza-muted)] sm:block">
+          ★ {product.ratingAvg.toFixed(1)}
+          {fulfillment.inStock && (
+            <>
+              {" · "}
+              <span className="font-medium text-[var(--huza-green-dark)]">
+                {t("arrivesIn")} {fulfillment.etaLabel}
+              </span>
+            </>
+          )}
+          {fulfillment.stockStatus === "LOW_STOCK" && (
+            <span className="font-semibold text-amber-700"> · {t("lowStock")}</span>
           )}
         </p>
-        {fulfillment.inStock && (
-          <p className="mt-0.5 text-xs font-medium text-[var(--huza-green-dark)]">
-            {t("arrivesIn")} {fulfillment.etaLabel}
-          </p>
-        )}
-        <Button
-          className="mt-3 w-full"
-          size="sm"
-          onClick={addToCart}
-          disabled={!fulfillment.inStock}
-        >
-          {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
-        </Button>
+
+        {/* Mobile: compact add; Desktop: full-width button */}
+        <div className="mt-2 flex items-center gap-2 sm:mt-3">
+          <Button
+            className="hidden w-full sm:inline-flex"
+            size="sm"
+            onClick={() => addToCart()}
+            disabled={out}
+          >
+            {out ? t("outOfStock") : t("addToCart")}
+          </Button>
+          <button
+            type="button"
+            onClick={addToCart}
+            disabled={out}
+            aria-label={t("addToCart")}
+            className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-[var(--huza-green)] text-xs font-semibold text-white transition hover:bg-[var(--huza-green-dark)] disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+          >
+            <Plus className="size-4" aria-hidden />
+            {out ? t("outOfStock") : t("addToCart")}
+          </button>
+        </div>
       </div>
 
       {quick && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4" onClick={() => setQuick(false)}>
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setQuick(false)}
+        >
           <div
             className="relative w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -203,13 +228,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             >
               <X className="size-4" />
             </button>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="relative aspect-square rounded-xl overflow-hidden bg-[var(--huza-mint)]">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--huza-mint)]">
                 <OptimizedImage src={image} alt={name} fill className="object-cover" sizes="80vw" />
               </div>
               <div>
                 {categoryName && <p className="text-xs text-[var(--huza-muted)]">{categoryName}</p>}
-                <h3 className="font-semibold text-lg">{name}</h3>
+                <h3 className="text-lg font-semibold">{name}</h3>
                 <p className="mt-2 text-xl font-bold text-[var(--huza-green-dark)]">
                   {formatRwf(product.price)}{" "}
                   <span className="text-sm font-medium text-[var(--huza-muted)]">
@@ -241,15 +266,18 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                 )}
                 <div className="mt-4 flex flex-col gap-2">
                   <Button
-                    disabled={!fulfillment.inStock}
+                    disabled={out}
                     onClick={() => {
                       addToCart();
                       setQuick(false);
                     }}
                   >
-                    {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
+                    {out ? t("outOfStock") : t("addToCart")}
                   </Button>
-                  <Link href={`/products/${product.id}`} className="text-center text-sm font-semibold text-[var(--huza-green)]">
+                  <Link
+                    href={`/products/${product.id}`}
+                    className="text-center text-sm font-semibold text-[var(--huza-green)]"
+                  >
                     Full details →
                   </Link>
                 </div>

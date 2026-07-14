@@ -6,11 +6,9 @@ export const revalidate = 90;
 
 export default async function Page() {
   const {
-    featured,
-    bestSellers,
-    freshToday,
-    categoryPreviews,
     categories,
+    popularNow,
+    readyToEat,
     promotions,
     testimonials,
     isOpen,
@@ -18,11 +16,9 @@ export default async function Page() {
 
   return (
     <HomePage
-      featured={featured}
-      bestSellers={bestSellers}
-      freshToday={freshToday}
-      categoryPreviews={categoryPreviews}
       categories={categories}
+      popularNow={popularNow}
+      readyToEat={readyToEat}
       promotions={promotions}
       testimonials={testimonials}
       isOpen={isOpen}

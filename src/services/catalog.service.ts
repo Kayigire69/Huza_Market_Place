@@ -4,15 +4,14 @@ import { getBusinessStatus } from "@/lib/business-hours";
 import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 
 type HomeCatalog = Awaited<ReturnType<typeof productRepository.findHomeLists>> & {
-  categories: Awaited<ReturnType<typeof prisma.category.findMany>>;
   promotions: Awaited<ReturnType<typeof prisma.promotion.findMany>>;
   testimonials: Awaited<ReturnType<typeof prisma.testimonial.findMany>>;
   isOpen: boolean;
 };
 
 /**
- * Homepage / bestsellers catalog with Redis caching when available.
- * Special offers come from admin-posted Promotion rows (not hardcoded).
+ * Homepage catalog with Redis caching when available.
+ * Phase B: categories + popular + ready-to-eat (no N× category product strips).
  */
 export const catalogService = {
   async getHomeCatalog(): Promise<HomeCatalog> {
@@ -21,7 +20,7 @@ export const catalogService = {
 
     const now = new Date();
     const [lists, promotions, testimonials, status] = await Promise.all([
-      productRepository.findHomeLists(4),
+      productRepository.findHomeLists(8),
       prisma.promotion.findMany({
         where: {
           isActive: true,
@@ -31,7 +30,7 @@ export const catalogService = {
           ],
         },
         orderBy: [{ isFlashSale: "desc" }, { createdAt: "desc" }],
-        take: 6,
+        take: 3,
       }),
       prisma.testimonial.findMany({ where: { isFeatured: true }, take: 3 }),
       getBusinessStatus(),
@@ -39,12 +38,12 @@ export const catalogService = {
 
     const payload: HomeCatalog = {
       ...lists,
-      categories: lists.categoryPreviews.map((c) => c.category),
       promotions,
       testimonials,
       isOpen: status.isOpen,
     };
 
+    // Bump cache key shape via short TTL; old cached payloads without popularNow expire soon
     await cacheSet(CacheKeys.homeCatalog, payload, 90);
     await cacheSet(CacheKeys.bestSellers, lists.bestSellers, 90);
     return payload;
@@ -53,7 +52,7 @@ export const catalogService = {
   async getBestSellers() {
     const cached = await cacheGet(CacheKeys.bestSellers);
     if (cached) return cached;
-    const { bestSellers } = await productRepository.findHomeLists(4);
+    const { bestSellers } = await productRepository.findHomeLists(8);
     await cacheSet(CacheKeys.bestSellers, bestSellers, 60);
     return bestSellers;
   },
