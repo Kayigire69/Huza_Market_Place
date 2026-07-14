@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { paymentService } from "@/services/payment.service";
 import { processDueJobs } from "@/jobs/processors";
 
@@ -34,8 +36,8 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/payments/status
- * - action: "confirm" — customer approved (demo) or admin force-confirm
- * - action: "fail" — declined / timeout
+ * - action: "fail" — customer Cancel on waiting screen (abandons pending payment)
+ * - action: "confirm" — ADMIN ONLY (never customer-facing; system confirms via callback/poll)
  */
 export async function POST(req: Request) {
   const body = await req.json();
@@ -51,6 +53,14 @@ export async function POST(req: Request) {
   }
 
   if (action === "confirm") {
+    const session = await getServerSession(authOptions);
+    const role = (session?.user as { role?: string } | undefined)?.role;
+    if (role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Payment can only be confirmed by the payment system or an admin." },
+        { status: 403 }
+      );
+    }
     const payment = await paymentService.confirmPayment(order.payment.id);
     return NextResponse.json({
       paymentStatus: payment?.status,
@@ -59,10 +69,17 @@ export async function POST(req: Request) {
   }
 
   if (action === "fail") {
-    await paymentService.failPayment(order.payment.id, "Payment declined or timed out on phone");
+    // Customers may cancel a pending request; never mark paid from the browser.
+    if (order.payment.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "This payment is no longer pending.", paymentStatus: order.payment.status },
+        { status: 409 }
+      );
+    }
+    await paymentService.failPayment(order.payment.id, "Payment cancelled by customer");
     return NextResponse.json({
       paymentStatus: "FAILED",
-      message: "Payment was not approved on the phone.",
+      message: "Payment request cancelled.",
     });
   }
 

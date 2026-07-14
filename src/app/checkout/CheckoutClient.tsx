@@ -1,26 +1,42 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import {
-  CheckCircle2,
-  Crosshair,
-  Loader2,
-  Lock,
-  MapPin,
-  Search,
-  ShieldCheck,
-  Smartphone,
-  XCircle,
-} from "lucide-react";
+  FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Loader2, Smartphone, XCircle } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
-import { formatRwf, formatUnit, FLAT_DELIVERY_FEE_RWF, type DeliveryZoneDto } from "@/lib/utils";
+import { formatRwf, type DeliveryZoneDto } from "@/lib/utils";
 import { cartFulfillmentEta, zoneFee } from "@/lib/delivery-eta";
 import { Button } from "@/components/ui/Button";
-import { DeliveryMapPin } from "@/components/checkout/DeliveryMapPin";
-import { cn } from "@/lib/utils";
+import {
+  BackToCart,
+  CheckoutHeader,
+  CheckoutStepCard,
+  type ProgressStep,
+} from "@/components/checkout/CheckoutChrome";
+import {
+  DeliveryAddressStep,
+  type ConfirmedDelivery,
+} from "@/components/checkout/DeliveryAddressStep";
+import {
+  OrderReviewStep,
+  type AppliedPromo,
+} from "@/components/checkout/OrderReviewStep";
+import { PaymentStep } from "@/components/checkout/PaymentStep";
+import {
+  CheckoutOrderSummary,
+  type OrderSummaryTotals,
+} from "@/components/checkout/CheckoutOrderSummary";
+import { saveConfirmation } from "@/app/checkout/confirmation/ConfirmationClient";
+import { formatMomoDisplay, isValidRwandaMomoPhone } from "@/lib/phone";
 
 type PaymentSuccess = {
   orderNumber: string;
@@ -33,9 +49,13 @@ type PaymentSuccess = {
   method: string;
   paymentMode: "live" | "demo";
   estimatedDelivery?: string;
+  deliveryAddress?: string;
+  dayLabel?: string;
+  windowLabel?: string;
+  totals: OrderSummaryTotals;
 };
 
-type CheckoutPhase = "form" | "awaiting" | "paid" | "failed";
+type CheckoutPhase = "form" | "awaiting" | "paid" | "failed" | "expired";
 
 type SavedAddress = {
   id: string;
@@ -46,11 +66,7 @@ type SavedAddress = {
   gpsLng: number | null;
 };
 
-type SearchHit = {
-  display_name: string;
-  lat: string;
-  lon: string;
-};
+const PAYMENT_TIMEOUT_MS = 3 * 60 * 1000;
 
 export default function CheckoutClient({
   zones,
@@ -62,24 +78,31 @@ export default function CheckoutClient({
   savedAddresses?: SavedAddress[];
 }) {
   const { t } = useLocale();
-  const { items, subtotal, clear } = useCart();
+  const router = useRouter();
+  const { items, subtotal, clear, updateQty, removeItem } = useCart();
   const sp = useSearchParams();
   const defaultZone = zones[0]?.code || "KIGALI";
   const initialZone = sp.get("zone") || defaultZone;
+  const slotParam = sp.get("slot");
+  const initialSlot: "TODAY" | "TOMORROW" =
+    slotParam === "TOMORROW" || slotParam === "SCHEDULED" ? "TOMORROW" : "TODAY";
+  const paymentSectionRef = useRef<HTMLDivElement>(null);
+  const addressSectionRef = useRef<HTMLDivElement>(null);
+  const payLockRef = useRef(false);
 
   const [zone, setZone] = useState(
     zones.some((z) => z.code === initialZone) ? initialZone : defaultZone
   );
-  const [slot, setSlot] = useState<"TODAY" | "TOMORROW">("TODAY");
+  const [slot, setSlot] = useState<"TODAY" | "TOMORROW">(initialSlot);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phase, setPhase] = useState<CheckoutPhase>("form");
   const [payment, setPayment] = useState<PaymentSuccess | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [locStatus, setLocStatus] = useState("");
-  const [addressQuery, setAddressQuery] = useState("");
-  const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [delivery, setDelivery] = useState<ConfirmedDelivery | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
+  const [paymentReady, setPaymentReady] = useState(false);
+  const [awaitStartedAt, setAwaitStartedAt] = useState<number | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(Math.floor(PAYMENT_TIMEOUT_MS / 1000));
 
   const [form, setForm] = useState({
     fullName: customer?.fullName || "",
@@ -102,9 +125,24 @@ export default function CheckoutClient({
     }));
   }, [customer]);
 
-  const fee = zoneFee(zone, zones);
+  const baseFee = zoneFee(zone, zones);
   const cartSubtotal = subtotal();
-  const total = useMemo(() => Math.max(0, cartSubtotal + fee), [cartSubtotal, fee]);
+  const discount = useMemo(() => {
+    if (!appliedPromo) return 0;
+    let d = 0;
+    if (appliedPromo.discountPct) d += Math.round((cartSubtotal * appliedPromo.discountPct) / 100);
+    if (appliedPromo.discountAmt) d += appliedPromo.discountAmt;
+    return Math.min(d, cartSubtotal);
+  }, [appliedPromo, cartSubtotal]);
+  const fee = appliedPromo?.freeDelivery ? 0 : baseFee;
+  const total = useMemo(
+    () => Math.max(0, cartSubtotal - discount + fee),
+    [cartSubtotal, discount, fee]
+  );
+  const liveTotals: OrderSummaryTotals = useMemo(
+    () => ({ subtotal: cartSubtotal, deliveryFee: fee, discount, total }),
+    [cartSubtotal, fee, discount, total]
+  );
   const fulfillment = useMemo(
     () => cartFulfillmentEta(items, zone, slot, zones),
     [items, zone, slot, zones]
@@ -112,139 +150,109 @@ export default function CheckoutClient({
   const zoneMeta = zones.find((z) => z.code === zone) || zones[0];
   const zoneLabel = zoneMeta?.labelEn || zone;
 
-  const pinLat = form.gpsLat ? Number(form.gpsLat) : null;
-  const pinLng = form.gpsLng ? Number(form.gpsLng) : null;
-
-  const onPinMove = useCallback((lat: number, lng: number) => {
-    setForm((f) => ({ ...f, gpsLat: String(lat), gpsLng: String(lng) }));
-    setLocStatus("Drop-off pin updated.");
-  }, []);
-
-  const applyCoords = async (lat: number, lng: number, fillAddress: boolean) => {
+  const onDeliveryConfirm = (data: ConfirmedDelivery) => {
+    setDelivery(data);
     setForm((f) => ({
       ...f,
-      gpsLat: String(lat),
-      gpsLng: String(lng),
+      address: data.address,
+      instructions: data.notes,
+      gpsLat: data.gpsLat,
+      gpsLng: data.gpsLng,
     }));
-    if (!fillAddress) return;
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-        { headers: { Accept: "application/json" } }
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.display_name) {
-        setForm((f) => ({
-          ...f,
-          gpsLat: String(lat),
-          gpsLng: String(lng),
-          address: f.address.trim() ? f.address : data.display_name,
-        }));
-      }
-    } catch {
-      /* optional */
+    if (data.zone && zones.some((z) => z.code === data.zone)) {
+      setZone(data.zone);
     }
+    setError("");
   };
 
-  const useLiveLocation = () => {
-    setLocStatus("Getting your location…");
-    setSearchHits([]);
-    if (!navigator.geolocation) {
-      setLocStatus("Location not supported. Search for your address or drop a pin on the map.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        await applyCoords(pos.coords.latitude, pos.coords.longitude, true);
-        setLocStatus("Current location found. Adjust the pin if needed.");
-      },
-      () => {
-        setLocStatus(
-          "Location access denied. Search your address or drop a pin on the map instead."
-        );
-      },
-      { enableHighAccuracy: true, timeout: 15000 }
-    );
-  };
-
-  const searchAddress = async () => {
-    const q = addressQuery.trim();
-    if (q.length < 3) {
-      setLocStatus("Type at least 3 characters to search.");
-      return;
-    }
-    setSearching(true);
-    setLocStatus("");
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=rw&q=${encodeURIComponent(q)}`,
-        { headers: { Accept: "application/json" } }
-      );
-      const data = (await res.json()) as SearchHit[];
-      setSearchHits(Array.isArray(data) ? data : []);
-      if (!data?.length) setLocStatus("No matches. Try a road, landmark, or area name.");
-    } catch {
-      setLocStatus("Search failed. You can still type an address and place the pin.");
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const pickSearchHit = async (hit: SearchHit) => {
-    const lat = Number(hit.lat);
-    const lng = Number(hit.lon);
+  const onDeliveryClear = () => {
+    setDelivery(null);
     setForm((f) => ({
       ...f,
-      address: hit.display_name,
-      gpsLat: String(lat),
-      gpsLng: String(lng),
+      address: "",
+      instructions: "",
+      gpsLat: "",
+      gpsLng: "",
     }));
-    setSearchHits([]);
-    setAddressQuery("");
-    setLocStatus("Address selected — refine the pin if needed.");
   };
 
-  const pickSavedAddress = (a: SavedAddress) => {
-    setForm((f) => ({
-      ...f,
-      address: a.fullAddress,
-      gpsLat: a.gpsLat != null ? String(a.gpsLat) : f.gpsLat,
-      gpsLng: a.gpsLng != null ? String(a.gpsLng) : f.gpsLng,
-    }));
-    setLocStatus(`Using saved location: ${a.label}`);
-  };
+  const settledRef = useRef(false);
 
-  const copyOrderNumber = async (orderNumber: string) => {
-    try {
-      await navigator.clipboard.writeText(orderNumber);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* ignore */
-    }
+  const markPaid = (p: PaymentSuccess) => {
+    if (settledRef.current) return;
+    settledRef.current = true;
+    saveConfirmation({
+      orderNumber: p.orderNumber,
+      payerPhone: p.payerPhone,
+      total: p.total,
+      estimatedDelivery: p.estimatedDelivery,
+      deliveryAddress: p.deliveryAddress,
+      dayLabel: p.dayLabel,
+      windowLabel: p.windowLabel,
+    });
+    clear();
+    router.push(`/checkout/confirmation?order=${encodeURIComponent(p.orderNumber)}`);
   };
 
   useEffect(() => {
     if (phase !== "awaiting" || !payment) return;
+    const current = payment;
     const tick = async () => {
-      const res = await fetch(`/api/payments/status?orderNumber=${payment.orderNumber}`);
+      const res = await fetch(`/api/payments/status?orderNumber=${current.orderNumber}`);
       if (!res.ok) return;
       const data = await res.json();
       if (data.paymentStatus === "CONFIRMED" || data.paymentStatus === "VERIFIED") {
-        setPhase("paid");
+        markPaid(current);
       } else if (data.paymentStatus === "FAILED") {
+        settledRef.current = true;
         setPhase("failed");
       }
     };
-    tick();
-    const id = setInterval(tick, 3000);
+    void tick();
+    const id = setInterval(() => void tick(), 3000);
     return () => clearInterval(id);
   }, [phase, payment]);
 
-  const placeOrder = async () => {
+  useEffect(() => {
+    if (phase !== "awaiting" || !awaitStartedAt || !payment) return;
+    const orderNumber = payment.orderNumber;
+    const id = setInterval(() => {
+      const left = Math.max(0, PAYMENT_TIMEOUT_MS - (Date.now() - awaitStartedAt));
+      setSecondsLeft(Math.ceil(left / 1000));
+      if (left <= 0) {
+        clearInterval(id);
+        if (settledRef.current) return;
+        settledRef.current = true;
+        setPhase("expired");
+        void fetch("/api/payments/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderNumber, action: "fail" }),
+        });
+      }
+    }, 500);
+    return () => clearInterval(id);
+  }, [phase, awaitStartedAt, payment]);
+
+  const payNow = async () => {
+    if (payLockRef.current || loading) return;
+    if (!delivery?.address.trim() || !form.address.trim()) {
+      return setError("Confirm your delivery location first.");
+    }
+    if (delivery && !delivery.available) {
+      return setError("Delivery is not available at this location.");
+    }
+    if (!form.fullName.trim()) return setError("Enter your full name.");
+    if (!form.phone.trim()) return setError("Enter your phone number.");
+    if (!isValidRwandaMomoPhone(form.paymentPhone)) {
+      return setError("Enter a valid MTN or Airtel Mobile Money number.");
+    }
+    if (items.length === 0) return setError("Your cart is empty.");
+
+    payLockRef.current = true;
     setLoading(true);
     setError("");
+    const frozenTotals = { ...liveTotals };
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
@@ -257,7 +265,8 @@ export default function CheckoutClient({
           deliveryZone: zone,
           deliverySlot: slot,
           paymentMethod: form.paymentMethod,
-          paymentPhone: form.paymentPhone.trim() || form.phone.trim(),
+          paymentPhone: form.paymentPhone.trim(),
+          promoCode: appliedPromo?.code || undefined,
           gpsLat: form.gpsLat || undefined,
           gpsLng: form.gpsLng || undefined,
           items: items.map((i) => ({
@@ -267,9 +276,9 @@ export default function CheckoutClient({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Checkout failed");
-      clear();
-      setPayment({
+      if (!res.ok) throw new Error(data.error || "Payment request failed");
+
+      const success: PaymentSuccess = {
         orderNumber: data.orderNumber,
         orderId: data.id,
         total: data.total,
@@ -279,493 +288,367 @@ export default function CheckoutClient({
         payeePhone: data.payeePhone,
         method: data.method,
         paymentMode: data.paymentMode,
-        estimatedDelivery: data.estimatedDelivery,
-      });
-      setPhase(data.paymentStatus === "CONFIRMED" ? "paid" : "awaiting");
+        estimatedDelivery: data.estimatedDelivery || fulfillment.etaLabel,
+        deliveryAddress: form.address.trim(),
+        dayLabel: fulfillment.dayLabel,
+        windowLabel: fulfillment.windowLabel,
+        totals: frozenTotals,
+      };
+      setPayment(success);
+      setAwaitStartedAt(Date.now());
+      setSecondsLeft(Math.floor(PAYMENT_TIMEOUT_MS / 1000));
+
+      if (data.paymentStatus === "CONFIRMED") {
+        markPaid(success);
+      } else {
+        setPhase("awaiting");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed");
+      setError(err instanceof Error ? err.message : "Payment request failed");
+      payLockRef.current = false;
     } finally {
       setLoading(false);
     }
   };
 
+  const cancelPaymentWait = async () => {
+    if (!payment) return;
+    try {
+      await fetch("/api/payments/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderNumber: payment.orderNumber, action: "fail" }),
+      });
+    } catch {
+      /* ignore */
+    }
+    setPhase("failed");
+  };
+
+  const resetToPayment = (changeMethod: boolean) => {
+    payLockRef.current = false;
+    settledRef.current = false;
+    setPayment(null);
+    setAwaitStartedAt(null);
+    setPhase("form");
+    setPaymentReady(true);
+    setError("");
+    if (changeMethod) {
+      requestAnimationFrame(() => {
+        paymentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  };
+
+  const proceedToPayment = () => {
+    if (!delivery?.address.trim()) {
+      setError("Confirm your delivery location first.");
+      addressSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (delivery && !delivery.available) {
+      setError("Delivery is not available at this location.");
+      return;
+    }
+    if (items.length === 0) {
+      setError("Your cart is empty.");
+      return;
+    }
+    setError("");
+    setPaymentReady(true);
+    requestAnimationFrame(() => {
+      paymentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.fullName.trim()) return setError("Enter your full name.");
-    if (!form.phone.trim()) return setError("Enter your phone number.");
-    if (!form.address.trim()) return setError("Enter or select a delivery address.");
-    if (!form.paymentPhone.trim()) return setError("Enter the Mobile Money phone number.");
-    if (items.length === 0) return setError("Your cart is empty.");
-    setError("");
-    await placeOrder();
+    if (!paymentReady) {
+      proceedToPayment();
+      return;
+    }
+    await payNow();
   };
+
+  const summaryTotals = payment?.totals ?? liveTotals;
+
+  const formProgress: ProgressStep = paymentReady ? "payment" : "checkout";
+
+  const paymentLayout = (main: ReactNode, active: ProgressStep = "payment") => (
+    <div className="min-h-screen bg-[var(--huza-cream,#F7FBF8)]">
+      <CheckoutHeader active={active} />
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8">
+        <div>{main}</div>
+        <aside className="mt-8 lg:mt-0 lg:sticky lg:top-4">
+          <CheckoutOrderSummary totals={summaryTotals} compact />
+          <p className="mt-3 text-center text-2xl font-bold text-[var(--huza-green-dark)] lg:text-left">
+            {formatRwf(summaryTotals.total)}
+          </p>
+          <p className="text-center text-xs text-[var(--huza-muted)] lg:text-left">Total Amount</p>
+        </aside>
+      </div>
+    </div>
+  );
 
   if (items.length === 0 && phase === "form") {
     return (
-      <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <p>{t("emptyCart")}</p>
-        <Link href="/products" className="mt-4 inline-block">
-          <Button>{t("continueShopping")}</Button>
-        </Link>
+      <div className="min-h-screen bg-[var(--huza-cream,#F7FBF8)]">
+        <CheckoutHeader active="cart" />
+        <div className="mx-auto max-w-lg px-4 py-16 text-center">
+          <p>{t("emptyCart")}</p>
+          <Link href="/products" className="mt-4 inline-block">
+            <Button>{t("continueShopping")}</Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (phase === "awaiting" && payment) {
-    const network = payment.method === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money";
-    return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--huza-mint)]">
+    const network = payment.method === "MTN_MOMO" ? "MTN Mobile Money" : "Airtel Money";
+    const mins = Math.floor(secondsLeft / 60);
+    const secs = secondsLeft % 60;
+    return paymentLayout(
+      <div className="mx-auto max-w-lg text-center lg:mx-0 lg:text-left">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--huza-mint)] lg:mx-0">
           <Smartphone className="size-10 text-[var(--huza-green-dark)]" />
         </div>
-        <h1 className="section-title">Approve payment on your phone</h1>
+        <h1 className="section-title">Waiting for Payment...</h1>
         <p className="mt-4 leading-relaxed text-[var(--huza-muted)]">
-          A <strong>{network}</strong> request was sent to <strong>{payment.payerPhone}</strong> for{" "}
-          <strong>{formatRwf(payment.total)}</strong>.
+          A payment request has been sent to
+          <br />
+          <strong className="text-[var(--huza-ink)]">{formatMomoDisplay(payment.payerPhone)}</strong>
+        </p>
+        <p className="mt-2 text-sm text-[var(--huza-muted)]">
+          Please approve the <strong>{network}</strong> payment on your phone.
         </p>
         <div className="mt-6 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-left text-sm">
           <p className="flex items-start gap-2">
             <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-[var(--huza-green)]" />
-            Open the pending approval and enter your PIN.
+            Waiting for approval… {mins}:{secs.toString().padStart(2, "0")} left
           </p>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--huza-mint)] px-4 py-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-[var(--huza-muted)]">
-                Order number
-              </p>
-              <p className="font-mono text-lg font-bold text-[var(--huza-green-dark)]">
-                {payment.orderNumber}
-              </p>
-            </div>
-            <Link href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}`}>
-              <Button size="sm">Track order</Button>
-            </Link>
-          </div>
-          {payment.paymentMode === "demo" && (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                type="button"
-                onClick={async () => {
-                  await fetch("/api/payments/status", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ orderNumber: payment.orderNumber, action: "confirm" }),
-                  });
-                  setPhase("paid");
-                }}
-              >
-                I approved on my phone
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={async () => {
-                  await fetch("/api/payments/status", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ orderNumber: payment.orderNumber, action: "fail" }),
-                  });
-                  setPhase("failed");
-                }}
-              >
-                Decline / cancel
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (phase === "paid" && payment) {
-    return (
-      <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <CheckCircle2 className="mx-auto size-14 text-[var(--huza-green)]" />
-        <h1 className="section-title mt-4">Order confirmed</h1>
-        <div className="mt-6 rounded-2xl border-2 border-[var(--huza-green)] bg-white p-5 text-left">
-          <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">Order number</p>
-          <p className="mt-1 break-all font-mono text-2xl font-bold text-[var(--huza-green-dark)]">
-            {payment.orderNumber}
-          </p>
-          <p className="mt-3 text-sm">
-            Payment status: <strong className="text-[var(--huza-green-dark)]">Paid</strong>
-          </p>
-          {payment.estimatedDelivery && (
-            <p className="mt-1 text-sm font-semibold text-[var(--huza-green-dark)]">
-              Estimated delivery: {payment.estimatedDelivery}
+          <div className="rounded-xl bg-[var(--huza-mint)] px-4 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-[var(--huza-muted)]">
+              Order · Pending Payment
             </p>
-          )}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button type="button" size="sm" variant="ghost" onClick={() => copyOrderNumber(payment.orderNumber)}>
-              {copied ? "Copied!" : "Copy order number"}
-            </Button>
-            <Link
-              href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(payment.payerPhone || form.phone || "")}`}
-            >
-              <Button size="sm">Track my order</Button>
-            </Link>
-            <a href={`/api/receipts/${encodeURIComponent(payment.orderNumber)}?format=pdf`}>
-              <Button type="button" size="sm" variant="ghost">
-                Download receipt
-              </Button>
-            </a>
+            <p className="font-mono text-lg font-bold text-[var(--huza-green-dark)]">
+              {payment.orderNumber}
+            </p>
           </div>
+          <p className="text-xs text-[var(--huza-muted)]">
+            We confirm payment automatically once {network} reports a successful approval. You do not
+            need to tap anything here.
+          </p>
         </div>
-        <Link href="/products" className="mt-6 inline-block">
-          <Button>{t("continueShopping")}</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  if (phase === "failed" && payment) {
-    return (
-      <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <XCircle className="mx-auto size-14 text-red-600" />
-        <h1 className="section-title mt-4">Payment not completed</h1>
-        <p className="mt-4 text-[var(--huza-muted)]">
-          Approval on <strong>{payment.payerPhone}</strong> was declined or timed out.
-        </p>
-        <Button
-          className="mt-6"
-          onClick={() => {
-            setPhase("form");
-            setPayment(null);
-          }}
-        >
-          Try again
+        <Button type="button" variant="ghost" className="mt-6" onClick={cancelPaymentWait}>
+          Cancel
         </Button>
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 pb-36 pt-8 sm:px-6 sm:pb-28 sm:pt-10">
-      <h1 className="section-title text-[1.75rem]">Checkout</h1>
-      <p className="mt-1 text-sm text-[var(--huza-muted)]">
-        Confirm delivery and pay — usually under 2 minutes.
-      </p>
-
-      <form onSubmit={onSubmit} className="mt-8 space-y-8">
-        {/* 1. Customer */}
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--huza-ink)]">Your details</h2>
-          <label className="block text-sm">
-            <span className="mb-1.5 block font-medium">Full name</span>
-            <input
-              required
-              value={form.fullName}
-              onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-              className="w-full rounded-xl border border-[var(--huza-line)] bg-white px-4 py-3 text-base"
-              autoComplete="name"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1.5 block font-medium">Phone number</span>
-            <input
-              required
-              value={form.phone}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  phone: e.target.value,
-                  paymentPhone: f.paymentPhone === f.phone ? e.target.value : f.paymentPhone,
-                }))
-              }
-              className="w-full rounded-xl border border-[var(--huza-line)] bg-white px-4 py-3 text-base"
-              autoComplete="tel"
-              inputMode="tel"
-              placeholder="07X XXX XXXX"
-            />
-          </label>
-        </section>
-
-        {/* 2. Location */}
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--huza-ink)]">Delivery location</h2>
-
-          {savedAddresses.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {savedAddresses.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => pickSavedAddress(a)}
-                  className="rounded-lg border border-[var(--huza-line)] bg-white px-3 py-2 text-left text-xs font-semibold hover:border-[var(--huza-green)]"
-                >
-                  <span className="block text-[var(--huza-green-dark)]">{a.label}</span>
-                  <span className="line-clamp-1 text-[var(--huza-muted)]">{a.fullAddress}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={useLiveLocation}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--huza-green)] px-4 py-3.5 text-sm font-semibold text-white sm:w-auto"
-          >
-            <Crosshair className="size-4" />
-            Use my current location
-          </button>
-
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--huza-muted)]" />
-              <input
-                value={addressQuery}
-                onChange={(e) => setAddressQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    searchAddress();
-                  }
-                }}
-                placeholder="Search road, building, landmark…"
-                className="w-full rounded-xl border border-[var(--huza-line)] bg-white py-3 pl-10 pr-3 text-base"
-              />
-            </div>
-            <Button type="button" variant="ghost" onClick={searchAddress} disabled={searching}>
-              {searching ? <Loader2 className="size-4 animate-spin" /> : "Search"}
-            </Button>
-          </div>
-
-          {searchHits.length > 0 && (
-            <ul className="overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white">
-              {searchHits.map((hit) => (
-                <li key={`${hit.lat}-${hit.lon}`}>
-                  <button
-                    type="button"
-                    onClick={() => pickSearchHit(hit)}
-                    className="w-full border-b border-[var(--huza-line)] px-3 py-2.5 text-left text-sm last:border-0 hover:bg-[var(--huza-mint)]"
-                  >
-                    {hit.display_name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <label className="block text-sm">
-            <span className="mb-1.5 block font-medium">Delivery address</span>
-            <textarea
-              required
-              rows={2}
-              value={form.address}
-              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-              className="w-full rounded-xl border border-[var(--huza-line)] bg-white px-4 py-3 text-base"
-              placeholder="Street, house, or landmark"
-            />
-          </label>
-
-          <DeliveryMapPin lat={pinLat} lng={pinLng} onMove={onPinMove} />
-          {locStatus && <p className="text-xs text-[var(--huza-muted)]">{locStatus}</p>}
-        </section>
-
-        {/* 3. Destination area (ETA differs; fee is flat) */}
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--huza-ink)]">Delivery area</h2>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {zones.map((z) => (
-              <button
-                key={z.code}
-                type="button"
-                onClick={() => setZone(z.code)}
-                className={cn(
-                  "rounded-xl border px-3 py-3 text-left transition",
-                  zone === z.code
-                    ? "border-[var(--huza-green)] bg-[var(--huza-mint)] ring-2 ring-[var(--huza-green)]"
-                    : "border-[var(--huza-line)] bg-white hover:border-[var(--huza-green)]"
-                )}
-              >
-                <p className="flex items-center gap-1.5 text-sm font-semibold">
-                  <MapPin className="size-3.5 text-[var(--huza-green)]" />
-                  {z.labelEn}
-                </p>
-                <p className="mt-1 text-xs text-[var(--huza-muted)]">{z.etaLabelEn}</p>
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 rounded-xl border border-[var(--huza-line)] bg-white p-4 text-sm">
-            <div>
-              <p className="text-xs text-[var(--huza-muted)]">Delivery fee</p>
-              <p className="font-bold text-[var(--huza-green-dark)]">{formatRwf(fee)}</p>
-              <p className="text-[10px] text-[var(--huza-muted)]">Same for all areas</p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--huza-muted)]">Estimated delivery</p>
-              <p className="font-bold text-[var(--huza-green-dark)]">{fulfillment.etaLabel}</p>
-              <p className="text-[10px] text-[var(--huza-muted)]">{zoneLabel}</p>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            {(
-              [
-                ["TODAY", "Today"],
-                ["TOMORROW", "Tomorrow"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setSlot(value)}
-                className={cn(
-                  "flex-1 rounded-lg border px-3 py-2.5 text-sm font-semibold",
-                  slot === value
-                    ? "border-[var(--huza-green)] bg-[var(--huza-mint)] text-[var(--huza-green-dark)]"
-                    : "border-[var(--huza-line)] bg-white"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* 4. Instructions */}
-        <section>
-          <label className="block text-sm">
-            <span className="mb-1.5 block font-medium">
-              Delivery instructions <span className="font-normal text-[var(--huza-muted)]">(optional)</span>
-            </span>
-            <input
-              value={form.instructions}
-              onChange={(e) => setForm((f) => ({ ...f, instructions: e.target.value }))}
-              className="w-full rounded-xl border border-[var(--huza-line)] bg-white px-4 py-3 text-base"
-              placeholder="e.g. Call when arriving"
-            />
-          </label>
-        </section>
-
-        {/* 5. Order summary */}
-        <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 sm:p-5">
-          <h2 className="text-base font-semibold">Order summary</h2>
-          <ul className="mt-3 divide-y divide-[var(--huza-line)]">
-            {items.map((item) => (
-              <li key={item.productId} className="flex items-start justify-between gap-3 py-2.5 text-sm">
-                <div className="min-w-0">
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-xs text-[var(--huza-muted)]">
-                    {item.quantity} {formatUnit(item.unit)} · {formatRwf(item.price)}
-                  </p>
-                </div>
-                <p className="shrink-0 font-semibold">{formatRwf(item.price * item.quantity)}</p>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 space-y-1.5 border-t border-[var(--huza-line)] pt-3 text-sm">
-            <div className="flex justify-between">
-              <span>{t("subtotal")}</span>
-              <span>{formatRwf(cartSubtotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>{t("deliveryFee")}</span>
-              <span>{formatRwf(fee)}</span>
-            </div>
-            <div className="flex justify-between text-base font-bold text-[var(--huza-green-dark)]">
-              <span>{t("total")}</span>
-              <span>{formatRwf(total)}</span>
-            </div>
-          </div>
-        </section>
-
-        {/* 6. Payment */}
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold">Payment method</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {(
-              [
-                ["MTN_MOMO", "MTN Mobile Money"],
-                ["AIRTEL_MONEY", "Airtel Money"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, paymentMethod: value }))}
-                className={cn(
-                  "rounded-xl border px-3 py-3 text-sm font-semibold",
-                  form.paymentMethod === value
-                    ? "border-[var(--huza-green)] bg-[var(--huza-mint)]"
-                    : "border-[var(--huza-line)] bg-white"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <label className="block text-sm">
-            <span className="mb-1.5 block font-medium">Mobile Money phone</span>
-            <input
-              required
-              value={form.paymentPhone}
-              onChange={(e) => setForm((f) => ({ ...f, paymentPhone: e.target.value }))}
-              className="w-full rounded-xl border border-[var(--huza-line)] bg-white px-4 py-3 text-base"
-              inputMode="tel"
-              placeholder="Phone that will approve the payment"
-            />
-          </label>
-          <p className="text-xs text-[var(--huza-muted)]">
-            You will get a prompt on this phone. Payment goes to Youth Huza.
-          </p>
-        </section>
-
-        <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--huza-muted)]">
-          <span className="inline-flex items-center gap-1">
-            <Lock className="size-3.5" /> Secure payment
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <ShieldCheck className="size-3.5" /> Encrypted checkout
-          </span>
-        </div>
-
-        {error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-            {error}
-          </p>
-        )}
-
-        {/* Desktop submit (mobile uses sticky bar) */}
-        <div className="hidden sm:block">
-          <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Processing…
-              </>
-            ) : (
-              <>Pay {formatRwf(total)}</>
-            )}
-          </Button>
-        </div>
-      </form>
-
-      {/* Sticky pay CTA — clears mobile bottom nav */}
-      <div className="fixed inset-x-0 bottom-0 z-[70] border-t border-[var(--huza-line)] bg-[rgba(247,251,248,0.97)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-[var(--huza-muted)]">Total</p>
-            <p className="truncate font-bold text-[var(--huza-green-dark)]">{formatRwf(total)}</p>
-          </div>
-          <Button
-            type="button"
-            size="lg"
-            className="shrink-0 px-6"
-            disabled={loading}
-            onClick={() => {
-              const fake = { preventDefault() {} } as FormEvent;
-              onSubmit(fake);
-            }}
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : `Pay ${formatRwf(total)}`}
+  if ((phase === "failed" || phase === "expired") && payment) {
+    return paymentLayout(
+      <div className="mx-auto max-w-lg text-center lg:mx-0 lg:text-left">
+        <XCircle className="mx-auto size-14 text-red-600 lg:mx-0" />
+        <h1 className="section-title mt-4">
+          {phase === "expired" ? "Payment request expired" : "Payment Failed"}
+        </h1>
+        <p className="mt-4 text-[var(--huza-muted)]">
+          {phase === "expired"
+            ? "Payment request expired. You can request a new payment prompt."
+            : "The payment could not be completed."}
+        </p>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center lg:justify-start">
+          <Button onClick={() => resetToPayment(false)}>Try Again</Button>
+          <Button variant="ghost" onClick={() => resetToPayment(true)}>
+            Change Payment Method
           </Button>
         </div>
       </div>
+    );
+  }
 
-      <p className="mt-4 hidden text-center text-[10px] text-[var(--huza-muted)] sm:block">
-        Delivery {formatRwf(FLAT_DELIVERY_FEE_RWF)} to Kigali, Kamonyi & Bugesera
-      </p>
+  const orderSummary = (
+    <CheckoutOrderSummary
+      items={items.map((i) => ({
+        productId: i.productId,
+        name: i.name,
+        quantity: i.quantity,
+        price: i.price,
+        unit: i.unit,
+      }))}
+      totals={liveTotals}
+      footer={
+        // Desktop: Proceed lives here; Pay Now lives in PaymentStep (one primary CTA)
+        !paymentReady ? (
+          <div className="hidden lg:block">
+            <Button type="button" size="lg" className="w-full" onClick={proceedToPayment}>
+              Proceed to Payment
+            </Button>
+          </div>
+        ) : null
+      }
+    />
+  );
+
+  return (
+    <div className="min-h-screen bg-[var(--huza-cream,#F7FBF8)] pb-28 lg:pb-10">
+      <CheckoutHeader active={formProgress} />
+
+      <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-8">
+        <BackToCart />
+
+        <form
+          onSubmit={onSubmit}
+          className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8"
+        >
+          <div className="space-y-4">
+            <div ref={addressSectionRef}>
+              <CheckoutStepCard step={1} title="Delivery Address">
+                <DeliveryAddressStep
+                  confirmed={delivery}
+                  slot={slot}
+                  onConfirm={onDeliveryConfirm}
+                  onClear={onDeliveryClear}
+                  canSaveAddress={Boolean(customer)}
+                  savedAddresses={savedAddresses}
+                />
+              </CheckoutStepCard>
+            </div>
+
+            <div>
+              <CheckoutStepCard step={2} title="Order Review">
+                <OrderReviewStep
+                  items={items}
+                  address={form.address}
+                  notes={form.instructions}
+                  slot={slot}
+                  etaDayLabel={fulfillment.dayLabel}
+                  etaWindowLabel={fulfillment.windowLabel}
+                  zoneLabel={zoneLabel}
+                  deliveryFee={fee}
+                  subtotal={cartSubtotal}
+                  discount={discount}
+                  total={total}
+                  paymentMethodLabel={
+                    paymentReady
+                      ? `${form.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"}${
+                          form.paymentPhone ? ` · ${form.paymentPhone}` : ""
+                        }`
+                      : null
+                  }
+                  appliedPromo={appliedPromo}
+                  onSlotChange={setSlot}
+                  onChangeAddress={() => {
+                    onDeliveryClear();
+                    addressSectionRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }}
+                  onUpdateQty={updateQty}
+                  onRemove={removeItem}
+                  onApplyPromo={async (code) => {
+                    try {
+                      const res = await fetch("/api/promotions/validate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ code }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok || !data.valid) {
+                        return { ok: false, error: data.error || "Invalid code" };
+                      }
+                      setAppliedPromo({
+                        code: data.code,
+                        title: data.title,
+                        discountPct: data.discountPct,
+                        discountAmt: data.discountAmt,
+                        freeDelivery: Boolean(data.freeDelivery),
+                      });
+                      return { ok: true };
+                    } catch {
+                      return { ok: false, error: "Could not validate code" };
+                    }
+                  }}
+                  onClearPromo={() => setAppliedPromo(null)}
+                />
+              </CheckoutStepCard>
+            </div>
+
+            <div ref={paymentSectionRef}>
+              <CheckoutStepCard step={3} title="Payment">
+                {!paymentReady ? (
+                  <p className="text-sm text-[var(--huza-muted)]">
+                    Review your order above, then tap <strong>Proceed to Payment</strong>.
+                  </p>
+                ) : (
+                  <PaymentStep
+                    method={form.paymentMethod}
+                    paymentPhone={form.paymentPhone}
+                    fullName={form.fullName}
+                    contactPhone={form.phone}
+                    total={total}
+                    loading={loading}
+                    onMethodChange={(method) =>
+                      setForm((f) => ({ ...f, paymentMethod: method }))
+                    }
+                    onPaymentPhoneChange={(paymentPhone) =>
+                      setForm((f) => ({ ...f, paymentPhone }))
+                    }
+                    onFullNameChange={(fullName) => setForm((f) => ({ ...f, fullName }))}
+                    onContactPhoneChange={(phone) =>
+                      setForm((f) => ({
+                        ...f,
+                        phone,
+                        paymentPhone:
+                          !f.paymentPhone || f.paymentPhone === f.phone ? phone : f.paymentPhone,
+                      }))
+                    }
+                    onPayNow={() => void payNow()}
+                  />
+                )}
+              </CheckoutStepCard>
+            </div>
+
+            <div className="lg:hidden">{orderSummary}</div>
+
+            {error && (
+              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            )}
+          </div>
+
+          <aside className="hidden lg:sticky lg:top-4 lg:block">{orderSummary}</aside>
+        </form>
+      </div>
+
+      {/* Mobile: single sticky primary CTA (Proceed or Pay Now) */}
+      <div className="fixed inset-x-0 bottom-0 z-[70] border-t border-[var(--huza-line)] bg-[rgba(247,251,248,0.97)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div className="mx-auto flex max-w-6xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-[var(--huza-muted)]">Total Amount</p>
+            <p className="truncate font-bold text-[var(--huza-green-dark)]">{formatRwf(total)}</p>
+          </div>
+          {paymentReady ? (
+            <Button
+              type="button"
+              size="lg"
+              className="shrink-0 px-6"
+              disabled={loading || !isValidRwandaMomoPhone(form.paymentPhone)}
+              onClick={() => void payNow()}
+            >
+              {loading ? <Loader2 className="size-4 animate-spin" /> : "Pay Now"}
+            </Button>
+          ) : (
+            <Button type="button" size="lg" className="shrink-0 px-6" onClick={proceedToPayment}>
+              Proceed to Payment
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

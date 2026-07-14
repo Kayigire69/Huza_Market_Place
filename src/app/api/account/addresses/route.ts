@@ -7,19 +7,34 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { label, fullAddress, district } = await req.json();
+  const { label, fullAddress, district, gpsLat, gpsLng, isDefault } = await req.json();
   if (!fullAddress) return NextResponse.json({ error: "Address required" }, { status: 400 });
 
-  await prisma.address.create({
+  const lat =
+    gpsLat !== undefined && gpsLat !== null && gpsLat !== "" ? Number(gpsLat) : null;
+  const lng =
+    gpsLng !== undefined && gpsLng !== null && gpsLng !== "" ? Number(gpsLng) : null;
+
+  if (isDefault) {
+    await prisma.address.updateMany({
+      where: { userId: session.user.id },
+      data: { isDefault: false },
+    });
+  }
+
+  const address = await prisma.address.create({
     data: {
       userId: session.user.id,
       label: label || "Home",
       fullAddress,
       district: district || null,
+      gpsLat: lat !== null && Number.isFinite(lat) ? lat : null,
+      gpsLng: lng !== null && Number.isFinite(lng) ? lng : null,
+      isDefault: Boolean(isDefault),
     },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, address });
 }
 
 export async function PATCH(req: Request) {

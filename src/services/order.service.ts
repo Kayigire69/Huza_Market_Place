@@ -316,12 +316,12 @@ export const orderService = {
       body: `${orderNumber} · ${data.fullName} · ${total} RWF · Pending payment`,
     }).catch(() => undefined);
 
-    // Auto-release reservation if unpaid after 10 minutes
+    // Auto-expire unpaid MoMo prompt after 3 minutes (stock released on expire)
     if (order.payment?.id) {
       await enqueueJob(
         "PAYMENT_VERIFY",
         { paymentId: order.payment.id, orderNumber, expireIfPending: true },
-        { runAfter: new Date(Date.now() + 10 * 60 * 1000), maxAttempts: 3 }
+        { runAfter: new Date(Date.now() + 3 * 60 * 1000), maxAttempts: 3 }
       );
     }
 

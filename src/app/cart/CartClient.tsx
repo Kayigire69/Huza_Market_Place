@@ -39,7 +39,7 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
+    <div className="mx-auto max-w-5xl px-4 pb-40 pt-10 sm:px-6 md:pb-28 lg:pb-10">
       <h1 className="section-title mb-8">{t("cart")}</h1>
       <div className="grid lg:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-4">
@@ -170,11 +170,27 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
               <span>{formatRwf(total)}</span>
             </div>
           </div>
-          <p className="mt-3 text-xs text-[var(--huza-muted)]">{t("noMiddleman")}</p>
-          <Link href={`/checkout?zone=${zone}&slot=${slot}`} className="block mt-4">
-            <Button className="w-full">Proceed to checkout</Button>
+
+          <Link href={`/checkout?zone=${zone}&slot=${slot}`} className="mt-4 block">
+            <Button className="w-full" size="lg">
+              Proceed to checkout
+            </Button>
           </Link>
+          <p className="mt-3 text-xs text-[var(--huza-muted)]">{t("noMiddleman")}</p>
         </aside>
+      </div>
+
+      {/* Mobile/tablet: sticky checkout CTA (sits above bottom nav on phones) */}
+      <div className="fixed inset-x-0 bottom-[4.75rem] z-[60] border-t border-[var(--huza-line)] bg-white/95 px-4 py-3 backdrop-blur-md md:bottom-0 md:pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-[var(--huza-muted)]">{t("total")}</p>
+            <p className="truncate font-bold text-[var(--huza-green-dark)]">{formatRwf(total)}</p>
+          </div>
+          <Link href={`/checkout?zone=${zone}&slot=${slot}`} className="shrink-0">
+            <Button size="lg">Proceed to checkout</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

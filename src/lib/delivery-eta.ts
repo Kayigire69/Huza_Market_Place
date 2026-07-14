@@ -4,6 +4,7 @@ import {
   type DeliveryZoneKey,
   isDeliveryZoneKey,
 } from "@/lib/utils";
+import { estimateArrivalWindow } from "@/lib/geo/delivery-zone";
 
 /**
  * Typical door-to-door minutes (upper bound) when items are in Huza stock.
@@ -90,34 +91,59 @@ export function productFulfillmentLabel(
   };
 }
 
-/** Cart / checkout overall ETA: any zero-stock line forces the 6–12h window */
+export type FulfillmentEta = {
+  needsRestock: boolean;
+  /** Full label: "Today · 2:00 PM – 3:30 PM" */
+  etaLabel: string;
+  dayLabel: string;
+  windowLabel: string;
+  estimatedMinutes: number;
+};
+
+/** Cart / checkout overall ETA as a calendar day + clock window */
 export function cartFulfillmentEta(
   items: Array<{ stockQty: number; quantity?: number }>,
   zone: string,
   slot: "TODAY" | "TOMORROW" | "SCHEDULED" = "TODAY",
   zones?: DeliveryZoneDto[]
-): { needsRestock: boolean; etaLabel: string; estimatedMinutes: number } {
+): FulfillmentEta {
+  const zoneKey: DeliveryZoneKey = isDeliveryZoneKey(zone) ? zone : "KIGALI";
   const needsRestock = items.some((i) => i.stockQty <= 0);
+
   if (needsRestock) {
+    const start = new Date();
+    start.setHours(start.getHours() + BACKORDER_ETA_HOURS.min);
+    const end = new Date();
+    end.setHours(end.getHours() + BACKORDER_ETA_HOURS.max);
+    const fmt = (d: Date) =>
+      d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    const dayLabel = "Today / Tomorrow";
+    const windowLabel = `${fmt(start)} – ${fmt(end)}`;
     return {
       needsRestock: true,
-      etaLabel: formatBackorderEta(),
+      dayLabel,
+      windowLabel,
+      etaLabel: `${dayLabel} · ${windowLabel}`,
       estimatedMinutes: BACKORDER_ETA_HOURS.max * 60,
     };
   }
-  if (slot === "TOMORROW") {
-    return { needsRestock: false, etaLabel: "Tomorrow", estimatedMinutes: 24 * 60 };
-  }
+
   if (slot === "SCHEDULED") {
     return {
       needsRestock: false,
+      dayLabel: "Scheduled",
+      windowLabel: "Pick a day at checkout",
       etaLabel: "Scheduled — pick a date at checkout",
-      estimatedMinutes: zoneEtaMinutes(zone, zones),
+      estimatedMinutes: zoneEtaMinutes(zoneKey, zones),
     };
   }
+
+  const arrival = estimateArrivalWindow(zoneKey, slot === "TOMORROW" ? "TOMORROW" : "TODAY");
   return {
     needsRestock: false,
-    etaLabel: formatZoneEta(zone, zones),
-    estimatedMinutes: zoneEtaMinutes(zone, zones),
+    dayLabel: arrival.dayLabel,
+    windowLabel: arrival.windowLabel,
+    etaLabel: arrival.label,
+    estimatedMinutes: zoneEtaMinutes(zoneKey, zones),
   };
 }
