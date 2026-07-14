@@ -6,11 +6,10 @@ import { FormEvent, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { Button } from "@/components/ui/Button";
 import { ProductCard, type ProductCardData } from "@/components/products/ProductCard";
-import { HeroGallery } from "@/components/home/HeroGallery";
+import { HeroSection } from "@/components/home/HeroSection";
 import { categoryName } from "@/lib/i18n";
 import {
   ArrowRight,
-  Truck,
   MapPin,
   ChevronRight,
   ShoppingBasket,
@@ -147,60 +146,14 @@ export function HomePage({
         </div>
       )}
 
-      <section className="hero-fullbleed hero-home">
-        <HeroGallery />
-        <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-24">
-          <div className="max-w-xl">
-            <div className="mb-3 flex items-center gap-2.5 sm:mb-5 sm:gap-4">
-              <Image
-                src="/logo.svg"
-                alt="Youth Huza logo"
-                width={64}
-                height={64}
-                className="size-10 rounded-full shadow-lg ring-2 ring-white/35 sm:size-16"
-                priority
-              />
-              <p className="font-[family-name:var(--font-display)] text-base font-bold tracking-tight sm:text-2xl">
-                YOUTH HUZA
-              </p>
-            </div>
-            <h1 className="font-[family-name:var(--font-display)] text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-              HUZA FRESH
-            </h1>
-            <p className="mt-2 line-clamp-2 max-w-md text-sm leading-relaxed text-[#E2F6EA] sm:mt-4 sm:line-clamp-none sm:text-lg">
-              {t("tagline")}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3 sm:mt-8">
-              <Link href="/products">
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="px-5 py-2.5 text-sm sm:px-7 sm:py-3.5 sm:text-base"
-                >
-                  {t("heroCta")} <ArrowRight className="size-4" />
-                </Button>
-              </Link>
-              <Link
-                href="/categories"
-                className="hidden items-center justify-center gap-2 rounded-xl border border-white/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/10 sm:inline-flex"
-              >
-                {t("shopByCategory")}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Compact trust strip — Murukali / Tuma style */}
-      <section className="border-b border-[var(--huza-line)] bg-white/90">
-        <p className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-2.5 text-center text-xs font-semibold text-[var(--huza-green-dark)] sm:text-sm">
-          <Truck className="size-3.5 shrink-0 text-[var(--huza-green)] sm:size-4" aria-hidden />
-          {t("trustStrip")}
-        </p>
-      </section>
+      {/* Phase 2 — compact shopping hero (Version 1.0 locked) */}
+      <HeroSection />
 
       {/* 1. Categories first */}
-      <section className="mx-auto mt-8 max-w-7xl px-4 sm:mt-12 sm:px-6">
+      <section
+        id="categories"
+        className="mx-auto mt-8 max-w-7xl scroll-mt-28 px-4 sm:mt-12 sm:px-6"
+      >
         <SectionHeader
           title={t("shopByCategory")}
           href="/categories"
