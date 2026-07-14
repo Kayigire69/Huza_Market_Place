@@ -19,6 +19,7 @@ import { useLocale } from "@/lib/locale-context";
 import { locales, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { SmartSearch } from "@/components/layout/SmartSearch";
+import { CategoriesMenu } from "@/components/layout/CategoriesMenu";
 
 const LOCALE_SHORT: Record<Locale, string> = {
   en: "EN",
@@ -247,13 +248,7 @@ export function Header() {
               : "max-h-12 py-2.5 opacity-100"
           )}
         >
-          <Link
-            href="/categories"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--huza-green-dark)] px-3.5 py-1.5 text-white transition hover:bg-[var(--huza-green)]"
-          >
-            <Menu className="size-4" />
-            {t("categories")}
-          </Link>
+          <CategoriesMenu variant="desktop" />
           <Link
             href="/products?featured=1"
             className="text-[var(--huza-ink)] transition hover:text-[var(--huza-green-dark)]"
@@ -285,8 +280,8 @@ export function Header() {
                 ))}
               </select>
             </label>
+            <CategoriesMenu variant="mobile" onNavigate={() => setMenuOpen(false)} />
             {[
-              { href: "/categories", label: t("categories") },
               { href: "/products?featured=1", label: t("specialOffers") },
               { href: "/track", label: t("trackOrder") },
               { href: "/wishlist", label: t("wishlist") },
