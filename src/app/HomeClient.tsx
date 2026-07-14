@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 import { resolveCategoryImage } from "@/lib/catalog-images";
-import { productListEmoji } from "@/lib/product-emoji";
 import { FLAT_DELIVERY_FEE_RWF, formatRwf } from "@/lib/utils";
 
 type Category = {
@@ -28,18 +27,6 @@ type Category = {
   nameFr: string;
   nameRw: string;
   imageUrl?: string | null;
-};
-
-type CategoryProduct = {
-  id: string;
-  nameEn: string;
-  nameFr: string;
-  nameRw: string;
-};
-
-type CategoryPreview = {
-  category: Category;
-  products: CategoryProduct[];
 };
 
 type Promo = {
@@ -112,7 +99,6 @@ export function HomePage({
   popularNow,
   readyToEat,
   categories,
-  categoryPreviews = [],
   promotions,
   testimonials,
   isOpen,
@@ -120,21 +106,12 @@ export function HomePage({
   popularNow: ProductCardData[];
   readyToEat: ProductCardData[];
   categories: Category[];
-  categoryPreviews?: CategoryPreview[];
   promotions: Promo[];
   testimonials: Testimonial[];
   isOpen: boolean;
 }) {
   const { t, locale } = useLocale();
   const [newsletterMsg, setNewsletterMsg] = useState("");
-
-  const productName = (p: CategoryProduct) =>
-    locale === "fr" ? p.nameFr : locale === "rw" ? p.nameRw : p.nameEn;
-
-  const previews =
-    categoryPreviews.length > 0
-      ? categoryPreviews
-      : categories.map((category) => ({ category, products: [] as CategoryProduct[] }));
 
   const promoTitle = (p: Promo) =>
     locale === "fr" ? p.titleFr : locale === "rw" ? p.titleRw : p.titleEn;
@@ -199,12 +176,15 @@ export function HomePage({
                   sizes="(max-width: 640px) 50vw, 33vw"
                   className="object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 flex flex-col items-stretch gap-2 p-3 sm:p-4">
-                  <p className="text-sm font-bold leading-snug text-white sm:text-lg">{name}</p>
-                  <span className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[var(--huza-green)] px-3 text-xs font-semibold text-white shadow-sm transition-colors group-hover:bg-[var(--huza-green-dark)] sm:h-10 sm:text-sm">
-                    {t("orderCategory").replace("{name}", name)}
-                    <ArrowRight className="size-3.5 shrink-0 sm:size-4" aria-hidden />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {/* Name + Order Now aligned on one bottom bar */}
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 sm:gap-3 sm:p-4">
+                  <p className="min-w-0 flex-1 text-sm font-bold leading-snug text-white drop-shadow-sm sm:text-base lg:text-lg">
+                    {name}
+                  </p>
+                  <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-[var(--huza-green)] px-2.5 text-[11px] font-semibold text-white shadow-md transition-colors group-hover:bg-[var(--huza-green-dark)] sm:h-9 sm:rounded-xl sm:px-3.5 sm:text-xs">
+                    {t("orderNow")}
+                    <ArrowRight className="size-3.5" aria-hidden />
                   </span>
                 </div>
               </Link>
