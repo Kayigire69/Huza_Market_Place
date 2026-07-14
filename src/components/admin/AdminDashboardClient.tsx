@@ -32,6 +32,13 @@ type LivePayload = {
     lowStock: number;
     pendingFarmers?: number;
     pendingSuppliers?: number;
+    completedOrders?: number;
+    revenueThisMonth?: number;
+    revenuePrevMonth?: number;
+    revenueGrowthPct?: number | null;
+    newCustomersMonth?: number;
+    suppliersApproved?: number;
+    suppliersPending?: number;
   };
   recentOrders: {
     id: string;
@@ -92,10 +99,21 @@ export function AdminDashboardClient({
   const cards = [
     { label: "Today's orders", value: String(c.todayOrders), tone: "bg-emerald-50 text-emerald-900" },
     { label: "Today's revenue", value: formatRwf(c.revenueToday), tone: "bg-sky-50 text-sky-900" },
+    {
+      label: "MoM revenue growth",
+      value:
+        c.revenueGrowthPct == null
+          ? "—"
+          : `${c.revenueGrowthPct > 0 ? "+" : ""}${c.revenueGrowthPct}%`,
+      tone: "bg-violet-50 text-violet-900",
+    },
     { label: "Pending payment", value: String(c.pendingPayment), tone: "bg-amber-50 text-amber-900" },
-    { label: "Paid / ready", value: String(c.paidReady), tone: "bg-lime-50 text-lime-900" },
-    { label: "Preparing", value: String(c.preparing), tone: "bg-teal-50 text-teal-900" },
-    { label: "Out for delivery", value: String(c.outForDelivery), tone: "bg-indigo-50 text-indigo-900" },
+    { label: "Completed orders", value: String(c.completedOrders ?? c.deliveredToday), tone: "bg-lime-50 text-lime-900" },
+    {
+      label: "New customers (month)",
+      value: String(c.newCustomersMonth ?? 0),
+      tone: "bg-teal-50 text-teal-900",
+    },
   ];
 
   return (

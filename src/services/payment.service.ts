@@ -26,7 +26,7 @@ export const paymentService = {
     // Commit reservations → physical stock sale
     await prisma.$transaction(async (tx) => {
       for (const item of payment.order.items) {
-        await productRepository.commitReservation(tx, item.productId, item.quantity);
+        const updated = await productRepository.commitReservation(tx, item.productId, item.quantity);
         await tx.stockHistory.create({
           data: {
             productId: item.productId,
@@ -42,8 +42,27 @@ export const paymentService = {
             reason: `Order ${payment.order.orderNumber}`,
           },
         });
+        const available = Math.max(0, updated.stockQty - updated.reservedQty);
+        if (available > 0 && available <= updated.lowStockAt) {
+          void notifyAdmins({
+            type: "LOW_STOCK",
+            title: `Low stock: ${updated.nameEn}`,
+            body: `Only ${available} units left after order ${payment.order.orderNumber}.`,
+          });
+        }
       }
     });
+
+    // Loyalty: 1 point per 1,000 RWF paid
+    if (payment.order.userId && payment.amount > 0) {
+      const points = Math.floor(payment.amount / 1000);
+      if (points > 0) {
+        await prisma.user.update({
+          where: { id: payment.order.userId },
+          data: { loyaltyPoints: { increment: points } },
+        });
+      }
+    }
 
     const updated = await paymentRepository.markConfirmed(payment.id, disbursed.message);
 

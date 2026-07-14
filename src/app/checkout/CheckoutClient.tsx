@@ -5,16 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import {
-  DELIVERY_FEES,
-  DELIVERY_ZONE_LABELS,
   formatRwf,
   formatUnit,
-  type DeliveryZoneKey,
+  type DeliveryZoneDto,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { Smartphone, CheckCircle2, XCircle, Loader2, FileText, CreditCard, MapPin } from "lucide-react";
-import { cartFulfillmentEta, ZONE_ETA_LABELS } from "@/lib/delivery-eta";
+import { cartFulfillmentEta, zoneFee } from "@/lib/delivery-eta";
 
 type PaymentSuccess = {
   orderNumber: string;
@@ -43,14 +41,15 @@ const STEPS = [
   { id: "payment", label: "Payment", icon: CreditCard },
 ] as const;
 
-export default function CheckoutClient() {
+export default function CheckoutClient({ zones }: { zones: DeliveryZoneDto[] }) {
   const { t } = useLocale();
   const { items, subtotal, clear } = useCart();
   const sp = useSearchParams();
-  const initialZone = (sp.get("zone") as DeliveryZoneKey) || "KIGALI";
+  const defaultZone = zones[0]?.code || "KIGALI";
+  const initialZone = sp.get("zone") || defaultZone;
   const initialSlot = (sp.get("slot") as "TODAY" | "TOMORROW" | "SCHEDULED") || "TODAY";
-  const [zone, setZone] = useState<DeliveryZoneKey>(
-    initialZone in DELIVERY_FEES ? initialZone : "KIGALI"
+  const [zone, setZone] = useState(
+    zones.some((z) => z.code === initialZone) ? initialZone : defaultZone
   );
   const [slot, setSlot] = useState<"TODAY" | "TOMORROW" | "SCHEDULED">(
     ["TODAY", "TOMORROW", "SCHEDULED"].includes(initialSlot) ? initialSlot : "TODAY"
@@ -76,15 +75,25 @@ export default function CheckoutClient() {
     paymentPhone: "",
   });
 
-  const fee = DELIVERY_FEES[zone];
-  const cartSubtotal = subtotal();
-  const total = useMemo(() => cartSubtotal + fee, [cartSubtotal, fee]);
-  const fulfillment = useMemo(
-    () => cartFulfillmentEta(items, zone, slot),
-    [items, zone, slot]
-  );
   const [locStatus, setLocStatus] = useState("");
   const [copied, setCopied] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoMsg, setPromoMsg] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoFreeDelivery, setPromoFreeDelivery] = useState(false);
+
+  const fee = promoFreeDelivery ? 0 : zoneFee(zone, zones);
+  const cartSubtotal = subtotal();
+  const total = useMemo(
+    () => Math.max(0, cartSubtotal - promoDiscount + fee),
+    [cartSubtotal, promoDiscount, fee]
+  );
+  const fulfillment = useMemo(
+    () => cartFulfillmentEta(items, zone, slot, zones),
+    [items, zone, slot, zones]
+  );
+  const zoneMeta = zones.find((z) => z.code === zone) || zones[0];
+  const zoneLabel = zoneMeta?.labelEn || zone;
 
   const useLiveLocation = () => {
     setLocStatus("Getting your location…");
@@ -195,6 +204,7 @@ export default function CheckoutClient() {
           deliverySlot: slot,
           scheduledFor: slot === "SCHEDULED" && scheduledDate ? scheduledDate : undefined,
           paymentPhone: form.paymentPhone,
+          promoCode: promoCode || undefined,
           items: items.map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
@@ -457,7 +467,7 @@ export default function CheckoutClient() {
             </div>
             <div className="text-right text-sm">
               <p className="font-semibold text-[var(--huza-green-dark)]">
-                {DELIVERY_ZONE_LABELS[zone]}
+                {zoneLabel}
               </p>
               <p className="text-[var(--huza-muted)]">ETA: {fulfillment.etaLabel}</p>
             </div>
@@ -515,9 +525,15 @@ export default function CheckoutClient() {
               <span>{t("subtotal")}</span>
               <span>{formatRwf(cartSubtotal)}</span>
             </div>
+            {promoDiscount > 0 && (
+              <div className="flex justify-between text-[var(--huza-green-dark)]">
+                <span>Discount</span>
+                <span>-{formatRwf(promoDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span>
-                {t("deliveryFee")} ({DELIVERY_ZONE_LABELS[zone]})
+                {t("deliveryFee")} ({zoneLabel})
               </span>
               <span>{formatRwf(fee)}</span>
             </div>
@@ -529,6 +545,55 @@ export default function CheckoutClient() {
               Estimated delivery: {fulfillment.etaLabel}
             </p>
           </div>
+          </div>
+
+        <div className="mt-5 rounded-xl border border-[var(--huza-line)] bg-white p-4">
+          <label className="label">Promo / loyalty code</label>
+          <div className="mt-1 flex gap-2">
+            <input
+              className="input-field"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              placeholder="Enter code"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={async () => {
+                setPromoMsg("");
+                if (!promoCode.trim()) {
+                  setPromoDiscount(0);
+                  setPromoFreeDelivery(false);
+                  setPromoMsg("");
+                  return;
+                }
+                const res = await fetch("/api/promotions/validate", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ code: promoCode }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.valid) {
+                  setPromoDiscount(0);
+                  setPromoFreeDelivery(false);
+                  setPromoMsg(data.error || "Invalid code");
+                  return;
+                }
+                let discount = 0;
+                if (data.discountPct) discount += Math.round((cartSubtotal * data.discountPct) / 100);
+                if (data.discountAmt) discount += data.discountAmt;
+                setPromoDiscount(Math.min(discount, cartSubtotal));
+                setPromoFreeDelivery(Boolean(data.freeDelivery));
+                setPromoMsg(data.title || "Code applied");
+              }}
+            >
+              Apply
+            </Button>
+          </div>
+          {promoMsg && (
+            <p className="mt-2 text-xs text-[var(--huza-green-dark)]">{promoMsg}</p>
+          )}
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -565,7 +630,7 @@ export default function CheckoutClient() {
             <span>{formatRwf(total)}</span>
           </div>
           <p className="mt-1 text-[var(--huza-muted)]">
-            {DELIVERY_ZONE_LABELS[zone]} · ETA {fulfillment.etaLabel}
+            {zoneLabel} · ETA {fulfillment.etaLabel}
           </p>
         </div>
 
@@ -664,35 +729,31 @@ export default function CheckoutClient() {
         <div>
           <label className="label">Delivery destination</label>
           <div className="mt-2 grid gap-3 sm:grid-cols-3">
-            {(Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map((z) => {
-              const selected = zone === z;
+            {zones.map((z) => {
+              const selected = zone === z.code;
               return (
                 <button
-                  key={z}
+                  key={z.code}
                   type="button"
-                  onClick={() => setZone(z)}
+                  onClick={() => setZone(z.code)}
                   className={`rounded-xl border p-4 text-left transition ${
                     selected
                       ? "border-[var(--huza-green)] bg-[var(--huza-mint)] ring-2 ring-[var(--huza-green)]/30"
                       : "border-[var(--huza-line)] hover:border-[var(--huza-green)]"
                   }`}
                 >
-                  <p className="font-semibold text-[var(--huza-green-dark)]">
-                    {DELIVERY_ZONE_LABELS[z]}
-                  </p>
+                  <p className="font-semibold text-[var(--huza-green-dark)]">{z.labelEn}</p>
                   <p className="mt-1 text-xs text-[var(--huza-muted)]">
-                    Fee {formatRwf(DELIVERY_FEES[z])}
+                    Fee {formatRwf(z.feeRwf)}
                   </p>
-                  <p className="mt-2 text-sm font-bold text-[var(--huza-ink)]">
-                    {ZONE_ETA_LABELS[z]}
-                  </p>
+                  <p className="mt-2 text-sm font-bold text-[var(--huza-ink)]">{z.etaLabelEn}</p>
                 </button>
               );
             })}
           </div>
           <div className="mt-3 rounded-xl bg-[var(--huza-mint)] px-4 py-3 text-sm">
             <p className="font-semibold text-[var(--huza-green-dark)]">
-              {DELIVERY_ZONE_LABELS[zone]} · {t("deliveryFee")} {formatRwf(fee)}
+              {zoneLabel} · {t("deliveryFee")} {formatRwf(fee)}
             </p>
             <p className="mt-0.5 text-[var(--huza-muted)]">
               Estimated delivery: <strong>{fulfillment.etaLabel}</strong>
@@ -824,7 +885,7 @@ export default function CheckoutClient() {
             <span>{formatRwf(total)}</span>
           </div>
           <p className="pt-1 text-xs text-[var(--huza-muted)]">
-            ETA for {DELIVERY_ZONE_LABELS[zone]}: {fulfillment.etaLabel}
+            ETA for {zoneLabel}: {fulfillment.etaLabel}
           </p>
         </div>
 

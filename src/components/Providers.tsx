@@ -3,11 +3,12 @@
 import { SessionProvider } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LocaleProvider } from "@/lib/locale-context";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartHydrator } from "@/components/CartHydrator";
+import { WhatsAppFab } from "@/components/WhatsAppFab";
 import {
   RoutePrefetcher,
   STOREFRONT_PREFETCH,
@@ -42,12 +43,23 @@ function isPartnerPortal(pathname: string | null) {
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const partner = isPartnerPortal(pathname);
+  const [whatsappUrl, setWhatsappUrl] = useState("https://wa.me/250788000000");
   const prefetchRoutes = useMemo(() => {
     if (pathname?.startsWith("/admin")) return ADMIN_PREFETCH;
     if (pathname === "/farmer" || pathname?.startsWith("/farmer/")) return FARMER_PREFETCH;
     if (partner) return [] as string[];
     return STOREFRONT_PREFETCH;
   }, [pathname, partner]);
+
+  useEffect(() => {
+    if (partner) return;
+    fetch("/api/public/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.whatsapp_url) setWhatsappUrl(data.whatsapp_url);
+      })
+      .catch(() => undefined);
+  }, [partner]);
 
   return (
     <SessionProvider
@@ -62,6 +74,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <main className={partner ? "min-h-screen" : "min-h-[70vh]"}>{children}</main>
         {!partner && <Footer />}
         {!partner && <SupportChat />}
+        {!partner && <WhatsAppFab href={whatsappUrl} />}
       </LocaleProvider>
     </SessionProvider>
   );

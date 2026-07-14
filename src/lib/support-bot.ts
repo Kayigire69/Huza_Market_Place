@@ -73,22 +73,22 @@ const replies: Record<string, Record<Locale, string>> = {
 
   // 3 Delivery
   delivery: {
-    en: "Youth Huza delivers to Kigali, Kamonyi (Ruyenzi), and Bugesera (Nyamata). Choose Today, Tomorrow, or Scheduled at checkout and share your address or live location. Delivery fee appears when you are about to pay.",
-    fr: "Youth Huza livre à Kigali, Kamonyi (Ruyenzi) et Bugesera (Nyamata). Choisissez Aujourd’hui, Demain ou Planifié et partagez votre adresse. Les frais s’affichent au paiement.",
-    rw: "Youth Huza itanga i Kigali, Kamonyi (Ruyenzi), na Bugesera (Nyamata). Hitamo Uyu munsi, Ejo cyangwa Iteganyijwe hanyuma ushyire aderesi. Amafaranga yo gutanga agaragara igihe wishyura.",
-    sw: "Youth Huza inawasilisha Kigali, Kamonyi (Ruyenzi), na Bugesera (Nyamata). Chagua Leo, Kesho, au Ratiba, kisha shiriki anwani. Ada inaonekana wakati wa malipo.",
+    en: "Youth Huza delivers to Kigali, Kamonyi, and Bugesera. Choose Today, Tomorrow, or Scheduled at checkout and share your address or live location. Delivery fee is 5,000 RWF for all three destinations.",
+    fr: "Youth Huza livre à Kigali, Kamonyi et Bugesera. Choisissez Aujourd’hui, Demain ou Planifié et partagez votre adresse. Les frais sont de 5 000 RWF pour les trois destinations.",
+    rw: "Youth Huza itanga i Kigali, Kamonyi, na Bugesera. Hitamo Uyu munsi, Ejo cyangwa Iteganyijwe hanyuma ushyire aderesi. Amafaranga yo gutanga ni RWF 5,000 ku byahi byombi.",
+    sw: "Youth Huza inawasilisha Kigali, Kamonyi, na Bugesera. Chagua Leo, Kesho, au Ratiba, kisha shiriki anwani. Ada ni RWF 5,000 kwa maeneo yote matatu.",
   },
   deliveryFee: {
-    en: "Delivery fee is calculated for your destination and shown at checkout before you pay (same flat fee for Kigali, Kamonyi/Ruyenzi, and Bugesera/Nyamata).",
-    fr: "Les frais de livraison s’affichent au paiement selon votre destination (tarif unique pour Kigali, Kamonyi/Ruyenzi et Bugesera/Nyamata).",
-    rw: "Amafaranga yo gutanga agaragara igihe wishyura hashinzwe aho bigenewe (igiciro kimwe kuri Kigali, Kamonyi/Ruyenzi na Bugesera/Nyamata).",
-    sw: "Ada ya uwasilishaji inaonekana wakati wa malipo kulingana na eneo lako (ada sawa kwa Kigali, Kamonyi/Ruyenzi, na Bugesera/Nyamata).",
+    en: "Delivery fee is 5,000 RWF for Kigali, Kamonyi, and Bugesera — shown at checkout before you pay.",
+    fr: "Les frais de livraison sont de 5 000 RWF pour Kigali, Kamonyi et Bugesera — affichés au paiement.",
+    rw: "Amafaranga yo gutanga ni RWF 5,000 kuri Kigali, Kamonyi na Bugesera — agaragara igihe wishyura.",
+    sw: "Ada ya uwasilishaji ni RWF 5,000 kwa Kigali, Kamonyi, na Bugesera — inaonekana wakati wa malipo.",
   },
   deliveryTime: {
-    en: "In stock: 45–90 minutes in Kigali, 2–3 hours for Kamonyi (Ruyenzi) or Bugesera (Nyamata). If we need to prepare fresh stock, delivery is within 6–12 hours.",
-    fr: "En stock : 45–90 min à Kigali, 2–3 h pour Kamonyi (Ruyenzi) ou Bugesera (Nyamata). Si nous devons préparer le stock, livraison sous 6–12 heures.",
-    rw: "Birahari: iminota 45–90 i Kigali, amasaha 2–3 Kamonyi (Ruyenzi) cyangwa Bugesera (Nyamata). Niba dukeneye guteza ububiko, dutanga mu masaha 6–12.",
-    sw: "Ipo: dakika 45–90 Kigali, saa 2–3 Kamonyi (Ruyenzi) au Bugesera (Nyamata). Ikiwa tunahitaji kuandaa hisa, uwasilishaji ni ndani ya saa 6–12.",
+    en: "In stock: 45–90 minutes in Kigali, 2–3 hours for Kamonyi or Bugesera. If we need to prepare fresh stock, delivery is within 6–12 hours.",
+    fr: "En stock : 45–90 min à Kigali, 2–3 h pour Kamonyi ou Bugesera. Si nous devons préparer le stock, livraison sous 6–12 heures.",
+    rw: "Birahari: iminota 45–90 i Kigali, amasaha 2–3 Kamonyi cyangwa Bugesera. Niba dukeneye guteza ububiko, dutanga mu masaha 6–12.",
+    sw: "Ipo: dakika 45–90 Kigali, saa 2–3 Kamonyi au Bugesera. Ikiwa tunahitaji kuandaa hisa, uwasilishaji ni ndani ya saa 6–12.",
   },
 
   // 4 Payment

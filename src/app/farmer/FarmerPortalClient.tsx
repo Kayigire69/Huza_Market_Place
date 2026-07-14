@@ -35,6 +35,7 @@ type ProductRow = {
   isOrganic: boolean;
   reviewStatus?: string;
   reviewNote?: string | null;
+  reviewedAt?: string | Date | null;
   qualityGeneral?: string | null;
   fieldType?: string | null;
   currentCrop?: string | null;
@@ -62,7 +63,19 @@ type Farmer = FarmerDossierValues & {
   user?: { fullName?: string } | null;
 };
 
-type Tab = "dossier" | "agreement" | "products" | "inventory";
+type Tab = "dossier" | "agreement" | "products" | "inventory" | "orders";
+
+type PurchaseOrderRow = {
+  id: string;
+  poNumber: string;
+  status: string;
+  totalAmount: number;
+  qualityNotes: string | null;
+  rejectionReason: string | null;
+  inspectedAt: string | null;
+  paymentStatus: string | null;
+  createdAt: string;
+};
 
 async function uploadPhotos(files: FileList | File[]): Promise<string[]> {
   const list = Array.from(files);
@@ -89,9 +102,11 @@ async function uploadOne(file: File, folder: string): Promise<string> {
 export function FarmerPortalClient({
   farmer,
   categories,
+  purchaseOrders = [],
 }: {
   farmer: Farmer;
   categories: Category[];
+  purchaseOrders?: PurchaseOrderRow[];
 }) {
   const { t } = useLocale();
   const router = useRouter();
@@ -106,11 +121,13 @@ export function FarmerPortalClient({
     ? [
         { key: "dossier", label: t("farmerInformation") },
         { key: "products", label: t("productsAndPhotos") },
+        { key: "orders", label: "Huza orders & payments" },
         { key: "inventory", label: t("inventoryTab") },
       ]
     : [
         { key: "agreement", label: t("huzaAgreementTab") },
         { key: "products", label: t("productsAndPhotos") },
+        { key: "orders", label: "Huza orders & payments" },
         { key: "inventory", label: t("inventoryTab") },
       ];
 
@@ -584,9 +601,14 @@ export function FarmerPortalClient({
                         <p className="text-[11px] mt-1 font-semibold text-[var(--huza-green-dark)]">
                           {t("review")}: {p.reviewStatus || "PENDING"}
                         </p>
+                        {p.reviewedAt && (
+                          <p className="text-[11px] text-[var(--huza-muted)]">
+                            Reviewed: {new Date(p.reviewedAt).toLocaleDateString()}
+                          </p>
+                        )}
                         {p.reviewNote && (
                           <p className="text-[11px] text-[var(--huza-muted)]">
-                            {t("note")}: {p.reviewNote}
+                            Feedback: {p.reviewNote}
                           </p>
                         )}
                       </div>
@@ -596,6 +618,43 @@ export function FarmerPortalClient({
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {tab === "orders" && (
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
+          <div>
+            <h2 className="font-semibold">Purchase requests &amp; payments</h2>
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">
+              Track Huza purchase orders, inspection feedback, and payment status.
+            </p>
+          </div>
+          {purchaseOrders.length === 0 ? (
+            <p className="text-sm text-[var(--huza-muted)]">No purchase orders yet.</p>
+          ) : (
+            purchaseOrders.map((po) => (
+              <div key={po.id} className="rounded-xl border border-[var(--huza-line)] p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-mono font-semibold text-[var(--huza-green-dark)]">{po.poNumber}</p>
+                  <span className="rounded-full bg-[var(--huza-mint)] px-2 py-0.5 text-xs">{po.status}</span>
+                </div>
+                <p className="mt-2">{formatRwf(po.totalAmount)}</p>
+                <p className="text-xs text-[var(--huza-muted)]">
+                  Submitted {new Date(po.createdAt).toLocaleDateString()}
+                  {po.inspectedAt ? ` · Inspected ${new Date(po.inspectedAt).toLocaleDateString()}` : ""}
+                </p>
+                <p className="mt-1 text-xs">
+                  Payment: <strong>{po.paymentStatus || "Pending"}</strong>
+                </p>
+                {po.qualityNotes && (
+                  <p className="mt-2 text-xs text-[var(--huza-green-dark)]">Feedback: {po.qualityNotes}</p>
+                )}
+                {po.rejectionReason && (
+                  <p className="mt-2 text-xs text-red-700">Rejection: {po.rejectionReason}</p>
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
 

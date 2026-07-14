@@ -28,11 +28,16 @@ export const productCardSelect = {
   price: true,
   unit: true,
   stockQty: true,
+  reservedQty: true,
+  lowStockAt: true,
   isOrganic: true,
   ratingAvg: true,
   availableDistricts: true,
   originDistrict: true,
   nutritionalInfo: true,
+  reviewStatus: true,
+  reviewedAt: true,
+  harvestDate: true,
   images: {
     where: { kind: "STOREFRONT" as const },
     orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
@@ -153,37 +158,52 @@ export const productRepository = {
     });
   },
 
-  async findHomeLists(take = 8) {
+  async findHomeLists(take = 4) {
     // Active products that have at least one HUZA storefront image
     const active = {
       isActive: true,
       deletedAt: null,
       images: { some: { kind: "STOREFRONT" as const } },
     };
-    const [shopProducts, featured, bestSellers, freshToday] = await Promise.all([
-      prisma.product.findMany({
-        where: active,
-        select: productCardSelect,
-        orderBy: [{ updatedAt: "desc" }],
-        take,
-      }),
+    const [featured, bestSellers, freshToday, categories] = await Promise.all([
       prisma.product.findMany({
         where: { ...active, isFeatured: true },
         select: productCardSelect,
-        take: 8,
+        take,
       }),
       prisma.product.findMany({
         where: { ...active, isBestSeller: true },
         select: productCardSelect,
-        take: 8,
+        take,
       }),
       prisma.product.findMany({
         where: { ...active, isNewArrival: true },
         select: productCardSelect,
         orderBy: { createdAt: "desc" },
-        take: 8,
+        take,
       }),
+      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
     ]);
-    return { shopProducts, featured, bestSellers, freshToday };
+
+    // Curated category strips for homepage (4 each) — full lists live on /products
+    const categoryPreviews = await Promise.all(
+      categories.map(async (category) => {
+        const products = await prisma.product.findMany({
+          where: { ...active, categoryId: category.id },
+          select: productCardSelect,
+          orderBy: [{ isBestSeller: "desc" }, { isFeatured: "desc" }, { updatedAt: "desc" }],
+          take: 4,
+        });
+        return { category, products };
+      })
+    );
+
+    return {
+      shopProducts: featured,
+      featured,
+      bestSellers,
+      freshToday,
+      categoryPreviews,
+    };
   },
 };

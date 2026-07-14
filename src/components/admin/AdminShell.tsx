@@ -24,6 +24,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/orders", label: "Orders", icon: "orders" },
       { href: "/admin/delivery", label: "Delivery", icon: "delivery" },
       { href: "/admin/customers", label: "Customers", icon: "customers" },
+      { href: "/admin/support", label: "Support inbox", icon: "support" },
     ],
   },
   {
@@ -109,6 +110,12 @@ function NavIcon({ name }: { name: string }) {
           <path d="M2.5 19a6.5 6.5 0 0 1 13 0" />
           <circle cx="17" cy="9" r="2.5" />
           <path d="M16 19a5 5 0 0 1 5.5-4.8" />
+        </svg>
+      );
+    case "support":
+      return (
+        <svg {...common}>
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
         </svg>
       );
     case "products":

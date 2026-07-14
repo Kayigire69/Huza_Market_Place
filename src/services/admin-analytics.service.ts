@@ -178,6 +178,9 @@ export async function getAdminLiveLite() {
 
 export async function getAdminDashboardAnalytics() {
   const startOfDay = startOfLocalDay();
+  const monthStart = new Date(startOfDay.getFullYear(), startOfDay.getMonth(), 1);
+  const prevMonthStart = new Date(startOfDay.getFullYear(), startOfDay.getMonth() - 1, 1);
+  const prevMonthEnd = new Date(monthStart.getTime() - 1);
 
   const [
     todayOrders,
@@ -194,6 +197,11 @@ export async function getAdminDashboardAnalytics() {
     ordersLast7Days,
     topProducts,
     salesByCategory,
+    revenueThisMonth,
+    revenuePrevMonth,
+    completedOrders,
+    supplierStats,
+    newCustomersMonth,
   ] = await Promise.all([
     prisma.order.count({ where: { createdAt: { gte: startOfDay } } }),
     prisma.order.count({ where: { status: "PENDING" } }),
@@ -228,7 +236,34 @@ export async function getAdminDashboardAnalytics() {
     getOrdersLast7Days(),
     getTopProductsBySales(5),
     getSalesByCategory(8),
+    prisma.order.aggregate({
+      _sum: { total: true },
+      where: {
+        createdAt: { gte: monthStart },
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+      },
+    }),
+    prisma.order.aggregate({
+      _sum: { total: true },
+      where: {
+        createdAt: { gte: prevMonthStart, lte: prevMonthEnd },
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+      },
+    }),
+    prisma.order.count({ where: { status: "DELIVERED" } }),
+    prisma.supplier.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    }),
+    prisma.user.count({
+      where: { role: "CUSTOMER", createdAt: { gte: monthStart } },
+    }),
   ]);
+
+  const thisMonth = revenueThisMonth._sum.total ?? 0;
+  const prevMonth = revenuePrevMonth._sum.total ?? 0;
+  const revenueGrowthPct =
+    prevMonth > 0 ? Math.round(((thisMonth - prevMonth) / prevMonth) * 1000) / 10 : null;
 
   return {
     counts: {
@@ -243,6 +278,13 @@ export async function getAdminDashboardAnalytics() {
       pendingFarmers,
       /** @deprecated alias kept for older clients */
       pendingSuppliers: pendingFarmers,
+      completedOrders,
+      revenueThisMonth: thisMonth,
+      revenuePrevMonth: prevMonth,
+      revenueGrowthPct,
+      newCustomersMonth,
+      suppliersApproved: supplierStats.find((s) => s.status === "APPROVED")?._count._all ?? 0,
+      suppliersPending: supplierStats.find((s) => s.status === "PENDING")?._count._all ?? 0,
     },
     recentOrders: recentOrders.map((o) => ({
       id: o.id,

@@ -19,7 +19,7 @@ import {
   cartFulfillmentEta,
   formatBackorderEta,
   formatZoneEta,
-  ZONE_ETA_MINUTES,
+  zoneEtaMinutes,
 } from "@/lib/delivery-eta";
 import type { DeliveryZoneKey } from "@/lib/utils";
 
@@ -64,6 +64,7 @@ export const createOrderSchema = z.object({
   instructions: z.string().optional(),
   paymentMethod: z.enum(["MTN_MOMO", "AIRTEL_MONEY"]),
   paymentPhone: z.string().optional(),
+  promoCode: z.string().optional(),
   items: z.array(z.object({ productId: z.string(), quantity: z.number().positive() })).min(1),
 });
 
@@ -169,14 +170,48 @@ export const orderService = {
     }
 
     const merchant = huzaPayee();
-    const deliveryFee = await getDeliveryFee(data.deliveryZone);
-    const total = subtotal + deliveryFee;
+    let deliveryFee = await getDeliveryFee(data.deliveryZone);
+    let discount = 0;
+    let appliedPromo: string | null = null;
+
+    if (data.promoCode) {
+      const code = data.promoCode.trim().toUpperCase();
+      const promo = await prisma.promotion.findFirst({
+        where: {
+          code,
+          isActive: true,
+          OR: [{ startsAt: null }, { startsAt: { lte: new Date() } }],
+        },
+      });
+      if (promo && (!promo.endsAt || promo.endsAt >= new Date())) {
+        appliedPromo = promo.code;
+        if (promo.freeDelivery) deliveryFee = 0;
+        if (promo.discountPct) discount += Math.round((subtotal * promo.discountPct) / 100);
+        if (promo.discountAmt) discount += promo.discountAmt;
+        if (promo.isLoyalty && promo.loyaltyPoints && userId) {
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { loyaltyPoints: true },
+          });
+          if (!user || user.loyaltyPoints < promo.loyaltyPoints) {
+            throw new Error(`Need ${promo.loyaltyPoints} loyalty points to use this reward`);
+          }
+          await prisma.user.update({
+            where: { id: userId },
+            data: { loyaltyPoints: { decrement: promo.loyaltyPoints } },
+          });
+        }
+      }
+    }
+
+    discount = Math.min(discount, subtotal);
+    const total = Math.max(0, subtotal - discount + deliveryFee);
     const orderNumber = await generateOrderNumber();
     const receiptNumber = await nextReceiptNumber(new Date().getFullYear());
     const payPhone = data.paymentPhone!;
     const estimatedMinutes = needsRestock
       ? fulfillment.estimatedMinutes
-      : ZONE_ETA_MINUTES[zoneKey];
+      : zoneEtaMinutes(zoneKey);
 
     // Step 1 — create pending order and reserve stock (backorders allowed)
     const order = await prisma.$transaction(async (tx) => {
@@ -225,6 +260,8 @@ export const orderService = {
           deliverySlot: slot,
           estimatedDelivery,
           subtotal,
+          discountAmt: discount,
+          promoCode: appliedPromo,
           total,
           status: OrderStatus.PENDING,
           scheduledFor,

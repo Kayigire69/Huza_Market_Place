@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "harvestDate" TIMESTAMP(3);
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "keywords" TEXT;

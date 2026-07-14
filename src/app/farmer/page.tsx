@@ -46,6 +46,24 @@ export default async function FarmerPage() {
   const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
   const listed = farmer.products.length;
 
+  const purchaseOrders = await prisma.purchaseOrder.findMany({
+    where: { supplierId: farmer.id },
+    orderBy: { createdAt: "desc" },
+    take: 40,
+    select: {
+      id: true,
+      poNumber: true,
+      status: true,
+      totalAmount: true,
+      qualityNotes: true,
+      rejectionReason: true,
+      inspectedAt: true,
+      createdAt: true,
+      paidAt: true,
+      paymentRef: true,
+    },
+  });
+
   return (
     <FarmerPortalChrome
       mode="dashboard"
@@ -58,7 +76,21 @@ export default async function FarmerPage() {
       inspectionScheduledAt={farmer.inspectionScheduledAt?.toISOString() ?? null}
       listed={listed}
     >
-      <FarmerPortalClient farmer={farmer as never} categories={categories} />
+      <FarmerPortalClient
+        farmer={farmer as never}
+        categories={categories}
+        purchaseOrders={purchaseOrders.map((po) => ({
+          id: po.id,
+          poNumber: po.poNumber,
+          status: po.status,
+          totalAmount: po.totalAmount,
+          qualityNotes: po.qualityNotes,
+          rejectionReason: po.rejectionReason,
+          inspectedAt: po.inspectedAt?.toISOString() ?? null,
+          paymentStatus: po.paidAt ? `Paid${po.paymentRef ? ` · ${po.paymentRef}` : ""}` : "Pending",
+          createdAt: po.createdAt.toISOString(),
+        }))}
+      />
     </FarmerPortalChrome>
   );
 }

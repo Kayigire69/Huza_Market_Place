@@ -25,7 +25,7 @@ export default function AboutPage() {
         <p>
           Pay Youth Huza with MTN MoMo or Airtel Money (bank cards coming soon — no Cash on
           Delivery). Browse in Kinyarwanda, English, French, or Kiswahili.
-          Delivery across Kigali, Kamonyi (Ruyenzi), and Bugesera (Nyamata).
+          Delivery across Kigali, Kamonyi, and Bugesera (5,000 RWF flat fee).
         </p>
       </div>
     </div>

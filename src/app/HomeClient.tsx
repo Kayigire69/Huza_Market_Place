@@ -16,6 +16,7 @@ import {
   BadgeCheck,
   MapPin,
   Clock,
+  ChevronRight,
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 
@@ -25,6 +26,12 @@ type Category = {
   nameEn: string;
   nameFr: string;
   nameRw: string;
+  imageUrl?: string | null;
+};
+
+type CategoryPreview = {
+  category: Category;
+  products: ProductCardData[];
 };
 
 type Promo = {
@@ -51,21 +58,48 @@ type Testimonial = {
   rating: number;
 };
 
+function SectionHeader({
+  title,
+  href,
+  viewAllLabel,
+  hint,
+}: {
+  title: string;
+  href: string;
+  viewAllLabel: string;
+  hint?: string;
+}) {
+  return (
+    <div className="mb-5 flex items-end justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="section-title">{title}</h2>
+        {hint ? <p className="mt-1 text-sm text-[var(--huza-muted)]">{hint}</p> : null}
+      </div>
+      <Link
+        href={href}
+        className="group inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-[var(--huza-green-dark)]"
+      >
+        {viewAllLabel}
+        <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
+      </Link>
+    </div>
+  );
+}
+
 export function HomePage({
-  shopProducts,
   featured,
   bestSellers,
   freshToday,
+  categoryPreviews,
   categories,
   promotions,
   testimonials,
   isOpen,
 }: {
-  heroProducts?: ProductCardData[];
-  shopProducts: ProductCardData[];
   featured: ProductCardData[];
   bestSellers: ProductCardData[];
   freshToday: ProductCardData[];
+  categoryPreviews: CategoryPreview[];
   categories: Category[];
   promotions: Promo[];
   testimonials: Testimonial[];
@@ -81,6 +115,12 @@ export function HomePage({
   const comment = (x: Testimonial) =>
     locale === "fr" ? x.commentFr : locale === "rw" ? x.commentRw : x.commentEn;
 
+  // Homepage shows two category product strips; remaining categories via shop tiles + View all
+  const highlightSlugs = ["fresh-fruits", "fresh-vegetables"];
+  const highlightPreviews = categoryPreviews.filter((p) =>
+    highlightSlugs.includes(p.category.slug)
+  );
+
   const subscribe = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -94,27 +134,27 @@ export function HomePage({
   };
 
   return (
-    <div>
+    <div className="home-surface">
       {!isOpen && (
         <div className="bg-[var(--huza-gold)] text-[var(--huza-ink)] text-center text-sm font-medium py-2 px-4">
           {t("closedNotice")}
         </div>
       )}
 
-      <section className="hero-fullbleed">
+      <section className="hero-fullbleed hero-home">
         <HeroGallery />
-        <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 py-20 sm:px-6 sm:py-28">
+        <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-24">
           <div className="animate-rise max-w-xl">
-            <div className="mb-6 flex items-center gap-4">
+            <div className="mb-5 flex items-center gap-3 sm:gap-4">
               <Image
                 src="/logo.svg"
                 alt="Youth Huza logo"
-                width={72}
-                height={72}
+                width={64}
+                height={64}
                 className="rounded-full shadow-lg ring-2 ring-white/35"
                 priority
               />
-              <p className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold tracking-tight">
+              <p className="font-[family-name:var(--font-display)] text-lg sm:text-2xl font-bold tracking-tight">
                 YOUTH HUZA
               </p>
             </div>
@@ -124,108 +164,147 @@ export function HomePage({
             <p className="mt-4 max-w-md text-base sm:text-lg text-[#E2F6EA] leading-relaxed">
               {t("tagline")}
             </p>
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/products">
                 <Button size="lg" variant="secondary">
                   {t("heroCta")} <ArrowRight className="size-4" />
                 </Button>
+              </Link>
+              <Link
+                href="/categories"
+                className="hidden sm:inline-flex items-center justify-center gap-2 rounded-xl border border-white/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
+              >
+                {t("shopByCategory")}
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <h2 className="section-title">{t("categories")}</h2>
-          <Link href="/categories" className="text-sm font-semibold text-[var(--huza-green)]">
-            {t("viewAll")}
-          </Link>
+      <section className="border-b border-[var(--huza-line)] bg-white/80">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-4 sm:grid-cols-4 sm:gap-4 sm:px-6 sm:py-5">
+          {[
+            { icon: BadgeCheck, label: t("qualityControlled") },
+            { icon: Truck, label: t("oneDeliveryTeam") },
+            { icon: ShieldCheck, label: t("securePayments") },
+            { icon: Leaf, label: t("farmFreshStock") },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2.5 text-sm text-[var(--huza-ink)]">
+              <item.icon className="size-5 shrink-0 text-[var(--huza-green)]" />
+              <span className="font-medium leading-snug">{item.label}</span>
+            </div>
+          ))}
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+        <SectionHeader
+          title={t("shopByCategory")}
+          href="/categories"
+          viewAllLabel={t("viewAll")}
+          hint={t("shopByCategoryHint")}
+        />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 sm:gap-4">
           {categories.map((c) => (
             <Link
               key={c.id}
               href={`/products?category=${c.slug}`}
-              className="snap-start shrink-0 rounded-full border border-[var(--huza-line)] bg-white px-5 py-2.5 text-sm font-semibold hover:border-[var(--huza-green)] hover:text-[var(--huza-green-dark)] transition"
+              className="group relative overflow-hidden rounded-2xl bg-[var(--huza-mint)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
             >
-              {categoryName(c, locale)}
+              <div className="relative aspect-[4/5] sm:aspect-square">
+                {c.imageUrl ? (
+                  <Image
+                    src={c.imageUrl}
+                    alt={categoryName(c, locale)}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--huza-green)] to-[var(--huza-green-dark)]" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <p className="absolute inset-x-0 bottom-0 p-3 text-sm font-semibold text-white leading-snug">
+                  {categoryName(c, locale)}
+                </p>
+              </div>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <div>
-            <h2 className="section-title">{t("products")}</h2>
-            <p className="mt-1 text-sm text-[var(--huza-muted)]">
-              {t("shopProductsHint")}
-            </p>
-          </div>
-          <Link href="/products" className="text-sm font-semibold text-[var(--huza-green)]">
-            {t("viewAll")}
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {shopProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <h2 className="section-title">{t("featured")}</h2>
-          <Link href="/products?featured=1" className="text-sm font-semibold text-[var(--huza-green)]">
-            {t("viewAll")}
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </section>
-
-      {freshToday.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-          <div className="flex items-end justify-between gap-4 mb-6">
-            <h2 className="section-title">{t("freshToday")}</h2>
-            <Link href="/products?new=1" className="text-sm font-semibold text-[var(--huza-green)]">
-              {t("viewAll")}
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {freshToday.map((p) => (
+      {featured.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+          <SectionHeader
+            title={t("featured")}
+            href="/products?featured=1"
+            viewAllLabel={t("viewAll")}
+          />
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+            {featured.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </section>
       )}
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <h2 className="section-title">{t("bestSellers")}</h2>
-          <Link href="/products?best=1" className="text-sm font-semibold text-[var(--huza-green)]">
-            {t("viewAll")}
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {bestSellers.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </section>
+      {bestSellers.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+          <SectionHeader
+            title={t("bestSellers")}
+            href="/products?best=1"
+            viewAllLabel={t("viewAll")}
+          />
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+            {bestSellers.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {highlightPreviews.map(({ category, products }) =>
+        products.length > 0 ? (
+          <section key={category.id} className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+            <SectionHeader
+              title={categoryName(category, locale)}
+              href={`/products?category=${category.slug}`}
+              viewAllLabel={t("viewAll")}
+            />
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {products.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </section>
+        ) : null
+      )}
+
+      {freshToday.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+          <SectionHeader
+            title={t("freshToday")}
+            href="/products?new=1"
+            viewAllLabel={t("viewAll")}
+          />
+          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4 sm:gap-5">
+            {freshToday.map((p) => (
+              <div key={p.id} className="w-[70%] shrink-0 snap-start sm:w-auto sm:shrink">
+                <ProductCard product={p} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {promotions.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-          <h2 className="section-title mb-6">{t("specialOffers")}</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            {promotions.map((p, i) => (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+          <h2 className="section-title mb-5">{t("specialOffers")}</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            {promotions.slice(0, 3).map((p, i) => (
               <div
                 key={p.id}
-                className={`rounded-2xl p-6 text-white ${
+                className={`rounded-2xl p-5 sm:p-6 text-white ${
                   i % 2 === 0 ? "bg-[var(--huza-green-dark)]" : "bg-[#166B3F]"
                 }`}
               >
@@ -251,81 +330,54 @@ export function HomePage({
         </section>
       )}
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <h2 className="section-title mb-6">{t("whyChooseHuza")}</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              icon: BadgeCheck,
-              title: t("qualityControlled"),
-              body: t("qualityControlledBody"),
-            },
-            {
-              icon: Truck,
-              title: t("oneDeliveryTeam"),
-              body: t("oneDeliveryTeamBody"),
-            },
-            {
-              icon: ShieldCheck,
-              title: t("securePayments"),
-              body: t("securePaymentsBody"),
-            },
-            {
-              icon: Leaf,
-              title: t("farmFreshStock"),
-              body: t("farmFreshStockBody"),
-            },
-          ].map((item) => (
-            <div key={item.title} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-              <item.icon className="size-7 text-[var(--huza-green)]" />
-              <h3 className="mt-3 font-semibold">{item.title}</h3>
-              <p className="mt-2 text-sm text-[var(--huza-muted)]">{item.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <h2 className="section-title mb-6">{t("deliveryCoverage")}</h2>
-        <div className="grid md:grid-cols-3 gap-4">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+        <h2 className="section-title mb-5">{t("deliveryCoverage")}</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
           {[
             { zone: t("zoneKigali"), time: t("about45min"), icon: MapPin },
             { zone: t("zoneKamonyi"), time: t("about75min"), icon: MapPin },
             { zone: t("zoneBugesera"), time: t("about75min"), icon: MapPin },
           ].map((z) => (
-            <div key={z.zone} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-              <z.icon className="size-6 text-[var(--huza-green)]" />
-              <h3 className="mt-3 font-semibold">{z.zone}</h3>
-              <p className="mt-1 text-sm text-[var(--huza-muted)] inline-flex items-center gap-1">
-                <Clock className="size-3.5" /> {t("deliveryEta")}: {z.time}
-              </p>
+            <div
+              key={z.zone}
+              className="flex items-start gap-3 rounded-2xl border border-[var(--huza-line)] bg-white/90 p-4 sm:p-5"
+            >
+              <z.icon className="mt-0.5 size-5 text-[var(--huza-green)]" />
+              <div>
+                <h3 className="font-semibold">{z.zone}</h3>
+                <p className="mt-1 text-sm text-[var(--huza-muted)] inline-flex items-center gap-1">
+                  <Clock className="size-3.5" /> {t("deliveryEta")}: {z.time}
+                </p>
+              </div>
             </div>
           ))}
         </div>
         <p className="mt-3 text-sm text-[var(--huza-muted)]">{t("deliveryFeeAtCheckoutHint")}</p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <h2 className="section-title mb-6">{t("testimonials")}</h2>
-        <div className="grid md:grid-cols-3 gap-5">
-          {testimonials.map((x) => (
-            <blockquote
-              key={x.id}
-              className="rounded-2xl border border-[var(--huza-line)] bg-white/80 p-5"
-            >
-              <p className="text-[var(--huza-gold)]">{"★".repeat(x.rating)}</p>
-              <p className="mt-3 text-sm leading-relaxed">&ldquo;{comment(x)}&rdquo;</p>
-              <footer className="mt-4">
-                <p className="font-semibold text-sm">{x.name}</p>
-                <p className="text-xs text-[var(--huza-muted)]">{x.role}</p>
-              </footer>
-            </blockquote>
-          ))}
-        </div>
-      </section>
+      {testimonials.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16">
+          <h2 className="section-title mb-5">{t("testimonials")}</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            {testimonials.map((x) => (
+              <blockquote
+                key={x.id}
+                className="rounded-2xl border border-[var(--huza-line)] bg-white/90 p-5"
+              >
+                <p className="text-[var(--huza-gold)]">{"★".repeat(x.rating)}</p>
+                <p className="mt-3 text-sm leading-relaxed">&ldquo;{comment(x)}&rdquo;</p>
+                <footer className="mt-4">
+                  <p className="font-semibold text-sm">{x.name}</p>
+                  <p className="text-xs text-[var(--huza-muted)]">{x.role}</p>
+                </footer>
+              </blockquote>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-16">
-        <div className="rounded-3xl bg-[var(--huza-green-dark)] text-white p-8 sm:p-10 grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 mt-12 sm:mt-16 mb-8">
+        <div className="rounded-3xl bg-[var(--huza-green-dark)] text-white p-7 sm:p-10 grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
           <div>
             <h2 className="font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
               {t("newsletter")}
