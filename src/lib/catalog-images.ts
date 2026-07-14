@@ -52,12 +52,12 @@ export const PRODUCT_IMAGE_BY_NAME_EN: Record<string, string> = {
 };
 
 export const CATEGORY_IMAGE_BY_SLUG: Record<string, string> = {
-  "fresh-fruits": "/images/catalog/cat-fruits.jpg",
-  "fresh-vegetables": "/images/catalog/cat-vegetables.jpg",
-  "fruit-seedlings": "/images/catalog/cat-seedlings.jpg",
-  "ornamental-plants": "/images/catalog/cat-ornamental.jpg",
-  "fruit-salads": "/images/catalog/cat-salads.jpg",
-  "fresh-juices": "/images/catalog/cat-juices.jpg",
+  "fresh-fruits": "/images/catalog/mango.jpg",
+  "fresh-vegetables": "/images/catalog/tomato.jpg",
+  "fruit-seedlings": "/images/catalog/avocado-seedling.jpg",
+  "ornamental-plants": "/images/catalog/ornamental-plant.jpg",
+  "fruit-salads": "/images/catalog/fruit-salad-cup.jpg",
+  "fresh-juices": "/images/catalog/passion-juice.jpg",
 };
 
 function isPhotoUrl(url: string): boolean {

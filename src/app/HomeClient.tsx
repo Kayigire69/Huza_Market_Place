@@ -165,7 +165,7 @@ export function HomePage({
             <Link
               key={c.id}
               href={`/products?category=${c.slug}`}
-              className="group relative overflow-hidden rounded-2xl bg-[var(--huza-mint)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
+              className="group relative overflow-hidden rounded-[22px] bg-[var(--huza-mint)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)]"
             >
               <div className="relative aspect-square">
                 <Image

@@ -3,42 +3,42 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Truck, BadgeCheck, Smartphone } from "lucide-react";
+import { ArrowRight, Truck, BadgeCheck, Smartphone } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 
-const PROMO_KEYS = ["heroPromoDelivery", "heroPromoQuality", "heroPromoFlatFee"] as const;
+const PROMO_KEYS = ["heroPromoDelivery", "heroPromoCheckout", "heroPromoQuality"] as const;
 
 const ROTATE_MS = 5500;
 
-/** Five matching hero banners — same lighting, color, and composition. */
+/** Five matching hero banners — same outdoor-market lighting, angle, and edit. */
 const HERO_BANNERS = [
   {
-    src: "/images/hero/banner-fruits-vegetables.jpg",
+    src: "/images/hero/banner-market-fruits.jpg",
     emoji: "🍎",
     labelKey: "bannerFruitsVeg",
     href: "/products?category=fresh-fruits",
   },
   {
-    src: "/images/hero/banner-juices.jpg",
+    src: "/images/hero/banner-market-juices.jpg",
     emoji: "🥤",
     labelKey: "bannerJuices",
     href: "/products?category=fresh-juices",
   },
   {
-    src: "/images/hero/banner-fruit-salads.jpg",
+    src: "/images/hero/banner-market-salads.jpg",
     emoji: "🥗",
     labelKey: "bannerSalads",
     href: "/products?category=fruit-salads",
   },
   {
-    src: "/images/hero/banner-seedlings.jpg",
+    src: "/images/hero/banner-market-seedlings.jpg",
     emoji: "🌱",
     labelKey: "bannerSeedlings",
     href: "/products?category=fruit-seedlings",
   },
   {
-    src: "/images/hero/banner-ornamental-plants.jpg",
+    src: "/images/hero/banner-market-plants.jpg",
     emoji: "🪴",
     labelKey: "bannerOrnamental",
     href: "/products?category=ornamental-plants",
@@ -46,8 +46,7 @@ const HERO_BANNERS = [
 ] as const;
 
 /**
- * Phase 2 Hero — refined compact shopping hero + rotating category banners.
- * Only the banner image area rotates; layout/copy/CTAs unchanged.
+ * Phase 2 Hero — rotating category banners with bottom dots only.
  */
 export function HeroSection() {
   const { t } = useLocale();
@@ -78,23 +77,17 @@ export function HeroSection() {
 
   return (
     <div>
-      {/* Amazon-style slim promo — one message, small type */}
       <div className="border-b border-[var(--huza-line)] bg-[#f3f6f4]">
         <p
           key={PROMO_KEYS[promoIndex]}
           className="hero-promo-fade mx-auto flex max-w-7xl items-center justify-center gap-1.5 px-3 py-1 text-center text-[11px] font-medium tracking-wide text-[var(--huza-muted)] sm:text-xs"
         >
-          <span aria-hidden className="text-[var(--huza-green)]">
-            ·
-          </span>
           <span>{t(PROMO_KEYS[promoIndex])}</span>
         </p>
       </div>
 
       <section aria-label="HUZA FRESH hero" className="border-b border-[var(--huza-line)] bg-white">
-        {/* Tighter gap under banner; 55/45 desktop split */}
         <div className="mx-auto grid max-w-7xl items-center gap-4 px-4 py-3 sm:gap-6 sm:px-6 sm:py-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:gap-8 md:py-5">
-          {/* Copy + CTAs */}
           <div className="hero-fade-in order-1 min-w-0">
             <h1 className="font-[family-name:var(--font-display)] text-[1.5rem] font-extrabold leading-[1.15] tracking-tight text-[var(--huza-green-dark)] sm:text-[1.85rem] lg:text-[2rem]">
               {t("heroHeadline")}
@@ -119,7 +112,6 @@ export function HeroSection() {
               </Link>
             </div>
 
-            {/* Trust row — icons + short labels only */}
             <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 sm:mt-5 sm:gap-x-5">
               <li className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--huza-ink)] sm:text-xs">
                 <BadgeCheck className="size-3.5 text-[var(--huza-green)]" aria-hidden />
@@ -136,7 +128,6 @@ export function HeroSection() {
             </ul>
           </div>
 
-          {/* Rotating category banners — arrows + dots */}
           <div
             className="hero-fade-in order-2 md:justify-self-end md:w-[92%]"
             onMouseEnter={() => setPaused(true)}
@@ -161,34 +152,20 @@ export function HeroSection() {
                     priority={i === 0}
                     sizes="(max-width: 768px) 100vw, 42vw"
                     quality={78}
-                    className="object-cover object-center brightness-[1.06] contrast-[1.02] saturate-[1.05]"
+                    className="object-cover object-[center_40%]"
                   />
-                  <span className="absolute bottom-3 left-3 z-[1] inline-flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-semibold text-[var(--huza-green-dark)] shadow-sm sm:bottom-4 sm:left-4 sm:text-xs">
-                    <span aria-hidden>{banner.emoji}</span>
-                    {t(banner.labelKey)}
-                  </span>
                 </Link>
               ))}
 
-              <button
-                type="button"
-                aria-label="Previous banner"
-                onClick={() => go(bannerIndex - 1)}
-                className="absolute left-2 top-1/2 z-[2] flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[var(--huza-ink)] shadow-sm transition-colors hover:bg-white sm:left-3 sm:size-9"
-              >
-                <ChevronLeft className="size-5" aria-hidden />
-              </button>
-              <button
-                type="button"
-                aria-label="Next banner"
-                onClick={() => go(bannerIndex + 1)}
-                className="absolute right-2 top-1/2 z-[2] flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[var(--huza-ink)] shadow-sm transition-colors hover:bg-white sm:right-3 sm:size-9"
-              >
-                <ChevronRight className="size-5" aria-hidden />
-              </button>
+              {/* Dynamic badge — follows active slide */}
+              <span className="pointer-events-none absolute left-3 top-3 z-[2] inline-flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-semibold text-[var(--huza-green-dark)] shadow-sm sm:left-4 sm:top-4 sm:text-xs">
+                <span aria-hidden>{active.emoji}</span>
+                {t(active.labelKey)}
+              </span>
 
+              {/* Bottom-only navigation dots */}
               <div
-                className="absolute bottom-3 right-3 z-[2] flex items-center gap-1.5 sm:bottom-4 sm:right-4"
+                className="absolute inset-x-0 bottom-3 z-[2] flex items-center justify-center gap-2 sm:bottom-4"
                 role="tablist"
                 aria-label="Hero banners"
               >
@@ -201,18 +178,14 @@ export function HeroSection() {
                     aria-label={t(banner.labelKey)}
                     onClick={() => go(i)}
                     className={cn(
-                      "h-1.5 rounded-full transition-[width,background-color] duration-300",
+                      "size-2.5 rounded-full border border-white/70 shadow-sm transition-colors",
                       i === bannerIndex
-                        ? "w-5 bg-[var(--huza-green)]"
-                        : "w-1.5 bg-white/80 hover:bg-white"
+                        ? "bg-[var(--huza-green)]"
+                        : "bg-white/75 hover:bg-white"
                     )}
                   />
                 ))}
               </div>
-
-              <span className="sr-only">
-                {active.emoji} {t(active.labelKey)}
-              </span>
             </div>
           </div>
         </div>
