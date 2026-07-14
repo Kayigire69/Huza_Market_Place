@@ -4,10 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
+import { cn } from "@/lib/utils";
 
 type Suggestion = { type: string; id: string; label: string; href: string };
 
-export function SmartSearch({ className = "" }: { className?: string }) {
+export function SmartSearch({
+  className = "",
+  size = "md",
+}: {
+  className?: string;
+  /** lg ≈ 48–52px tall — Phase 1 header */
+  size?: "md" | "lg";
+}) {
   const { t } = useLocale();
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -51,7 +59,7 @@ export function SmartSearch({ className = "" }: { className?: string }) {
   }, []);
 
   return (
-    <div ref={box} className={`relative w-full ${className}`}>
+    <div ref={box} className={cn("relative w-full", className)}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -59,18 +67,30 @@ export function SmartSearch({ className = "" }: { className?: string }) {
           setOpen(false);
         }}
       >
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--huza-muted)]" />
+        <Search
+          className={cn(
+            "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--huza-muted)]",
+            size === "lg" ? "size-[18px]" : "size-4"
+          )}
+          aria-hidden
+        />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={t("searchPlaceholder")}
-          className="w-full rounded-full border border-[var(--huza-line)] bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--huza-green)]"
+          className={cn(
+            "w-full rounded-full border border-[var(--huza-line)] bg-[var(--huza-cream)] text-[var(--huza-ink)] outline-none transition placeholder:text-[var(--huza-muted)] focus:border-[var(--huza-green)] focus:bg-white focus:ring-2 focus:ring-[var(--huza-green)]/20",
+            size === "lg"
+              ? "h-[48px] sm:h-[50px] pl-11 pr-4 text-[15px]"
+              : "py-2.5 pl-10 pr-4 text-sm"
+          )}
           autoComplete="off"
+          enterKeyHint="search"
         />
       </form>
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white shadow-lg">
+        <ul className="absolute z-50 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-[var(--huza-line)] bg-white shadow-lg">
           {suggestions.map((s) => (
             <li key={`${s.type}-${s.id}`}>
               <button

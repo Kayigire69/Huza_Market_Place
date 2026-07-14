@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Truck,
   MapPin,
-  Clock,
   ChevronRight,
   ShoppingBasket,
   BadgeCheck,
@@ -151,7 +150,7 @@ export function HomePage({
       <section className="hero-fullbleed hero-home">
         <HeroGallery />
         <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-24">
-          <div className="animate-rise max-w-xl">
+          <div className="max-w-xl">
             <div className="mb-3 flex items-center gap-2.5 sm:mb-5 sm:gap-4">
               <Image
                 src="/logo.svg"
@@ -233,9 +232,12 @@ export function HomePage({
         </div>
       </section>
 
-      {/* 2. One popular rail */}
+      {/* 2. One popular rail — anchor for header "Fresh Today" */}
       {popularNow.length > 0 && (
-        <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <section
+          id="fresh-today"
+          className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
+        >
           <SectionHeader
             title={t("popularNow")}
             href="/products?best=1"
@@ -297,7 +299,10 @@ export function HomePage({
       </section>
 
       {promotions.length > 0 && (
-        <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <section
+          id="special-offers"
+          className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
+        >
           <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("specialOffers")}</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             {promotions.slice(0, 3).map((p, i) => (
@@ -333,7 +338,7 @@ export function HomePage({
         </section>
       )}
 
-      {/* Delivery — flat fee + clear ETAs */}
+      {/* Delivery — flat fee; ETAs are shown at checkout, not under product photos */}
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
         <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("deliveryCoverage")}</h2>
         <div className="mb-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-4 py-3 text-sm sm:flex sm:items-center sm:justify-between">
@@ -343,22 +348,13 @@ export function HomePage({
           <p className="mt-1 text-xs text-[var(--huza-muted)] sm:mt-0">{t("flatDeliveryFeeHint")}</p>
         </div>
         <div className="grid gap-2.5 sm:grid-cols-3">
-          {[
-            { zone: t("zoneKigali"), time: t("about45min") },
-            { zone: t("zoneKamonyi"), time: t("about75min") },
-            { zone: t("zoneBugesera"), time: t("about75min") },
-          ].map((z) => (
+          {[t("zoneKigali"), t("zoneKamonyi"), t("zoneBugesera")].map((zone) => (
             <div
-              key={z.zone}
+              key={zone}
               className="flex items-center gap-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-3.5 py-3"
             >
               <MapPin className="size-4 shrink-0 text-[var(--huza-green)]" aria-hidden />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{z.zone}</p>
-                <p className="inline-flex items-center gap-1 text-xs text-[var(--huza-muted)]">
-                  <Clock className="size-3" aria-hidden /> {z.time}
-                </p>
-              </div>
+              <p className="truncate text-sm font-semibold">{zone}</p>
             </div>
           ))}
         </div>

@@ -77,6 +77,11 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/support" className="hover:text-white">
+                {t("support")}
+              </Link>
+            </li>
+            <li>
               <Link href="/track" className="hover:text-white">
                 {t("trackOrder")}
               </Link>

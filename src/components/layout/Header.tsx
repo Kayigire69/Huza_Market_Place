@@ -3,235 +3,405 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { ShoppingCart, User, Menu, X, Heart, MapPinned } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  ShoppingCart,
+  User,
+  Heart,
+  Package,
+  Menu,
+  ChevronDown,
+  LogIn,
+} from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
-import { localeFlags, locales, type Locale } from "@/lib/i18n";
+import { locales, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { NAV_CATEGORIES } from "@/lib/nav-categories";
 import { SmartSearch } from "@/components/layout/SmartSearch";
 
+/** Orange accent — cart / wishlist badges only (Phase 1). */
+const BADGE = "bg-[#F97316] text-white";
+
+function IconButton({
+  href,
+  label,
+  children,
+  className,
+}: {
+  href: string;
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className={cn(
+        "relative inline-flex size-10 items-center justify-center rounded-full text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)] hover:text-[var(--huza-green-dark)]",
+        className
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+/**
+ * Phase 1 Navigation (locked design)
+ * Desktop: logo · search · icons | Categories · Special Offers · Fresh Today
+ * Mobile: logo · cart · account | search | swipe categories
+ * Sticky compact: logo · search · cart · account (second row hidden)
+ */
 export function Header() {
   const { t, locale, setLocale } = useLocale();
   const items = useCart((s) => s.items);
-  const count = items.reduce((sum, i) => sum + i.quantity, 0);
+  const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const { data: session } = useSession();
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [compact, setCompact] = useState(false);
+  const [catsOpen, setCatsOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [wishCount, setWishCount] = useState(0);
+  const catsRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
 
-  const nav = [
-    { href: "/", label: t("home") },
-    { href: "/products", label: t("products") },
-    { href: "/categories", label: t("categories") },
-    { href: "/track", label: t("trackOrder") },
-    { href: "/support", label: t("support") },
-    { href: "/about", label: t("about") },
-  ];
+  const firstName =
+    session?.user?.name?.trim().split(/\s+/)[0] ||
+    session?.user?.email?.split("@")[0] ||
+    "";
+
+  useEffect(() => {
+    const onScroll = () => setCompact(window.scrollY > 48);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    setCatsOpen(false);
+    setAccountOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setWishCount(0);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/wishlist")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.items) setWishCount(data.items.length);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id, pathname]);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (catsRef.current && !catsRef.current.contains(target)) setCatsOpen(false);
+      if (accountRef.current && !accountRef.current.contains(target)) setAccountOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const catLabel = (c: (typeof NAV_CATEGORIES)[number]) => {
+    if (locale === "fr") return c.nameFr;
+    if (locale === "rw") return c.nameRw;
+    if (locale === "sw") return c.nameSw;
+    return c.nameEn;
+  };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--huza-line)] bg-[rgba(247,251,248,0.95)] backdrop-blur-md">
-      <div className="mx-auto max-w-7xl px-3 sm:px-6">
-        {/* Row 1 — brand + actions */}
-        <div className="flex h-14 items-center gap-2 sm:h-16 sm:gap-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="HUZA FRESH">
-            <Image src="/logo.svg" alt="Youth Huza" width={36} height={36} className="sm:h-10 sm:w-10" priority />
-            <div className="min-w-0 leading-tight">
-              <p className="font-[family-name:var(--font-display)] text-[0.95rem] font-bold tracking-tight text-[var(--huza-green-dark)] sm:text-lg">
-                HUZA FRESH
-              </p>
-              <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--huza-green)] sm:block">
-                {t("poweredBy")}
-              </p>
-            </div>
+    <header className="sticky top-0 z-50 bg-white">
+      {/* ——— Top bar (always visible) ——— */}
+      <div className="border-b border-[var(--huza-line)]">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-2"
+            aria-label="HUZA FRESH — Home"
+          >
+            <Image src="/logo.svg" alt="Youth Huza" width={40} height={40} priority />
+            <span className="font-[family-name:var(--font-display)] text-base font-bold tracking-tight text-[var(--huza-green-dark)] sm:text-lg">
+              HUZA FRESH
+            </span>
           </Link>
 
-          <div className="mx-auto hidden max-w-xl flex-1 md:flex">
-            <SmartSearch />
+          {/* Desktop search */}
+          <div className="mx-auto hidden min-w-0 flex-1 md:block md:max-w-2xl">
+            <SmartSearch size="lg" />
           </div>
 
-          <div className="ml-auto flex items-center gap-0.5 sm:gap-2">
-            <label className="sr-only" htmlFor="lang">
+          {/* Desktop icons */}
+          <div className="ml-auto hidden items-center gap-0.5 md:flex">
+            <label className="sr-only" htmlFor="header-lang">
               {t("language")}
             </label>
             <select
-              id="lang"
+              id="header-lang"
               value={locale}
               onChange={(e) => setLocale(e.target.value as Locale)}
-              className="hidden rounded-md border border-[var(--huza-line)] bg-white px-2 py-1.5 text-sm sm:block"
+              className="mr-1 cursor-pointer rounded-lg border-0 bg-transparent py-2 pl-2 pr-1 text-sm font-semibold text-[var(--huza-ink)] outline-none hover:bg-[var(--huza-mint)]"
+              aria-label={t("language")}
             >
               {locales.map((l) => (
                 <option key={l} value={l}>
-                  {localeFlags[l]} {l.toUpperCase()}
+                  {l.toUpperCase()}
                 </option>
               ))}
             </select>
 
-            <Link
-              href="/wishlist"
-              className="relative hidden items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)] sm:inline-flex"
-              aria-label={t("wishlist")}
-            >
-              <Heart className="size-5" />
-            </Link>
+            {!compact && (
+              <>
+                <IconButton href="/wishlist" label={t("wishlist")}>
+                  <Heart
+                    className={cn("size-5", wishCount > 0 && "fill-[#F97316] text-[#F97316]")}
+                  />
+                  {wishCount > 0 && (
+                    <span
+                      className={cn(
+                        "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold",
+                        BADGE
+                      )}
+                    >
+                      {wishCount > 9 ? "9+" : wishCount}
+                    </span>
+                  )}
+                </IconButton>
 
-            <Link
-              href="/track"
-              className="hidden items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)] sm:inline-flex"
-              aria-label={t("trackOrder")}
-            >
-              <MapPinned className="size-5" />
-            </Link>
+                <IconButton href="/track" label={t("trackOrder")}>
+                  <Package className="size-5" />
+                </IconButton>
+              </>
+            )}
 
-            <Link
-              href="/cart"
-              className="relative hidden items-center justify-center rounded-full p-2 hover:bg-[var(--huza-mint)] md:inline-flex"
-              aria-label={t("cart")}
-            >
+            <IconButton href="/cart" label={t("cart")}>
               <ShoppingCart className="size-5" />
-              {count > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--huza-gold)] px-1 text-[10px] font-bold text-[var(--huza-ink)]">
-                  {count}
+              {cartCount > 0 && (
+                <span
+                  className={cn(
+                    "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold",
+                    BADGE
+                  )}
+                >
+                  {cartCount > 99 ? "99+" : cartCount}
                 </span>
               )}
-            </Link>
+            </IconButton>
 
-            {session?.user ? (
-              <div className="relative group hidden sm:block">
-                <Link
-                  href="/account"
-                  className="inline-flex items-center gap-1 rounded-full p-2 hover:bg-[var(--huza-mint)]"
-                >
+            {/* Account */}
+            <div className="relative" ref={accountRef}>
+              <button
+                type="button"
+                onClick={() => setAccountOpen((v) => !v)}
+                aria-label={t("account")}
+                aria-expanded={accountOpen}
+                className="inline-flex items-center gap-1 rounded-full px-1.5 py-1.5 text-[var(--huza-ink)] transition hover:bg-[var(--huza-mint)]"
+              >
+                <span className="inline-flex size-10 items-center justify-center">
                   <User className="size-5" />
-                </Link>
-                <div className="invisible absolute right-0 mt-1 w-44 rounded-lg border border-[var(--huza-line)] bg-white p-2 shadow-lg group-hover:visible">
-                  <p className="truncate px-2 py-1 text-xs text-[var(--huza-muted)]">{session.user.name}</p>
-                  <Link href="/account" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                    {t("account")}
-                  </Link>
-                  <Link href="/wishlist" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                    {t("wishlist")}
-                  </Link>
-                  {session.user.role === "SUPPLIER" && (
-                    <Link href="/farmer" className="block rounded px-2 py-1.5 text-sm hover:bg-[var(--huza-mint)]">
-                      {t("farmerPortal")}
+                </span>
+                {session?.user && firstName ? (
+                  <span className="hidden max-w-[7rem] truncate text-left text-xs font-semibold lg:block">
+                    {t("hello")} {firstName}
+                  </span>
+                ) : null}
+                <ChevronDown className="hidden size-3.5 text-[var(--huza-muted)] lg:block" />
+              </button>
+
+              {accountOpen && (
+                <div className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white py-1 shadow-lg">
+                  {session?.user ? (
+                    <>
+                      <p className="truncate border-b border-[var(--huza-line)] px-3 py-2 text-xs text-[var(--huza-muted)]">
+                        {t("hello")} {firstName}
+                      </p>
+                      <Link
+                        href="/account#orders"
+                        className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                        onClick={() => setAccountOpen(false)}
+                      >
+                        {t("orders")}
+                      </Link>
+                      <Link
+                        href="/account#addresses"
+                        className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                        onClick={() => setAccountOpen(false)}
+                      >
+                        {t("savedAddresses")}
+                      </Link>
+                      <Link
+                        href="/wishlist"
+                        className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                        onClick={() => setAccountOpen(false)}
+                      >
+                        {t("wishlist")}
+                      </Link>
+                      {session.user.role === "SUPPLIER" && (
+                        <Link
+                          href="/farmer"
+                          className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                          onClick={() => setAccountOpen(false)}
+                        >
+                          {t("farmerPortal")}
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        className="block w-full px-3 py-2.5 text-left text-sm hover:bg-[var(--huza-mint)]"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          signOut({ callbackUrl: "/" });
+                        }}
+                      >
+                        {t("logout")}
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      href="/auth/login"
+                      className="flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-[var(--huza-green-dark)] hover:bg-[var(--huza-mint)]"
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <LogIn className="size-4" />
+                      {t("login")}
                     </Link>
                   )}
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-[var(--huza-mint)]"
-                  >
-                    {t("logout")}
-                  </button>
                 </div>
-              </div>
-            ) : (
-              <Link
-                href="/auth/login"
-                className="hidden rounded-full bg-[var(--huza-green)] px-3 py-1.5 text-sm font-semibold text-white sm:inline-flex"
-              >
-                {t("login")}
-              </Link>
-            )}
+              )}
+            </div>
+          </div>
 
+          {/* Mobile: cart + account only */}
+          <div className="ml-auto flex items-center gap-0.5 md:hidden">
+            <IconButton href="/cart" label={t("cart")}>
+              <ShoppingCart className="size-5" />
+              {cartCount > 0 && (
+                <span
+                  className={cn(
+                    "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold",
+                    BADGE
+                  )}
+                >
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </IconButton>
+            <IconButton
+              href={session?.user ? "/account" : "/auth/login"}
+              label={session?.user ? t("account") : t("login")}
+            >
+              <User className="size-5" />
+            </IconButton>
+          </div>
+        </div>
+
+        {/* Mobile search — always in sticky top */}
+        <div className="border-t border-[var(--huza-line)] px-3 py-2.5 md:hidden">
+          <SmartSearch size="lg" />
+        </div>
+      </div>
+
+      {/* ——— Second row: desktop shopping links (hidden when compact) ——— */}
+      <div
+        className={cn(
+          "hidden border-b border-[var(--huza-line)] bg-white md:block",
+          compact && "md:hidden"
+        )}
+      >
+        <div className="relative mx-auto flex h-11 max-w-7xl items-center gap-6 px-3 sm:px-6">
+          <div className="relative" ref={catsRef}>
             <button
               type="button"
-              className="p-2 md:hidden"
-              onClick={() => setOpen((v) => !v)}
-              aria-label={t("menu")}
-              aria-expanded={open}
-            >
-              {open ? <X className="size-5" /> : <Menu className="size-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Row 2 — always-visible mobile search (Tuma / Murukali pattern) */}
-        <div className="pb-2.5 md:hidden">
-          <SmartSearch />
-        </div>
-
-        <nav className="hidden items-center gap-6 pb-3 text-sm font-medium md:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch
+              onClick={() => setCatsOpen((v) => !v)}
+              aria-expanded={catsOpen}
               className={cn(
-                "border-b-2 border-transparent pb-1 hover:text-[var(--huza-green)]",
-                pathname === item.href && "border-[var(--huza-green)] text-[var(--huza-green-dark)]"
+                "inline-flex h-9 items-center gap-2 rounded-full bg-[var(--huza-mint)] px-3.5 text-sm font-semibold text-[var(--huza-green-dark)] transition hover:bg-[#d8f0e0]",
+                catsOpen && "ring-2 ring-[var(--huza-green)]/30"
               )}
             >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+              <Menu className="size-4" aria-hidden />
+              {t("categories")}
+            </button>
 
-        {open && (
-          <div className="space-y-1 pb-4 md:hidden">
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-[var(--huza-line)] bg-white px-3 py-2 text-sm">
-              <span className="text-[var(--huza-muted)]">{t("language")}</span>
-              <select
-                value={locale}
-                onChange={(e) => setLocale(e.target.value as Locale)}
-                className="rounded-md border border-[var(--huza-line)] bg-white px-2 py-1 text-sm"
-              >
-                {locales.map((l) => (
-                  <option key={l} value={l}>
-                    {localeFlags[l]} {l.toUpperCase()}
-                  </option>
+            {catsOpen && (
+              <div className="absolute left-0 z-50 mt-2 w-64 overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white py-1 shadow-lg">
+                {NAV_CATEGORIES.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/products?category=${c.slug}`}
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                    onClick={() => setCatsOpen(false)}
+                  >
+                    <span className="text-lg" aria-hidden>
+                      {c.emoji}
+                    </span>
+                    <span className="font-medium">{catLabel(c)}</span>
+                  </Link>
                 ))}
-              </select>
-            </label>
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="block rounded-lg px-2 py-2.5 font-medium hover:bg-[var(--huza-mint)]"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Link
-              href="/wishlist"
-              onClick={() => setOpen(false)}
-              className="block rounded-lg px-2 py-2.5 font-medium hover:bg-[var(--huza-mint)]"
-            >
-              {t("wishlist")}
-            </Link>
-            {session?.user ? (
-              <>
                 <Link
-                  href="/account"
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-2.5 font-medium hover:bg-[var(--huza-mint)]"
+                  href="/categories"
+                  className="block border-t border-[var(--huza-line)] px-3 py-2.5 text-sm font-semibold text-[var(--huza-green-dark)] hover:bg-[var(--huza-mint)]"
+                  onClick={() => setCatsOpen(false)}
                 >
-                  {t("account")}
+                  {t("allCategories")} →
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    signOut({ callbackUrl: "/" });
-                  }}
-                  className="block w-full rounded-lg px-2 py-2.5 text-left font-medium hover:bg-[var(--huza-mint)]"
-                >
-                  {t("logout")}
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/auth/login"
-                onClick={() => setOpen(false)}
-                className="mt-1 inline-flex rounded-full bg-[var(--huza-green)] px-4 py-2 text-sm font-semibold text-white"
-              >
-                {t("login")}
-              </Link>
+              </div>
             )}
           </div>
-        )}
+
+          <Link
+            href="/#special-offers"
+            className="text-sm font-medium text-[var(--huza-ink)] transition hover:text-[var(--huza-green)]"
+          >
+            {t("specialOffers")}
+          </Link>
+
+          <Link
+            href="/#fresh-today"
+            className="text-sm font-medium text-[var(--huza-ink)] transition hover:text-[var(--huza-green)]"
+          >
+            {t("navFreshToday")}
+          </Link>
+        </div>
       </div>
+
+      {/* ——— Mobile category swipe (hidden when compact) ——— */}
+      {!compact && (
+        <div className="border-b border-[var(--huza-line)] bg-white md:hidden">
+          <div
+            className="-mx-0 flex gap-2 overflow-x-auto px-3 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="navigation"
+            aria-label={t("categories")}
+          >
+            {NAV_CATEGORIES.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/products?category=${c.slug}`}
+                className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl px-1 py-1 text-center transition active:bg-[var(--huza-mint)]"
+              >
+                <span
+                  className="flex size-11 items-center justify-center rounded-full bg-[var(--huza-mint)] text-xl"
+                  aria-hidden
+                >
+                  {c.emoji}
+                </span>
+                <span className="w-full truncate text-[10px] font-semibold leading-tight text-[var(--huza-ink)]">
+                  {catLabel(c)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
