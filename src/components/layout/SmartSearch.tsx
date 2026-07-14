@@ -80,10 +80,10 @@ export function SmartSearch({
           onFocus={() => setOpen(true)}
           placeholder={t("searchPlaceholder")}
           className={cn(
-            "w-full rounded-full border border-[var(--huza-line)] bg-[var(--huza-cream)] text-[var(--huza-ink)] outline-none transition placeholder:text-[var(--huza-muted)] focus:border-[var(--huza-green)] focus:bg-white focus:ring-2 focus:ring-[var(--huza-green)]/20",
+            "w-full rounded-[999px] border border-[var(--huza-line)] bg-[var(--huza-cream)] text-[var(--huza-ink)] outline-none transition-colors placeholder:text-[var(--huza-muted)] focus:border-[var(--huza-green)] focus:bg-white focus:ring-2 focus:ring-[var(--huza-green)]/20",
             size === "lg"
-              ? "h-[48px] sm:h-[50px] pl-11 pr-4 text-[15px]"
-              : "py-2.5 pl-10 pr-4 text-sm"
+              ? "h-[48px] sm:h-[50px] pl-11 pr-5 text-[15px]"
+              : "rounded-[999px] py-2.5 pl-10 pr-4 text-sm"
           )}
           autoComplete="off"
           enterKeyHint="search"

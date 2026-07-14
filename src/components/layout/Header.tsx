@@ -9,7 +9,6 @@ import {
   User,
   Heart,
   Package,
-  Menu,
   ChevronDown,
   LogIn,
 } from "lucide-react";
@@ -304,11 +303,11 @@ export function Header() {
               onClick={() => setCatsOpen((v) => !v)}
               aria-expanded={catsOpen}
               className={cn(
-                "inline-flex h-9 items-center gap-2 rounded-full bg-[var(--huza-mint)] px-3.5 text-sm font-semibold text-[var(--huza-green-dark)] transition-colors hover:bg-[#d8f0e0]",
+                "inline-flex h-9 items-center gap-1.5 rounded-full bg-[var(--huza-mint)] px-3.5 text-sm font-semibold text-[var(--huza-green-dark)] transition-colors hover:bg-[#d8f0e0]",
                 catsOpen && "ring-2 ring-[var(--huza-green)]/30"
               )}
             >
-              <Menu className="size-4" aria-hidden />
+              <span aria-hidden>🥬</span>
               {t("categories")}
             </button>
 
@@ -340,15 +339,17 @@ export function Header() {
 
           <Link
             href="/#special-offers"
-            className="text-sm font-medium text-[var(--huza-ink)] transition-colors hover:text-[var(--huza-green)]"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--huza-ink)] transition-colors hover:text-[var(--huza-green)]"
           >
-            {t("specialOffers")}
+            <span aria-hidden>🔥</span>
+            {t("navOffers")}
           </Link>
 
           <Link
             href="/#fresh-today"
-            className="text-sm font-medium text-[var(--huza-ink)] transition-colors hover:text-[var(--huza-green)]"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--huza-ink)] transition-colors hover:text-[var(--huza-green)]"
           >
+            <span aria-hidden>🌱</span>
             {t("navFreshToday")}
           </Link>
         </div>
