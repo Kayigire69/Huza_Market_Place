@@ -6,7 +6,6 @@ import { Heart, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit, cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
 import { resolveProductImage } from "@/lib/catalog-images";
@@ -213,25 +212,13 @@ export function ProductCard({
         </p>
 
         <div className="mt-auto pt-2 sm:pt-3">
-          <Button
-            className={cn(
-              "hidden w-full gap-2 sm:inline-flex",
-              prepared && "bg-[#F97316] hover:bg-[#ea580c]"
-            )}
-            size="sm"
-            onClick={() => addToCart()}
-            disabled={out}
-          >
-            <ShoppingCart className="size-4" aria-hidden />
-            {out ? t("outOfStock") : t("addToCart")}
-          </Button>
           <button
             type="button"
             onClick={addToCart}
             disabled={out}
             aria-label={t("addToCart")}
             className={cn(
-              "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-white transition disabled:pointer-events-none disabled:opacity-50 sm:hidden",
+              "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-white transition disabled:pointer-events-none disabled:opacity-50",
               prepared
                 ? "bg-[#F97316] hover:bg-[#ea580c]"
                 : "bg-[var(--huza-green)] hover:bg-[var(--huza-green-dark)]"
