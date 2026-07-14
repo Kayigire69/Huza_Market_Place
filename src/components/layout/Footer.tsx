@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
+import { HuzaFreshLogo } from "@/components/brand/HuzaFreshLogo";
 
 export function Footer() {
   const { t } = useLocale();
@@ -11,15 +11,7 @@ export function Footer() {
     <footer className="mt-20 border-t border-[var(--huza-line)] bg-[var(--huza-green-dark)] text-[#E8F5EE]">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-1">
-          <div className="flex items-center gap-3">
-            <Image src="/logo.svg" alt="Youth Huza" width={48} height={48} />
-            <div>
-              <p className="font-[family-name:var(--font-display)] text-xl font-bold">HUZA FRESH</p>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--huza-gold)]">
-                {t("poweredBy")}
-              </p>
-            </div>
-          </div>
+          <HuzaFreshLogo size="md" variant="onDark" />
           <p className="mt-4 text-sm leading-relaxed text-[#C8E8D4]">{t("footerAbout")}</p>
         </div>
 

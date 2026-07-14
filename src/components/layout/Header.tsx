@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -19,6 +18,7 @@ import { locales, localeFlags, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { NAV_CATEGORIES } from "@/lib/nav-categories";
 import { SmartSearch } from "@/components/layout/SmartSearch";
+import { HuzaFreshLogo } from "@/components/brand/HuzaFreshLogo";
 
 /** Orange accent — cart / wishlist badges only (Phase 1). */
 const BADGE = "bg-[#F97316] text-white";
@@ -118,13 +118,10 @@ export function Header() {
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-2"
+            className="flex shrink-0 items-center"
             aria-label="HUZA FRESH — Home"
           >
-            <Image src="/logo.svg" alt="Youth Huza" width={40} height={40} priority />
-            <span className="font-[family-name:var(--font-display)] text-base font-bold tracking-tight text-[var(--huza-green-dark)] sm:text-lg">
-              HUZA FRESH
-            </span>
+            <HuzaFreshLogo size="sm" />
           </Link>
 
           <div className="mx-auto hidden min-w-0 flex-1 md:block md:max-w-2xl">

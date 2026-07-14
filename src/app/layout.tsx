@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   title: "HUZA FRESH | Powered by Youth Huza",
   description:
     "Youth Huza buys from farms and sells fresh food on HUZA FRESH — sold and delivered by us across Rwanda.",
-  icons: { icon: "/logo.svg" },
+  icons: { icon: "/youth-huza-emblem.png" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
