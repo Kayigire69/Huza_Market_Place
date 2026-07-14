@@ -183,70 +183,33 @@ export function HomePage({
           viewAllLabel={t("viewAll")}
           hint={t("shopByCategoryHint")}
         />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-          {previews.map(({ category: c, products }) => (
-            <article
-              key={c.id}
-              className="overflow-hidden rounded-[22px] border border-[var(--huza-line)] bg-white shadow-[0_4px_16px_rgba(11,92,52,0.06)]"
-            >
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-3">
+          {categories.map((c) => {
+            const name = categoryName(c, locale);
+            return (
               <Link
+                key={c.id}
                 href={`/products?category=${c.slug}`}
-                className="group relative block aspect-[16/10] overflow-hidden bg-[var(--huza-mint)]"
+                className="group relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[var(--huza-mint)] shadow-[0_4px_16px_rgba(11,92,52,0.08)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)] sm:aspect-[5/4]"
               >
                 <Image
                   src={resolveCategoryImage(c.slug, c.imageUrl)}
-                  alt={categoryName(c, locale)}
+                  alt={name}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  sizes="(max-width: 640px) 50vw, 33vw"
                   className="object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                <p className="absolute inset-x-0 bottom-0 p-3 text-base font-bold text-white sm:p-4 sm:text-lg">
-                  {categoryName(c, locale)}
-                </p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 flex flex-col items-stretch gap-2 p-3 sm:p-4">
+                  <p className="text-sm font-bold leading-snug text-white sm:text-lg">{name}</p>
+                  <span className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[var(--huza-green)] px-3 text-xs font-semibold text-white shadow-sm transition-colors group-hover:bg-[var(--huza-green-dark)] sm:h-10 sm:text-sm">
+                    {t("orderCategory").replace("{name}", name)}
+                    <ArrowRight className="size-3.5 shrink-0 sm:size-4" aria-hidden />
+                  </span>
+                </div>
               </Link>
-
-              <div className="p-3.5 sm:p-4">
-                <Link
-                  href={`/products?category=${c.slug}`}
-                  className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--huza-green)] text-sm font-semibold text-white transition-colors hover:bg-[var(--huza-green-dark)]"
-                >
-                  {t("orderNow")}
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-
-                {products.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
-                      {t("allCategoryProducts")}
-                    </p>
-                    <ul className="mt-1.5 space-y-1">
-                      {products.map((p) => (
-                        <li key={p.id}>
-                          <Link
-                            href={`/products/${p.id}`}
-                            className="flex items-center gap-2 rounded-lg px-1 py-1 text-sm text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)] hover:text-[var(--huza-green-dark)]"
-                          >
-                            <span className="w-5 shrink-0 text-center text-sm" aria-hidden>
-                              {productListEmoji(p.nameEn)}
-                            </span>
-                            <span className="truncate">{productName(p)}</span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      href={`/products?category=${c.slug}`}
-                      className="mt-2 inline-flex items-center gap-0.5 text-xs font-semibold text-[var(--huza-green-dark)]"
-                    >
-                      {t("viewAll")}
-                      <ChevronRight className="size-3.5" />
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </article>
-          ))}
+            );
+          })}
         </div>
       </section>
 

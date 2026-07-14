@@ -188,24 +188,6 @@ export const productRepository = {
       }),
     ]);
 
-    // Product names under each category (homepage “Shop by Category”)
-    const categoryPreviews = await Promise.all(
-      categories.map(async (category) => {
-        const products = await prisma.product.findMany({
-          where: { ...active, categoryId: category.id },
-          select: {
-            id: true,
-            nameEn: true,
-            nameFr: true,
-            nameRw: true,
-          },
-          orderBy: [{ isBestSeller: "desc" }, { nameEn: "asc" }],
-          take: 8,
-        });
-        return { category, products };
-      })
-    );
-
     // One curated "Popular now" rail — prefer bestsellers, fill from featured
     const seen = new Set<string>();
     const popularNow: typeof bestSellers = [];
@@ -224,7 +206,10 @@ export const productRepository = {
       featured: popularNow.slice(0, 4),
       freshToday: [],
       shopProducts: popularNow,
-      categoryPreviews,
+      categoryPreviews: [] as {
+        category: (typeof categories)[number];
+        products: { id: string; nameEn: string; nameFr: string; nameRw: string }[];
+      }[],
     };
   },
 };
