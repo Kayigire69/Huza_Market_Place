@@ -16,7 +16,10 @@ type HomeCatalog = Awaited<ReturnType<typeof productRepository.findHomeLists>> &
 export const catalogService = {
   async getHomeCatalog(): Promise<HomeCatalog> {
     const cached = await cacheGet<HomeCatalog>(CacheKeys.homeCatalog);
-    if (cached) return cached;
+    // Guard against older cache payloads missing the Phase B rails
+    if (cached?.popularNow && cached?.readyToEat && cached?.categories) {
+      return cached;
+    }
 
     const now = new Date();
     const [lists, promotions, testimonials, status] = await Promise.all([

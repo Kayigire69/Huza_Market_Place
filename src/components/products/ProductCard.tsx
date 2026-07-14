@@ -151,7 +151,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           onClick={() => setQuick(true)}
           className="absolute bottom-2 right-2 hidden items-center gap-1 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-semibold shadow hover:bg-white sm:inline-flex sm:bottom-3 sm:right-3"
         >
-          <Eye className="size-3.5" /> Quick view
+          <Eye className="size-3.5" /> {t("quickView")}
         </button>
       </div>
 
@@ -224,7 +224,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               type="button"
               className="absolute right-3 top-3 rounded-full p-1 hover:bg-[var(--huza-mint)]"
               onClick={() => setQuick(false)}
-              aria-label="Close"
+              aria-label={t("close")}
             >
               <X className="size-4" />
             </button>
@@ -278,7 +278,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                     href={`/products/${product.id}`}
                     className="text-center text-sm font-semibold text-[var(--huza-green)]"
                   >
-                    Full details →
+                    {t("fullDetails")} →
                   </Link>
                 </div>
               </div>
