@@ -2,16 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, ShoppingCart, Package, User } from "lucide-react";
-import { useCart } from "@/lib/cart-store";
+import { Home, LayoutGrid, Heart, Package, User } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 
 export function MobileBottomNav() {
   const { t } = useLocale();
   const pathname = usePathname() || "/";
-  const items = useCart((s) => s.items);
-  const count = items.reduce((sum, i) => sum + i.quantity, 0);
 
   const tabs = [
     {
@@ -27,11 +24,10 @@ export function MobileBottomNav() {
       active: pathname.startsWith("/categories") || pathname.startsWith("/products"),
     },
     {
-      href: "/cart",
-      label: t("cart"),
-      icon: ShoppingCart,
-      active: pathname.startsWith("/cart") || pathname.startsWith("/checkout"),
-      badge: count,
+      href: "/wishlist",
+      label: t("wishlist"),
+      icon: Heart,
+      active: pathname.startsWith("/wishlist"),
     },
     {
       href: "/account#orders",
@@ -56,23 +52,16 @@ export function MobileBottomNav() {
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
-            <li key={tab.href}>
+            <li key={`${tab.href}-${tab.label}`}>
               <Link
                 href={tab.href}
                 prefetch
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-semibold transition",
+                  "relative flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-semibold transition",
                   tab.active ? "text-[var(--huza-green-dark)]" : "text-[var(--huza-muted)]"
                 )}
               >
-                <span className="relative">
-                  <Icon className={cn("size-5", tab.active && "stroke-[2.5]")} aria-hidden />
-                  {tab.badge && tab.badge > 0 ? (
-                    <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--huza-gold)] px-1 text-[9px] font-bold text-[var(--huza-ink)]">
-                      {tab.badge > 9 ? "9+" : tab.badge}
-                    </span>
-                  ) : null}
-                </span>
+                <Icon className={cn("size-5", tab.active && "stroke-[2.5]")} aria-hidden />
                 <span className="max-w-[4.5rem] truncate">{tab.label}</span>
               </Link>
             </li>
