@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { DELIVERY_FEES, type DeliveryZoneDto, type DeliveryZoneKey } from "@/lib/utils";
+import {
+  DELIVERY_FEES,
+  FLAT_DELIVERY_FEE_RWF,
+  type DeliveryZoneDto,
+  type DeliveryZoneKey,
+} from "@/lib/utils";
 import { ZONE_ETA_LABELS, ZONE_ETA_MINUTES } from "@/lib/delivery-eta";
 
 const FALLBACK_ZONES: DeliveryZoneDto[] = (Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map(
@@ -51,16 +56,8 @@ export async function listDeliveryZones(): Promise<
   }));
 }
 
-export async function getDeliveryFee(code: string): Promise<number> {
-  try {
-    const row = await prisma.deliveryZoneConfig.findFirst({
-      where: { code, isActive: true },
-    });
-    if (row) return row.feeRwf;
-  } catch {
-    /* fallback */
-  }
-  return DELIVERY_FEES[code as DeliveryZoneKey] ?? 5000;
+export async function getDeliveryFee(_code: string): Promise<number> {
+  return FLAT_DELIVERY_FEE_RWF;
 }
 
 export async function getSetting(key: string, fallback = ""): Promise<string> {
