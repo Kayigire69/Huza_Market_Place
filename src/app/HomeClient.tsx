@@ -2,23 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
-import { Button } from "@/components/ui/Button";
 import { ProductCard, type ProductCardData } from "@/components/products/ProductCard";
 import { HeroSection } from "@/components/home/HeroSection";
 import { categoryName } from "@/lib/i18n";
 import {
   ArrowRight,
-  MapPin,
   ChevronRight,
   ShoppingBasket,
   BadgeCheck,
   Bike,
+  Truck,
+  Smartphone,
+  Leaf,
+  MessageCircle,
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 import { resolveCategoryImage } from "@/lib/catalog-images";
-import { FLAT_DELIVERY_FEE_RWF, formatRwf } from "@/lib/utils";
 
 type Category = {
   id: string;
@@ -101,23 +101,34 @@ function ProductRail({
   );
 }
 
+type CustomerReview = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  user: { fullName: string };
+  product: { nameEn: string } | null;
+};
+
 export function HomePage({
   popularNow,
   readyToEat,
   categories,
   promotions,
   testimonials,
+  customerReviews = [],
   isOpen,
+  whatsappUrl = "https://wa.me/250788000000",
 }: {
   popularNow: ProductCardData[];
   readyToEat: ProductCardData[];
   categories: Category[];
   promotions: Promo[];
   testimonials: Testimonial[];
+  customerReviews?: CustomerReview[];
   isOpen: boolean;
+  whatsappUrl?: string;
 }) {
   const { t, locale } = useLocale();
-  const [newsletterMsg, setNewsletterMsg] = useState("");
 
   const promoTitle = (p: Promo) =>
     locale === "fr" ? p.titleFr : locale === "rw" ? p.titleRw : p.titleEn;
@@ -126,23 +137,48 @@ export function HomePage({
   const comment = (x: Testimonial) =>
     locale === "fr" ? x.commentFr : locale === "rw" ? x.commentRw : x.commentEn;
 
-  const subscribe = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/newsletter", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: form.get("email"), phone: form.get("phone") }),
-    });
-    setNewsletterMsg(res.ok ? t("thanksSubscribed") : t("subscribeFailed"));
-    if (res.ok) (e.target as HTMLFormElement).reset();
-  };
-
   const howSteps = [
     { n: "1", title: t("howStep1Title"), body: t("howStep1Body"), icon: ShoppingBasket },
     { n: "2", title: t("howStep2Title"), body: t("howStep2Body"), icon: BadgeCheck },
     { n: "3", title: t("howStep3Title"), body: t("howStep3Body"), icon: Bike },
   ];
+
+  const whyChoose = [
+    { icon: BadgeCheck, label: t("trustQuality") },
+    { icon: Truck, label: t("trustDelivery") },
+    { icon: Smartphone, label: t("trustMomo") },
+    { icon: Leaf, label: t("trustFarmFresh") },
+  ];
+
+  const seasonal = [
+    { emoji: "🥭", title: t("seasonMango"), href: "/products?q=mango" },
+    { emoji: "🥑", title: t("seasonAvocado"), href: "/products?q=avocado" },
+    { emoji: "🟣", title: t("seasonPassion"), href: "/products?q=passion" },
+  ];
+
+  const reviews =
+    customerReviews.length > 0
+      ? customerReviews.map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          text: r.comment || "",
+          name: r.user.fullName,
+          role: r.product?.nameEn || "",
+        }))
+      : testimonials.map((x) => ({
+          id: x.id,
+          rating: x.rating,
+          text: comment(x),
+          name: x.name,
+          role: x.role || "",
+        }));
+
+  const waHref = whatsappUrl.startsWith("http")
+    ? whatsappUrl
+    : `https://wa.me/${whatsappUrl.replace(/\D/g, "")}`;
+  const waUpdatesHref = `${waHref}${waHref.includes("?") ? "&" : "?"}text=${encodeURIComponent(
+    "Hello HUZA — please add me to weekly fresh deals updates."
+  )}`;
 
   return (
     <div className="home-surface">
@@ -152,10 +188,9 @@ export function HomePage({
         </div>
       )}
 
-      {/* Phase 2 — compact shopping hero (Version 1.0 locked) */}
       <HeroSection />
 
-      {/* 1. Categories first */}
+      {/* 1. Categories */}
       <section
         id="categories"
         className="mx-auto mt-8 max-w-7xl scroll-mt-28 px-4 sm:mt-12 sm:px-6"
@@ -183,7 +218,6 @@ export function HomePage({
                   className="object-cover transition duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                {/* Name + Order Now aligned on one bottom bar */}
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 sm:gap-3 sm:p-4">
                   <p className="min-w-0 flex-1 text-sm font-bold leading-snug text-white drop-shadow-sm sm:text-base lg:text-lg">
                     {name}
@@ -215,7 +249,7 @@ export function HomePage({
         </section>
       )}
 
-      {/* 3. Freshly Prepared — unique juices & salads section */}
+      {/* 3. Freshly Prepared */}
       {readyToEat.length > 0 && (
         <section
           id="freshly-prepared"
@@ -242,9 +276,92 @@ export function HomePage({
         </section>
       )}
 
-      {/* 4. How Huza works */}
+      {/* 4. Special Offers — admin CMS promotions only */}
+      <section
+        id="special-offers"
+        className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
+      >
+        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">🔥 {t("specialOffers")}</h2>
+        {promotions.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-[var(--huza-line)] bg-white/80 px-4 py-6 text-center text-sm text-[var(--huza-muted)]">
+            {t("specialOffersEmpty")}
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {promotions.slice(0, 3).map((p, i) => (
+              <Link
+                key={p.id}
+                href="/products"
+                className={`rounded-2xl p-5 text-white transition hover:brightness-110 ${
+                  i % 2 === 0 ? "bg-[var(--huza-green-dark)]" : "bg-[#166B3F]"
+                }`}
+              >
+                {p.isFlashSale && (
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--huza-gold)]">
+                    {t("flashSale")}
+                  </span>
+                )}
+                <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold sm:text-xl">
+                  {promoTitle(p)}
+                </h3>
+                {promoDesc(p) && <p className="mt-2 text-sm text-[#C8E8D4]">{promoDesc(p)}</p>}
+                {p.code && (
+                  <p className="mt-3 inline-block rounded-md bg-white/15 px-3 py-1 text-sm font-mono">
+                    {p.code}
+                    {p.discountPct ? ` · ${p.discountPct}%` : ""}
+                    {p.freeDelivery ? ` · ${t("freeDelivery")}` : ""}
+                  </p>
+                )}
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--huza-gold)]">
+                  {t("shopNow")} <ArrowRight className="size-4" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 5. Why Choose HUZA — icons only */}
+      <section className="mx-auto mt-8 max-w-7xl px-4 sm:mt-10 sm:px-6">
+        <h2 className="mb-3 text-center text-sm font-semibold text-[var(--huza-green-dark)] sm:text-base">
+          ❤️ {t("whyChooseHuza")}
+        </h2>
+        <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:gap-x-8">
+          {whyChoose.map((item) => (
+            <li
+              key={item.label}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--huza-ink)] sm:text-xs"
+            >
+              <item.icon className="size-3.5 text-[var(--huza-green)]" aria-hidden />
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* 6. Seasonal Picks */}
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("howHuzaWorks")}</h2>
+        <h2 className="section-title mb-2 text-[1.35rem] sm:mb-3">🌱 {t("seasonalPicks")}</h2>
+        <p className="mb-4 text-sm text-[var(--huza-muted)]">{t("seasonalPicksHint")}</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {seasonal.map((s) => (
+            <Link
+              key={s.href}
+              href={s.href}
+              className="flex items-center gap-3 rounded-2xl border border-[var(--huza-line)] bg-white px-4 py-4 transition hover:border-[var(--huza-green)] hover:bg-[var(--huza-mint)]"
+            >
+              <span className="text-2xl" aria-hidden>
+                {s.emoji}
+              </span>
+              <span className="font-semibold text-[var(--huza-ink)]">{s.title}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* 7. How HUZA Works */}
+      <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">🚚 {t("howHuzaWorks")}</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {howSteps.map((step) => (
             <div
@@ -264,83 +381,21 @@ export function HomePage({
         </div>
       </section>
 
-      {promotions.length > 0 && (
-        <section
-          id="special-offers"
-          className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
-        >
-          <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("specialOffers")}</h2>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {promotions.slice(0, 3).map((p, i) => (
-              <Link
-                key={p.id}
-                href="/products"
-                className={`rounded-2xl p-5 text-white transition hover:brightness-110 ${
-                  i % 2 === 0 ? "bg-[var(--huza-green-dark)]" : "bg-[#166B3F]"
-                }`}
-              >
-                {p.isFlashSale && (
-                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--huza-gold)]">
-                    {t("flashSale")}
-                  </span>
-                )}
-                <h3 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold sm:text-xl">
-                  {promoTitle(p)}
-                </h3>
-                <p className="mt-2 text-sm text-[#C8E8D4]">{promoDesc(p)}</p>
-                {p.code && (
-                  <p className="mt-3 inline-block rounded-md bg-white/15 px-3 py-1 text-sm font-mono">
-                    {p.code}
-                    {p.discountPct ? ` · ${p.discountPct}%` : ""}
-                    {p.freeDelivery ? ` · ${t("freeDelivery")}` : ""}
-                  </p>
-                )}
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--huza-gold)]">
-                  {t("heroCta")} <ArrowRight className="size-4" />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Delivery — flat fee; ETAs are shown at checkout, not under product photos */}
-      <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("deliveryCoverage")}</h2>
-        <div className="mb-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-4 py-3 text-sm sm:flex sm:items-center sm:justify-between">
-          <p className="font-semibold text-[var(--huza-green-dark)]">
-            {t("deliveryFeeLabel")}: {formatRwf(FLAT_DELIVERY_FEE_RWF)}
-          </p>
-          <p className="mt-1 text-xs text-[var(--huza-muted)] sm:mt-0">{t("flatDeliveryFeeHint")}</p>
-        </div>
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          {[t("zoneKigali"), t("zoneKamonyi"), t("zoneBugesera")].map((zone) => (
-            <div
-              key={zone}
-              className="flex items-center gap-3 rounded-xl border border-[var(--huza-line)] bg-white/90 px-3.5 py-3"
-            >
-              <MapPin className="size-4 shrink-0 text-[var(--huza-green)]" aria-hidden />
-              <p className="truncate text-sm font-semibold">{zone}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-2.5 text-xs text-[var(--huza-muted)] sm:text-sm">{t("deliveryFeeAtCheckoutHint")}</p>
-      </section>
-
-      {testimonials.length > 0 && (
+      {/* 8. Customer Reviews */}
+      {reviews.length > 0 && (
         <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-          <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("testimonials")}</h2>
+          <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">💬 {t("customerReviews")}</h2>
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 snap-x sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
-            {testimonials.map((x) => (
+            {reviews.map((x) => (
               <blockquote
                 key={x.id}
                 className="w-[85%] shrink-0 snap-start rounded-2xl border border-[var(--huza-line)] bg-white/90 p-4 sm:w-auto"
               >
                 <p className="text-[var(--huza-gold)]">{"★".repeat(x.rating)}</p>
-                <p className="mt-2 text-sm leading-relaxed">&ldquo;{comment(x)}&rdquo;</p>
+                <p className="mt-2 text-sm leading-relaxed">&ldquo;{x.text}&rdquo;</p>
                 <footer className="mt-3">
                   <p className="text-sm font-semibold">{x.name}</p>
-                  <p className="text-xs text-[var(--huza-muted)]">{x.role}</p>
+                  {x.role ? <p className="text-xs text-[var(--huza-muted)]">{x.role}</p> : null}
                 </footer>
               </blockquote>
             ))}
@@ -348,32 +403,44 @@ export function HomePage({
         </section>
       )}
 
-      <section className="mx-auto mb-8 mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-        <div className="grid items-center gap-6 rounded-3xl bg-[var(--huza-green-dark)] p-6 text-white sm:gap-8 sm:p-10 md:grid-cols-[1.2fr_0.8fr]">
+      {/* 9. WhatsApp ordering card */}
+      <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#25D366]/40 bg-[#f3fff7] p-5 sm:flex-row sm:items-center sm:p-6">
           <div>
-            <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold sm:text-3xl">
-              {t("newsletter")}
-            </h2>
-            <p className="mt-2 text-sm text-[#C8E8D4]">{t("newsletterBody")}</p>
+            <p className="text-sm font-semibold text-[#128C7E]">📱 {t("whatsappHelpTitle")}</p>
+            <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-ink)]">
+              {t("needHelpChoosing")}
+            </h3>
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("orderOnWhatsApp")}</p>
           </div>
-          <form onSubmit={subscribe} className="space-y-3">
-            <input
-              name="email"
-              type="email"
-              required
-              placeholder={t("emailAddress")}
-              className="w-full rounded-lg border-0 px-4 py-2.5 text-[var(--huza-ink)]"
-            />
-            <input
-              name="phone"
-              placeholder={t("phoneOptional")}
-              className="w-full rounded-lg border-0 px-4 py-2.5 text-[var(--huza-ink)]"
-            />
-            <Button type="submit" variant="secondary" className="w-full">
-              {t("subscribe")}
-            </Button>
-            {newsletterMsg && <p className="text-sm text-[var(--huza-gold)]">{newsletterMsg}</p>}
-          </form>
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#25D366] px-5 text-sm font-semibold text-white transition hover:bg-[#1ebe57]"
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            {t("chatNow")}
+          </a>
+        </div>
+      </section>
+
+      {/* 10. WhatsApp updates (replaces newsletter) */}
+      <section className="mx-auto mb-4 mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <div className="rounded-3xl bg-[var(--huza-green-dark)] p-6 text-white sm:p-8">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold sm:text-3xl">
+            {t("whatsappUpdatesTitle")}
+          </h2>
+          <p className="mt-2 max-w-xl text-sm text-[#C8E8D4]">{t("whatsappUpdatesBody")}</p>
+          <a
+            href={waUpdatesHref}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--huza-gold)] px-5 text-sm font-semibold text-[var(--huza-ink)] transition hover:brightness-105"
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            {t("getWeeklyDeals")}
+          </a>
         </div>
       </section>
 
