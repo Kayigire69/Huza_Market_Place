@@ -1,18 +1,39 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { isAdminPortalRole } from "@/lib/rbac";
+import type { UnitType } from "@prisma/client";
+import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { stockService } from "@/services/stock.service";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 
+const UNIT_TYPES: UnitType[] = ["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"];
+
+function parseUnitType(raw: unknown): UnitType {
+  const s = String(raw || "KG")
+    .trim()
+    .toUpperCase()
+    .replace(/S$/, "");
+  const aliases: Record<string, UnitType> = {
+    KG: "KG",
+    KILO: "KG",
+    KILOGRAM: "KG",
+    PIECE: "PIECE",
+    PC: "PIECE",
+    BUNCH: "BUNCH",
+    LITRE: "LITRE",
+    LITER: "LITRE",
+    L: "LITRE",
+    PACK: "PACK",
+    DOZEN: "DOZEN",
+  };
+  const mapped = aliases[s] || (UNIT_TYPES.includes(s as UnitType) ? (s as UnitType) : null);
+  return mapped || "KG";
+}
+
 async function requireAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || (!isAdminPortalRole(session.user.role) && session.user.role !== "PROCUREMENT")) {
-    return null;
-  }
-  return session;
+  return requireAdminSession({
+    modules: ["products", "approvals", "inventory", "purchase_orders"],
+  });
 }
 
 /** List catalog products for admin price & stock management */
@@ -22,6 +43,59 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const mode = searchParams.get("mode") || "pending";
+  const categoryId = searchParams.get("categoryId") || undefined;
+  const q = searchParams.get("q")?.trim() || "";
+  const filter = searchParams.get("filter") || "all"; // all | active | out | low | hidden | featured | bestseller
+  const sort = searchParams.get("sort") || "name"; // name | price | stock
+
+  if (mode === "by_category") {
+    if (!categoryId) {
+      return NextResponse.json({ error: "categoryId required" }, { status: 400 });
+    }
+    const products = await prisma.product.findMany({
+      where: {
+        deletedAt: null,
+        categoryId,
+        ...(q
+          ? {
+              OR: [
+                { nameEn: { contains: q, mode: "insensitive" } },
+                { nameFr: { contains: q, mode: "insensitive" } },
+                { nameRw: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        category: { select: { id: true, nameEn: true, slug: true } },
+        images: {
+          where: { kind: "STOREFRONT" },
+          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+          take: 5,
+        },
+      },
+      orderBy:
+        sort === "price"
+          ? { price: "asc" }
+          : sort === "stock"
+            ? { stockQty: "desc" }
+            : { nameEn: "asc" },
+      take: 300,
+    });
+
+    const filtered = products.filter((p) => {
+      const available = Math.max(0, p.stockQty - p.reservedQty);
+      if (filter === "active") return p.isActive;
+      if (filter === "hidden") return !p.isActive;
+      if (filter === "out") return available <= 0;
+      if (filter === "low") return available > 0 && available <= (p.lowStockAt ?? 5);
+      if (filter === "featured") return p.isFeatured;
+      if (filter === "bestseller") return p.isBestSeller;
+      return true;
+    });
+
+    return NextResponse.json({ products: filtered });
+  }
 
   if (mode === "catalog") {
     const products = await prisma.product.findMany({
@@ -50,6 +124,80 @@ export async function GET(req: Request) {
   return NextResponse.json(products);
 }
 
+/** Create a catalog product (admin) */
+export async function POST(req: Request) {
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const body = await req.json();
+  const nameEn = String(body.nameEn || "").trim();
+  const categoryId = String(body.categoryId || "");
+  const price = Math.round(Number(body.price));
+  if (!nameEn || !categoryId) {
+    return NextResponse.json({ error: "Name and category are required" }, { status: 400 });
+  }
+  if (!Number.isFinite(price) || price < 0) {
+    return NextResponse.json({ error: "Invalid price" }, { status: 400 });
+  }
+
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, deletedAt: null },
+  });
+  if (!category) return NextResponse.json({ error: "Category not found" }, { status: 404 });
+
+  // Prefer Youth Huza retail supplier if present; otherwise first approved supplier
+  const supplier =
+    (await prisma.supplier.findFirst({
+      where: { status: "APPROVED", businessName: { contains: "Huza", mode: "insensitive" } },
+    })) ||
+    (await prisma.supplier.findFirst({ where: { status: "APPROVED" } }));
+  if (!supplier) {
+    return NextResponse.json(
+      { error: "No approved supplier available to own this product" },
+      { status: 400 }
+    );
+  }
+
+  const stockQty = Math.max(0, Math.floor(Number(body.stockQty) || 0));
+  const unit = parseUnitType(body.unit);
+
+  const product = await prisma.product.create({
+    data: {
+      supplierId: supplier.id,
+      categoryId,
+      nameEn,
+      nameFr: String(body.nameFr || nameEn).trim(),
+      nameRw: String(body.nameRw || nameEn).trim(),
+      descriptionEn: String(body.descriptionEn || body.description || "").trim() || nameEn,
+      descriptionFr: String(body.descriptionFr || body.description || "").trim() || nameEn,
+      descriptionRw: String(body.descriptionRw || body.description || "").trim() || nameEn,
+      price,
+      unit,
+      stockQty,
+      isActive: Boolean(body.isActive ?? true),
+      isFeatured: Boolean(body.isFeatured ?? false),
+      isBestSeller: Boolean(body.isBestSeller ?? false),
+      isNewArrival: Boolean(body.isNewArrival ?? true),
+      isOrganic: Boolean(body.isOrganic ?? false),
+      reviewStatus: "APPROVED",
+      reviewedAt: new Date(),
+    },
+    include: {
+      category: { select: { id: true, nameEn: true, slug: true } },
+      images: true,
+    },
+  });
+
+  await auditAdminAction(req, session, {
+    action: "product.create",
+    entity: "Product",
+    entityId: product.id,
+    details: `${product.nameEn} · ${category.nameEn}`,
+  });
+  await cacheDel(CacheKeys.homeCatalog);
+  return NextResponse.json(product, { status: 201 });
+}
+
 export async function PATCH(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -67,7 +215,54 @@ export async function PATCH(req: Request) {
     isActive?: boolean;
   };
 
-  if (!id || !action) {
+  if (!action) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  // Bulk ops don't need a single product id
+  if (action === "bulk") {
+    const ids = Array.isArray(body.ids) ? (body.ids as string[]).map(String) : [];
+    const bulkAction = String(body.bulkAction || "");
+    if (!ids.length || !bulkAction) {
+      return NextResponse.json({ error: "ids and bulkAction required" }, { status: 400 });
+    }
+    if (bulkAction === "hide") {
+      await prisma.product.updateMany({
+        where: { id: { in: ids }, deletedAt: null },
+        data: { isActive: false },
+      });
+    } else if (bulkAction === "show") {
+      await prisma.product.updateMany({
+        where: { id: { in: ids }, deletedAt: null },
+        data: { isActive: true },
+      });
+    } else if (bulkAction === "delete") {
+      await prisma.product.updateMany({
+        where: { id: { in: ids } },
+        data: { deletedAt: new Date(), isActive: false },
+      });
+    } else if (bulkAction === "price") {
+      const price = Math.round(Number(body.price));
+      if (!Number.isFinite(price) || price < 0) {
+        return NextResponse.json({ error: "Invalid price" }, { status: 400 });
+      }
+      await prisma.product.updateMany({
+        where: { id: { in: ids }, deletedAt: null },
+        data: { price },
+      });
+    } else {
+      return NextResponse.json({ error: "Unknown bulkAction" }, { status: 400 });
+    }
+    await auditAdminAction(req, session, {
+      action: `product.bulk_${bulkAction}`,
+      entity: "Product",
+      details: `${ids.length} products`,
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    return NextResponse.json({ ok: true, count: ids.length });
+  }
+
+  if (!id) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
@@ -165,11 +360,12 @@ export async function PATCH(req: Request) {
     if (imageUrls.length === 0) {
       return NextResponse.json({ error: "Upload at least one storefront image" }, { status: 400 });
     }
-    const coverIndex = Math.max(0, Math.min(Number(body.coverIndex) || 0, imageUrls.length - 1));
+    const limited = imageUrls.slice(0, 5);
+    const coverIndex = Math.max(0, Math.min(Number(body.coverIndex) || 0, limited.length - 1));
     await prisma.$transaction([
       prisma.productImage.deleteMany({ where: { productId: id, kind: "STOREFRONT" } }),
       prisma.productImage.createMany({
-        data: imageUrls.map((url, i) => ({
+        data: limited.map((url, i) => ({
           productId: id,
           url,
           alt: `${existing.nameEn} ${i + 1}`,
@@ -183,7 +379,7 @@ export async function PATCH(req: Request) {
       action: "product.set_storefront_images",
       entity: "Product",
       entityId: id,
-      details: `${existing.nameEn}: ${imageUrls.length} storefront image(s)`,
+      details: `${existing.nameEn}: ${limited.length} storefront image(s)`,
     });
     await cacheDel(CacheKeys.homeCatalog);
     const product = await prisma.product.findUnique({
@@ -191,6 +387,42 @@ export async function PATCH(req: Request) {
       include: { images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] } },
     });
     return NextResponse.json(product);
+  }
+
+  // --- Append storefront images (max 5 total) ---
+  if (action === "append_storefront_images") {
+    const imageUrls = Array.isArray(body.imageUrls)
+      ? (body.imageUrls as unknown[]).map(String).map((u) => u.trim()).filter(Boolean)
+      : [];
+    if (imageUrls.length === 0) {
+      return NextResponse.json({ error: "Upload at least one image" }, { status: 400 });
+    }
+    const current = await prisma.productImage.findMany({
+      where: { productId: id, kind: "STOREFRONT" },
+      orderBy: { sortOrder: "asc" },
+    });
+    const slots = Math.max(0, 5 - current.length);
+    if (slots === 0) {
+      return NextResponse.json({ error: "Maximum 5 images per product" }, { status: 400 });
+    }
+    const toAdd = imageUrls.slice(0, slots);
+    const startOrder = current.length;
+    await prisma.productImage.createMany({
+      data: toAdd.map((url, i) => ({
+        productId: id,
+        url,
+        alt: `${existing.nameEn} ${startOrder + i + 1}`,
+        sortOrder: startOrder + i,
+        kind: "STOREFRONT",
+        isCover: current.length === 0 && i === 0,
+      })),
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    const images = await prisma.productImage.findMany({
+      where: { productId: id, kind: "STOREFRONT" },
+      orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+    });
+    return NextResponse.json({ ok: true, images });
   }
 
   // --- Promote farmer inspection photos into storefront (temporary draft) ---
@@ -302,6 +534,120 @@ export async function PATCH(req: Request) {
         { status: 400 }
       );
     }
+  }
+
+  // --- Full catalog edit (side panel) ---
+  if (action === "update_details") {
+    const nextCategoryId =
+      body.categoryId !== undefined ? String(body.categoryId) : undefined;
+    if (nextCategoryId) {
+      const cat = await prisma.category.findFirst({
+        where: { id: nextCategoryId, deletedAt: null },
+      });
+      if (!cat) return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...(body.nameEn !== undefined ? { nameEn: String(body.nameEn).trim() } : {}),
+        ...(body.nameFr !== undefined ? { nameFr: String(body.nameFr).trim() } : {}),
+        ...(body.nameRw !== undefined ? { nameRw: String(body.nameRw).trim() } : {}),
+        ...(body.descriptionEn !== undefined || body.description !== undefined
+          ? {
+              descriptionEn: String(body.descriptionEn ?? body.description ?? "").trim(),
+              descriptionFr: String(
+                body.descriptionFr ?? body.descriptionEn ?? body.description ?? ""
+              ).trim(),
+              descriptionRw: String(
+                body.descriptionRw ?? body.descriptionEn ?? body.description ?? ""
+              ).trim(),
+            }
+          : {}),
+        ...(nextCategoryId ? { category: { connect: { id: nextCategoryId } } } : {}),
+        ...(body.price !== undefined ? { price: Math.round(Number(body.price)) } : {}),
+        ...(body.unit !== undefined ? { unit: parseUnitType(body.unit) } : {}),
+        ...(body.stockQty !== undefined
+          ? { stockQty: Math.max(0, Math.floor(Number(body.stockQty))) }
+          : {}),
+        ...(body.isActive !== undefined ? { isActive: Boolean(body.isActive) } : {}),
+        ...(body.isFeatured !== undefined ? { isFeatured: Boolean(body.isFeatured) } : {}),
+        ...(body.isBestSeller !== undefined ? { isBestSeller: Boolean(body.isBestSeller) } : {}),
+        ...(body.isNewArrival !== undefined ? { isNewArrival: Boolean(body.isNewArrival) } : {}),
+        ...(body.isOrganic !== undefined ? { isOrganic: Boolean(body.isOrganic) } : {}),
+        ...(body.lowStockAt !== undefined
+          ? { lowStockAt: Math.max(0, Math.floor(Number(body.lowStockAt))) }
+          : {}),
+      },
+      include: {
+        category: { select: { id: true, nameEn: true, slug: true } },
+        images: {
+          where: { kind: "STOREFRONT" },
+          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        },
+      },
+    });
+    await auditAdminAction(req, session, {
+      action: "product.update_details",
+      entity: "Product",
+      entityId: id,
+      details: product.nameEn,
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    return NextResponse.json(product);
+  }
+
+  if (action === "delete_image") {
+    const imageId = String(body.imageId || "");
+    if (!imageId) return NextResponse.json({ error: "imageId required" }, { status: 400 });
+    await prisma.productImage.deleteMany({
+      where: { id: imageId, productId: id, kind: "STOREFRONT" },
+    });
+    let remaining = await prisma.productImage.findMany({
+      where: { productId: id, kind: "STOREFRONT" },
+      orderBy: { sortOrder: "asc" },
+    });
+    if (remaining.length && !remaining.some((i) => i.isCover)) {
+      await prisma.productImage.update({
+        where: { id: remaining[0].id },
+        data: { isCover: true },
+      });
+      remaining = await prisma.productImage.findMany({
+        where: { productId: id, kind: "STOREFRONT" },
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+      });
+    }
+    await cacheDel(CacheKeys.homeCatalog);
+    return NextResponse.json({ ok: true, images: remaining });
+  }
+
+  if (action === "reorder_images") {
+    const order = Array.isArray(body.imageIds) ? (body.imageIds as string[]) : [];
+    await prisma.$transaction(
+      order.map((imageId, i) =>
+        prisma.productImage.updateMany({
+          where: { id: imageId, productId: id, kind: "STOREFRONT" },
+          data: { sortOrder: i },
+        })
+      )
+    );
+    await cacheDel(CacheKeys.homeCatalog);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === "soft_delete") {
+    await prisma.product.update({
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false },
+    });
+    await auditAdminAction(req, session, {
+      action: "product.soft_delete",
+      entity: "Product",
+      entityId: id,
+      details: existing.nameEn,
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    return NextResponse.json({ ok: true });
   }
 
   // --- Flags ---

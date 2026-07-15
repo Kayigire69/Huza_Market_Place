@@ -1,5 +1,6 @@
-import { renderAdminModule } from "../_module";
+import { redirect } from "next/navigation";
 
-export default async function Page() {
-  return renderAdminModule("procurement");
+/** Legacy /admin/procurement → Purchase Orders */
+export default function ProcurementIndexPage() {
+  redirect("/admin/procurement/orders");
 }

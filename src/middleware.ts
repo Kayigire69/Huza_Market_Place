@@ -1,6 +1,12 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import { isAdminPortalRole, isSuperAdmin, isSuperAdminOnlyPath } from "@/lib/rbac";
+import {
+  canAccessAdminPath,
+  firstAllowedAdminPath,
+  isAdminPortalRole,
+  isSuperAdmin,
+  isSuperAdminOnlyPath,
+} from "@/lib/rbac";
 
 /**
  * Staff & partner portals are never advertised on the customer storefront.
@@ -59,10 +65,19 @@ export default withAuth(
 
     if (isStaffPath(pathname)) {
       const allowed: Record<string, string[]> = {
-        "/admin": ["ADMIN", "SUPER_ADMIN"],
-        "/warehouse": ["WAREHOUSE", "ADMIN", "SUPER_ADMIN"],
-        "/procurement": ["PROCUREMENT", "ADMIN", "SUPER_ADMIN"],
-        "/delivery-portal": ["DELIVERY", "ADMIN", "SUPER_ADMIN"],
+        "/admin": [
+          "ADMIN",
+          "SUPER_ADMIN",
+          "MANAGER",
+          "INVENTORY",
+          "WAREHOUSE",
+          "SUPPORT",
+          "PROCUREMENT",
+          "FINANCE",
+        ],
+        "/warehouse": ["WAREHOUSE", "INVENTORY", "ADMIN", "SUPER_ADMIN", "MANAGER"],
+        "/procurement": ["PROCUREMENT", "ADMIN", "SUPER_ADMIN", "MANAGER"],
+        "/delivery-portal": ["DELIVERY", "ADMIN", "SUPER_ADMIN", "MANAGER"],
       };
       const match = STAFF_PREFIXES.find((p) => pathname === p || pathname.startsWith(`${p}/`));
       const roles = match ? allowed[match] : ["ADMIN", "SUPER_ADMIN"];
@@ -73,9 +88,14 @@ export default withAuth(
         return NextResponse.redirect(login);
       }
 
-      // Employee Management / Audit / System Settings — Super Admin only
+      // Role-aware admin modules (Inventory / Support / Finance / etc.)
+      if (pathname.startsWith("/admin") && !canAccessAdminPath(role, pathname)) {
+        return NextResponse.redirect(new URL(firstAllowedAdminPath(role), req.url));
+      }
+
+      // Extra belt: Staff / Audit / Settings — Super Admin only
       if (pathname.startsWith("/admin") && isSuperAdminOnlyPath(pathname) && !isSuperAdmin(role)) {
-        return NextResponse.redirect(new URL("/admin", req.url));
+        return NextResponse.redirect(new URL(firstAllowedAdminPath(role), req.url));
       }
 
       return NextResponse.next();

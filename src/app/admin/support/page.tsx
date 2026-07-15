@@ -54,57 +54,68 @@ export default function AdminSupportPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-[var(--huza-green-dark)]">Support inbox</h1>
-      <p className="mt-1 text-sm text-[var(--huza-muted)]">
-        FAQs, complaints, and customer tickets from the Support Center.
-      </p>
-      {msg && <p className="mt-3 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
-      <div className="mt-6 space-y-4">
-        {tickets.map((t) => (
-          <div key={t.id} className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-mono text-sm font-semibold">{t.ticketNumber}</p>
-              <span className="rounded-full bg-[var(--huza-mint)] px-2 py-0.5 text-xs">{t.status}</span>
-            </div>
-            <p className="mt-2 font-semibold">{t.subject}</p>
-            <p className="mt-1 text-sm text-[var(--huza-muted)]">{t.body}</p>
-            <p className="mt-2 text-xs text-[var(--huza-muted)]">
-              {t.type} · {t.user?.fullName || t.guestName || "Guest"} ·{" "}
-              {t.user?.phone || t.guestPhone || "—"}
-              {t.orderNumber ? ` · Order ${t.orderNumber}` : ""}
-            </p>
-            {t.adminReply && (
-              <p className="mt-2 rounded-lg bg-[var(--huza-mint)] p-3 text-sm">
-                Reply: {t.adminReply}
+    <div className="space-y-4">
+      <div>
+        <h1 className="admin-panel-title">Support</h1>
+        <p className="admin-panel-sub">
+          FAQs, complaints, and customer tickets from the Support Center.
+        </p>
+      </div>
+      {msg ? (
+        <p className="rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)] px-3 py-2 text-sm">
+          {msg}
+        </p>
+      ) : null}
+      <div className="space-y-3">
+        {tickets.length === 0 ? (
+          <div className="admin-panel p-6 text-sm text-[var(--admin-muted)]">No tickets yet.</div>
+        ) : (
+          tickets.map((t) => (
+            <article key={t.id} className="admin-panel space-y-3 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-mono text-sm font-semibold">{t.ticketNumber}</p>
+                <span className="admin-status admin-status-warn">{t.status}</span>
+              </div>
+              <p className="font-semibold">{t.subject}</p>
+              <p className="text-sm text-[var(--admin-muted)]">{t.body}</p>
+              <p className="text-xs text-[var(--admin-muted)]">
+                {t.type} · {t.user?.fullName || t.guestName || "Guest"} ·{" "}
+                {t.user?.phone || t.guestPhone || "—"}
+                {t.orderNumber ? ` · Order ${t.orderNumber}` : ""}
               </p>
-            )}
-            <textarea
-              className="input-field mt-3 min-h-20"
-              placeholder="Admin reply…"
-              value={reply[t.id] ?? t.adminReply ?? ""}
-              onChange={(e) => setReply((prev) => ({ ...prev, [t.id]: e.target.value }))}
-            />
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                onClick={() =>
-                  update(t.id, { adminReply: reply[t.id] ?? "", status: "IN_PROGRESS" })
-                }
-              >
-                Save reply
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => update(t.id, { status: "RESOLVED" })}>
-                Mark resolved
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => update(t.id, { status: "CLOSED" })}>
-                Close
-              </Button>
-            </div>
-          </div>
-        ))}
-        {tickets.length === 0 && (
-          <p className="text-sm text-[var(--huza-muted)]">No support tickets yet.</p>
+              {t.adminReply ? (
+                <p className="rounded-lg bg-[var(--admin-soft)] p-3 text-sm">Reply: {t.adminReply}</p>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <input
+                  className="admin-input flex-1"
+                  placeholder="Reply to customer…"
+                  value={reply[t.id] || ""}
+                  onChange={(e) => setReply((r) => ({ ...r, [t.id]: e.target.value }))}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() =>
+                    void update(t.id, {
+                      adminReply: reply[t.id],
+                      status: "RESOLVED",
+                    })
+                  }
+                >
+                  Send &amp; resolve
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => void update(t.id, { status: "IN_PROGRESS" })}
+                >
+                  In progress
+                </Button>
+              </div>
+            </article>
+          ))
         )}
       </div>
     </div>

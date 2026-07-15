@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isAdminPortalRole } from "@/lib/rbac";
+import { requireAdminSession } from "@/lib/rbac-server";
 import { auditAdminAction } from "@/lib/audit";
 
 async function requireAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !isAdminPortalRole(session.user.role)) return null;
-  return session;
+  return requireAdminSession({ modules: ["support", "orders"] });
 }
 
 export async function GET() {

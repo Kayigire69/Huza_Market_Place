@@ -8,7 +8,16 @@ import { auditAdminAction } from "@/lib/audit";
 import { canManageStaff, isSuperAdmin } from "@/lib/rbac";
 
 /** Roles Super Admin may create for employees (not Super Admin by default). */
-const EMPLOYEE_ROLES: Role[] = ["ADMIN", "WAREHOUSE", "DELIVERY", "PROCUREMENT", "SUPPORT"];
+const EMPLOYEE_ROLES: Role[] = [
+  "ADMIN",
+  "MANAGER",
+  "WAREHOUSE",
+  "INVENTORY",
+  "DELIVERY",
+  "PROCUREMENT",
+  "SUPPORT",
+  "FINANCE",
+];
 
 async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
@@ -203,6 +212,41 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: true, id: user.id });
   }
 
+  if (body.action === "reset_password" || body.resetPassword) {
+    const password = String(body.password || "");
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: "Temporary password must be at least 8 characters" },
+        { status: 400 }
+      );
+    }
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        passwordHash: await bcrypt.hash(password, 10),
+        mustChangePassword: true,
+        passwordChangedAt: null,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        role: true,
+        mustChangePassword: true,
+      },
+    });
+    await auditAdminAction(req, session, {
+      action: "staff.reset_password",
+      entity: "User",
+      entityId: id,
+      details: `Password reset for ${before.fullName} — must change on next login`,
+      before: { id: before.id, fullName: before.fullName },
+      after: { mustChangePassword: true },
+    });
+    return NextResponse.json(user);
+  }
+
   const nextRole =
     body.role && (EMPLOYEE_ROLES.includes(body.role) || body.role === "SUPER_ADMIN")
       ? (body.role as Role)
@@ -227,6 +271,8 @@ export async function PATCH(req: Request) {
       role: true,
       isActive: true,
       isPrimarySuperAdmin: true,
+      mustChangePassword: true,
+      totpEnabled: true,
       createdAt: true,
     },
   });

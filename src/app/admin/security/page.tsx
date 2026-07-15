@@ -80,7 +80,7 @@ export default function AdminSecurityPage() {
   if (session?.user?.role !== "SUPER_ADMIN") {
     return (
       <div className="admin-panel p-6">
-        <p className="text-sm text-[var(--huza-muted)]">Security settings are Super Admin only.</p>
+        <p className="text-sm text-[var(--admin-muted)]">Security settings are Super Admin only.</p>
       </div>
     );
   }
@@ -88,14 +88,14 @@ export default function AdminSecurityPage() {
   return (
     <div className="space-y-4 max-w-xl">
       <div>
-        <h1 className="admin-panel-title text-2xl">Super Admin security</h1>
+        <h1 className="admin-panel-title">Super Admin security</h1>
         <p className="admin-panel-sub">
           Enable two-factor authentication so a stolen password alone cannot access the most powerful
           account in the system.
         </p>
       </div>
 
-      <div className="admin-panel p-5 space-y-3">
+      <div className="admin-panel space-y-3 p-5">
         <p className="text-sm">
           Status:{" "}
           <strong className={totpEnabled ? "text-emerald-800" : "text-amber-800"}>
@@ -113,9 +113,9 @@ export default function AdminSecurityPage() {
           <div className="space-y-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qr} alt="2FA QR code" className="mx-auto h-48 w-48 rounded-xl border" />
-            <p className="text-xs text-[var(--huza-muted)] break-all">Manual secret: {secret}</p>
+            <p className="break-all text-xs text-[var(--admin-muted)]">Manual secret: {secret}</p>
             <input
-              className="input-field"
+              className="admin-input"
               placeholder="6-digit code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -129,7 +129,7 @@ export default function AdminSecurityPage() {
         {totpEnabled && (
           <div className="space-y-2">
             <input
-              className="input-field"
+              className="admin-input"
               placeholder="Code to disable 2FA"
               value={code}
               onChange={(e) => setCode(e.target.value)}

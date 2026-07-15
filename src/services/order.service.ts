@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { productRepository, availableQty } from "@/repositories/product.repository";
 import { enqueueAnalytics, enqueueJob } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
-import { generateOrderNumber, getDeliveryFee } from "@/services/settings.service";
+import { generateOrderNumber, getDeliveryFee, getHuzaPayee, isPaymentMethodEnabled } from "@/services/settings.service";
 import { writeAuditLog } from "@/lib/audit";
 import { notifyAdmins } from "@/lib/notify-admins";
 import {
@@ -70,17 +70,6 @@ export const createOrderSchema = z.object({
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 
-function huzaPayee() {
-  const phone =
-    process.env.HUZA_MERCHANT_PHONE ||
-    process.env.NEXT_PUBLIC_HUZA_MERCHANT_PHONE ||
-    "0788000000";
-  return {
-    phone,
-    name: process.env.HUZA_MERCHANT_NAME || "Youth Huza — HUZA FRESH",
-  };
-}
-
 /**
  * Checkout business logic:
  * 1) Create PENDING order (reserve stock)
@@ -92,6 +81,17 @@ export const orderService = {
     const data = createOrderSchema.parse(input);
     if (!data.paymentPhone || data.paymentPhone.length < 8) {
       throw new Error("Enter your MoMo / Airtel phone number (e.g. 078xxxxxxx)");
+    }
+
+    const methodOk = await isPaymentMethodEnabled(
+      data.paymentMethod as "MTN_MOMO" | "AIRTEL_MONEY"
+    );
+    if (!methodOk) {
+      throw new Error(
+        data.paymentMethod === "MTN_MOMO"
+          ? "MTN MoMo is temporarily unavailable. Try Airtel Money."
+          : "Airtel Money is temporarily unavailable. Try MTN MoMo."
+      );
     }
 
     const status = await getBusinessStatus();
@@ -169,7 +169,7 @@ export const orderService = {
       estimatedDelivery = fulfillment.etaLabel;
     }
 
-    const merchant = huzaPayee();
+    const merchant = await getHuzaPayee();
     let deliveryFee = await getDeliveryFee(data.deliveryZone);
     let discount = 0;
     let appliedPromo: string | null = null;

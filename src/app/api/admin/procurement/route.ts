@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession, type Session } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { isAdminPortalRole } from "@/lib/rbac";
+import type { Session } from "next-auth";
+import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { OfferStatus, PurchaseOrderStatus, UnitType } from "@prisma/client";
@@ -16,13 +15,59 @@ function poNumber() {
  * - offer actions: accept | reject | purchase (creates PO + inventory)
  * - PO actions: receive | inspect_accept | inspect_reject | pay | cancel
  */
-function canProcure(role?: string) {
-  return role === "ADMIN" || role === "SUPER_ADMIN" || role === "PROCUREMENT";
+
+export async function GET(req: Request) {
+  const session = await requireAdminSession({
+    modules: ["purchase_requests", "purchase_orders", "goods_received", "farmers"],
+  });
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const view = searchParams.get("view") || "requests";
+
+  if (view === "requests") {
+    const offers = await prisma.supplierOffer.findMany({
+      where: { status: { in: ["PENDING", "ACCEPTED"] } },
+      include: { supplier: { select: { businessName: true } }, category: true },
+      orderBy: { createdAt: "desc" },
+      take: 80,
+    });
+    return NextResponse.json({ offers, purchaseOrders: [] });
+  }
+
+  if (view === "received") {
+    const purchaseOrders = await prisma.purchaseOrder.findMany({
+      where: { status: { in: ["RECEIVED", "INSPECTED", "ACCEPTED", "PAID"] } },
+      include: {
+        supplier: { select: { businessName: true } },
+        offer: { select: { title: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 80,
+    });
+    return NextResponse.json({ offers: [], purchaseOrders });
+  }
+
+  // Active POs awaiting receive / inspect / pay
+  const purchaseOrders = await prisma.purchaseOrder.findMany({
+    where: { status: { in: ["DRAFT", "ORDERED", "RECEIVED", "INSPECTED"] } },
+    include: {
+      supplier: { select: { businessName: true } },
+      offer: { select: { title: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 80,
+  });
+  return NextResponse.json({ offers: [], purchaseOrders });
 }
 
 export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !canProcure(session.user.role)) {
+  const session = await requireAdminSession({
+    modules: ["purchase_requests", "purchase_orders", "goods_received"],
+  });
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -74,6 +119,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "No category available" }, { status: 400 });
     }
 
+    // Draft product: not sold on the shop until goods are received & quality-checked
     const product = await prisma.product.create({
       data: {
         supplierId: offer.supplierId,
@@ -91,10 +137,11 @@ export async function PATCH(req: Request) {
           offer.description ||
           `${offer.title} bishya bigurishwa na Youth Huza kuri HUZA FRESH.`,
         price: sellPrice,
+        purchasePrice: unitPrice,
         unit: offer.unit as UnitType,
-        stockQty: Math.floor(qty),
+        stockQty: 0,
         isNewArrival: true,
-        isActive: true,
+        isActive: false,
         location: offer.supplier.location,
         originDistrict: offer.supplier.district,
         availableDistricts:
@@ -112,27 +159,8 @@ export async function PATCH(req: Request) {
             },
           ],
         },
-        // Placeholder image — replace with professional HUZA photos in Catalog before featuring
         reviewStatus: "APPROVED",
-        reviewNote: "Created from procurement — replace placeholder image with HUZA photos",
-      },
-    });
-
-    // Automatic stock ledger (RECEIVE) when Huza purchases into inventory
-    await prisma.stockHistory.create({
-      data: {
-        productId: product.id,
-        change: Math.floor(qty),
-        reason: `Purchased from farmer offer ${offer.id}`,
-      },
-    });
-    await prisma.stockMovement.create({
-      data: {
-        productId: product.id,
-        type: "RECEIVE",
-        quantity: Math.floor(qty),
-        reason: `Purchased from farmer offer ${offer.id}`,
-        actorId: session.user.id,
+        reviewNote: "From procurement — awaiting delivery & QC before shop publish",
       },
     });
 
@@ -142,7 +170,7 @@ export async function PATCH(req: Request) {
         poNumber: poNumber(),
         supplierId: offer.supplierId,
         offerId: offer.id,
-        status: PurchaseOrderStatus.ACCEPTED,
+        status: PurchaseOrderStatus.ORDERED,
         productName: offer.title,
         category: offer.categoryId || null,
         unit: offer.unit as UnitType,
@@ -151,12 +179,9 @@ export async function PATCH(req: Request) {
         totalAmount,
         retailPrice: sellPrice,
         orderedAt: new Date(),
-        receivedAt: new Date(),
-        inspectedAt: new Date(),
         notes: adminNote || null,
         productId: product.id,
         createdById: session.user.id,
-        qualityNotes: "Accepted into Huza inventory on purchase",
       },
     });
 
@@ -168,7 +193,7 @@ export async function PATCH(req: Request) {
         productId: product.id,
         adminNote:
           adminNote ||
-          `PO ${purchaseOrder.poNumber}: purchased at ${unitPrice} RWF; retail ${sellPrice} RWF`,
+          `PO ${purchaseOrder.poNumber}: ordered at ${unitPrice} RWF; retail ${sellPrice} RWF — awaiting delivery`,
       },
     });
 
@@ -177,8 +202,8 @@ export async function PATCH(req: Request) {
         userId: offer.supplier.userId,
         type: "SUPPLIER_STATUS",
         channel: "IN_APP",
-        title: "Youth Huza purchased your offer",
-        body: `PO ${purchaseOrder.poNumber}: Huza bought ${qty} ${offer.unit.toLowerCase()} of ${offer.title} at ${unitPrice} RWF/${offer.unit.toLowerCase()}.`,
+        title: "Youth Huza created a purchase order",
+        body: `PO ${purchaseOrder.poNumber}: Huza ordered ${qty} ${offer.unit.toLowerCase()} of ${offer.title} at ${unitPrice} RWF/${offer.unit.toLowerCase()}. Please deliver for inspection.`,
       },
     });
 
@@ -186,7 +211,7 @@ export async function PATCH(req: Request) {
       action: "offer.purchase",
       entity: "PurchaseOrder",
       entityId: purchaseOrder.id,
-      details: `PO ${purchaseOrder.poNumber}; product ${product.id}; qty ${qty}; wholesale ${unitPrice}; retail ${sellPrice}`,
+      details: `PO ${purchaseOrder.poNumber}; product ${product.id}; qty ${qty}; wholesale ${unitPrice}; retail ${sellPrice}; status ORDERED`,
     });
 
     return NextResponse.json({ offer: updated, product, purchaseOrder });
@@ -206,6 +231,7 @@ async function handlePoAction(
     paymentRef?: string;
     paymentMethod?: string;
     notes?: string;
+    expiryDate?: string;
   }
 ) {
   const po = await prisma.purchaseOrder.findUnique({
@@ -218,17 +244,17 @@ async function handlePoAction(
   let data: Record<string, unknown> = {};
 
   switch (body.poAction) {
-    case "receive":
+    case "receive": {
       data = {
         status: PurchaseOrderStatus.RECEIVED,
         receivedAt: now,
         notes: body.notes || po.notes,
       };
-      // Auto stock-in only when first receiving (not already in warehouse from purchase)
       if (
         po.productId &&
         po.quantity > 0 &&
         po.status !== PurchaseOrderStatus.RECEIVED &&
+        po.status !== PurchaseOrderStatus.INSPECTED &&
         po.status !== PurchaseOrderStatus.ACCEPTED &&
         po.status !== PurchaseOrderStatus.PAID
       ) {
@@ -236,20 +262,52 @@ async function handlePoAction(
         await stockService.stockIn(
           po.productId,
           Math.floor(po.quantity),
-          `PO ${po.poNumber} received into warehouse`,
+          `PO ${po.poNumber} received into warehouse (awaiting QC)`,
           session.user.id,
           "RECEIVE"
         );
+        // Keep off the shop until quality inspection passes
+        await prisma.product.update({
+          where: { id: po.productId },
+          data: { isActive: false },
+        });
+        // Track batch for juices/salads expiry workflows
+        const batchNumber = `B-${po.poNumber}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
+        await prisma.stockBatch.create({
+          data: {
+            productId: po.productId,
+            batchNumber,
+            quantity: Math.floor(po.quantity),
+            expiryDate: body.expiryDate ? new Date(body.expiryDate) : null,
+            notes: `From PO ${po.poNumber}`,
+          },
+        });
       }
       break;
-    case "inspect_accept":
+    }
+    case "inspect_accept": {
       data = {
-        status: PurchaseOrderStatus.ACCEPTED,
+        status: PurchaseOrderStatus.INSPECTED,
         inspectedAt: now,
-        qualityNotes: body.qualityNotes || "Quality accepted",
+        qualityNotes: body.qualityNotes || "Quality accepted — ready for shop",
       };
+      if (po.productId) {
+        await prisma.product.update({
+          where: { id: po.productId },
+          data: {
+            isActive: true,
+            isNewArrival: true,
+            reviewStatus: "APPROVED",
+            reviewNote: "Passed QC — published to HUZA FRESH shop",
+            reviewedAt: now,
+          },
+        });
+        const { cacheDel, CacheKeys } = await import("@/lib/redis");
+        await cacheDel(CacheKeys.homeCatalog);
+      }
       break;
-    case "inspect_reject":
+    }
+    case "inspect_reject": {
       data = {
         status: PurchaseOrderStatus.REJECTED,
         inspectedAt: now,
@@ -263,6 +321,7 @@ async function handlePoAction(
         });
       }
       break;
+    }
     case "pay":
       data = {
         status: PurchaseOrderStatus.PAID,
@@ -304,8 +363,10 @@ async function handlePoAction(
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !canProcure(session.user.role)) {
+  const session = await requireAdminSession({
+    modules: ["purchase_orders", "purchase_requests"],
+  });
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

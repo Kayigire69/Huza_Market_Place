@@ -572,12 +572,51 @@ async function main() {
 
   await prisma.orderSequence.create({ data: { year: new Date().getFullYear(), lastValue: 245 } });
 
+  // Specialized Admin Portal workspaces (same shell, role-aware sidebar)
+  await prisma.user.createMany({
+    data: [
+      {
+        email: "inventory@huza.rw",
+        phone: "0780000021",
+        passwordHash: password,
+        fullName: "Inventory Officer",
+        role: Role.INVENTORY,
+      },
+      {
+        email: "support@huza.rw",
+        phone: "0780000022",
+        passwordHash: password,
+        fullName: "Support Officer",
+        role: Role.SUPPORT,
+      },
+      {
+        email: "procurement@huza.rw",
+        phone: "0780000023",
+        passwordHash: password,
+        fullName: "Procurement Officer",
+        role: Role.PROCUREMENT,
+      },
+      {
+        email: "finance@huza.rw",
+        phone: "0780000024",
+        passwordHash: password,
+        fullName: "Finance Officer",
+        role: Role.FINANCE,
+      },
+    ],
+  });
+
   console.log("Seed complete.");
   console.log("Super Admin (setup — change password on first login):");
   console.log("  owner@huza.rw / Huza@2026!");
-  console.log("Shift Admins (cannot see Staff / Audit / Settings):");
+  console.log("Managers (ops, no Settings):");
   console.log("  alice@huza.rw / password123");
   console.log("  john@huza.rw / password123");
+  console.log("Specialized Admin Portal roles (password123):");
+  console.log("  inventory@huza.rw  → Products, Inventory, Deliveries");
+  console.log("  support@huza.rw    → Orders, Customers, Payments");
+  console.log("  procurement@huza.rw → Farmers, Purchases");
+  console.log("  finance@huza.rw    → Payments, Reports, Orders");
   console.log("Customer: customer@example.com / password123");
   console.log("Farmer: greenvalley@farm.rw / password123");
 }

@@ -1,5 +1,13 @@
-import { renderAdminModule } from "../_module";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
+import { canAccessAdminPath } from "@/lib/rbac";
+import { AdminReportsClient } from "@/components/admin/AdminReportsClient";
 
-export default async function Page() {
-  return renderAdminModule("reports");
+export default async function AdminReportsPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect("/auth/login");
+  if (!canAccessAdminPath(session.user.role, "/admin/reports")) redirect("/admin");
+
+  return <AdminReportsClient />;
 }

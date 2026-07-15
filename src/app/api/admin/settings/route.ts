@@ -3,9 +3,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
-import { setSetting } from "@/services/settings.service";
+import {
+  getAdminSettingsBundle,
+  setSetting,
+  setSettingsBulk,
+  syncAllZoneFees,
+  SETTING_DEFAULTS,
+} from "@/services/settings.service";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { canEditSystemSettings, isAdminPortalRole } from "@/lib/rbac";
+import { ADMIN_ROLE_MODULES } from "@/lib/admin-nav";
 
 async function requirePortalAdmin() {
   const session = await getServerSession(authOptions);
@@ -23,18 +30,55 @@ export async function GET() {
   const session = await requirePortalAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [settings, zones, stockHistory, banners] = await Promise.all([
-    prisma.websiteSetting.findMany({ orderBy: { key: "asc" } }),
+  const [settings, zones, hours, emergency, staffCount] = await Promise.all([
+    getAdminSettingsBundle(),
     prisma.deliveryZoneConfig.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.stockHistory.findMany({
-      include: { product: { select: { nameEn: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 40,
+    prisma.businessHours.findMany({ orderBy: { dayOfWeek: "asc" } }),
+    prisma.emergencyClosure.findFirst({
+      where: { isActive: true },
+      orderBy: { startsAt: "desc" },
     }),
-    prisma.homepageBanner.findMany({ orderBy: { sortOrder: "asc" }, take: 10 }),
+    prisma.user.count({
+      where: {
+        role: { notIn: ["CUSTOMER", "SUPPLIER", "DELIVERY"] },
+        deletedAt: null,
+      },
+    }),
   ]);
 
-  return NextResponse.json({ settings, zones, stockHistory, banners });
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return NextResponse.json({
+    settings,
+    defaults: SETTING_DEFAULTS,
+    zones,
+    canEdit: canEditSystemSettings(session.user.role),
+    hours: hours.map((h) => ({
+      dayOfWeek: h.dayOfWeek,
+      day: dayNames[h.dayOfWeek] || String(h.dayOfWeek),
+      openHour: h.openHour,
+      closeHour: h.closeHour,
+      isClosed: h.isClosed,
+    })),
+    emergency: emergency
+      ? { reason: emergency.reason, startsAt: emergency.startsAt, endsAt: emergency.endsAt }
+      : null,
+    roles: Object.entries(ADMIN_ROLE_MODULES).map(([role, modules]) => ({
+      role,
+      modules,
+    })),
+    system: {
+      staffCount,
+      nodeEnv: process.env.NODE_ENV || "development",
+      mtnConfigured: Boolean(process.env.MTN_MOMO_SUBSCRIPTION_KEY),
+      airtelConfigured: Boolean(
+        process.env.AIRTEL_CLIENT_ID && process.env.AIRTEL_CLIENT_SECRET
+      ),
+      redisConfigured: Boolean(process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL),
+      databaseConfigured: Boolean(process.env.DATABASE_URL),
+      appUrl: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "",
+    },
+  });
 }
 
 export async function PATCH(req: Request) {
@@ -56,12 +100,31 @@ export async function PATCH(req: Request) {
     const value = String(body.value ?? "");
     if (!key) return NextResponse.json({ error: "key required" }, { status: 400 });
     await setSetting(key, value);
+    if (key === "delivery_fee_rwf") {
+      const fee = Number(value);
+      if (Number.isFinite(fee) && fee >= 0) await syncAllZoneFees(fee);
+    }
     await auditAdminAction(req, session, {
       action: "settings.update",
       entity: "WebsiteSetting",
       details: `${key}=${value}`,
     });
     return NextResponse.json({ ok: true });
+  }
+
+  if (action === "settings_bulk") {
+    const entries = (body.settings || {}) as Record<string, string>;
+    await setSettingsBulk(entries);
+    if (entries.delivery_fee_rwf != null) {
+      const fee = Number(entries.delivery_fee_rwf);
+      if (Number.isFinite(fee) && fee >= 0) await syncAllZoneFees(fee);
+    }
+    await auditAdminAction(req, session, {
+      action: "settings.bulk_update",
+      entity: "WebsiteSetting",
+      details: Object.keys(entries).join(", "),
+    });
+    return NextResponse.json({ ok: true, settings: await getAdminSettingsBundle() });
   }
 
   if (action === "zone") {
@@ -93,46 +156,19 @@ export async function PATCH(req: Request) {
     return NextResponse.json(updated);
   }
 
-  if (action === "product_flags") {
-    const { productId, isFeatured, isBestSeller, isNewArrival, isActive } = body as {
-      productId: string;
-      isFeatured?: boolean;
-      isBestSeller?: boolean;
-      isNewArrival?: boolean;
-      isActive?: boolean;
-    };
-    if (!productId) return NextResponse.json({ error: "productId required" }, { status: 400 });
-    const data: Record<string, unknown> = {};
-    if (isFeatured !== undefined) data.isFeatured = isFeatured;
-    if (isBestSeller !== undefined) data.isBestSeller = isBestSeller;
-    if (isNewArrival !== undefined) data.isNewArrival = isNewArrival;
-    if (isActive !== undefined) {
-      data.isActive = isActive;
-      data.deletedAt = isActive ? null : new Date();
+  if (action === "sync_delivery_fee") {
+    const fee = Number(body.feeRwf);
+    if (!Number.isFinite(fee) || fee < 0) {
+      return NextResponse.json({ error: "Invalid fee" }, { status: 400 });
     }
-    const updated = await prisma.product.update({ where: { id: productId }, data });
+    await setSetting("delivery_fee_rwf", String(Math.round(fee)));
+    await syncAllZoneFees(fee);
     await auditAdminAction(req, session, {
-      action: "product.flags",
-      entity: "Product",
-      entityId: productId,
-      details: JSON.stringify(data),
+      action: "settings.sync_delivery_fee",
+      entity: "DeliveryZoneConfig",
+      details: `feeRwf=${fee}`,
     });
-    return NextResponse.json(updated);
-  }
-
-  if (action === "soft_delete_product") {
-    const productId = String(body.productId || "");
-    if (!productId) return NextResponse.json({ error: "productId required" }, { status: 400 });
-    const updated = await prisma.product.update({
-      where: { id: productId },
-      data: { isActive: false, deletedAt: new Date() },
-    });
-    await auditAdminAction(req, session, {
-      action: "product.soft_delete",
-      entity: "Product",
-      entityId: productId,
-    });
-    return NextResponse.json(updated);
+    return NextResponse.json({ ok: true, feeRwf: Math.round(fee) });
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });

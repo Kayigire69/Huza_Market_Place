@@ -12,10 +12,16 @@ enum Role {
   SUPPLIER
   ADMIN
   SUPER_ADMIN
+  /// Broad operations manager (same portal access as ADMIN)
+  MANAGER
   DELIVERY
   WAREHOUSE
+  /// Inventory Officer — Products, Inventory, Deliveries
+  INVENTORY
   PROCUREMENT
   SUPPORT
+  /// Finance Officer — Payments, Reports, Orders
+  FINANCE
 }
 
 enum SupplierStatus {
@@ -167,6 +173,8 @@ model User {
   referralCode  String?   @unique
   referredBy    String?
   isActive      Boolean   @default(true)
+  /// Internal CRM notes for support / ops (not shown to customer)
+  supportNotes  String?
   /// Force password change on next login (temporary passwords / Super Admin setup)
   mustChangePassword Boolean @default(false)
   passwordChangedAt   DateTime?

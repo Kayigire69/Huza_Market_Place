@@ -5,17 +5,17 @@ export function portalPathForRole(role?: string | null, opts?: { mustChangePassw
   switch (role) {
     case "SUPER_ADMIN":
     case "ADMIN":
+    case "MANAGER":
+    case "INVENTORY":
+    case "WAREHOUSE":
+    case "SUPPORT":
+    case "PROCUREMENT":
+    case "FINANCE":
       return "/admin";
     case "SUPPLIER":
       return "/farmer";
-    case "WAREHOUSE":
-      return "/warehouse";
-    case "PROCUREMENT":
-      return "/procurement";
     case "DELIVERY":
       return "/delivery-portal";
-    case "SUPPORT":
-      return "/support";
     default:
       return "/account";
   }
