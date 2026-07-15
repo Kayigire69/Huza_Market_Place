@@ -119,7 +119,7 @@ export function Header() {
           <Link
             href="/"
             className="flex shrink-0 items-center"
-            aria-label="HUZA FRESH — Home"
+            aria-label="HUZA FRESH Home"
           >
             <HuzaFreshLogo size="sm" />
           </Link>
