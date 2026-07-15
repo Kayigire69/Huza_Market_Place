@@ -49,22 +49,19 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
       <header className="relative z-20 bg-[var(--huza-green-dark)] shadow-[0_8px_24px_rgba(7,44,27,0.22)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
           <Link href="/farmer" className="flex items-center gap-3">
-            <Image
-              src="/logo.svg"
-              alt="Youth Huza"
-              width={48}
-              height={48}
-              className="rounded-full bg-white/10 ring-2 ring-white/35"
-              priority
-            />
-            <div className="leading-tight">
-              <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-white sm:text-xl">
-                Youth Huza
-              </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
-                {t("farmerPortal")}
-              </p>
-            </div>
+            <span className="rounded-xl bg-white px-2 py-1.5 shadow-sm ring-1 ring-white/40">
+              <Image
+                src="/images/youth-huza-logo.png"
+                alt="Youth Huza — Connecting you to freshness"
+                width={148}
+                height={72}
+                className="h-12 w-auto sm:h-14"
+                priority
+              />
+            </span>
+            <p className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-white/75 sm:block">
+              {t("farmerPortal")}
+            </p>
           </Link>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
