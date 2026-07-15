@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useLocale } from "@/lib/locale-context";
@@ -45,10 +46,27 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <div className="text-center">
+          <div className="mx-auto mb-4 inline-flex rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-[var(--huza-line)]">
+            <Image
+              src="/images/youth-huza-logo.png"
+              alt="Youth Huza — Connecting you to freshness"
+              width={220}
+              height={110}
+              className="mx-auto h-24 w-auto sm:h-28"
+              priority
+            />
+          </div>
           <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
             {t("farmersPortalBadge")}
           </p>
           <h1 className="section-title mt-3">{t("farmerPortal")}</h1>
+          <p className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-[var(--huza-green-dark)] sm:text-2xl">
+            Grow Better. Sell Better. Earn Better.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--huza-muted)]">
+            Youth Huza is your agricultural partner — quality guidance, fair purchasing, and a reliable
+            market. HUZA FRESH is the customer brand shoppers see.
+          </p>
         </div>
 
         <div className="mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white/95 p-6 shadow-sm backdrop-blur-sm">

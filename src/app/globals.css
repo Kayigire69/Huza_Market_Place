@@ -213,6 +213,35 @@ h3,
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
+/* Phase 1 Farmers Portal workspace chrome */
+.farmer-sidebar {
+  background: linear-gradient(165deg, #0b5c34 0%, #0a3d24 55%, #072c1b 100%);
+  color: white;
+}
+
+.farmer-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.farmer-nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.farmer-nav-link.is-active {
+  background: rgba(245, 197, 66, 0.18);
+  color: #fff8e6;
+  box-shadow: inset 3px 0 0 #f5c542;
+}
+
 /* ─── Admin portal chrome ─── */
 .admin-shell {
   --admin-sidebar: #0a3d26;

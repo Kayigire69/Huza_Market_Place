@@ -13,7 +13,7 @@ export function portalPathForRole(role?: string | null, opts?: { mustChangePassw
     case "FINANCE":
       return "/admin";
     case "SUPPLIER":
-      return "/farmer";
+      return "/farmer/dashboard";
     case "DELIVERY":
       return "/delivery-portal";
     default:

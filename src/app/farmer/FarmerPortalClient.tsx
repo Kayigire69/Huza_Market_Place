@@ -65,6 +65,16 @@ type Farmer = FarmerDossierValues & {
 
 type Tab = "dossier" | "agreement" | "products" | "inventory" | "orders";
 
+/** Workspace IA panels mapped onto the existing farmer client sections */
+export type FarmerPanelKey =
+  | "profile"
+  | "products"
+  | "submit"
+  | "approvals"
+  | "orders"
+  | "payments"
+  | "inventory";
+
 type PurchaseOrderRow = {
   id: string;
   poNumber: string;
@@ -74,8 +84,29 @@ type PurchaseOrderRow = {
   rejectionReason: string | null;
   inspectedAt: string | null;
   paymentStatus: string | null;
+  paidAt?: string | null;
+  paymentRef?: string | null;
   createdAt: string;
 };
+
+function panelToTab(panel: FarmerPanelKey | undefined, isOrganic: boolean): Tab {
+  if (!panel) return isOrganic ? "dossier" : "agreement";
+  switch (panel) {
+    case "profile":
+      return isOrganic ? "dossier" : "agreement";
+    case "products":
+    case "submit":
+    case "approvals":
+      return "products";
+    case "orders":
+    case "payments":
+      return "orders";
+    case "inventory":
+      return "inventory";
+    default:
+      return isOrganic ? "dossier" : "agreement";
+  }
+}
 
 async function uploadPhotos(files: FileList | File[]): Promise<string[]> {
   const list = Array.from(files);
@@ -103,15 +134,19 @@ export function FarmerPortalClient({
   farmer,
   categories,
   purchaseOrders = [],
+  panel,
 }: {
   farmer: Farmer;
   categories: Category[];
   purchaseOrders?: PurchaseOrderRow[];
+  /** When set, hides legacy pill tabs and shows the matching workspace section. */
+  panel?: FarmerPanelKey;
 }) {
   const { t } = useLocale();
   const router = useRouter();
   const isOrganicFarmer = farmer.farmingType !== "STANDARD";
-  const [tab, setTab] = useState<Tab>(isOrganicFarmer ? "dossier" : "agreement");
+  const workspaceMode = Boolean(panel);
+  const [tab, setTab] = useState<Tab>(() => panelToTab(panel, isOrganicFarmer));
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [products, setProducts] = useState<ProductRow[]>(farmer.products || []);
@@ -133,6 +168,10 @@ export function FarmerPortalClient({
 
   const refresh = () => startTransition(() => router.refresh());
   const approved = farmer.status === "APPROVED";
+
+  useEffect(() => {
+    if (panel) setTab(panelToTab(panel, isOrganicFarmer));
+  }, [panel, isOrganicFarmer]);
 
   useEffect(() => {
     setProducts(farmer.products || []);
@@ -231,22 +270,24 @@ export function FarmerPortalClient({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 mb-6">
-        {TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold ${
-              tab === key
-                ? "bg-[var(--huza-green)] text-white"
-                : "bg-white border border-[var(--huza-line)]"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {!workspaceMode && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                tab === key
+                  ? "bg-[var(--huza-green)] text-white"
+                  : "bg-white border border-[var(--huza-line)]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       {msg && <p className="mb-4 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
 
       {tab === "dossier" && isOrganicFarmer && (
@@ -296,7 +337,14 @@ export function FarmerPortalClient({
       )}
 
       {tab === "products" && (
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div
+          className={
+            panel === "submit" || panel === "approvals" || panel === "products"
+              ? "space-y-6"
+              : "grid lg:grid-cols-2 gap-6"
+          }
+        >
+          {(panel === "submit" || !panel) && (
           <form
             onSubmit={createProduct}
             className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4"
@@ -569,9 +617,24 @@ export function FarmerPortalClient({
               <p className="text-xs text-[var(--huza-muted)]">{t("waitApprovalProducts")}</p>
             )}
           </form>
+          )}
 
+          {(panel === "products" || panel === "approvals" || !panel) && (
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
-            <h2 className="font-semibold mb-4">{t("submittedProducts")}</h2>
+            <h2 className="font-semibold mb-4">
+              {panel === "approvals" ? "Approval status" : t("submittedProducts")}
+            </h2>
+            {panel === "products" && (
+              <p className="mb-4 text-sm text-[var(--huza-muted)]">
+                Your submitted crops and stock. Use Submit Product to add new listings.
+              </p>
+            )}
+            {panel === "approvals" && (
+              <p className="mb-4 text-sm text-[var(--huza-muted)]">
+                Track Huza quality review for each crop. Rejected items show feedback so you can improve
+                next harvest.
+              </p>
+            )}
             <div className="space-y-3 max-h-[720px] overflow-y-auto">
               {products.length === 0 ? (
                 <p className="text-sm text-[var(--huza-muted)]">{t("noProductsYet")}</p>
@@ -590,7 +653,7 @@ export function FarmerPortalClient({
                           />
                         ) : null}
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium">{p.nameEn}</p>
                         <p className="text-xs text-[var(--huza-muted)]">
                           {formatRwf(p.price)}/{formatUnit(p.unit)} · {t("stock")} {p.stockQty}
@@ -598,7 +661,15 @@ export function FarmerPortalClient({
                             ? ` · ${t("qualityInGeneral")} ${t(qualityLabelKey[p.qualityGeneral] || p.qualityGeneral)}`
                             : ""}
                         </p>
-                        <p className="text-[11px] mt-1 font-semibold text-[var(--huza-green-dark)]">
+                        <p
+                          className={`text-[11px] mt-1 font-semibold ${
+                            p.reviewStatus === "REJECTED"
+                              ? "text-red-700"
+                              : p.reviewStatus === "APPROVED"
+                                ? "text-[var(--huza-green-dark)]"
+                                : "text-amber-700"
+                          }`}
+                        >
                           {t("review")}: {p.reviewStatus || "PENDING"}
                         </p>
                         {p.reviewedAt && (
@@ -611,6 +682,28 @@ export function FarmerPortalClient({
                             Feedback: {p.reviewNote}
                           </p>
                         )}
+                        {panel === "products" && (
+                          <form
+                            className="mt-3 flex flex-wrap items-end gap-2"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const form = new FormData(e.currentTarget);
+                              updateStock(p.id, Number(form.get("stockQty")));
+                            }}
+                          >
+                            <input
+                              name="stockQty"
+                              type="number"
+                              min={0}
+                              defaultValue={p.stockQty}
+                              className="input-field w-28"
+                              required
+                            />
+                            <Button type="submit" size="sm" disabled={busy}>
+                              {t("update")} stock
+                            </Button>
+                          </form>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -618,34 +711,45 @@ export function FarmerPortalClient({
               )}
             </div>
           </div>
+          )}
         </div>
       )}
 
       {tab === "orders" && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
           <div>
-            <h2 className="font-semibold">Purchase requests &amp; payments</h2>
+            <h2 className="font-semibold">
+              {panel === "payments" ? "Payments from HUZA" : "Purchase orders"}
+            </h2>
             <p className="mt-1 text-sm text-[var(--huza-muted)]">
-              Track Huza purchase orders, inspection feedback, and payment status.
+              {panel === "payments"
+                ? "See which purchase orders are paid and which are still pending."
+                : "Track Huza purchase orders, inspection feedback, and order status."}
             </p>
           </div>
           {purchaseOrders.length === 0 ? (
             <p className="text-sm text-[var(--huza-muted)]">No purchase orders yet.</p>
           ) : (
-            purchaseOrders.map((po) => (
+            purchaseOrders
+              .filter((po) => (panel === "payments" ? true : true))
+              .map((po) => (
               <div key={po.id} className="rounded-xl border border-[var(--huza-line)] p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-mono font-semibold text-[var(--huza-green-dark)]">{po.poNumber}</p>
-                  <span className="rounded-full bg-[var(--huza-mint)] px-2 py-0.5 text-xs">{po.status}</span>
+                  <span className="rounded-full bg-[var(--huza-mint)] px-2 py-0.5 text-xs">
+                    {panel === "payments" ? po.paymentStatus || "Pending" : po.status}
+                  </span>
                 </div>
                 <p className="mt-2">{formatRwf(po.totalAmount)}</p>
                 <p className="text-xs text-[var(--huza-muted)]">
                   Submitted {new Date(po.createdAt).toLocaleDateString()}
                   {po.inspectedAt ? ` · Inspected ${new Date(po.inspectedAt).toLocaleDateString()}` : ""}
                 </p>
-                <p className="mt-1 text-xs">
-                  Payment: <strong>{po.paymentStatus || "Pending"}</strong>
-                </p>
+                {panel !== "payments" && (
+                  <p className="mt-1 text-xs">
+                    Payment: <strong>{po.paymentStatus || "Pending"}</strong>
+                  </p>
+                )}
                 {po.qualityNotes && (
                   <p className="mt-2 text-xs text-[var(--huza-green-dark)]">Feedback: {po.qualityNotes}</p>
                 )}
@@ -658,7 +762,7 @@ export function FarmerPortalClient({
         </div>
       )}
 
-      {tab === "inventory" && (
+      {tab === "inventory" && !workspaceMode && (
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
           <h2 className="font-semibold mb-1">{t("inventoryTab")}</h2>
           <p className="text-xs text-[var(--huza-muted)] mb-4">{t("inventoryHint")}</p>

@@ -2,14 +2,13 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { FarmerPortalClient } from "./FarmerPortalClient";
 import { FarmerPortalChrome } from "./FarmerPortalChrome";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Partner-only entry. Not linked from the customer storefront.
- * Guests see a login wall; registration is at /farmer/register (unlisted).
+ * Partner entry. Guests see login/apply.
+ * Approved suppliers enter the Phase 1 workspace at /farmer/dashboard.
  */
 export default async function FarmerPage() {
   const session = await getServerSession(authOptions);
@@ -18,79 +17,26 @@ export default async function FarmerPage() {
     return <FarmerPortalChrome mode="landing" />;
   }
 
-  if (session.user.role !== "SUPPLIER" && session.user.role !== "ADMIN") {
+  if (
+    session.user.role !== "SUPPLIER" &&
+    session.user.role !== "ADMIN" &&
+    session.user.role !== "SUPER_ADMIN"
+  ) {
     redirect("/account");
   }
 
   const farmer = await prisma.supplier.findFirst({
     where:
-      session.user.role === "ADMIN" && !session.user.supplierId
+      (session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN") &&
+      !session.user.supplierId
         ? { status: "APPROVED" }
         : { userId: session.user.id },
-    include: {
-      user: { select: { fullName: true } },
-      products: {
-        include: {
-          category: true,
-          images: { orderBy: { sortOrder: "asc" } },
-        },
-        orderBy: { updatedAt: "desc" },
-      },
-    },
+    select: { id: true },
   });
 
   if (!farmer) {
     return <FarmerPortalChrome mode="apply" />;
   }
 
-  const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
-  const listed = farmer.products.length;
-
-  const purchaseOrders = await prisma.purchaseOrder.findMany({
-    where: { supplierId: farmer.id },
-    orderBy: { createdAt: "desc" },
-    take: 40,
-    select: {
-      id: true,
-      poNumber: true,
-      status: true,
-      totalAmount: true,
-      qualityNotes: true,
-      rejectionReason: true,
-      inspectedAt: true,
-      createdAt: true,
-      paidAt: true,
-      paymentRef: true,
-    },
-  });
-
-  return (
-    <FarmerPortalChrome
-      mode="dashboard"
-      businessName={farmer.businessName}
-      status={farmer.status}
-      isVerified={farmer.isVerified}
-      farmingType={farmer.farmingType}
-      rejectionReason={farmer.rejectionReason}
-      adminNotes={farmer.adminNotes}
-      inspectionScheduledAt={farmer.inspectionScheduledAt?.toISOString() ?? null}
-      listed={listed}
-    >
-      <FarmerPortalClient
-        farmer={farmer as never}
-        categories={categories}
-        purchaseOrders={purchaseOrders.map((po) => ({
-          id: po.id,
-          poNumber: po.poNumber,
-          status: po.status,
-          totalAmount: po.totalAmount,
-          qualityNotes: po.qualityNotes,
-          rejectionReason: po.rejectionReason,
-          inspectedAt: po.inspectedAt?.toISOString() ?? null,
-          paymentStatus: po.paidAt ? `Paid${po.paymentRef ? ` · ${po.paymentRef}` : ""}` : "Pending",
-          createdAt: po.createdAt.toISOString(),
-        }))}
-      />
-    </FarmerPortalChrome>
-  );
+  redirect("/farmer/dashboard");
 }
