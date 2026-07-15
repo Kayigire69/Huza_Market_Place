@@ -10,12 +10,12 @@
  * - Phase 3 Selling workflow (Submit Crop + Approval Status polish, volume-first)
  * - Phase 4 Orders & Payments (PO pipeline + payout tracker)
  * - Phase 5 Quality feedback (reason + recommendation + Read Guide / Ask Expert)
+ * - Phase 9 Homepage partnership (landing lockup, Why Farmers Partner, register chrome polish)
  *
  * NEXT:
  * - Phase 6 Farmer Support knowledge library
  * - Phase 7 Ask an Agronomist
  * - Phase 8 Notifications & Profile polish
- * - Phase 9 Homepage partnership section
  */
 export const FARMER_PHASES = {
   /** Sidebar, header, selling-first IA, route shell */
@@ -35,7 +35,7 @@ export const FARMER_PHASES = {
   /** Inbox + My Profile polish */
   ACCOUNT: { id: 8, name: "Notifications & Profile", status: "planned" as const },
   /** Public homepage partnership section */
-  HOMEPAGE: { id: 9, name: "Homepage partnership", status: "planned" as const },
+  HOMEPAGE: { id: 9, name: "Homepage partnership", status: "locked" as const },
 } as const;
 
 export function isFarmerPhaseLocked(phase: keyof typeof FARMER_PHASES): boolean {

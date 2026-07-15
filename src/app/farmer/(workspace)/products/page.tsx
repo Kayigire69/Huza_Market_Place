@@ -28,7 +28,7 @@ export default async function FarmerProductsPage() {
     <div>
       <FarmerPageHeader
         title="My Crop Supply"
-        subtitle="One farm, one main crop, large quantity — not a catalog. Salads and juices are prepared by HUZA FRESH."
+        subtitle="One main crop in volume. Fruit salads and juices are prepared by HUZA FRESH."
         action={
           <Link href="/farmer/products/submit">
             <Button variant={stats.listed === 0 ? "primary" : "ghost"}>

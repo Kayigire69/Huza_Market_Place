@@ -25,7 +25,7 @@ export default async function FarmerApprovalsPage() {
     <div>
       <FarmerPageHeader
         title="Approval Status"
-        subtitle="Track farm account approval and each crop’s quality review — clear results, not just “pending”."
+        subtitle="Farm account status and crop quality review results."
       />
       <FarmerApprovalsClient
         account={{

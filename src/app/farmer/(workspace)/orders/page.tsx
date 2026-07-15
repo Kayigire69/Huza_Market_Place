@@ -11,7 +11,7 @@ export default async function FarmerOrdersPage() {
     <div>
       <FarmerPageHeader
         title="Purchase Orders"
-        subtitle="When Youth Huza buys your harvest — quantity, inspection, and order progress in one place."
+        subtitle="Quantity, inspection, and status when Youth Huza buys your harvest."
       />
       <FarmerOrdersClient orders={purchaseOrders} />
     </div>

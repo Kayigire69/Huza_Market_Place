@@ -14,7 +14,7 @@ export default async function FarmerSupportPage({
     <div>
       <FarmerPageHeader
         title="Farmer Support"
-        subtitle="Practical guides — organic tips, soil, pests, harvest timing, and HUZA quality standards."
+        subtitle="Soil, pests, harvest timing, and HUZA quality standards."
       />
 
       {qualityFocus ? (
@@ -25,14 +25,13 @@ export default async function FarmerSupportPage({
           <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-ink)]">
             How to Meet HUZA Quality Standards
           </h2>
-          <p className="mt-1 text-xs text-[var(--huza-muted)]">5-minute guide · Updated for partners</p>
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">5-minute guide</p>
           <p className="mt-3 text-sm text-[var(--huza-muted)]">
-            Learn the harvesting, handling, and cleanliness practices that reduce rejection and improve
-            acceptance rates. Full library unlocks in the next Farmer Support phase — for now use this
-            checklist while you prepare your next harvest.
+            Harvesting, handling, and cleanliness practices that help your crops pass Huza review.
+            Use this checklist while you prepare your next harvest.
           </p>
           <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[var(--huza-ink)]">
-            <li>Harvest at the right maturity — not overripe or underripe.</li>
+            <li>Harvest at the right maturity (not overripe or underripe).</li>
             <li>Respect spray / pesticide wait times before harvest.</li>
             <li>Sort damaged produce; pack only sound crops.</li>
             <li>Keep hands, water, and containers clean.</li>
@@ -49,7 +48,7 @@ export default async function FarmerSupportPage({
 
       <FarmerComingSoon
         title={qualityFocus ? "More guides coming next" : "Knowledge library coming next"}
-        body="Short, practical guides (not a big e-learning platform): organic tips, soil, pests, harvest timing, post-harvest handling, and Huza quality standards."
+        body="Short guides on organic tips, soil, pests, harvest timing, post-harvest handling, and Huza quality standards."
         ctaHref="/farmer/dashboard"
         ctaLabel="Back to Dashboard"
       />

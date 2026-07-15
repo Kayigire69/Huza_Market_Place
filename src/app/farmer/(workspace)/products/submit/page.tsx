@@ -7,7 +7,6 @@ export const dynamic = "force-dynamic";
 
 export default async function FarmerSubmitProductPage() {
   const { farmer, categories, purchaseOrders, stats } = await requireFarmerWorkspace();
-  const isOrganic = farmer.farmingType !== "STANDARD";
   const hasMainCrop = stats.listed > 0;
   const accountReady = farmer.status === "APPROVED";
 
@@ -15,11 +14,6 @@ export default async function FarmerSubmitProductPage() {
     <div>
       <FarmerPageHeader
         title={hasMainCrop ? "Submit another crop" : "Submit your main crop"}
-        subtitle={
-          isOrganic
-            ? "Volume-first harvest form — crop, photos, available quantity, then field details."
-            : "Simple harvest form — one crop, photos, available quantity, and price."
-        }
       />
 
       {!accountReady ? (
@@ -40,7 +34,7 @@ export default async function FarmerSubmitProductPage() {
 
       <FarmerPanel className="mb-5 max-w-2xl !py-3">
         <p className="text-sm text-[var(--huza-muted)]">
-          Submit <strong>raw farm crops only</strong> — fruits, vegetables, or seedlings.{" "}
+          Submit <strong>raw farm crops only</strong> (fruits, vegetables, or seedlings).{" "}
           <strong>Fruit salads and juices are prepared by HUZA FRESH</strong>, not by farmers. Prefer one
           main crop in volume; update quantity on{" "}
           <Link href="/farmer/products" className="font-semibold text-[var(--huza-green-dark)] underline">

@@ -131,7 +131,7 @@ export function FarmerApprovalsClient({
 
         {account.status === "APPROVED" ? (
           <p className="mt-3 text-sm text-[var(--huza-green-dark)]">
-            Your farm can submit harvests. Keep quantities honest and photos clear for faster crop acceptance.
+            Your farm can submit harvests. Keep quantities accurate and photos clear.
           </p>
         ) : account.status === "REJECTED" ? (
           <div className="mt-3 rounded-xl border border-red-200 bg-white/80 px-3 py-3 text-sm">
@@ -145,7 +145,7 @@ export function FarmerApprovalsClient({
           </div>
         ) : (
           <p className="mt-3 text-sm text-amber-900">
-            Youth Huza is reviewing your farm partnership. Crop selling unlocks after account approval.
+            Youth Huza is reviewing your farm. Crop selling unlocks after account approval.
           </p>
         )}
 
@@ -201,7 +201,7 @@ export function FarmerApprovalsClient({
           </h3>
           <p className="mt-2 text-sm text-[var(--huza-muted)]">
             {crops.length === 0
-              ? "Submit your main crop in large quantity. Youth Huza will show acceptance or improvement notes here."
+              ? "Submit your main crop. Acceptance or improvement notes will show here."
               : "Try another filter to see other review results."}
           </p>
           {crops.length === 0 ? (

@@ -50,7 +50,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
           <div className="mx-auto mb-2 inline-flex rounded-2xl bg-white px-2 py-1">
             <Image
               src="/images/youth-huza-logo.png"
-              alt="Youth Huza — Connecting you to freshness"
+              alt="Youth Huza"
               width={220}
               height={110}
               className="mx-auto h-14 w-auto sm:h-16"
@@ -109,18 +109,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16">
         <div className="text-center">
-          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
-            {t("farmersPortalBadge")}
-          </p>
-          <h1 className="section-title mt-3">{t("farmerPortal")}</h1>
-          <p className="mt-3 text-sm">
-            <Link
-              href="/auth/login?callbackUrl=/farmer"
-              className="font-bold text-[var(--huza-green-dark)] underline decoration-[var(--huza-green)] underline-offset-4"
-            >
-              {t("farmerLogin")}
-            </Link>
-          </p>
+          <h1 className="section-title">{t("farmerPortal")}</h1>
         </div>
         {props.children}
       </div>
