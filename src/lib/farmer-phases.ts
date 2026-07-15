@@ -10,7 +10,8 @@
  * - Phase 3 Selling workflow (Submit Crop + Approval Status polish, volume-first)
  * - Phase 4 Orders & Payments (PO pipeline + payout tracker)
  * - Phase 5 Quality feedback (reason + recommendation + Read Guide / Ask Expert)
- * - Phase 9 Homepage partnership (landing lockup, Why Farmers Partner, register chrome polish)
+ * - Phase 9 Homepage partnership (landing lockup, Why Farmers Partner, Farmer Success Stories,
+ *   register chrome polish)
  *
  * NEXT:
  * - Phase 6 Farmer Support knowledge library
