@@ -383,6 +383,8 @@ model Product {
   /// Huza review of farmer-listed product
   reviewStatus  String   @default("PENDING")
   reviewNote    String?
+  /// Actionable advice after rejection (shown to farmer with Read Guide / Ask Expert)
+  reviewRecommendation String?
   reviewedAt    DateTime?
 
   /// Crop / field details for this listing (used in accept/reject)
@@ -836,6 +838,8 @@ model PurchaseOrder {
   retailPrice      Int?
   qualityNotes     String?
   rejectionReason  String?
+  /// What the farmer should do next after a quality rejection
+  recommendation   String?
   paymentRef       String?
   paymentMethod    String?
   paidAt           DateTime?

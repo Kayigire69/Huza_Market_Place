@@ -362,10 +362,19 @@ export function AdminProcurementClient({
                         disabled={busy === po.id}
                         onClick={() => {
                           const reason =
-                            window.prompt("Rejection reason", "Quality below standard") ||
-                            undefined;
+                            window.prompt(
+                              "Rejection reason (shown to farmer)",
+                              "Quality below Huza standard"
+                            ) || undefined;
+                          if (!reason) return;
+                          const recommendation =
+                            window.prompt(
+                              "Recommendation — what should the farmer do next?",
+                              "Improve harvest handling and cleanliness, then offer the next batch."
+                            ) || undefined;
                           void poAction(po.id, "inspect_reject", {
                             rejectionReason: reason,
+                            recommendation,
                           });
                         }}
                       >

@@ -2,6 +2,10 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  FARMER_SUPPLY_CATEGORY_SLUGS,
+  filterFarmerSupplyProducts,
+} from "@/lib/farmer-supply";
 
 export type FarmerPurchaseOrderRow = {
   id: string;
@@ -15,6 +19,7 @@ export type FarmerPurchaseOrderRow = {
   totalAmount: number;
   qualityNotes: string | null;
   rejectionReason: string | null;
+  recommendation: string | null;
   inspectedAt: string | null;
   orderedAt: string | null;
   receivedAt: string | null;
@@ -58,7 +63,15 @@ export async function requireFarmerWorkspace() {
     redirect("/farmer");
   }
 
-  const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
+  /** Only crop categories farmers can supply — not Huza kitchen (salads/juices). */
+  const categories = await prisma.category.findMany({
+    where: { slug: { in: [...FARMER_SUPPLY_CATEGORY_SLUGS] } },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  /** Hide prepared storefront lines that may be seed-linked to a supplier by mistake. */
+  const farmProducts = filterFarmerSupplyProducts(farmer.products);
+  const farmerForPortal = { ...farmer, products: farmProducts };
 
   const purchaseOrdersRaw = await prisma.purchaseOrder.findMany({
     where: { supplierId: farmer.id },
@@ -76,6 +89,7 @@ export async function requireFarmerWorkspace() {
       totalAmount: true,
       qualityNotes: true,
       rejectionReason: true,
+      recommendation: true,
       inspectedAt: true,
       orderedAt: true,
       receivedAt: true,
@@ -98,6 +112,7 @@ export async function requireFarmerWorkspace() {
     totalAmount: po.totalAmount,
     qualityNotes: po.qualityNotes,
     rejectionReason: po.rejectionReason,
+    recommendation: po.recommendation,
     inspectedAt: po.inspectedAt?.toISOString() ?? null,
     orderedAt: po.orderedAt?.toISOString() ?? null,
     receivedAt: po.receivedAt?.toISOString() ?? null,
@@ -108,30 +123,34 @@ export async function requireFarmerWorkspace() {
     createdAt: po.createdAt.toISOString(),
   }));
 
-  const pendingReviews = farmer.products.filter(
+  const pendingReviews = farmProducts.filter(
     (p) => !p.reviewStatus || p.reviewStatus === "PENDING"
   ).length;
-  const rejectedProducts = farmer.products.filter((p) => p.reviewStatus === "REJECTED").length;
-  const approvedProducts = farmer.products.filter((p) => p.reviewStatus === "APPROVED").length;
+  const rejectedProducts = farmProducts.filter((p) => p.reviewStatus === "REJECTED").length;
+  const approvedProducts = farmProducts.filter((p) => p.reviewStatus === "APPROVED").length;
   const unpaidOrders = purchaseOrders.filter((po) => !po.paidAt && po.status !== "CANCELLED");
   const paidOrders = purchaseOrders.filter((po) => po.paidAt);
-  const availableVolume = farmer.products.reduce((sum, p) => sum + (Number(p.stockQty) || 0), 0);
+  const availableVolume = farmProducts.reduce((sum, p) => sum + (Number(p.stockQty) || 0), 0);
   const pendingPayoutAmount = unpaidOrders
     .filter((po) => !["REJECTED", "CANCELLED"].includes(po.status))
     .reduce((sum, po) => sum + (Number(po.totalAmount) || 0), 0);
   const paidAmount = paidOrders.reduce((sum, po) => sum + (Number(po.totalAmount) || 0), 0);
-  const mainCrop = farmer.products
+  const mainCrop = farmProducts
     .slice()
     .sort((a, b) => (Number(b.stockQty) || 0) - (Number(a.stockQty) || 0))[0];
   const primaryUnit = mainCrop?.unit || "kg";
+  const distinctCropNames = new Set(
+    farmProducts.map((p) => p.nameEn.trim().toLowerCase()).filter(Boolean)
+  );
 
   return {
     session,
-    farmer,
+    farmer: farmerForPortal,
     categories,
     purchaseOrders,
     stats: {
-      listed: farmer.products.length,
+      listed: distinctCropNames.size,
+      cropBatches: farmProducts.length,
       pendingReviews,
       rejectedProducts,
       approvedProducts,

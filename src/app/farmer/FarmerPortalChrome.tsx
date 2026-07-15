@@ -44,42 +44,62 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
   if (props.mode === "landing") {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16">
-        <div className="text-center">
-          <div className="mx-auto mb-4 inline-flex rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-[var(--huza-line)]">
+      <div className="mx-auto flex h-full max-w-lg flex-col justify-center gap-3 overflow-hidden px-4 py-3 sm:gap-4 sm:py-4">
+        {/* Middle lockup — logo, title, CTAs only */}
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 text-center shadow-md sm:p-5">
+          <div className="mx-auto mb-2 inline-flex rounded-2xl bg-white px-2 py-1">
             <Image
               src="/images/youth-huza-logo.png"
               alt="Youth Huza — Connecting you to freshness"
               width={220}
               height={110}
-              className="mx-auto h-24 w-auto sm:h-28"
+              className="mx-auto h-14 w-auto sm:h-16"
               priority
             />
           </div>
-          <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
-            {t("farmersPortalBadge")}
-          </p>
-          <h1 className="section-title mt-3">{t("farmerPortal")}</h1>
-          <p className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold text-[var(--huza-green-dark)] sm:text-2xl">
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--huza-ink)] sm:text-3xl">
+            {t("farmerPortal")}
+          </h1>
+          <p className="mt-1.5 font-[family-name:var(--font-display)] text-base font-semibold text-[var(--huza-green-dark)] sm:text-lg">
             Grow Better. Sell Better. Earn Better.
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-[var(--huza-muted)]">
-            Youth Huza is your agricultural partner — quality guidance, fair purchasing, and a reliable
-            market. HUZA FRESH is the customer brand shoppers see.
-          </p>
+
+          <div className="mt-4 space-y-2">
+            <Link href="/auth/login?callbackUrl=/farmer" className="block">
+              <Button className="w-full" size="lg">
+                {t("farmerLogin")}
+              </Button>
+            </Link>
+            <Link href="/farmer/register" className="block">
+              <Button className="w-full" variant="ghost" size="lg">
+                {t("newFarmerApplication")}
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        <div className="mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white/95 p-6 shadow-sm backdrop-blur-sm">
-          <Link href="/auth/login?callbackUrl=/farmer" className="block">
-            <Button className="w-full" size="lg">
-              {t("farmerLogin")}
-            </Button>
-          </Link>
-          <Link href="/farmer/register" className="block">
-            <Button className="w-full" variant="ghost" size="lg">
-              {t("newFarmerApplication")}
-            </Button>
-          </Link>
+        {/* Partnership reasons — same viewport, no scroll */}
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 shadow-sm sm:p-5">
+          <h2 className="font-[family-name:var(--font-display)] text-base font-bold text-[var(--huza-ink)] sm:text-lg">
+            Why Farmers Partner With Youth Huza
+          </h2>
+          <ul className="mt-2.5 space-y-1.5 text-left text-sm leading-snug text-[var(--huza-ink)]">
+            {[
+              "Practical farming guidance from experienced professionals.",
+              "Quality standards that help improve marketability.",
+              "Fair purchasing process.",
+              "Reliable buyer for accepted produce.",
+              "Long-term partnership focused on growth.",
+            ].map((item) => (
+              <li key={item} className="flex gap-2.5">
+                <span
+                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--huza-green)]"
+                  aria-hidden
+                />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     );

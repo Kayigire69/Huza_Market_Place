@@ -18,7 +18,9 @@ export default async function FarmerProductsPage() {
     reviewNote: p.reviewNote,
     reviewedAt: p.reviewedAt,
     qualityGeneral: p.qualityGeneral,
-    category: p.category ? { nameEn: p.category.nameEn } : null,
+    category: p.category
+      ? { nameEn: p.category.nameEn, slug: p.category.slug }
+      : null,
     images: p.images?.map((img) => ({ id: img.id, url: img.url, alt: img.alt })) ?? [],
   }));
 
@@ -26,11 +28,11 @@ export default async function FarmerProductsPage() {
     <div>
       <FarmerPageHeader
         title="My Crop Supply"
-        subtitle="Built for volume suppliers — usually one main crop in large quantity, not many small products."
+        subtitle="One farm, one main crop, large quantity — not a catalog. Salads and juices are prepared by HUZA FRESH."
         action={
           <Link href="/farmer/products/submit">
             <Button variant={stats.listed === 0 ? "primary" : "ghost"}>
-              {stats.listed === 0 ? "Submit my main crop" : "Submit another crop"}
+              {stats.listed === 0 ? "Submit my main crop" : "Add another crop (rare)"}
             </Button>
           </Link>
         }

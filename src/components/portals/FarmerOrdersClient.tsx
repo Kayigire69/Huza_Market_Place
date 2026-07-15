@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { FarmerPanel } from "@/components/portals/FarmerUi";
+import {
+  FarmerQualityReviewCard,
+  defaultQualityRecommendation,
+} from "@/components/portals/FarmerQualityReviewCard";
 import { Button } from "@/components/ui/Button";
 import type { FarmerPurchaseOrderRow } from "@/lib/farmer-workspace";
 import { formatRwf, formatUnit } from "@/lib/utils";
@@ -186,22 +190,14 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
             ) : null}
 
             {po.rejectionReason ? (
-              <div className="mt-3 rounded-xl border border-red-200 bg-red-50/70 px-3 py-3">
-                <p className="text-sm font-semibold text-red-800">Order not accepted</p>
-                <p className="mt-1 text-sm text-red-700">{po.rejectionReason}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Link href="/farmer/approvals">
-                    <Button size="sm" variant="ghost">
-                      Review crop status
-                    </Button>
-                  </Link>
-                  <Link href="/farmer/support">
-                    <Button size="sm" variant="ghost">
-                      Read quality guides
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+              <FarmerQualityReviewCard
+                productName={po.productName}
+                reason={po.rejectionReason}
+                recommendation={
+                  po.recommendation || defaultQualityRecommendation(po.rejectionReason)
+                }
+                resubmitHref="/farmer/approvals"
+              />
             ) : null}
 
             {!po.paidAt && po.status !== "REJECTED" && po.status !== "CANCELLED" ? (

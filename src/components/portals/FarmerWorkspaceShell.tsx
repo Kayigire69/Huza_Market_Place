@@ -60,7 +60,7 @@ export function FarmerWorkspaceShell({
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-lg bg-white/10 px-2.5 py-2">
-            <p className="text-[10px] uppercase tracking-wide text-white/55">Crops</p>
+            <p className="text-[10px] uppercase tracking-wide text-white/55">Main crops</p>
             <p className="text-sm font-bold text-white">{listed}</p>
           </div>
           <div className="rounded-lg bg-white/10 px-2.5 py-2">

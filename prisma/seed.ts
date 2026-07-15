@@ -208,7 +208,7 @@ async function main() {
       data: {
         userId: supplierUsers[0].id,
         businessName: "Green Valley Farm",
-        description: "Organic fruits and vegetables from Musanze highlands.",
+        description: "Tomato grower from Musanze — supplies tomatoes in volume to Youth Huza.",
         location: "Musanze",
         district: "Musanze",
         phone: "0781111001",
@@ -225,7 +225,7 @@ async function main() {
       data: {
         userId: supplierUsers[1].id,
         businessName: "Fresh Fields Cooperative",
-        description: "Cereals, dairy and spices from Kamonyi farmers.",
+        description: "Irish potato growers in Kamonyi — one main crop for Huza purchase.",
         location: "Ruyenzi, Kamonyi",
         district: "Kamonyi",
         phone: "0781111002",
@@ -242,7 +242,7 @@ async function main() {
       data: {
         userId: supplierUsers[2].id,
         businessName: "Lake Harvest",
-        description: "Fresh fish, poultry and eggs from Bugesera.",
+        description: "Banana growers in Bugesera — sweet bananas supplied in volume to Huza.",
         location: "Nyamata, Bugesera",
         district: "Bugesera",
         phone: "0781111003",
@@ -302,30 +302,72 @@ async function main() {
 
   const deliveryDistricts = ["Gasabo", "Kicukiro", "Nyarugenge", "Kamonyi", "Bugesera"];
 
-  const productsData = CATALOG_PRODUCTS.map((p, i) => ({
-    supplierId: suppliers[i % suppliers.length].id,
-    categoryId: cat[p.category].id,
-    nameEn: p.nameEn,
-    nameFr: p.nameFr,
-    nameRw: p.nameRw,
-    descriptionEn: p.descriptionEn,
-    descriptionFr: p.descriptionFr,
-    descriptionRw: p.descriptionRw,
-    price: p.price,
-    purchasePrice: Math.round(p.price * 0.65),
-    unit: UnitType[p.unit],
-    stockQty: p.stockQty,
-    isOrganic: Boolean(p.isOrganic),
-    isFeatured: Boolean(p.isFeatured),
-    isBestSeller: Boolean(p.isBestSeller),
-    isNewArrival: Boolean(p.isNewArrival),
-    originDistrict: p.originDistrict,
-    location: p.originDistrict,
-    keywords: p.keywords,
-    reviewStatus: "APPROVED",
-    reviewedAt: new Date(),
-    images: [p.image],
-  }));
+  /**
+   * Shop catalog products owned by Youth Huza (the company), not by inventing extra partner brands.
+   * Real demo farmers each keep one specialty crop for the Farmers Portal.
+   */
+  const companySupplierUser = await prisma.user.create({
+    data: {
+      email: "catalog@youthhuza.rw",
+      phone: "0780000001",
+      passwordHash: password,
+      fullName: "Youth Huza",
+      role: Role.SUPPLIER,
+    },
+  });
+  const companySupplier = await prisma.supplier.create({
+    data: {
+      userId: companySupplierUser.id,
+      businessName: "Youth Huza",
+      description: "Company catalogue for HUZA FRESH — products Youth Huza sells after buying/preparing.",
+      location: "Kigali",
+      district: "Gasabo",
+      phone: "0780000001",
+      status: SupplierStatus.APPROVED,
+      availability: AvailabilityStatus.OPEN,
+      approvedAt: new Date(),
+      isVerified: true,
+      verificationBadge: "Youth Huza",
+    },
+  });
+
+  /** Demo farmers: one main crop each (volume), not a mixed catalog */
+  const FARMER_MAIN_CROPS: Record<string, string> = {
+    [suppliers[0].id]: "Fresh Tomatoes",
+    [suppliers[1].id]: "Irish Potatoes",
+    [suppliers[2].id]: "Sweet Bananas",
+  };
+
+  const productsData = CATALOG_PRODUCTS.map((p) => {
+    const specialtyOwner = Object.entries(FARMER_MAIN_CROPS).find(([, crop]) => crop === p.nameEn);
+    const supplierId = specialtyOwner ? specialtyOwner[0] : companySupplier.id;
+    const stockQty = specialtyOwner ? Math.max(p.stockQty, 800) : p.stockQty;
+
+    return {
+      supplierId,
+      categoryId: cat[p.category].id,
+      nameEn: p.nameEn,
+      nameFr: p.nameFr,
+      nameRw: p.nameRw,
+      descriptionEn: p.descriptionEn,
+      descriptionFr: p.descriptionFr,
+      descriptionRw: p.descriptionRw,
+      price: p.price,
+      purchasePrice: Math.round(p.price * 0.65),
+      unit: UnitType[p.unit],
+      stockQty,
+      isOrganic: Boolean(p.isOrganic),
+      isFeatured: Boolean(p.isFeatured),
+      isBestSeller: Boolean(p.isBestSeller),
+      isNewArrival: Boolean(p.isNewArrival),
+      originDistrict: p.originDistrict,
+      location: p.originDistrict,
+      keywords: p.keywords,
+      reviewStatus: "APPROVED",
+      reviewedAt: new Date(),
+      images: [p.image],
+    };
+  });
 
   for (const p of productsData) {
     const { images, ...data } = p;
