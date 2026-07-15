@@ -12,6 +12,7 @@ import {
 } from "@/lib/documents/pdf";
 import {
   REPORT_LABELS,
+  normalizeReportType,
   type ReportType,
 } from "@/lib/documents/report-types";
 
@@ -21,7 +22,6 @@ export { REPORT_TYPES, REPORT_LABELS, isReportType } from "@/lib/documents/repor
 function parseRange(from?: string | null, to?: string | null) {
   const end = to ? new Date(to) : new Date();
   const start = from ? new Date(from) : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
-  // normalize to day bounds
   start.setHours(0, 0, 0, 0);
   end.setHours(23, 59, 59, 999);
   return { start, end };
@@ -31,23 +31,25 @@ function money(n: number | null | undefined) {
   return formatRwf(n || 0);
 }
 
-const DETAIL_TITLES: Record<ReportType, string> = {
+const DETAIL_TITLES: Record<string, string> = {
   sales: "1. SALES & ORDERS DETAIL IN PERIOD",
   payments: "1. PAYMENTS DETAIL IN PERIOD",
   deliveries: "1. DELIVERY ACTIVITY DETAIL IN PERIOD",
-  stock: "1. STOCK MOVEMENTS DETAIL IN PERIOD",
+  inventory: "1. STOCK MOVEMENTS DETAIL IN PERIOD",
   farmers: "1. FARMER APPLICATIONS DETAIL IN PERIOD",
   procurement: "1. PROCUREMENT DETAIL IN PERIOD",
+  customers: "1. CUSTOMER ACTIVITY DETAIL IN PERIOD",
   audit: "1. ADMIN AUDIT DETAIL IN PERIOD",
 };
 
-const TOTAL_LABELS: Record<ReportType, string> = {
+const TOTAL_LABELS: Record<string, string> = {
   sales: "Total orders in period",
   payments: "Total payments in period",
   deliveries: "Total deliveries in period",
-  stock: "Total stock movements in period",
+  inventory: "Total stock movements in period",
   farmers: "Total farmer applications in period",
   procurement: "Total purchase orders in period",
+  customers: "Total customers in period",
   audit: "Total audit events in period",
 };
 
@@ -71,7 +73,6 @@ function drawTable(
   doc.font("Helvetica").fontSize(8);
 
   for (const row of rows) {
-    // Leave room for footer on continued pages
     if (doc.y > doc.page.height - 72) {
       doc.addPage();
       doc.y = doc.page.margins.top;
@@ -92,16 +93,35 @@ function drawTable(
   }
 }
 
+export type ReportData = {
+  summary: string[];
+  headers: string[];
+  rows: string[][];
+  widths: number[];
+  totalHighlight?: string;
+};
+
+export async function getReportDataset(
+  type: ReportType,
+  from?: string | null,
+  to?: string | null
+): Promise<{ data: ReportData; start: Date; end: Date; resolvedType: ReportType }> {
+  const resolvedType = normalizeReportType(type);
+  const { start, end } = parseRange(from, to);
+  const data = await fetchReportData(resolvedType, start, end);
+  return { data, start, end, resolvedType };
+}
+
 export async function buildActivityReportPdf(
   type: ReportType,
   from?: string | null,
   to?: string | null,
   preparedBy?: ReportPreparer | null
 ): Promise<{ buffer: Buffer; filename: string }> {
-  const { start, end } = parseRange(from, to);
+  const { data, start, end, resolvedType } = await getReportDataset(type, from, to);
   const rangeLabel = `${start.toLocaleDateString("en-GB")} – ${end.toLocaleDateString("en-GB")}`;
   const stamp = new Date().toISOString().slice(0, 10);
-  const filename = `huza-${type}-report-${stamp}.pdf`;
+  const filename = `huza-${resolvedType}-report-${stamp}.pdf`;
 
   const preparer: ReportPreparer = {
     name: preparedBy?.name?.trim() || "Huza staff",
@@ -109,14 +129,13 @@ export async function buildActivityReportPdf(
     role: preparedBy?.role || "STAFF",
   };
 
-  const data = await fetchReportData(type, start, end);
   const numberedHeaders = ["#", ...data.headers];
   const numberedWidths = [28, ...data.widths];
   const numberedRows = data.rows.map((row, i) => [String(i + 1), ...row]);
 
   const pdf = await renderPdf(
     (doc) => {
-      drawHuzaReportHeader(doc, REPORT_LABELS[type], {
+      drawHuzaReportHeader(doc, REPORT_LABELS[resolvedType], {
         companyLine: "YOUTH HUZA",
         tagline: "HUZA FRESH · Fresh produce marketplace",
       });
@@ -130,7 +149,7 @@ export async function buildActivityReportPdf(
         doc.moveDown(0.7);
       }
 
-      drawSectionTitle(doc, DETAIL_TITLES[type]);
+      drawSectionTitle(doc, DETAIL_TITLES[resolvedType] || "1. DETAIL");
 
       if (numberedHeaders.length > 1 && numberedRows.length) {
         drawTable(doc, numberedHeaders, numberedRows, numberedWidths);
@@ -139,7 +158,7 @@ export async function buildActivityReportPdf(
           .fillColor(BRAND.ink)
           .font("Helvetica-Bold")
           .fontSize(10)
-          .text(`${TOTAL_LABELS[type]}  ${numberedRows.length}`);
+          .text(`${TOTAL_LABELS[resolvedType] || "Total rows"}  ${numberedRows.length}`);
         if (data.totalHighlight) {
           doc
             .font("Helvetica")
@@ -154,29 +173,109 @@ export async function buildActivityReportPdf(
       drawSignatureBlocks(doc, preparer);
       drawConfidentialFooter(doc, preparer.email, { company: "Youth Huza" });
     },
-    { info: { Title: `HUZA ${REPORT_LABELS[type]} · ${rangeLabel}` } }
+    { info: { Title: `HUZA ${REPORT_LABELS[resolvedType]} · ${rangeLabel}` } }
   );
 
   return { buffer: pdf, filename };
 }
 
-type ReportData = {
-  summary: string[];
-  headers: string[];
-  rows: string[][];
-  widths: number[];
-  /** Optional money / KPI line under the count total */
-  totalHighlight?: string;
-};
-
-async function fetchReportData(
+/** Excel-compatible SpreadsheetML (.xls) — opens natively in Excel without extra deps. */
+export async function buildActivityReportExcel(
   type: ReportType,
-  start: Date,
-  end: Date
-): Promise<ReportData> {
-  const createdAt = { gte: start, lte: end };
+  from?: string | null,
+  to?: string | null
+): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  const { data, start, end, resolvedType } = await getReportDataset(type, from, to);
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `huza-${resolvedType}-report-${stamp}.xls`;
 
-  switch (type) {
+  const escapeXml = (s: string) =>
+    String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const sheetRows: string[] = [];
+  sheetRows.push(
+    `<Row>${data.headers.map((h) => `<Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join("")}</Row>`
+  );
+  for (const row of data.rows) {
+    sheetRows.push(
+      `<Row>${row
+        .map((cell) => `<Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`)
+        .join("")}</Row>`
+    );
+  }
+
+  const summaryLines = [
+    `HUZA FRESH — ${REPORT_LABELS[resolvedType]}`,
+    `Period: ${start.toLocaleDateString("en-GB")} – ${end.toLocaleDateString("en-GB")}`,
+    ...data.summary,
+    data.totalHighlight || "",
+  ].filter(Boolean);
+
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Header"><Font ss:Bold="1"/></Style>
+ </Styles>
+ <Worksheet ss:Name="Summary">
+  <Table>
+   ${summaryLines
+     .map((l) => `<Row><Cell><Data ss:Type="String">${escapeXml(l)}</Data></Cell></Row>`)
+     .join("\n   ")}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Data">
+  <Table>
+   ${sheetRows.join("\n   ")}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+  return {
+    buffer: Buffer.from(xml, "utf8"),
+    filename,
+    contentType: "application/vnd.ms-excel",
+  };
+}
+
+/** UTF-8 CSV (opens in Excel) */
+export async function buildActivityReportCsv(
+  type: ReportType,
+  from?: string | null,
+  to?: string | null
+): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  const { data, resolvedType } = await getReportDataset(type, from, to);
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `huza-${resolvedType}-report-${stamp}.csv`;
+
+  const esc = (v: string) => {
+    if (/[",\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
+    return v;
+  };
+
+  const lines = [
+    data.headers.map(esc).join(","),
+    ...data.rows.map((r) => r.map(esc).join(",")),
+  ];
+  // BOM for Excel UTF-8
+  const csv = `\uFEFF${lines.join("\n")}`;
+  return {
+    buffer: Buffer.from(csv, "utf8"),
+    filename,
+    contentType: "text/csv; charset=utf-8",
+  };
+}
+
+async function fetchReportData(type: ReportType, start: Date, end: Date): Promise<ReportData> {
+  const createdAt = { gte: start, lte: end };
+  const resolved = normalizeReportType(type);
+
+  switch (resolved) {
     case "sales": {
       const orders = await prisma.order.findMany({
         where: { createdAt },
@@ -225,10 +324,13 @@ async function fetchReportData(
         ["CONFIRMED", "VERIFIED"].includes(p.status)
       );
       const confirmedSum = confirmed.reduce((s, p) => s + p.amount, 0);
+      const refunded = payments.filter((p) => p.status === "REFUNDED");
+      const failed = payments.filter((p) => p.status === "FAILED");
       return {
         summary: [
           `Payments: ${payments.length}`,
           `Confirmed/verified: ${confirmed.length} · ${money(confirmedSum)}`,
+          `Failed: ${failed.length} · Refunded: ${refunded.length}`,
         ],
         headers: ["Order", "Method", "Phone", "Amount", "Status", "Date"],
         widths: [88, 70, 80, 65, 70, 75],
@@ -254,10 +356,13 @@ async function fetchReportData(
         take: 200,
       });
       const delivered = deliveries.filter((d) => d.status === "DELIVERED").length;
+      const failed = deliveries.filter((d) =>
+        ["RETURNED", "CANCELLED"].includes(d.status)
+      ).length;
       return {
         summary: [
           `Delivery records: ${deliveries.length}`,
-          `Delivered: ${delivered}`,
+          `Delivered: ${delivered} · Failed/returned: ${failed}`,
         ],
         headers: ["Order", "Zone", "Status", "Driver", "Delivered"],
         widths: [90, 90, 80, 110, 80],
@@ -271,15 +376,23 @@ async function fetchReportData(
         ]),
       };
     }
-    case "stock": {
+    case "inventory": {
       const movements = await prisma.stockMovement.findMany({
         where: { createdAt },
         include: { product: { select: { nameEn: true, stockQty: true } } },
         orderBy: { createdAt: "desc" },
         take: 250,
       });
+      const products = await prisma.product.findMany({
+        where: { deletedAt: null, isActive: true },
+        select: { stockQty: true, lowStockAt: true },
+      });
+      const lowStock = products.filter((p) => p.stockQty <= p.lowStockAt).length;
       return {
-        summary: [`Stock movements: ${movements.length}`],
+        summary: [
+          `Stock movements: ${movements.length}`,
+          `Products at/below low-stock threshold: ${lowStock}`,
+        ],
         headers: ["Date", "Product", "Type", "Qty", "Reason", "On hand"],
         widths: [70, 115, 60, 40, 105, 50],
         rows: movements.map((m) => [
@@ -295,7 +408,10 @@ async function fetchReportData(
     case "farmers": {
       const suppliers = await prisma.supplier.findMany({
         where: { createdAt },
-        include: { user: { select: { fullName: true, phone: true } }, _count: { select: { products: true } } },
+        include: {
+          user: { select: { fullName: true, phone: true } },
+          _count: { select: { products: true } },
+        },
         orderBy: { createdAt: "desc" },
         take: 200,
       });
@@ -345,6 +461,59 @@ async function fetchReportData(
           String(p.quantity),
           money(p.totalAmount),
           p.status,
+        ]),
+      };
+    }
+    case "customers": {
+      const customersFull = await prisma.user.findMany({
+        where: { role: "CUSTOMER", createdAt },
+        select: {
+          id: true,
+          fullName: true,
+          phone: true,
+          email: true,
+          isActive: true,
+          loyaltyPoints: true,
+          createdAt: true,
+          _count: { select: { orders: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      });
+
+      const rows = await Promise.all(
+        customersFull.map(async (c) => {
+          const spent = await prisma.order.aggregate({
+            where: {
+              userId: c.id,
+              status: { notIn: ["CANCELLED", "REFUNDED"] },
+            },
+            _sum: { total: true },
+          });
+          return {
+            ...c,
+            spent: spent._sum.total || 0,
+          };
+        })
+      );
+
+      const totalSpend = rows.reduce((s, c) => s + c.spent, 0);
+      return {
+        summary: [
+          `New customers in period: ${rows.length}`,
+          `Lifetime spend (these customers): ${money(totalSpend)}`,
+        ],
+        headers: ["Name", "Phone", "Orders", "Spent", "Loyalty", "Active", "Joined"],
+        widths: [100, 85, 45, 65, 50, 45, 70],
+        totalHighlight: `Lifetime spend (these customers): ${money(totalSpend)}`,
+        rows: rows.map((c) => [
+          c.fullName,
+          c.phone,
+          String(c._count.orders),
+          money(c.spent),
+          String(c.loyaltyPoints),
+          c.isActive ? "Yes" : "No",
+          c.createdAt.toLocaleDateString("en-GB"),
         ]),
       };
     }

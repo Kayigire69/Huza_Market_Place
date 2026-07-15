@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { NotificationType } from "@prisma/client";
+import { getSetting } from "@/services/settings.service";
 
 /** Push an in-app alert to every active admin (dashboard live feed). */
 export async function notifyAdmins(input: {
@@ -7,6 +8,22 @@ export async function notifyAdmins(input: {
   title: string;
   body: string;
 }) {
+  if ((await getSetting("notify_inapp_enabled", "true")) === "false") return;
+
+  if (input.type === "LOW_STOCK") {
+    if ((await getSetting("notify_low_stock_enabled", "true")) === "false") return;
+  }
+  if (input.type === "NEW_SUPPLIER") {
+    if ((await getSetting("notify_new_farmer_enabled", "true")) === "false") return;
+  }
+  if (
+    input.type === "ORDER_CONFIRMATION" ||
+    input.type === "PAYMENT_CONFIRMATION" ||
+    input.type === "ORDER_PACKED"
+  ) {
+    if ((await getSetting("notify_new_order_enabled", "true")) === "false") return;
+  }
+
   const admins = await prisma.user.findMany({
     where: { role: { in: ["ADMIN", "SUPER_ADMIN"] }, isActive: true },
     select: { id: true },

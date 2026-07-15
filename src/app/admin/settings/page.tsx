@@ -1,5 +1,13 @@
-import { renderAdminModule } from "../_module";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
+import { canAccessAdminPath, isSuperAdmin } from "@/lib/rbac";
+import { AdminSettingsClient } from "@/components/admin/AdminSettingsClient";
 
-export default async function Page() {
-  return renderAdminModule("hours");
+export default async function AdminSettingsPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect("/auth/login");
+  if (!canAccessAdminPath(session.user.role, "/admin/settings")) redirect("/admin");
+
+  return <AdminSettingsClient isSuperAdmin={isSuperAdmin(session.user.role)} />;
 }

@@ -30,8 +30,8 @@ export default async function AdminDashboardPage() {
           createdAt: n.createdAt.toISOString(),
         })),
         ordersLast7Days: analytics.ordersLast7Days,
-        topProducts: analytics.topProducts,
-        salesByCategory: analytics.salesByCategory,
+        ordersByStatus: analytics.ordersByStatus,
+        recentActivity: analytics.recentActivity,
       }}
       lowStockPreview={analytics.lowStockPreview}
     />

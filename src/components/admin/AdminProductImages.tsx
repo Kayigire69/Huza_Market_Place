@@ -29,21 +29,28 @@ export function AdminProductImages({
 
   const uploadStorefront = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    if (storefront.length >= 5) {
+      onDone("Maximum 5 storefront images per product");
+      return;
+    }
     setBusy(true);
     try {
       const form = new FormData();
-      Array.from(files).forEach((f) => form.append("files", f));
+      Array.from(files)
+        .slice(0, 5 - storefront.length)
+        .forEach((f) => form.append("files", f));
       form.append("folder", "storefront");
       const up = await fetch("/api/uploads", { method: "POST", body: form });
       const upData = await up.json();
       if (!up.ok) throw new Error(upData.error || "Upload failed");
 
+      const action = storefront.length === 0 ? "set_storefront_images" : "append_storefront_images";
       const res = await fetch("/api/admin/products", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: productId,
-          action: "set_storefront_images",
+          action,
           imageUrls: upData.urls,
           coverIndex: 0,
         }),

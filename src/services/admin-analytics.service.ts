@@ -128,6 +128,7 @@ export async function getSalesByCategory(take = 8) {
 /** Lightweight counts + recent list for admin chrome polling. */
 export async function getAdminLiveLite() {
   const startOfDay = startOfLocalDay();
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
   const [
     todayOrders,
     pendingPayment,
@@ -138,6 +139,7 @@ export async function getAdminLiveLite() {
     revenueToday,
     lowStockCount,
     pendingFarmers,
+    delayedOrders,
   ] = await Promise.all([
     prisma.order.count({ where: { createdAt: { gte: startOfDay } } }),
     prisma.order.count({ where: { status: "PENDING" } }),
@@ -158,12 +160,21 @@ export async function getAdminLiveLite() {
       where: { isActive: true, deletedAt: null, stockQty: { lte: 5 } },
     }),
     prisma.supplier.count({ where: { status: "PENDING" } }),
+    prisma.order.count({
+      where: {
+        status: { in: ["CONFIRMED", "PAID", "PREPARING", "OUT_FOR_DELIVERY"] },
+        updatedAt: { lt: twoHoursAgo },
+      },
+    }),
   ]);
+
+  const pendingOrders = pendingPayment + paidReady + preparing;
 
   return {
     counts: {
       todayOrders,
       pendingPayment,
+      pendingOrders,
       paidReady,
       preparing,
       outForDelivery,
@@ -172,6 +183,8 @@ export async function getAdminLiveLite() {
       lowStock: lowStockCount,
       pendingFarmers,
       pendingSuppliers: pendingFarmers,
+      pendingDeliveries: outForDelivery + preparing,
+      delayedOrders,
     },
   };
 }
@@ -265,10 +278,83 @@ export async function getAdminDashboardAnalytics() {
   const revenueGrowthPct =
     prevMonth > 0 ? Math.round(((thisMonth - prevMonth) / prevMonth) * 1000) / 10 : null;
 
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  const [
+    ordersByStatusRows,
+    delayedOrders,
+    refundRequests,
+    recentActivity,
+    pendingApprovals,
+    openTickets,
+    pendingPaymentsCount,
+  ] = await Promise.all([
+    prisma.order.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+      where: { status: { notIn: ["CANCELLED", "REFUNDED", "RETURNED"] } },
+    }),
+    prisma.order.count({
+      where: {
+        status: { in: ["CONFIRMED", "PAID", "PREPARING", "OUT_FOR_DELIVERY"] },
+        updatedAt: { lt: twoHoursAgo },
+      },
+    }),
+    prisma.returnRequest.count({ where: { status: "PENDING" } }),
+    prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        action: true,
+        details: true,
+        entity: true,
+        createdAt: true,
+        actorName: true,
+      },
+    }),
+    prisma.product.count({
+      where: { reviewStatus: "PENDING", deletedAt: null },
+    }),
+    prisma.supportTicket.count({
+      where: { status: { in: ["OPEN", "IN_PROGRESS"] } },
+    }),
+    prisma.payment.count({ where: { status: "PENDING" } }),
+  ]);
+
+  const statusMap = Object.fromEntries(
+    ordersByStatusRows.map((r) => [r.status, r._count._all])
+  ) as Record<string, number>;
+
+  const ordersByStatus = {
+    pending: (statusMap.PENDING || 0) + (statusMap.PAID || 0),
+    preparing:
+      (statusMap.CONFIRMED || 0) +
+      (statusMap.PREPARING || 0) +
+      (statusMap.PACKED || 0) +
+      (statusMap.READY_FOR_DISPATCH || 0) +
+      (statusMap.READY_FOR_PICKUP || 0),
+    outForDelivery: statusMap.OUT_FOR_DELIVERY || 0,
+    delivered: statusMap.DELIVERED || 0,
+  };
+
+  const pendingOrders =
+    (statusMap.PENDING || 0) +
+    (statusMap.PAID || 0) +
+    (statusMap.CONFIRMED || 0) +
+    (statusMap.PREPARING || 0) +
+    (statusMap.PACKED || 0) +
+    (statusMap.READY_FOR_DISPATCH || 0) +
+    (statusMap.READY_FOR_PICKUP || 0) +
+    (statusMap.OUT_FOR_DELIVERY || 0);
+
   return {
     counts: {
       todayOrders,
       pendingPayment,
+      pendingOrders,
+      pendingApprovals,
+      openTickets,
+      pendingPayments: pendingPaymentsCount,
       paidReady,
       preparing,
       outForDelivery,
@@ -278,6 +364,9 @@ export async function getAdminDashboardAnalytics() {
       pendingFarmers,
       /** @deprecated alias kept for older clients */
       pendingSuppliers: pendingFarmers,
+      pendingDeliveries: outForDelivery + preparing,
+      delayedOrders,
+      refundRequests,
       completedOrders,
       revenueThisMonth: thisMonth,
       revenuePrevMonth: prevMonth,
@@ -304,5 +393,12 @@ export async function getAdminDashboardAnalytics() {
     ordersLast7Days,
     topProducts,
     salesByCategory,
+    ordersByStatus,
+    recentActivity: recentActivity.map((a) => ({
+      id: a.id,
+      time: a.createdAt.toISOString(),
+      title: a.action.replace(/\./g, " · "),
+      body: a.details || `${a.entity}${a.actorName ? ` · ${a.actorName}` : ""}`,
+    })),
   };
 }
