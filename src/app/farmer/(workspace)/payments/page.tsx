@@ -1,24 +1,19 @@
-import { FarmerPortalClient } from "../../FarmerPortalClient";
+import { FarmerPaymentsClient } from "@/components/portals/FarmerPaymentsClient";
 import { FarmerPageHeader } from "@/components/portals/FarmerUi";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 
 export const dynamic = "force-dynamic";
 
 export default async function FarmerPaymentsPage() {
-  const { farmer, categories, purchaseOrders } = await requireFarmerWorkspace();
+  const { purchaseOrders } = await requireFarmerWorkspace();
 
   return (
     <div>
       <FarmerPageHeader
         title="Payments"
-        subtitle="Payout status for purchase orders Huza has accepted."
+        subtitle="Payouts from Youth Huza for accepted purchase orders — paid vs waiting, with references."
       />
-      <FarmerPortalClient
-        farmer={farmer as never}
-        categories={categories}
-        purchaseOrders={purchaseOrders}
-        panel="payments"
-      />
+      <FarmerPaymentsClient orders={purchaseOrders} />
     </div>
   );
 }

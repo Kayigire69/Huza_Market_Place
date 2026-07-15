@@ -6,11 +6,11 @@
  *
  * LOCKED:
  * - Phase 1 Layout & Navigation (sidebar IA, selling core vs support, routes)
+ * - Phase 2 Dashboard (KPIs, needs attention, next action, workflow progress, activity)
+ * - Phase 3 Selling workflow (Submit Crop + Approval Status polish, volume-first)
+ * - Phase 4 Orders & Payments (PO pipeline + payout tracker)
  *
  * NEXT:
- * - Phase 2 Dashboard polish (deeper KPIs / attention widgets)
- * - Phase 3 Selling workflow deep polish (My Products / Submit / Approvals)
- * - Phase 4 Orders & Payments split polish
  * - Phase 5 Quality feedback (reason + recommendation + Read Guide / Ask Expert)
  * - Phase 6 Farmer Support knowledge library
  * - Phase 7 Ask an Agronomist
@@ -21,11 +21,11 @@ export const FARMER_PHASES = {
   /** Sidebar, header, selling-first IA, route shell */
   LAYOUT: { id: 1, name: "Layout & Navigation", status: "locked" as const },
   /** Overview KPIs + selling workflow guide */
-  DASHBOARD: { id: 2, name: "Dashboard", status: "planned" as const },
+  DASHBOARD: { id: 2, name: "Dashboard", status: "locked" as const },
   /** My Products, Submit Product, Approval Status */
-  SELLING: { id: 3, name: "Selling workflow", status: "planned" as const },
+  SELLING: { id: 3, name: "Selling workflow", status: "locked" as const },
   /** Purchase Orders + Payments */
-  ORDERS_PAYMENTS: { id: 4, name: "Orders & Payments", status: "planned" as const },
+  ORDERS_PAYMENTS: { id: 4, name: "Orders & Payments", status: "locked" as const },
   /** Structured rejection reason + recommendation + CTAs */
   QUALITY_FEEDBACK: { id: 5, name: "Quality feedback", status: "planned" as const },
   /** Knowledge library guides */

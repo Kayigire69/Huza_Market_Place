@@ -1,42 +1,42 @@
-import { FarmerPortalClient } from "../../FarmerPortalClient";
-import { FarmerPageHeader, FarmerPanel } from "@/components/portals/FarmerUi";
+import { FarmerApprovalsClient } from "@/components/portals/FarmerApprovalsClient";
+import { FarmerPageHeader } from "@/components/portals/FarmerUi";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 
 export const dynamic = "force-dynamic";
 
 export default async function FarmerApprovalsPage() {
-  const { farmer, categories, purchaseOrders } = await requireFarmerWorkspace();
+  const { farmer } = await requireFarmerWorkspace();
+
+  const crops = (farmer.products || []).map((p) => ({
+    id: p.id,
+    nameEn: p.nameEn,
+    price: p.price,
+    unit: p.unit,
+    stockQty: p.stockQty,
+    reviewStatus: p.reviewStatus,
+    reviewNote: p.reviewNote,
+    reviewedAt: p.reviewedAt,
+    category: p.category ? { nameEn: p.category.nameEn } : null,
+    images: p.images?.map((img) => ({ id: img.id, url: img.url, alt: img.alt })) ?? [],
+  }));
 
   return (
     <div>
       <FarmerPageHeader
         title="Approval Status"
-        subtitle="Account and product quality reviews in one place. Structured quality feedback expands in a later phase."
+        subtitle="Track farm account approval and each crop’s quality review — clear results, not just “pending”."
       />
-
-      <FarmerPanel className="mb-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
-          Farm account
-        </p>
-        <p className="mt-1 text-lg font-semibold text-[var(--huza-ink)]">{farmer.status}</p>
-        {farmer.rejectionReason ? (
-          <p className="mt-2 text-sm text-red-700">Reason: {farmer.rejectionReason}</p>
-        ) : null}
-        {farmer.adminNotes ? (
-          <p className="mt-1 text-sm text-[var(--huza-muted)]">Note: {farmer.adminNotes}</p>
-        ) : null}
-        {farmer.inspectionScheduledAt ? (
-          <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            Agent visit: {new Date(farmer.inspectionScheduledAt).toLocaleString()}
-          </p>
-        ) : null}
-      </FarmerPanel>
-
-      <FarmerPortalClient
-        farmer={farmer as never}
-        categories={categories}
-        purchaseOrders={purchaseOrders}
-        panel="approvals"
+      <FarmerApprovalsClient
+        account={{
+          businessName: farmer.businessName,
+          status: farmer.status,
+          isVerified: farmer.isVerified,
+          farmingType: farmer.farmingType,
+          rejectionReason: farmer.rejectionReason,
+          adminNotes: farmer.adminNotes,
+          inspectionScheduledAt: farmer.inspectionScheduledAt?.toISOString() ?? null,
+        }}
+        crops={crops}
       />
     </div>
   );

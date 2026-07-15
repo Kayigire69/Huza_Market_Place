@@ -7,11 +7,19 @@ export type FarmerPurchaseOrderRow = {
   id: string;
   poNumber: string;
   status: string;
+  productName: string;
+  category: string | null;
+  unit: string;
+  quantity: number;
+  negotiatedPrice: number;
   totalAmount: number;
   qualityNotes: string | null;
   rejectionReason: string | null;
   inspectedAt: string | null;
+  orderedAt: string | null;
+  receivedAt: string | null;
   paymentStatus: string;
+  paymentMethod: string | null;
   paidAt: string | null;
   paymentRef: string | null;
   createdAt: string;
@@ -60,13 +68,21 @@ export async function requireFarmerWorkspace() {
       id: true,
       poNumber: true,
       status: true,
+      productName: true,
+      category: true,
+      unit: true,
+      quantity: true,
+      negotiatedPrice: true,
       totalAmount: true,
       qualityNotes: true,
       rejectionReason: true,
       inspectedAt: true,
+      orderedAt: true,
+      receivedAt: true,
       createdAt: true,
       paidAt: true,
       paymentRef: true,
+      paymentMethod: true,
     },
   });
 
@@ -74,11 +90,19 @@ export async function requireFarmerWorkspace() {
     id: po.id,
     poNumber: po.poNumber,
     status: po.status,
+    productName: po.productName,
+    category: po.category,
+    unit: po.unit,
+    quantity: po.quantity,
+    negotiatedPrice: po.negotiatedPrice,
     totalAmount: po.totalAmount,
     qualityNotes: po.qualityNotes,
     rejectionReason: po.rejectionReason,
     inspectedAt: po.inspectedAt?.toISOString() ?? null,
+    orderedAt: po.orderedAt?.toISOString() ?? null,
+    receivedAt: po.receivedAt?.toISOString() ?? null,
     paymentStatus: po.paidAt ? `Paid${po.paymentRef ? ` · ${po.paymentRef}` : ""}` : "Pending",
+    paymentMethod: po.paymentMethod,
     paidAt: po.paidAt?.toISOString() ?? null,
     paymentRef: po.paymentRef,
     createdAt: po.createdAt.toISOString(),
@@ -88,8 +112,18 @@ export async function requireFarmerWorkspace() {
     (p) => !p.reviewStatus || p.reviewStatus === "PENDING"
   ).length;
   const rejectedProducts = farmer.products.filter((p) => p.reviewStatus === "REJECTED").length;
-  const unpaidOrders = purchaseOrders.filter((po) => !po.paidAt).length;
-  const paidOrders = purchaseOrders.filter((po) => po.paidAt).length;
+  const approvedProducts = farmer.products.filter((p) => p.reviewStatus === "APPROVED").length;
+  const unpaidOrders = purchaseOrders.filter((po) => !po.paidAt && po.status !== "CANCELLED");
+  const paidOrders = purchaseOrders.filter((po) => po.paidAt);
+  const availableVolume = farmer.products.reduce((sum, p) => sum + (Number(p.stockQty) || 0), 0);
+  const pendingPayoutAmount = unpaidOrders
+    .filter((po) => !["REJECTED", "CANCELLED"].includes(po.status))
+    .reduce((sum, po) => sum + (Number(po.totalAmount) || 0), 0);
+  const paidAmount = paidOrders.reduce((sum, po) => sum + (Number(po.totalAmount) || 0), 0);
+  const mainCrop = farmer.products
+    .slice()
+    .sort((a, b) => (Number(b.stockQty) || 0) - (Number(a.stockQty) || 0))[0];
+  const primaryUnit = mainCrop?.unit || "kg";
 
   return {
     session,
@@ -100,10 +134,17 @@ export async function requireFarmerWorkspace() {
       listed: farmer.products.length,
       pendingReviews,
       rejectedProducts,
-      unpaidOrders,
-      paidOrders,
-      openPurchaseOrders: purchaseOrders.filter((po) => !["CANCELLED", "REJECTED", "PAID"].includes(po.status))
-        .length,
+      approvedProducts,
+      unpaidOrders: unpaidOrders.length,
+      paidOrders: paidOrders.length,
+      openPurchaseOrders: purchaseOrders.filter(
+        (po) => !["CANCELLED", "REJECTED", "PAID"].includes(po.status)
+      ).length,
+      availableVolume,
+      pendingPayoutAmount,
+      paidAmount,
+      mainCropName: mainCrop?.nameEn ?? null,
+      primaryUnit,
     },
   };
 }
