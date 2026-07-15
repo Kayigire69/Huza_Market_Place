@@ -46,6 +46,17 @@ export async function rateLimit(opts: {
   };
 }
 
+/** Clear a rate-limit bucket (e.g. after successful login or password change). */
+export async function clearRateLimit(key: string): Promise<void> {
+  memory.delete(key);
+  try {
+    const redis = await ensureRedis();
+    if (redis) await redis.del(`rl:${key}`);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function clientIp(req: Request): string {
   return (
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

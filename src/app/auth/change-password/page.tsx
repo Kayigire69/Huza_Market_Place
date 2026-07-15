@@ -1,12 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { portalPathForRole } from "@/lib/auth-redirect";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const { data: session, update } = useSession();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -28,9 +30,9 @@ export default function ChangePasswordPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not change password");
 
-      // Sign out so the next login uses the new password cleanly.
-      await signOut({ redirect: false });
-      router.push("/auth/login?reset=1");
+      // Stay signed in — update the JWT flag so middleware lets you into admin.
+      await update({ mustChangePassword: false });
+      router.push(portalPathForRole(session?.user?.role));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
@@ -43,9 +45,7 @@ export default function ChangePasswordPage() {
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">Change your password</h1>
       <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
-        Enter the temporary password, then choose a new one. After you save,{" "}
-        <strong className="text-[var(--huza-ink)]">Huza@2026! will stop working</strong> — only your
-        new password will sign you in.
+        Enter your temporary password, then choose a new one. You will stay signed in after saving.
       </p>
       <form
         onSubmit={onSubmit}
@@ -59,7 +59,7 @@ export default function ChangePasswordPage() {
             required
             className="input-field"
             autoComplete="current-password"
-            placeholder="Huza@2026!"
+            placeholder="Temporary password from setup"
           />
         </div>
         <div>

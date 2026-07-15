@@ -16,7 +16,8 @@
  * - Phase 10 Payments (MoMo/Airtel, history, refunds, failed, reconcile)
  * - Phase 11 Reports (sales→deliveries, PDF/Excel/CSV, preview)
  * - Phase 12 Settings (company, fees, hours, payments, notifications, system)
- * - Phase 13 Super Admin (staff, roles, password reset, audit, 2FA, error logs)
+ * - Phase 13 Super Admin (staff, roles, password reset, audit, 2FA, error logs;
+ *   first-login forced password change + login error/rate-limit UX)
  *
  * NEXT:
  * - Phase 14 Support
