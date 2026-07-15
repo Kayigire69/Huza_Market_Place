@@ -57,5 +57,6 @@ export async function GET(req: Request) {
     topProducts: analytics.topProducts,
     salesByCategory: analytics.salesByCategory,
     lowStockPreview: analytics.lowStockPreview,
+    todaySchedule: analytics.todaySchedule,
   });
 }

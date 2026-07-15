@@ -176,8 +176,130 @@ export async function getAdminLiveLite() {
   };
 }
 
+/** Build today's ops schedule from live orders / stock / farmers (no fake calendar). */
+export async function getTodaySchedule() {
+  const startOfDay = startOfLocalDay();
+  const [prepareOrders, deliveryOrders, pendingFarmers, lowStock] = await Promise.all([
+    prisma.order.findMany({
+      where: { status: { in: ["PAID", "CONFIRMED", "PREPARING"] } },
+      orderBy: { createdAt: "asc" },
+      take: 4,
+      select: {
+        orderNumber: true,
+        status: true,
+        deliveryDistrict: true,
+        guestName: true,
+        createdAt: true,
+      },
+    }),
+    prisma.order.findMany({
+      where: { status: { in: ["PACKED", "OUT_FOR_DELIVERY"] } },
+      orderBy: { updatedAt: "asc" },
+      take: 4,
+      select: {
+        orderNumber: true,
+        status: true,
+        deliveryDistrict: true,
+        guestName: true,
+        estimatedDelivery: true,
+        updatedAt: true,
+      },
+    }),
+    prisma.supplier.findMany({
+      where: { status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+      take: 3,
+      select: { businessName: true, createdAt: true },
+    }),
+    prisma.product.findMany({
+      where: { isActive: true, deletedAt: null, stockQty: { lte: 5 } },
+      orderBy: { stockQty: "asc" },
+      take: 3,
+      select: { nameEn: true, stockQty: true, unit: true },
+    }),
+  ]);
+
+  type ScheduleItem = {
+    id: string;
+    timeLabel: string;
+    title: string;
+    detail: string;
+    tone: "prepare" | "delivery" | "farmer" | "stock";
+    href: string;
+  };
+
+  const items: ScheduleItem[] = [];
+
+  for (const o of prepareOrders) {
+    items.push({
+      id: `prep-${o.orderNumber}`,
+      timeLabel: o.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      title:
+        o.status === "PREPARING"
+          ? `Continue packing ${o.orderNumber}`
+          : `Prepare order ${o.orderNumber}`,
+      detail: [o.guestName || "Customer", o.deliveryDistrict].filter(Boolean).join(" · "),
+      tone: "prepare",
+      href: `/admin/orders?focus=${encodeURIComponent(o.orderNumber)}`,
+    });
+  }
+
+  for (const o of deliveryOrders) {
+    items.push({
+      id: `del-${o.orderNumber}`,
+      timeLabel:
+        o.estimatedDelivery ||
+        o.updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      title:
+        o.status === "OUT_FOR_DELIVERY"
+          ? `Delivery in progress ${o.orderNumber}`
+          : `Dispatch ${o.orderNumber}`,
+      detail: [o.guestName || "Customer", o.deliveryDistrict].filter(Boolean).join(" · "),
+      tone: "delivery",
+      href: `/admin/delivery`,
+    });
+  }
+
+  for (const f of pendingFarmers) {
+    items.push({
+      id: `farmer-${f.businessName}-${f.createdAt.toISOString()}`,
+      timeLabel: f.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      title: "Review farmer application",
+      detail: f.businessName,
+      tone: "farmer",
+      href: "/admin/suppliers",
+    });
+  }
+
+  for (const p of lowStock) {
+    items.push({
+      id: `stock-${p.nameEn}`,
+      timeLabel: "Stock",
+      title: `Restock ${p.nameEn}`,
+      detail: `${p.stockQty} ${p.unit} left`,
+      tone: "stock",
+      href: "/admin/inventory",
+    });
+  }
+
+  // Prefer actionable work first; cap at 8 rows for a clean panel
+  const toneOrder = { prepare: 0, delivery: 1, farmer: 2, stock: 3 } as const;
+  items.sort((a, b) => toneOrder[a.tone] - toneOrder[b.tone]);
+
+  return {
+    dateLabel: startOfDay.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    }),
+    items: items.slice(0, 8),
+  };
+}
+
 export async function getAdminDashboardAnalytics() {
   const startOfDay = startOfLocalDay();
+  const yesterdayStart = new Date(startOfDay);
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
   const monthStart = new Date(startOfDay.getFullYear(), startOfDay.getMonth(), 1);
   const prevMonthStart = new Date(startOfDay.getFullYear(), startOfDay.getMonth() - 1, 1);
   const prevMonthEnd = new Date(monthStart.getTime() - 1);
@@ -190,6 +312,7 @@ export async function getAdminDashboardAnalytics() {
     outForDelivery,
     deliveredToday,
     revenueToday,
+    revenueYesterday,
     lowStockCount,
     pendingFarmers,
     recentOrders,
@@ -202,6 +325,9 @@ export async function getAdminDashboardAnalytics() {
     completedOrders,
     supplierStats,
     newCustomersMonth,
+    activeProducts,
+    outOfStock,
+    todaySchedule,
   ] = await Promise.all([
     prisma.order.count({ where: { createdAt: { gte: startOfDay } } }),
     prisma.order.count({ where: { status: "PENDING" } }),
@@ -215,6 +341,13 @@ export async function getAdminDashboardAnalytics() {
       _sum: { total: true },
       where: {
         createdAt: { gte: startOfDay },
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+      },
+    }),
+    prisma.order.aggregate({
+      _sum: { total: true },
+      where: {
+        createdAt: { gte: yesterdayStart, lt: startOfDay },
         status: { notIn: ["CANCELLED", "REFUNDED"] },
       },
     }),
@@ -258,12 +391,28 @@ export async function getAdminDashboardAnalytics() {
     prisma.user.count({
       where: { role: "CUSTOMER", createdAt: { gte: monthStart } },
     }),
+    prisma.product.count({ where: { isActive: true, deletedAt: null } }),
+    prisma.product.count({
+      where: { isActive: true, deletedAt: null, stockQty: { lte: 0 } },
+    }),
+    getTodaySchedule(),
   ]);
 
   const thisMonth = revenueThisMonth._sum.total ?? 0;
   const prevMonth = revenuePrevMonth._sum.total ?? 0;
   const revenueGrowthPct =
     prevMonth > 0 ? Math.round(((thisMonth - prevMonth) / prevMonth) * 1000) / 10 : null;
+  const todayRev = revenueToday._sum.total ?? 0;
+  const yesterdayRev = revenueYesterday._sum.total ?? 0;
+  const revenueVsYesterdayPct =
+    yesterdayRev > 0
+      ? Math.round(((todayRev - yesterdayRev) / yesterdayRev) * 1000) / 10
+      : null;
+
+  const suppliersApproved =
+    supplierStats.find((s) => s.status === "APPROVED")?._count._all ?? 0;
+  const suppliersPending =
+    supplierStats.find((s) => s.status === "PENDING")?._count._all ?? 0;
 
   return {
     counts: {
@@ -273,7 +422,9 @@ export async function getAdminDashboardAnalytics() {
       preparing,
       outForDelivery,
       deliveredToday,
-      revenueToday: revenueToday._sum.total ?? 0,
+      revenueToday: todayRev,
+      revenueYesterday: yesterdayRev,
+      revenueVsYesterdayPct,
       lowStock: lowStockCount,
       pendingFarmers,
       /** @deprecated alias kept for older clients */
@@ -283,8 +434,12 @@ export async function getAdminDashboardAnalytics() {
       revenuePrevMonth: prevMonth,
       revenueGrowthPct,
       newCustomersMonth,
-      suppliersApproved: supplierStats.find((s) => s.status === "APPROVED")?._count._all ?? 0,
-      suppliersPending: supplierStats.find((s) => s.status === "PENDING")?._count._all ?? 0,
+      suppliersApproved,
+      suppliersPending,
+      suppliersTotal: suppliersApproved + suppliersPending,
+      warehouseProducts: activeProducts,
+      warehouseOutOfStock: outOfStock,
+      warehouseLowStock: lowStockCount,
     },
     recentOrders: recentOrders.map((o) => ({
       id: o.id,
@@ -304,5 +459,6 @@ export async function getAdminDashboardAnalytics() {
     ordersLast7Days,
     topProducts,
     salesByCategory,
+    todaySchedule,
   };
 }
