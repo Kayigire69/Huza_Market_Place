@@ -239,6 +239,9 @@ export function FarmerPortalClient({
         setPhotoPreviews([]);
         await loadProducts();
         refresh();
+        if (panel === "submit") {
+          startTransition(() => router.push("/farmer/approvals"));
+        }
       }
     } catch (err) {
       setMsg(err instanceof Error ? err.message : t("uploadFailed"));
@@ -347,24 +350,60 @@ export function FarmerPortalClient({
           {(panel === "submit" || !panel) && (
           <form
             onSubmit={createProduct}
-            className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4"
+            className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4 max-w-2xl"
           >
-            <h2 className="font-semibold">{t("submitProductTitle")}</h2>
-            <p className="text-xs text-[var(--huza-muted)]">
-              {isOrganicFarmer ? t("submitProductHint") : t("submitProductHintStandard")}
-            </p>
+            {panel === "submit" ? (
+              <>
+                <div className="flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-[0.12em]">
+                  {(isOrganicFarmer
+                    ? ["1 · Crop & photos", "2 · Volume & price", "3 · Field details"]
+                    : ["1 · Crop & photos", "2 · Volume & price"]
+                  ).map((step) => (
+                    <span
+                      key={step}
+                      className="rounded-full bg-[var(--huza-mint)] px-2.5 py-1 text-[var(--huza-green-dark)]"
+                    >
+                      {step}
+                    </span>
+                  ))}
+                </div>
+                <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-ink)]">
+                  Harvest details for Youth Huza
+                </h2>
+                <p className="text-sm text-[var(--huza-muted)]">
+                  Focus on <strong>one crop</strong> and the <strong>quantity you can supply</strong>. Clear
+                  photos and honest stock help acceptance.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="font-semibold">{t("submitProductTitle")}</h2>
+                <p className="text-xs text-[var(--huza-muted)]">
+                  {isOrganicFarmer ? t("submitProductHint") : t("submitProductHintStandard")}
+                </p>
+              </>
+            )}
 
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold">{t("productsAndPhotos")}</h3>
-              <input
-                name="nameEn"
-                placeholder={t("productCropName")}
-                className="input-field"
-                required
-              />
+              <h3 className="text-sm font-semibold">
+                {panel === "submit" ? "Crop & photos" : t("productsAndPhotos")}
+              </h3>
+              <label className="block text-xs font-semibold text-[var(--huza-muted)]">
+                Crop name
+                <input
+                  name="nameEn"
+                  placeholder={t("productCropName")}
+                  className="input-field mt-1"
+                  required
+                />
+              </label>
               <textarea
                 name="descriptionEn"
-                placeholder={t("shortDescription")}
+                placeholder={
+                  panel === "submit"
+                    ? "Short harvest note (variety, readiness, location)…"
+                    : t("shortDescription")
+                }
                 className="input-field min-h-16"
               />
               <select name="categoryId" className="input-field" required>
@@ -375,19 +414,22 @@ export function FarmerPortalClient({
                   </option>
                 ))}
               </select>
-              <input
-                name="photos"
-                type="file"
-                accept="image/*"
-                multiple
-                className="input-field"
-                required
-                onChange={(e) =>
-                  setPhotoPreviews(
-                    e.target.files ? Array.from(e.target.files).map((f) => URL.createObjectURL(f)) : []
-                  )
-                }
-              />
+              <label className="block text-xs font-semibold text-[var(--huza-muted)]">
+                Harvest photos (required)
+                <input
+                  name="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="input-field mt-1"
+                  required
+                  onChange={(e) =>
+                    setPhotoPreviews(
+                      e.target.files ? Array.from(e.target.files).map((f) => URL.createObjectURL(f)) : []
+                    )
+                  }
+                />
+              </label>
               {photoPreviews.length > 0 && (
                 <div className="grid grid-cols-4 gap-2">
                   {photoPreviews.map((src) => (
@@ -400,7 +442,9 @@ export function FarmerPortalClient({
 
             {isOrganicFarmer && (
               <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-                <h3 className="text-sm font-semibold">{t("fieldInformation")}</h3>
+                <h3 className="text-sm font-semibold">
+                  {panel === "submit" ? "Field details (organic path)" : t("fieldInformation")}
+                </h3>
                 <select name="fieldType" className="input-field" defaultValue={farmer.fieldType || ""} required>
                   <option value="">{t("greenhouseOrOpen")}</option>
                   {FIELD_TYPES.map((f) => (
@@ -473,7 +517,14 @@ export function FarmerPortalClient({
 
             {isOrganicFarmer ? (
               <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-                <h3 className="text-sm font-semibold">{t("productionInformation")}</h3>
+                <h3 className="text-sm font-semibold">
+                  {panel === "submit" ? "Volume available for Huza" : t("productionInformation")}
+                </h3>
+                {panel === "submit" ? (
+                  <p className="text-xs text-[var(--huza-muted)]">
+                    Enter large supply volumes clearly (kg / crates). This is what Huza buys from you.
+                  </p>
+                ) : null}
                 <input
                   name="totalQuantityHarvested"
                   className="input-field"
@@ -488,24 +539,38 @@ export function FarmerPortalClient({
                     </option>
                   ))}
                 </select>
-                <input
-                  name="stockQty"
-                  type="number"
-                  className="input-field"
-                  placeholder={t("availableStockQty")}
-                />
+                <label className="block text-xs font-semibold text-[var(--huza-muted)]">
+                  Available quantity for purchase
+                  <input
+                    name="stockQty"
+                    type="number"
+                    min={0}
+                    className="input-field mt-1 text-lg font-semibold"
+                    placeholder={t("availableStockQty")}
+                  />
+                </label>
               </div>
             ) : (
               <div className="space-y-2 border-t border-[var(--huza-line)] pt-3">
-                <h3 className="text-sm font-semibold">{t("simpleProductDetails")}</h3>
-                <p className="text-xs text-[var(--huza-muted)]">{t("standardProductFormHint")}</p>
-                <input
-                  name="stockQty"
-                  type="number"
-                  className="input-field"
-                  placeholder={t("availableStockQty")}
-                  required
-                />
+                <h3 className="text-sm font-semibold">
+                  {panel === "submit" ? "Volume & asking price" : t("simpleProductDetails")}
+                </h3>
+                <p className="text-xs text-[var(--huza-muted)]">
+                  {panel === "submit"
+                    ? "Tell Huza how much you can supply of this one crop, and your price per unit."
+                    : t("standardProductFormHint")}
+                </p>
+                <label className="block text-xs font-semibold text-[var(--huza-muted)]">
+                  Available quantity
+                  <input
+                    name="stockQty"
+                    type="number"
+                    min={0}
+                    className="input-field mt-1 text-lg font-semibold"
+                    placeholder={t("availableStockQty")}
+                    required
+                  />
+                </label>
                 <select name="priceUnit" className="input-field" defaultValue="kg">
                   {PRICE_UNITS.map((u) => (
                     <option key={u} value={u}>
@@ -611,15 +676,24 @@ export function FarmerPortalClient({
               </p>
             )}
             <Button type="submit" className="w-full" disabled={busy || !approved}>
-              {busy ? t("submitting") : t("submitProductCta")}
+              {busy
+                ? t("submitting")
+                : panel === "submit"
+                  ? "Submit harvest for review"
+                  : t("submitProductCta")}
             </Button>
+            {panel === "submit" ? (
+              <p className="text-center text-xs text-[var(--huza-muted)]">
+                After submit you&apos;ll go to Approval Status to track Youth Huza review.
+              </p>
+            ) : null}
             {!approved && (
               <p className="text-xs text-[var(--huza-muted)]">{t("waitApprovalProducts")}</p>
             )}
           </form>
           )}
 
-          {(panel === "products" || panel === "approvals" || !panel) && (
+          {(panel === "products" || !panel) && (
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-4">
               {panel === "approvals" ? "Approval status" : t("submittedProducts")}
