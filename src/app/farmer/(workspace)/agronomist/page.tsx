@@ -3,15 +3,12 @@ import { FarmerComingSoon, FarmerPageHeader } from "@/components/portals/FarmerU
 export default function FarmerAgronomistPage() {
   return (
     <div>
-      <FarmerPageHeader
-        title="Ask an Agronomist"
-        subtitle="Send a question, photo, or crop issue — Youth Huza agronomists reply with practical advice."
-      />
+      <FarmerPageHeader title="Ask an Agronomist" />
       <FarmerComingSoon
         title="Expert Q&A coming next"
-        body='Example: “My tomato leaves are turning yellow. What should I do?” → clear compost, watering, and nutrient guidance without changing your selling workflow.'
+        body='Example: “My tomato leaves are turning yellow. What should I do?” Get clear compost, watering, and nutrient advice.'
         ctaHref="/farmer/products/submit"
-        ctaLabel="Continue selling — Submit Product"
+        ctaLabel="Submit Product"
       />
     </div>
   );

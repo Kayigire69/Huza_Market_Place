@@ -88,8 +88,8 @@ export default async function FarmerDashboardPage() {
       title: "Farm account awaiting Youth Huza approval",
       body:
         farmer.status === "REJECTED"
-          ? farmer.rejectionReason || "Your application was not approved yet. Update your profile and wait for guidance."
-          : "You can explore the portal; crop submissions unlock after approval.",
+          ? farmer.rejectionReason || "Your application was not approved. Update your profile and wait for Huza to review again."
+          : "You can explore the portal. Crop submissions unlock after approval.",
       href: "/farmer/profile",
       cta: "View profile",
     });
@@ -98,7 +98,7 @@ export default async function FarmerDashboardPage() {
     attention.push({
       tone: "info",
       title: "Add your main crop supply",
-      body: "Most partners supply one crop in large quantity. Submit harvest details and available volume.",
+      body: "Submit one main crop with harvest details and available volume.",
       href: "/farmer/products/submit",
       cta: "Submit my main crop",
     });
@@ -107,7 +107,7 @@ export default async function FarmerDashboardPage() {
     attention.push({
       tone: "info",
       title: `${stats.pendingReviews} crop review${stats.pendingReviews === 1 ? "" : "s"} in progress`,
-      body: "Youth Huza is reviewing quality. Track status and prepare your field if an agent visit is scheduled.",
+      body: "Youth Huza is reviewing quality. Check status on Approval Status.",
       href: "/farmer/approvals",
       cta: "Open Approval Status",
     });
@@ -116,7 +116,7 @@ export default async function FarmerDashboardPage() {
     attention.push({
       tone: "warn",
       title: `${stats.rejectedProducts} crop submission${stats.rejectedProducts === 1 ? "" : "s"} need improvement`,
-      body: "Read the feedback, fix quality issues, and resubmit when ready.",
+      body: "Read the feedback, fix the issues, and resubmit when ready.",
       href: "/farmer/approvals",
       cta: "See feedback",
     });
@@ -133,8 +133,8 @@ export default async function FarmerDashboardPage() {
   if (attention.length === 0) {
     attention.push({
       tone: "ok",
-      title: "You're in good shape",
-      body: "Keep available quantity up to date so Huza can buy confidently.",
+      title: "All clear for now",
+      body: "Keep available quantity up to date so Huza can buy when ready.",
       href: "/farmer/products",
       cta: "Update crop supply",
     });
@@ -194,10 +194,7 @@ export default async function FarmerDashboardPage() {
 
   return (
     <div>
-      <FarmerPageHeader
-        title={`Welcome, ${farmer.user?.fullName || farmer.businessName}`}
-        subtitle="Grow Better. Sell Better. Earn Better. — your Youth Huza partner dashboard."
-      />
+      <FarmerPageHeader title={`Welcome, ${farmer.user?.fullName || farmer.businessName}`} />
 
       {/* Recommended next step */}
       <FarmerPanel className="mb-5 border-[var(--huza-green)]/35 bg-gradient-to-br from-white to-[var(--huza-mint)]/50">
@@ -293,7 +290,7 @@ export default async function FarmerDashboardPage() {
                 {formatUnit(stats.primaryUnit)} available
               </p>
               <p className="mt-2 text-xs text-[var(--huza-muted)]">
-                Volume-first partnership — keep quantity current after each harvest.
+                Update quantity after each harvest.
               </p>
               <Link href="/farmer/products" className="mt-4 inline-block">
                 <Button size="sm" variant="ghost" className="gap-1 px-0">
@@ -327,7 +324,7 @@ export default async function FarmerDashboardPage() {
           Keep business at the center
         </h2>
         <p className="mt-1 text-sm text-[var(--huza-muted)]">
-          Support tools help you grow quality — they stay secondary to selling.
+          Sell first. Support tools are secondary.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {steps.map((item) => (

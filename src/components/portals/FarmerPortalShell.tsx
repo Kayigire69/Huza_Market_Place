@@ -59,7 +59,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
             <span className="rounded-xl bg-white px-2 py-1.5 shadow-sm ring-1 ring-white/40">
               <Image
                 src="/images/youth-huza-logo.png"
-                alt="Youth Huza — Connecting you to freshness"
+                alt="Youth Huza"
                 width={148}
                 height={72}
                 className="h-12 w-auto sm:h-14"

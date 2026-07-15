@@ -125,7 +125,7 @@ export function FarmerMyCropsPanel({ products: initial }: { products: FarmerCrop
           Register your main crop
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--huza-muted)]">
-          Real Youth Huza partners usually grow <strong>one main crop</strong> in large volume — for
+          Youth Huza partners usually grow <strong>one main crop</strong> in large volume, for
           example tomatoes, potatoes, bananas, or cabbage. Fruit salads and juices are prepared by
           HUZA FRESH, not by farmers.
         </p>
@@ -145,7 +145,7 @@ export function FarmerMyCropsPanel({ products: initial }: { products: FarmerCrop
           How Youth Huza buys
         </p>
         <p className="mt-1 text-sm text-[var(--huza-muted)]">
-          One farm · one main crop · large quantity. You do not need a shop catalog. Prepared items
+          One main crop in large quantity. You do not need a shop catalog. Prepared items
           (fruit salads, juices) are made by HUZA FRESH after buying raw produce.
         </p>
       </FarmerPanel>
@@ -274,8 +274,8 @@ export function FarmerMyCropsPanel({ products: initial }: { products: FarmerCrop
             You have {otherCrops.length} extra crop type{otherCrops.length === 1 ? "" : "s"} on file
           </p>
           <p className="mt-1 text-sm text-amber-900/90">
-            Most Huza farm partners stick to <strong>one main crop</strong>. Extra lines are unusual —
-            only keep them if Huza specifically asked.
+            Most Huza farm partners stick to <strong>one main crop</strong>. Extra lines are unusual.
+            Only keep them if Huza specifically asked.
           </p>
           <button
             type="button"

@@ -41,7 +41,7 @@ export function FarmerWorkspaceShell({
         <div className="mb-3 rounded-xl bg-white px-2 py-2">
           <Image
             src="/images/youth-huza-logo.png"
-            alt="Youth Huza — Connecting you to freshness"
+            alt="Youth Huza"
             width={180}
             height={88}
             className="mx-auto h-16 w-auto"
@@ -49,7 +49,7 @@ export function FarmerWorkspaceShell({
           />
         </div>
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
-          Grow Better · Sell Better · Earn Better
+          Farmers Portal
         </p>
         <p className="mt-2 truncate font-[family-name:var(--font-display)] text-lg font-bold text-white">
           {businessName}
@@ -107,7 +107,7 @@ export function FarmerWorkspaceShell({
       </div>
 
       <div className="border-t border-white/10 px-4 py-3 text-[11px] text-white/50">
-        Youth Huza · Agricultural partner
+        Youth Huza
       </div>
     </nav>
   );

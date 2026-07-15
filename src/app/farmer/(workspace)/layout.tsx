@@ -21,7 +21,7 @@ export default async function FarmerWorkspaceLayout({
     >
       {farmer.status !== "APPROVED" && (
         <div className="mb-5 rounded-xl border border-[var(--huza-gold)] bg-[#FFF8E6] px-4 py-3 text-sm text-[var(--huza-ink)]">
-          Your farm account is <strong>{farmer.status}</strong>. You can explore the portal, but product
+          Your farm account is <strong>{farmer.status}</strong>. You can explore the portal. Product
           submissions unlock after Youth Huza approval.
           {farmer.rejectionReason ? (
             <span className="mt-1 block text-red-700">Reason: {farmer.rejectionReason}</span>

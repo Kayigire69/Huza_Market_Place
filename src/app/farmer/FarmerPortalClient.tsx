@@ -420,7 +420,7 @@ export function FarmerPortalClient({
               {panel === "submit" ? (
                 <p className="text-[11px] text-[var(--huza-muted)]">
                   Options are fruits, vegetables, and seedlings. Fruit salads and juices are prepared by
-                  HUZA FRESH — not listed here.
+                  HUZA FRESH and are not listed here.
                 </p>
               ) : null}
               <label className="block text-xs font-semibold text-[var(--huza-muted)]">
@@ -709,13 +709,12 @@ export function FarmerPortalClient({
             </h2>
             {panel === "products" && (
               <p className="mb-4 text-sm text-[var(--huza-muted)]">
-                Your submitted crops and stock. Use Submit Product to add new listings.
+                Submitted crops and stock. Use Submit Product to add a new listing.
               </p>
             )}
             {panel === "approvals" && (
               <p className="mb-4 text-sm text-[var(--huza-muted)]">
-                Track Huza quality review for each crop. Rejected items show feedback so you can improve
-                next harvest.
+                Quality review status for each crop. Rejected items include feedback for the next harvest.
               </p>
             )}
             <div className="space-y-3 max-h-[720px] overflow-y-auto">

@@ -44,8 +44,7 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
           No payouts yet
         </h2>
         <p className="mt-2 text-sm text-[var(--huza-muted)]">
-          After Youth Huza accepts a purchase order for your crop, payment status and references show
-          here.
+          After Youth Huza accepts a purchase order, payment status and references show here.
         </p>
         <Link href="/farmer/orders" className="mt-4 inline-block">
           <Button className="gap-2">

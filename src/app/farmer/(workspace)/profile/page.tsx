@@ -14,7 +14,7 @@ export default async function FarmerProfilePage() {
         title="My Profile"
         subtitle={
           isOrganic
-            ? "Organic farm dossier — the detailed form Youth Huza uses for quality partnership."
+            ? "Organic farm details for Youth Huza."
             : "Your Huza purchase agreement and contact details."
         }
       />

@@ -77,8 +77,7 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
           No purchase orders yet
         </h2>
         <p className="mt-2 text-sm text-[var(--huza-muted)]">
-          When Youth Huza wants to buy your harvest, the purchase order appears here with quantity,
-          inspection notes, and payment follow-up.
+          When Youth Huza buys your harvest, the order appears here with quantity, inspection, and payment follow-up.
         </p>
         <Link href="/farmer/products" className="mt-4 inline-block">
           <Button className="gap-2">
