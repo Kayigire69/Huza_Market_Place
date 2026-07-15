@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+/** Edge-safe role helpers only — never import @/lib/auth (pulls Redis/ioredis). */
 import { isAdminPortalRole, isSuperAdmin, isSuperAdminOnlyPath } from "@/lib/rbac";
 
 /**

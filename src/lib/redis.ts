@@ -1,41 +1,55 @@
 /**
  * Cache with Redis when available, otherwise an in-process memory fallback.
  * Keeps local/dev fast even when REDIS_URL is unset.
+ *
+ * ioredis is loaded only at runtime on the Node.js server. Never import this
+ * module from Edge middleware — it is marked server-only.
  */
-import Redis from "ioredis";
+import "server-only";
+
+type Redis = import("ioredis").default;
 
 let client: Redis | null | undefined;
 let connectPromise: Promise<Redis | null> | null = null;
+let RedisCtor: typeof import("ioredis").default | null = null;
 const memory = new Map<string, { exp: number; value: string }>();
 
 export function isRedisEnabled(): boolean {
   return Boolean(process.env.REDIS_URL);
 }
 
-export function getRedis(): Redis | null {
+async function loadRedisCtor() {
+  if (RedisCtor) return RedisCtor;
+  // Keep ioredis out of Edge/middleware webpack graphs (node: diagnostics_channel).
+  const mod = await import(/* webpackIgnore: true */ "ioredis");
+  RedisCtor = mod.default;
+  return RedisCtor;
+}
+
+export async function getRedis(): Promise<Redis | null> {
   if (!process.env.REDIS_URL) return null;
-  if (client === undefined) {
-    try {
-      client = new Redis(process.env.REDIS_URL, {
-        maxRetriesPerRequest: 2,
-        lazyConnect: true,
-        enableOfflineQueue: false,
-        connectTimeout: 2500,
-      });
-      client.on("error", (err) => {
-        console.warn("[redis]", err.message);
-      });
-    } catch (err) {
-      console.warn("[redis] init failed", err);
-      client = null;
-    }
+  if (client !== undefined) return client;
+  try {
+    const RedisClient = await loadRedisCtor();
+    client = new RedisClient(process.env.REDIS_URL, {
+      maxRetriesPerRequest: 2,
+      lazyConnect: true,
+      enableOfflineQueue: false,
+      connectTimeout: 2500,
+    });
+    client.on("error", (err) => {
+      console.warn("[redis]", err.message);
+    });
+  } catch (err) {
+    console.warn("[redis] init failed", err);
+    client = null;
   }
   return client;
 }
 
 /** Single shared connect — avoids reconnect storms on every cacheGet. */
 export async function ensureRedis(): Promise<Redis | null> {
-  const redis = getRedis();
+  const redis = await getRedis();
   if (!redis) return null;
   if (redis.status === "ready") return redis;
   if (!connectPromise) {

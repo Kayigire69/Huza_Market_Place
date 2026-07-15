@@ -1,4 +1,6 @@
-/** Role helpers for HUZA staff portals — Super Admin vs day-to-day Admin. */
+/** Role helpers for HUZA staff portals — Super Admin vs day-to-day Admin.
+ * Must stay Edge/middleware-safe: no Node-only imports (auth, redis, prisma).
+ */
 
 export const ADMIN_PORTAL_ROLES = ["ADMIN", "SUPER_ADMIN"] as const;
 export const SUPER_ADMIN_ONLY_PATHS = ["/admin/staff", "/admin/audit", "/admin/settings", "/admin/security"] as const;

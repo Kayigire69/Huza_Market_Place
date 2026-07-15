@@ -1,8 +1,10 @@
 /**
  * Simple sliding-window rate limiter.
  * Uses Redis when REDIS_URL is set; otherwise in-memory Map (per process).
+ *
+ * Server-only — do not import from Edge middleware.
  */
-import { ensureRedis } from "@/lib/redis";
+import "server-only";
 
 type Bucket = { count: number; resetAt: number };
 const memory = new Map<string, Bucket>();
@@ -14,6 +16,9 @@ export async function rateLimit(opts: {
 }): Promise<{ ok: boolean; remaining: number; retryAfterMs: number }> {
   const { key, limit, windowMs } = opts;
   const now = Date.now();
+
+  // Dynamic import keeps redis/ioredis out of any accidental Edge graph.
+  const { ensureRedis } = await import("@/lib/redis");
   const redis = await ensureRedis();
 
   if (redis) {

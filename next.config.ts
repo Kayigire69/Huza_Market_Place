@@ -7,8 +7,9 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig: NextConfig = {
   // Pin workspace root — parent folder had a stray lockfile that confused Next.js
   outputFileTracingRoot: projectRoot,
-  // pdfkit ships AFM font files; bundling into .next breaks Helvetica paths
-  serverExternalPackages: ["pdfkit"],
+  // pdfkit ships AFM font files; bundling into .next breaks Helvetica paths.
+  // ioredis uses node: APIs — keep it external so Edge/middleware never bundles it.
+  serverExternalPackages: ["pdfkit", "ioredis"],
   poweredByHeader: false,
   compress: true,
   images: {
