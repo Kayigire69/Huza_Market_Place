@@ -332,10 +332,10 @@ export function AdminShell({
           ))}
         </nav>
 
-        <div className="admin-sidebar-footer mx-3 mb-4 rounded-2xl px-3.5 py-3">
+        <div className="admin-sidebar-footer mx-3 mb-4 rounded-2xl px-3.5 py-3.5">
           <p className="text-xs font-bold tracking-wide text-emerald-50">HUZA Admin Portal</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-emerald-100/70">
-            © {new Date().getFullYear()} Youth Huza. All rights reserved.
+          <p className="mt-1.5 text-[11px] leading-relaxed text-emerald-100/75">
+            © {new Date().getFullYear()} Youth Huza
           </p>
         </div>
       </aside>

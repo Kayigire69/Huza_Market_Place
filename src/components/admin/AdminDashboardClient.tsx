@@ -19,6 +19,14 @@ type CategorySale = {
   units: number;
   revenue: number;
 };
+type ScheduleItem = {
+  id: string;
+  timeLabel: string;
+  title: string;
+  detail: string;
+  tone: "prepare" | "delivery" | "farmer" | "stock";
+  href: string;
+};
 
 type LivePayload = {
   counts: {
@@ -29,6 +37,8 @@ type LivePayload = {
     outForDelivery: number;
     deliveredToday: number;
     revenueToday: number;
+    revenueYesterday?: number;
+    revenueVsYesterdayPct?: number | null;
     lowStock: number;
     pendingFarmers?: number;
     pendingSuppliers?: number;
@@ -39,6 +49,10 @@ type LivePayload = {
     newCustomersMonth?: number;
     suppliersApproved?: number;
     suppliersPending?: number;
+    suppliersTotal?: number;
+    warehouseProducts?: number;
+    warehouseOutOfStock?: number;
+    warehouseLowStock?: number;
   };
   recentOrders: {
     id: string;
@@ -55,6 +69,7 @@ type LivePayload = {
   topProducts?: TopProduct[];
   salesByCategory?: CategorySale[];
   lowStockPreview?: { name: string; stockQty: number; unit: string }[];
+  todaySchedule?: { dateLabel: string; items: ScheduleItem[] };
 };
 
 function actionForStatus(status: string) {
@@ -64,6 +79,21 @@ function actionForStatus(status: string) {
   if (status === "OUT_FOR_DELIVERY") return "Track delivery";
   return "View";
 }
+
+function scheduleToneClass(tone: ScheduleItem["tone"]) {
+  if (tone === "prepare") return "bg-emerald-50 text-emerald-800";
+  if (tone === "delivery") return "bg-sky-50 text-sky-800";
+  if (tone === "farmer") return "bg-amber-50 text-amber-900";
+  return "bg-orange-50 text-orange-900";
+}
+
+const QUICK_ACTIONS: { href: string; label: string }[] = [
+  { href: "/admin/products", label: "+ Add product" },
+  { href: "/admin/offers", label: "+ Create offer" },
+  { href: "/admin/customers", label: "+ Add customer" },
+  { href: "/admin/suppliers", label: "+ Register farmer" },
+  { href: "/admin/reports", label: "+ Generate report" },
+];
 
 export function AdminDashboardClient({
   initial,
@@ -92,13 +122,27 @@ export function AdminDashboardClient({
   const topProducts = data.topProducts || [];
   const salesByCategory = data.salesByCategory || [];
   const stockPreview = data.lowStockPreview || lowStockPreview;
+  const schedule = data.todaySchedule;
 
   const maxOrders = Math.max(1, ...week.map((d) => d.orders));
   const maxCategoryRevenue = Math.max(1, ...salesByCategory.map((d) => d.revenue));
 
+  const vsYesterday =
+    c.revenueVsYesterdayPct == null
+      ? null
+      : `${c.revenueVsYesterdayPct > 0 ? "↑" : c.revenueVsYesterdayPct < 0 ? "↓" : "→"} ${Math.abs(
+          c.revenueVsYesterdayPct,
+        )}% vs yesterday`;
+
   const cards = [
-    { label: "Today's orders", value: String(c.todayOrders), tone: "bg-emerald-50 text-emerald-900" },
-    { label: "Today's revenue", value: formatRwf(c.revenueToday), tone: "bg-sky-50 text-sky-900" },
+    { label: "Today's orders", value: String(c.todayOrders), tone: "bg-emerald-50 text-emerald-900", href: "/admin/orders" },
+    {
+      label: "Today's revenue",
+      value: formatRwf(c.revenueToday),
+      tone: "bg-sky-50 text-sky-900",
+      href: "/admin/reports",
+      hint: vsYesterday,
+    },
     {
       label: "MoM revenue growth",
       value:
@@ -106,13 +150,20 @@ export function AdminDashboardClient({
           ? "—"
           : `${c.revenueGrowthPct > 0 ? "+" : ""}${c.revenueGrowthPct}%`,
       tone: "bg-violet-50 text-violet-900",
+      href: "/admin/reports",
     },
-    { label: "Pending payment", value: String(c.pendingPayment), tone: "bg-amber-50 text-amber-900" },
-    { label: "Completed orders", value: String(c.completedOrders ?? c.deliveredToday), tone: "bg-lime-50 text-lime-900" },
+    { label: "Pending payment", value: String(c.pendingPayment), tone: "bg-amber-50 text-amber-900", href: "/admin/payments" },
+    {
+      label: "Completed orders",
+      value: String(c.completedOrders ?? c.deliveredToday),
+      tone: "bg-lime-50 text-lime-900",
+      href: "/admin/orders",
+    },
     {
       label: "New customers (month)",
       value: String(c.newCustomersMonth ?? 0),
       tone: "bg-teal-50 text-teal-900",
+      href: "/admin/customers",
     },
   ];
 
@@ -122,7 +173,7 @@ export function AdminDashboardClient({
         <div>
           <h1 className="admin-panel-title text-2xl sm:text-3xl">Dashboard</h1>
           <p className="admin-panel-sub">
-            Live business data from real orders, stock, and farmers — updates every 15 seconds.
+            Live business data from real orders, stock, and farmers — updates every 30 seconds.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -139,19 +190,79 @@ export function AdminDashboardClient({
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {cards.map((card) => (
-          <div key={card.label} className={`admin-kpi ${card.tone}`}>
+          <Link key={card.label} href={card.href} className={`admin-kpi ${card.tone} transition hover:brightness-[0.98]`}>
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-80">{card.label}</p>
             <p className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight">
               {card.value}
             </p>
-          </div>
+            {"hint" in card && card.hint ? (
+              <p className="mt-1 text-[11px] font-semibold opacity-75">{card.hint}</p>
+            ) : null}
+          </Link>
         ))}
+      </div>
+
+      {/* Phase 11–12 summary cards: Farmers + Warehouse */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Link href="/admin/suppliers" className="admin-panel block p-5 transition hover:shadow-md">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+              Farmers
+            </h2>
+            <span className="text-sm font-semibold text-[var(--huza-green)]">Manage →</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-[#f8fbf9] px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--huza-muted)]">Total</p>
+              <p className="mt-1 text-xl font-bold text-[var(--huza-green-dark)]">
+                {c.suppliersTotal ?? (c.suppliersApproved ?? 0) + (c.suppliersPending ?? pendingFarmers)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-emerald-50 px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700/80">Approved</p>
+              <p className="mt-1 text-xl font-bold text-emerald-900">{c.suppliersApproved ?? 0}</p>
+            </div>
+            <div className="rounded-2xl bg-amber-50 px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-amber-800/80">Pending</p>
+              <p className="mt-1 text-xl font-bold text-amber-950">{c.suppliersPending ?? pendingFarmers}</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/admin/inventory" className="admin-panel block p-5 transition hover:shadow-md">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+              Warehouse
+            </h2>
+            <span className="text-sm font-semibold text-[var(--huza-green)]">Inventory →</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-[#f8fbf9] px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--huza-muted)]">Products</p>
+              <p className="mt-1 text-xl font-bold text-[var(--huza-green-dark)]">
+                {c.warehouseProducts ?? "—"}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-rose-50 px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-rose-800/80">Out of stock</p>
+              <p className="mt-1 text-xl font-bold text-rose-950">{c.warehouseOutOfStock ?? 0}</p>
+            </div>
+            <div className="rounded-2xl bg-orange-50 px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-orange-800/80">Low stock</p>
+              <p className="mt-1 text-xl font-bold text-orange-950">
+                {c.warehouseLowStock ?? c.lowStock}
+              </p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="admin-panel p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Recent orders</h2>
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+              Recent orders
+            </h2>
             <Link href="/admin/orders" className="text-sm font-semibold text-[var(--huza-green)]">
               View all →
             </Link>
@@ -189,7 +300,9 @@ export function AdminDashboardClient({
 
         <div className="space-y-4">
           <div className="admin-panel p-5">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Alerts</h2>
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+              Alerts
+            </h2>
             <ul className="mt-3 space-y-2 text-sm">
               <li className="rounded-xl bg-red-50 px-3 py-2 text-red-800">
                 {c.pendingPayment} pending payment
@@ -207,7 +320,9 @@ export function AdminDashboardClient({
           </div>
 
           <div className="admin-panel p-5">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Low stock</h2>
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+              Low stock
+            </h2>
             <ul className="mt-3 space-y-2 text-sm">
               {stockPreview.length === 0 ? (
                 <li className="text-[var(--huza-muted)]">Stock levels look healthy.</li>
@@ -229,9 +344,54 @@ export function AdminDashboardClient({
         </div>
       </div>
 
+      {/* Phase 10 — Today's schedule from real ops */}
+      <div className="admin-panel p-5">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+              Today&apos;s schedule
+            </h2>
+            <p className="text-sm text-[var(--huza-muted)]">
+              {schedule?.dateLabel || "Today"} — prepared from live orders, deliveries, farmers, and stock.
+            </p>
+          </div>
+          <Link href="/admin/orders" className="text-sm font-semibold text-[var(--huza-green)]">
+            Open ops →
+          </Link>
+        </div>
+        {!schedule?.items?.length ? (
+          <p className="text-sm text-[var(--huza-muted)]">No urgent tasks queued right now.</p>
+        ) : (
+          <ul className="space-y-2">
+            {schedule.items.map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={item.href}
+                  className="flex flex-wrap items-start gap-3 rounded-2xl border border-[var(--huza-line)] bg-[#fbfdfc] px-3 py-3 transition hover:border-[var(--huza-green)]/40"
+                >
+                  <span
+                    className={`min-w-[4.5rem] rounded-full px-2.5 py-1 text-center text-[11px] font-bold ${scheduleToneClass(item.tone)}`}
+                  >
+                    {item.timeLabel}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-[var(--huza-green-dark)]">
+                      {item.title}
+                    </span>
+                    <span className="block text-xs text-[var(--huza-muted)]">{item.detail}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="admin-panel p-5">
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Orders last 7 days</h2>
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+            Orders last 7 days
+          </h2>
           <div className="mt-4 flex h-40 items-end gap-2">
             {week.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No order data yet.</p>
@@ -260,7 +420,9 @@ export function AdminDashboardClient({
         </div>
 
         <div className="admin-panel p-5">
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Sales by category</h2>
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+            Sales by category
+          </h2>
           <div className="mt-3 space-y-2">
             {salesByCategory.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No paid sales yet.</p>
@@ -290,7 +452,9 @@ export function AdminDashboardClient({
       </div>
 
       <div className="admin-panel p-5">
-        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Top products (by units sold)</h2>
+        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+          Top products (by units sold)
+        </h2>
         <ol className="mt-3 space-y-2 text-sm">
           {topProducts.length === 0 ? (
             <li className="text-[var(--huza-muted)]">No product sales yet.</li>
@@ -314,19 +478,16 @@ export function AdminDashboardClient({
         </ol>
       </div>
 
+      {/* Phase 7 — Quick actions */}
       <div className="admin-panel p-5">
-        <h2 className="mb-3 font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">Quick actions</h2>
+        <h2 className="mb-3 font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-green-dark)]">
+          Quick actions
+        </h2>
         <div className="flex flex-wrap gap-2">
-          {[
-            ["/admin/products", "Manage products"],
-            ["/admin/suppliers", "Review farmers"],
-            ["/admin/inventory", "Stock in / out"],
-            ["/admin/reports", "PDF reports"],
-            ["/admin/settings", "Settings"],
-          ].map(([href, label]) => (
-            <Link key={href} href={href}>
+          {QUICK_ACTIONS.map((action) => (
+            <Link key={action.href + action.label} href={action.href}>
               <Button size="sm" variant="ghost">
-                {label}
+                {action.label}
               </Button>
             </Link>
           ))}

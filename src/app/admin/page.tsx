@@ -32,6 +32,7 @@ export default async function AdminDashboardPage() {
         ordersLast7Days: analytics.ordersLast7Days,
         topProducts: analytics.topProducts,
         salesByCategory: analytics.salesByCategory,
+        todaySchedule: analytics.todaySchedule,
       }}
       lowStockPreview={analytics.lowStockPreview}
     />
