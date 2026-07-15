@@ -49,18 +49,30 @@ export function AdminApprovalsClient() {
   const review = async (id: string, action: "approve" | "reject") => {
     setBusy(id);
     try {
-      const note =
-        action === "reject"
-          ? window.prompt("Rejection note", "Does not meet quality standards") || undefined
-          : undefined;
+      let note: string | undefined;
+      let recommendation: string | undefined;
+      if (action === "reject") {
+        note =
+          window.prompt("Rejection reason (shown to farmer)", "Pesticide residue above accepted level") ||
+          undefined;
+        if (!note) {
+          setBusy(null);
+          return;
+        }
+        recommendation =
+          window.prompt(
+            "Recommendation — what should the farmer do next?",
+            "Wait the recommended number of days after spraying before harvesting."
+          ) || undefined;
+      }
       const res = await fetch("/api/admin/products", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action, note }),
+        body: JSON.stringify({ id, action, note, recommendation }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Action failed");
-      setMsg(action === "approve" ? "Product approved" : "Product rejected");
+      setMsg(action === "approve" ? "Product approved" : "Product rejected with farmer guidance");
       await load();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Action failed");

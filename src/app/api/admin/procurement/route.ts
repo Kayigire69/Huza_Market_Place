@@ -228,6 +228,7 @@ async function handlePoAction(
     poAction: string;
     qualityNotes?: string;
     rejectionReason?: string;
+    recommendation?: string;
     paymentRef?: string;
     paymentMethod?: string;
     notes?: string;
@@ -313,11 +314,19 @@ async function handlePoAction(
         inspectedAt: now,
         rejectionReason: body.rejectionReason || "Quality rejected",
         qualityNotes: body.qualityNotes || null,
+        recommendation: body.recommendation?.trim() || null,
       };
       if (po.productId) {
         await prisma.product.update({
           where: { id: po.productId },
-          data: { isActive: false, stockQty: 0 },
+          data: {
+            isActive: false,
+            stockQty: 0,
+            reviewStatus: "REJECTED",
+            reviewNote: body.rejectionReason || "Quality rejected",
+            reviewRecommendation: body.recommendation?.trim() || null,
+            reviewedAt: now,
+          },
         });
       }
       break;

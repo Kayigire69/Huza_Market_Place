@@ -406,14 +406,23 @@ export function FarmerPortalClient({
                 }
                 className="input-field min-h-16"
               />
-              <select name="categoryId" className="input-field" required>
-                <option value="">{t("selectCategory")}</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nameEn}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-xs font-semibold text-[var(--huza-muted)]">
+                Crop type (raw farm produce only)
+                <select name="categoryId" className="input-field mt-1" required>
+                  <option value="">{t("selectCategory")}</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nameEn}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {panel === "submit" ? (
+                <p className="text-[11px] text-[var(--huza-muted)]">
+                  Options are fruits, vegetables, and seedlings. Fruit salads and juices are prepared by
+                  HUZA FRESH — not listed here.
+                </p>
+              ) : null}
               <label className="block text-xs font-semibold text-[var(--huza-muted)]">
                 Harvest photos (required)
                 <input

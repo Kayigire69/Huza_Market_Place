@@ -40,12 +40,13 @@ export default async function FarmerSubmitProductPage() {
 
       <FarmerPanel className="mb-5 max-w-2xl !py-3">
         <p className="text-sm text-[var(--huza-muted)]">
-          Youth Huza usually buys <strong>one crop type per farm partner in large quantity</strong>. Prefer
-          updating stock on{" "}
+          Submit <strong>raw farm crops only</strong> — fruits, vegetables, or seedlings.{" "}
+          <strong>Fruit salads and juices are prepared by HUZA FRESH</strong>, not by farmers. Prefer one
+          main crop in volume; update quantity on{" "}
           <Link href="/farmer/products" className="font-semibold text-[var(--huza-green-dark)] underline">
             My Crop Supply
           </Link>{" "}
-          unless you truly have a second harvest type ready.
+          after each harvest.
         </p>
       </FarmerPanel>
 

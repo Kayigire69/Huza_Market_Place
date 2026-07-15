@@ -15,8 +15,9 @@ export default async function FarmerApprovalsPage() {
     stockQty: p.stockQty,
     reviewStatus: p.reviewStatus,
     reviewNote: p.reviewNote,
+    reviewRecommendation: p.reviewRecommendation,
     reviewedAt: p.reviewedAt,
-    category: p.category ? { nameEn: p.category.nameEn } : null,
+    category: p.category ? { nameEn: p.category.nameEn, slug: p.category.slug } : null,
     images: p.images?.map((img) => ({ id: img.id, url: img.url, alt: img.alt })) ?? [],
   }));
 

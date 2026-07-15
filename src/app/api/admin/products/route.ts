@@ -203,10 +203,12 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { id, action, note } = body as {
+  const { id, action, note, recommendation } = body as {
     id?: string;
     action?: string;
     note?: string;
+    /** Actionable next step shown to the farmer after rejection */
+    recommendation?: string;
     price?: number;
     quantity?: number;
     reason?: string;
@@ -291,6 +293,10 @@ export async function PATCH(req: Request) {
       data: {
         reviewStatus: action === "approve" ? "APPROVED" : "REJECTED",
         reviewNote: note || null,
+        reviewRecommendation:
+          action === "reject"
+            ? String(recommendation || "").trim() || null
+            : null,
         reviewedAt: new Date(),
         ...(action === "approve"
           ? {
@@ -326,7 +332,9 @@ export async function PATCH(req: Request) {
         body:
           action === "approve"
             ? `${product.nameEn} was accepted and may be sold on HUZA FRESH.`
-            : `${product.nameEn} was rejected. ${note || "See admin notes."}`,
+            : `${product.nameEn} was rejected. Reason: ${note || "See Approval Status."}${
+                recommendation ? ` Recommendation: ${recommendation}` : ""
+              } Open Approval Status for details.`,
       },
     });
 
@@ -345,6 +353,7 @@ export async function PATCH(req: Request) {
         isActive: product.isActive,
         price: product.price,
         reviewNote: product.reviewNote,
+        reviewRecommendation: product.reviewRecommendation,
       },
     });
 

@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { FarmerPanel } from "@/components/portals/FarmerUi";
+import {
+  FarmerQualityReviewCard,
+  defaultQualityRecommendation,
+} from "@/components/portals/FarmerQualityReviewCard";
 import { Button } from "@/components/ui/Button";
 import { formatRwf, formatUnit } from "@/lib/utils";
 import { ArrowRight, CheckCircle2, Clock3, XCircle } from "lucide-react";
@@ -18,6 +22,7 @@ type CropRow = {
   stockQty: number;
   reviewStatus?: string | null;
   reviewNote?: string | null;
+  reviewRecommendation?: string | null;
   reviewedAt?: string | Date | null;
   category?: { nameEn: string } | null;
   images?: ProductImage[];
@@ -264,31 +269,17 @@ export function FarmerApprovalsClient({
                     ) : null}
 
                     {status === "REJECTED" ? (
-                      <div className="mt-3 rounded-xl border border-red-200 bg-red-50/60 px-3 py-3">
-                        <p className="text-sm font-semibold text-red-800">Quality review result</p>
-                        <p className="mt-1 text-sm text-red-700">
-                          {crop.reviewNote ||
-                            "This submission did not meet Huza quality standards. Improve and submit again."}
-                        </p>
-                        <p className="mt-2 text-xs text-[var(--huza-muted)]">
-                          Tip: clearer photos, correct harvest timing, and cleaner handling improve acceptance.
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Link href="/farmer/products/submit">
-                            <Button size="sm">Submit improved harvest</Button>
-                          </Link>
-                          <Link href="/farmer/support">
-                            <Button size="sm" variant="ghost">
-                              Read guides
-                            </Button>
-                          </Link>
-                          <Link href="/farmer/agronomist">
-                            <Button size="sm" variant="ghost">
-                              Ask an expert
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
+                      <FarmerQualityReviewCard
+                        productName={crop.nameEn}
+                        reason={
+                          crop.reviewNote ||
+                          "This submission did not meet Huza quality standards."
+                        }
+                        recommendation={
+                          crop.reviewRecommendation ||
+                          defaultQualityRecommendation(crop.reviewNote || "")
+                        }
+                      />
                     ) : null}
 
                     {status === "PENDING" || !crop.reviewStatus ? (

@@ -9,9 +9,9 @@
  * - Phase 2 Dashboard (KPIs, needs attention, next action, workflow progress, activity)
  * - Phase 3 Selling workflow (Submit Crop + Approval Status polish, volume-first)
  * - Phase 4 Orders & Payments (PO pipeline + payout tracker)
+ * - Phase 5 Quality feedback (reason + recommendation + Read Guide / Ask Expert)
  *
  * NEXT:
- * - Phase 5 Quality feedback (reason + recommendation + Read Guide / Ask Expert)
  * - Phase 6 Farmer Support knowledge library
  * - Phase 7 Ask an Agronomist
  * - Phase 8 Notifications & Profile polish
@@ -27,7 +27,7 @@ export const FARMER_PHASES = {
   /** Purchase Orders + Payments */
   ORDERS_PAYMENTS: { id: 4, name: "Orders & Payments", status: "locked" as const },
   /** Structured rejection reason + recommendation + CTAs */
-  QUALITY_FEEDBACK: { id: 5, name: "Quality feedback", status: "planned" as const },
+  QUALITY_FEEDBACK: { id: 5, name: "Quality feedback", status: "locked" as const },
   /** Knowledge library guides */
   SUPPORT_LIBRARY: { id: 6, name: "Farmer Support", status: "planned" as const },
   /** Photo + question agronomist Q&A */

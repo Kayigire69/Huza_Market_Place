@@ -62,6 +62,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Name and category are required" }, { status: 400 });
   }
 
+  const category = await prisma.category.findUnique({ where: { id: String(body.categoryId) } });
+  if (!category) {
+    return NextResponse.json({ error: "Category not found" }, { status: 400 });
+  }
+  const { isFarmerSupplyCategory, isHuzaPreparedCategory } = await import("@/lib/farmer-supply");
+  if (isHuzaPreparedCategory(category.slug) || !isFarmerSupplyCategory(category.slug)) {
+    return NextResponse.json(
+      {
+        error:
+          "Farmers supply raw crops (fruits, vegetables, seedlings) only. Fruit salads and juices are prepared by HUZA FRESH.",
+      },
+      { status: 400 }
+    );
+  }
+
   const imageUrls = parseImageUrls(body);
   if (imageUrls.length === 0) {
     return NextResponse.json(
