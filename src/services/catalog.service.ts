@@ -61,7 +61,7 @@ export const catalogService = {
           product: { select: { nameEn: true } },
         },
         orderBy: { createdAt: "desc" },
-        take: 6,
+        take: 3,
       }),
       getBusinessStatus(),
     ]);

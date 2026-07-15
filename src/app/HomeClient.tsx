@@ -156,7 +156,7 @@ export function HomePage({
     { emoji: "🟣", title: t("seasonPassion"), href: "/products?q=passion" },
   ];
 
-  const reviews =
+  const reviews = (
     customerReviews.length > 0
       ? customerReviews.map((r) => ({
           id: r.id,
@@ -171,13 +171,14 @@ export function HomePage({
           text: comment(x),
           name: x.name,
           role: x.role || "",
-        }));
+        }))
+  ).slice(0, 3);
 
   const waHref = whatsappUrl.startsWith("http")
     ? whatsappUrl
     : `https://wa.me/${whatsappUrl.replace(/\D/g, "")}`;
   const waUpdatesHref = `${waHref}${waHref.includes("?") ? "&" : "?"}text=${encodeURIComponent(
-    "Hello HUZA — please add me to weekly fresh deals updates."
+    "Hello HUZA, please add me to weekly fresh deals updates."
   )}`;
 
   return (
@@ -281,7 +282,7 @@ export function HomePage({
         id="special-offers"
         className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
       >
-        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">🔥 {t("specialOffers")}</h2>
+        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("specialOffers")}</h2>
         {promotions.length === 0 ? (
           <p className="rounded-xl border border-dashed border-[var(--huza-line)] bg-white/80 px-4 py-6 text-center text-sm text-[var(--huza-muted)]">
             {t("specialOffersEmpty")}
@@ -309,7 +310,7 @@ export function HomePage({
                   <p className="mt-3 inline-block rounded-md bg-white/15 px-3 py-1 text-sm font-mono">
                     {p.code}
                     {p.discountPct ? ` · ${p.discountPct}%` : ""}
-                    {p.freeDelivery ? ` · ${t("freeDelivery")}` : ""}
+                    {p.freeDelivery ? `, ${t("freeDelivery")}` : ""}
                   </p>
                 )}
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--huza-gold)]">
@@ -324,7 +325,7 @@ export function HomePage({
       {/* 5. Why Choose HUZA — icons only */}
       <section className="mx-auto mt-8 max-w-7xl px-4 sm:mt-10 sm:px-6">
         <h2 className="mb-3 text-center text-sm font-semibold text-[var(--huza-green-dark)] sm:text-base">
-          ❤️ {t("whyChooseHuza")}
+          {t("whyChooseHuza")}
         </h2>
         <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:gap-x-8">
           {whyChoose.map((item) => (
@@ -341,7 +342,7 @@ export function HomePage({
 
       {/* 6. Seasonal Picks */}
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-        <h2 className="section-title mb-2 text-[1.35rem] sm:mb-3">🌱 {t("seasonalPicks")}</h2>
+        <h2 className="section-title mb-2 text-[1.35rem] sm:mb-3">{t("seasonalPicks")}</h2>
         <p className="mb-4 text-sm text-[var(--huza-muted)]">{t("seasonalPicksHint")}</p>
         <div className="grid gap-3 sm:grid-cols-3">
           {seasonal.map((s) => (
@@ -361,7 +362,7 @@ export function HomePage({
 
       {/* 7. How HUZA Works */}
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">🚚 {t("howHuzaWorks")}</h2>
+        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("howHuzaWorks")}</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {howSteps.map((step) => (
             <div
@@ -384,7 +385,7 @@ export function HomePage({
       {/* 8. Customer Reviews */}
       {reviews.length > 0 && (
         <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-          <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">💬 {t("customerReviews")}</h2>
+          <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("customerReviews")}</h2>
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 snap-x sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
             {reviews.map((x) => (
               <blockquote
@@ -407,7 +408,7 @@ export function HomePage({
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
         <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#25D366]/40 bg-[#f3fff7] p-5 sm:flex-row sm:items-center sm:p-6">
           <div>
-            <p className="text-sm font-semibold text-[#128C7E]">📱 {t("whatsappHelpTitle")}</p>
+            <p className="text-sm font-semibold text-[#128C7E]">{t("whatsappHelpTitle")}</p>
             <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-ink)]">
               {t("needHelpChoosing")}
             </h3>
