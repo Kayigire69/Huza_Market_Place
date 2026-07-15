@@ -39,22 +39,31 @@ export const authOptions: NextAuthOptions = {
         });
         if (!user) return null;
 
-        const { rateLimit } = await import("./rate-limit");
+        const { rateLimit, clearRateLimit } = await import("./rate-limit");
+        const rlKey = `login:${identifier.toLowerCase()}`;
         const rl = await rateLimit({
-          key: `login:${identifier.toLowerCase()}`,
+          key: rlKey,
           limit: 10,
           windowMs: 15 * 60_000,
         });
-        if (!rl.ok) return null;
+        if (!rl.ok) {
+          throw new Error("RATE_LIMITED");
+        }
 
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
         if (user.totpEnabled && user.totpSecret) {
-          if (!totpCode || !verifyTotp(totpCode, user.totpSecret)) {
-            return null;
+          if (!totpCode) {
+            throw new Error("TOTP_REQUIRED");
+          }
+          if (!verifyTotp(totpCode, user.totpSecret)) {
+            throw new Error("TOTP_INVALID");
           }
         }
+
+        // Successful login clears the failure window
+        await clearRateLimit(rlKey);
 
         return {
           id: user.id,
@@ -83,6 +92,7 @@ export const authOptions: NextAuthOptions = {
           isPrimarySuperAdmin?: boolean;
         };
         token.id = u.id;
+        token.sub = u.id;
         token.role = u.role;
         token.supplierId = u.supplierId;
         token.supplierStatus = u.supplierStatus;
@@ -103,7 +113,8 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id?: string }).id = token.id as string;
+        const uid = (token.id as string) || (token.sub as string);
+        (session.user as { id?: string }).id = uid;
         (session.user as { role?: string }).role = token.role as string;
         (session.user as { supplierId?: string | null }).supplierId =
           (token.supplierId as string | null) ?? null;

@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
-import { clientIp } from "@/lib/rate-limit";
+import { clearRateLimit, clientIp } from "@/lib/rate-limit";
 
 /** Change password — clears mustChangePassword (forced first login for Super Admin). */
 export async function POST(req: Request) {
@@ -49,6 +49,10 @@ export async function POST(req: Request) {
       passwordChangedAt: new Date(),
     },
   });
+
+  // Clear login lockouts so the next sign-in is not blocked
+  const identifiers = [user.email, user.phone].filter(Boolean) as string[];
+  await Promise.all(identifiers.map((id) => clearRateLimit(`login:${id.toLowerCase()}`)));
 
   await writeAuditLog({
     actorId: user.id,

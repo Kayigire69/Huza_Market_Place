@@ -14,7 +14,7 @@ export default function LoginForm() {
   const sp = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [needsTotp, setNeedsTotp] = useState(false);
+  const [showTotp, setShowTotp] = useState(false);
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,18 +31,26 @@ export default function LoginForm() {
       totpCode,
       redirect: false,
     });
+
     if (res?.error) {
       setLoading(false);
-      if (!totpCode) {
-        setNeedsTotp(true);
-        setError(
-          needsTotp
-            ? "Invalid credentials or 2FA code."
-            : "Login failed. If 2FA is enabled, enter your authenticator code."
-        );
-      } else {
-        setError("Invalid credentials or 2FA code. Try again.");
+      const code = String(res.error);
+      if (code === "RATE_LIMITED") {
+        setError("Too many login attempts. Wait a few minutes and try again.");
+        return;
       }
+      if (code === "TOTP_REQUIRED") {
+        setShowTotp(true);
+        setError("This account has 2FA enabled. Enter the 6-digit authenticator code.");
+        return;
+      }
+      if (code === "TOTP_INVALID") {
+        setShowTotp(true);
+        setError("Authenticator code is incorrect. Try again.");
+        return;
+      }
+      // Wrong email/password (2FA is not the cause when it is disabled)
+      setError("Email or password is incorrect.");
       return;
     }
 
@@ -59,7 +67,7 @@ export default function LoginForm() {
       <h1 className="section-title text-center">{t("login")}</h1>
       {sp.get("reset") === "1" && (
         <p className="mt-2 text-center text-sm text-emerald-800">
-          Password updated. Sign in with your <strong>new</strong> password (not the temporary one).
+          Password updated. Sign in with your new password.
         </p>
       )}
       <form
@@ -88,16 +96,30 @@ export default function LoginForm() {
             autoComplete="current-password"
           />
         </div>
-        <div>
-          <label className="label">Authenticator code (optional — required if 2FA is on)</label>
-          <input
-            name="totpCode"
-            className="input-field"
-            placeholder="6-digit code"
-            autoComplete="one-time-code"
-            inputMode="numeric"
-          />
-        </div>
+        {showTotp ? (
+          <div>
+            <label className="label">Authenticator code</label>
+            <input
+              name="totpCode"
+              className="input-field"
+              placeholder="6-digit code"
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              autoFocus
+            />
+          </div>
+        ) : (
+          <>
+            <input type="hidden" name="totpCode" value="" />
+            <button
+              type="button"
+              className="text-left text-xs font-semibold text-[var(--huza-muted)] underline underline-offset-2"
+              onClick={() => setShowTotp(true)}
+            >
+              Have 2FA enabled? Enter authenticator code
+            </button>
+          </>
+        )}
         {error && <p className="text-sm text-red-700">{error}</p>}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "..." : t("login")}
