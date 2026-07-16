@@ -120,7 +120,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-5 text-center">
+      <div className="border-t border-white/10 px-4 py-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] text-center md:pb-5">
         <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-wide">
           HUZA FRESH
         </p>

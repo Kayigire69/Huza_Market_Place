@@ -45,10 +45,10 @@ export const PRODUCT_IMAGE_BY_NAME_EN: Record<string, string> = {
   "Family Fruit Tray": "/images/catalog/fruit-salad.jpg",
   "Passion Fruit Juice": "/images/catalog/passion-juice.jpg",
   "Pineapple Juice": "/images/catalog/pineapple-juice.jpg",
-  "Pineapple Ginger Juice": "/images/catalog/pineapple-juice.jpg",
-  "Mango Juice": "/images/catalog/orange-juice.jpg",
-  "Tree Tomato Juice": "/images/catalog/orange-juice.jpg",
-  "Sugarcane Juice": "/images/catalog/passion-juice.jpg",
+  "Pineapple Ginger Juice": "/images/catalog/pineapple-ginger-juice.jpg",
+  "Mango Juice": "/images/catalog/mango-juice.jpg",
+  "Tree Tomato Juice": "/images/catalog/tree-tomato-juice.jpg",
+  "Sugarcane Juice": "/images/catalog/sugarcane-juice.jpg",
 };
 
 export const CATEGORY_IMAGE_BY_SLUG: Record<string, string> = {
