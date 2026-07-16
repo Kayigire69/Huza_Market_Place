@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   compress: true,
   images: {
     formats: ["image/avif", "image/webp"],
+    // Allow qualities used by next/image (default 75 + hero banners at 78)
+    qualities: [75, 78],
     remotePatterns: [
       {
         protocol: "https",

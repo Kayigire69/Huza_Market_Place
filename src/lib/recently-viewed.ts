@@ -53,11 +53,13 @@ export function getRecentlyViewed(): RecentProduct[] {
 
 export function pushRecentlyViewed(item: { id: string } | RecentProduct) {
   if (typeof window === "undefined" || !item?.id) return;
-  const prev = getRecentlyViewedIds().filter((id) => id !== item.id);
-  const next: RecentView[] = [
-    { id: item.id, viewedAt: Date.now() },
-    ...prev.map((id) => ({ id, viewedAt: 0 })),
-  ].slice(0, MAX);
+  const prev = getRecentlyViewedIds();
+  if (prev[0] === item.id) return;
+  const nextIds = [item.id, ...prev.filter((id) => id !== item.id)].slice(0, MAX);
+  const next: RecentView[] = nextIds.map((id, i) => ({
+    id,
+    viewedAt: i === 0 ? Date.now() : 0,
+  }));
   localStorage.setItem(KEY, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent(EVENT));
 }

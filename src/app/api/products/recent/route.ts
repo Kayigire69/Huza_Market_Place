@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { productCardSelect } from "@/repositories/product.repository";
 import { resolveProductImage } from "@/lib/catalog-images";
+import { cacheGet, cacheSet } from "@/lib/redis";
 
 /** GET /api/products/recent?ids=id1,id2 — live catalog rows in the given order. */
 export async function GET(req: Request) {
@@ -14,6 +15,14 @@ export async function GET(req: Request) {
 
   if (ids.length === 0) {
     return NextResponse.json({ products: [] });
+  }
+
+  const cacheKey = `huza:products:recent:${ids.join(",")}`;
+  const cached = await cacheGet<{ products: unknown[] }>(cacheKey);
+  if (cached?.products) {
+    return NextResponse.json(cached, {
+      headers: { "Cache-Control": "private, max-age=30" },
+    });
   }
 
   const rows = await prisma.product.findMany({
@@ -52,5 +61,10 @@ export async function GET(req: Request) {
       category: p.category,
     }));
 
-  return NextResponse.json({ products });
+  const payload = { products };
+  await cacheSet(cacheKey, payload, 60);
+
+  return NextResponse.json(payload, {
+    headers: { "Cache-Control": "private, max-age=30" },
+  });
 }
