@@ -86,9 +86,6 @@ export function AdminAuditClient() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="admin-panel-title">System logs</h1>
-          <p className="admin-panel-sub">
-            Audit trail (who changed what, when) and application error logs. Super Admin only.
-          </p>
         </div>
         <Link href="/admin/staff">
           <Button size="sm" variant="ghost">

@@ -140,10 +140,6 @@ export function AdminStaffClient() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="admin-panel-title">Staff accounts</h1>
-          <p className="admin-panel-sub">
-            Create, activate, assign roles, and reset passwords. Super Admin only — one person, one
-            login.
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/audit">

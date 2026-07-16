@@ -17,10 +17,12 @@
  * - Phase 11 Reports (sales→deliveries, PDF/Excel/CSV, preview)
  * - Phase 12 Settings (company, fees, hours, payments, notifications, system)
  * - Phase 13 Super Admin (staff, roles, password reset, audit, 2FA, error logs;
- *   first-login forced password change + login error/rate-limit UX)
+ *   login error/rate-limit UX; password change is optional, not forced)
+ * - Phase 14 Support (tickets, live chat, contact inbox; optional password change;
+ *   admin subtitle polish)
  *
  * NEXT:
- * - Phase 14 Support
+ * - (Admin portal phases complete — expand only on request)
  */
 export const ADMIN_PHASES = {
   /** Sidebar, header, nav, colors, cards, search, notifications shell */
@@ -38,7 +40,7 @@ export const ADMIN_PHASES = {
   REPORTS: { id: 11, name: "Reports", status: "locked" as const },
   SETTINGS: { id: 12, name: "Settings", status: "locked" as const },
   SUPER_ADMIN: { id: 13, name: "Super Admin", status: "locked" as const },
-  SUPPORT: { id: 14, name: "Support", status: "planned" as const },
+  SUPPORT: { id: 14, name: "Support", status: "locked" as const },
 } as const;
 
 export function isAdminPhaseLocked(phase: keyof typeof ADMIN_PHASES): boolean {

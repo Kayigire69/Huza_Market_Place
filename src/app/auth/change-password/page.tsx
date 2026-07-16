@@ -30,7 +30,7 @@ export default function ChangePasswordPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not change password");
 
-      // Stay signed in — update the JWT flag so middleware lets you into admin.
+      // Refresh session flag after voluntary password change.
       await update({ mustChangePassword: false });
       router.push(portalPathForRole(session?.user?.role));
       router.refresh();
@@ -45,21 +45,20 @@ export default function ChangePasswordPage() {
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">Change your password</h1>
       <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
-        Enter your temporary password, then choose a new one. You will stay signed in after saving.
+        Optional — update your password whenever you want. You stay signed in after saving.
       </p>
       <form
         onSubmit={onSubmit}
         className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6"
       >
         <div>
-          <label className="label">Current (temporary) password</label>
+          <label className="label">Current password</label>
           <input
             name="currentPassword"
             type="password"
             required
             className="input-field"
             autoComplete="current-password"
-            placeholder="Temporary password from setup"
           />
         </div>
         <div>
@@ -86,7 +85,7 @@ export default function ChangePasswordPage() {
         </div>
         {error && <p className="text-sm text-red-700">{error}</p>}
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Saving…" : "Save new password & continue"}
+          {loading ? "Saving…" : "Save new password"}
         </Button>
       </form>
     </div>

@@ -54,7 +54,6 @@ async function main() {
   const ownerPassword = await bcrypt.hash("Huza@2026!", 10);
 
   // Primary Super Admin — created at system setup (not via the public website).
-  // Owner must change this temporary password on first login.
   await prisma.user.create({
     data: {
       email: "owner@huza.rw",
@@ -62,7 +61,7 @@ async function main() {
       passwordHash: ownerPassword,
       fullName: "YOUTH HUZA Owner",
       role: Role.SUPER_ADMIN,
-      mustChangePassword: true,
+      mustChangePassword: false,
       isPrimarySuperAdmin: true,
     },
   });

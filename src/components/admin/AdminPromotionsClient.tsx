@@ -100,9 +100,6 @@ export function AdminPromotionsClient() {
     <div className="space-y-5">
       <div>
         <h1 className="admin-panel-title">Promotions</h1>
-        <p className="admin-panel-sub">
-          Discounts and homepage special offers — codes, flash sales, free delivery.
-        </p>
       </div>
 
       {msg ? (

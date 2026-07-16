@@ -101,7 +101,7 @@ export async function POST(req: Request) {
       role,
       passwordHash: await bcrypt.hash(password, 10),
       isActive: true,
-      mustChangePassword: true,
+      mustChangePassword: false,
       isPrimarySuperAdmin: false,
     },
     select: {
@@ -224,8 +224,8 @@ export async function PATCH(req: Request) {
       where: { id },
       data: {
         passwordHash: await bcrypt.hash(password, 10),
-        mustChangePassword: true,
-        passwordChangedAt: null,
+        mustChangePassword: false,
+        passwordChangedAt: new Date(),
       },
       select: {
         id: true,
@@ -240,9 +240,9 @@ export async function PATCH(req: Request) {
       action: "staff.reset_password",
       entity: "User",
       entityId: id,
-      details: `Password reset for ${before.fullName} — must change on next login`,
+      details: `Password reset for ${before.fullName}`,
       before: { id: before.id, fullName: before.fullName },
-      after: { mustChangePassword: true },
+      after: { mustChangePassword: false },
     });
     return NextResponse.json(user);
   }

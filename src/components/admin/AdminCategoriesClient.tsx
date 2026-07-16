@@ -149,10 +149,6 @@ export function AdminCategoriesClient() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="admin-panel-title">Categories</h1>
-          <p className="admin-panel-sub">
-            Manage catalog categories. Add Honey, Eggs, Coffee, or anything else later — no code
-            changes.
-          </p>
         </div>
         <Button type="button" onClick={openCreate}>
           <Plus className="size-4" />

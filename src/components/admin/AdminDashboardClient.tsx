@@ -332,9 +332,6 @@ export function AdminDashboardClient({
             {todayLabel}
           </p>
           <h1 className="admin-panel-title mt-1">Dashboard</h1>
-          <p className="admin-panel-sub">
-            Start-of-day overview — information only. No tables. No editing here.
-          </p>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           {quick.slice(0, 4).map((q) => (

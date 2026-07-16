@@ -169,10 +169,6 @@ export function AdminOrdersClient() {
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Orders</h1>
-        <p className="admin-panel-sub">
-          Filter by status. Search by order ID, customer, or phone. View opens details — no page
-          hop.
-        </p>
       </div>
 
       {msg ? (

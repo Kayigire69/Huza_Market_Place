@@ -134,10 +134,6 @@ export function AdminSettingsClient({ isSuperAdmin }: { isSuperAdmin: boolean })
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Settings</h1>
-        <p className="admin-panel-sub">
-          Company, delivery fees, hours, payments, notifications, and system — split by area.
-          {canEdit ? "" : " View only (Super Admin can edit)."}
-        </p>
       </div>
 
       {msg ? (

@@ -56,9 +56,8 @@ export default function LoginForm() {
 
     const session = await getSession();
     const role = session?.user?.role;
-    const mustChange = Boolean(session?.user?.mustChangePassword);
     setLoading(false);
-    router.push(portalPathForRole(role, { mustChangePassword: mustChange }));
+    router.push(portalPathForRole(role));
     router.refresh();
   };
 

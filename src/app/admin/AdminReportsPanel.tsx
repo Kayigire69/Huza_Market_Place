@@ -66,11 +66,6 @@ export function AdminReportsPanel({ snapshot }: { snapshot: Snapshot }) {
       <div className="admin-panel space-y-4 p-5 sm:p-6">
         <div>
           <h2 className="admin-panel-title text-xl">PDF activity reports</h2>
-          <p className="admin-panel-sub">
-            Download branded Youth Huza / HUZA FRESH reports with period detail, prepared-by
-            (logged-in employee), and manager approval signature lines. Each download is written to
-            the audit log.
-          </p>
         </div>
 
         <form onSubmit={downloadPdf} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

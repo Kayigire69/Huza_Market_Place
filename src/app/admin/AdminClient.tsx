@@ -306,10 +306,6 @@ export function AdminClient(props: {
       {activeTab === "overview" && (
         <div className="admin-panel space-y-4 p-6">
           <h2 className="admin-panel-title">Team playbook</h2>
-          <p className="text-sm text-[var(--huza-muted)]">
-            Several staff can use admin at the same time. Use the left menu so each person stays in
-            their lane — audit log records who did what.
-          </p>
           <ul className="text-sm space-y-2 list-disc pl-5 text-[var(--huza-muted)]">
             <li>
               <strong className="text-[var(--huza-ink)]">Farmer approval / product review</strong> —
@@ -375,10 +371,6 @@ export function AdminClient(props: {
         <div className="space-y-6">
           <div className="admin-panel p-5 space-y-3">
             <h2 className="font-semibold mb-1">Procurement Management</h2>
-            <p className="text-sm text-[var(--huza-muted)] mb-4">
-              Review farm offers, negotiate wholesale price, purchase into Huza stock, then manage
-              purchase orders (receive, inspect, pay).
-            </p>
             {(props.procurementOffers || []).length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No offers yet.</p>
             ) : (
@@ -454,9 +446,6 @@ export function AdminClient(props: {
 
           <div className="admin-panel p-5 space-y-3">
             <h2 className="font-semibold mb-1">Purchase orders</h2>
-            <p className="text-sm text-[var(--huza-muted)] mb-4">
-              Record receipt, quality inspection, and farmer payment.
-            </p>
             {(props.purchaseOrders || []).length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No purchase orders yet.</p>
             ) : (
@@ -535,10 +524,6 @@ export function AdminClient(props: {
         <div className="space-y-6">
           <section className="admin-panel p-5">
             <h2 className="font-semibold mb-1">Farmer Approval (Module 10)</h2>
-            <p className="text-sm text-[var(--huza-muted)] mb-4">
-              Review farmer applications. Organic farms use the full dossier; standard (non-organic)
-              farms submit name, ID, products, and the Huza purchase agreement.
-            </p>
             {props.pendingSuppliers.length === 0 ? (
               <p className="text-sm text-[var(--huza-muted)]">No pending requests.</p>
             ) : (
@@ -788,10 +773,6 @@ export function AdminClient(props: {
       {activeTab === "products" && (
         <div className="admin-panel p-5 space-y-4">
           <h2 className="font-semibold mb-1">Product review</h2>
-          <p className="text-sm text-[var(--huza-muted)] mb-4">
-            Farmer photos are for inspection only. Upload HUZA storefront images (cover + gallery)
-            before accepting — those are what customers see on the home page and shop.
-          </p>
           {(props.pendingFarmerProducts || []).length === 0 ? (
             <p className="text-sm text-[var(--huza-muted)]">No products waiting for review.</p>
           ) : (
@@ -905,10 +886,6 @@ export function AdminClient(props: {
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h2 className="font-semibold">Order management</h2>
-              <p className="text-sm text-[var(--huza-muted)]">
-                Full order screen — prepare only after payment is confirmed. Customer receipt and
-                internal purchase record are separate documents.
-              </p>
             </div>
           </div>
           {props.orders.map((o) => {
@@ -1003,9 +980,6 @@ export function AdminClient(props: {
       {activeTab === "delivery" && (
         <div className="admin-panel p-5 space-y-3">
           <h2 className="font-semibold mb-2">Delivery management</h2>
-          <p className="text-sm text-[var(--huza-muted)] mb-4">
-            Youth Huza delivers directly — assign your delivery personnel here.
-          </p>
           {props.deliveries.map((d) => {
             const order = d.order as { orderNumber?: string; deliveryAddress?: string };
             return (
@@ -1035,9 +1009,6 @@ export function AdminClient(props: {
         <div className="admin-panel space-y-4 p-5 sm:p-6">
           <div>
             <h2 className="admin-panel-title">Payment management</h2>
-            <p className="admin-panel-sub">
-              Confirm MoMo / Airtel collections and issue refunds for HUZA FRESH orders.
-            </p>
           </div>
           <div className="space-y-2.5">
             {props.payments.length === 0 ? (
@@ -1085,7 +1056,6 @@ export function AdminClient(props: {
       {activeTab === "reviews" && (
         <div className="admin-panel p-5 space-y-3">
           <h2 className="font-semibold mb-2">Reviews & ratings</h2>
-          <p className="text-sm text-[var(--huza-muted)]">Bad comments can be deleted or hidden.</p>
           {props.reviews.map((r) => (
             <div key={String(r.id)} className="rounded-xl border border-[var(--huza-line)] p-3">
               <p className="font-medium">
