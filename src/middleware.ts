@@ -37,31 +37,11 @@ function isPublicFarmerEntry(pathname: string) {
   );
 }
 
-function isAuthExempt(pathname: string) {
-  return (
-    pathname === "/auth/change-password" ||
-    pathname.startsWith("/auth/change-password/") ||
-    pathname === "/auth/forgot-password" ||
-    pathname.startsWith("/auth/forgot-password/") ||
-    pathname === "/auth/reset-password" ||
-    pathname.startsWith("/auth/reset-password/") ||
-    pathname === "/auth/login" ||
-    pathname.startsWith("/api/auth/")
-  );
-}
-
 export default withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
     const role = token?.role as string | undefined;
-
-    // Force temporary-password holders to change before using the app
-    if (token?.mustChangePassword && !isAuthExempt(pathname) && !pathname.startsWith("/api/auth")) {
-      if (!pathname.startsWith("/api/")) {
-        return NextResponse.redirect(new URL("/auth/change-password", req.url));
-      }
-    }
 
     if (isStaffPath(pathname)) {
       const allowed: Record<string, string[]> = {

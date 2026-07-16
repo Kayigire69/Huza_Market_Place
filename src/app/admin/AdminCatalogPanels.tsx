@@ -71,10 +71,6 @@ export function AdminCatalogPanel({
     <div className="admin-panel p-5 space-y-4">
       <div>
         <h2 className="font-semibold text-lg">Catalog &amp; prices</h2>
-        <p className="text-sm text-[var(--huza-muted)] mt-1">
-          Youth Huza sets every customer retail price and storefront photos. Farm-partner inspection
-          photos are never shown to shoppers until you upload HUZA images.
-        </p>
       </div>
 
       {products.length === 0 ? (
@@ -210,10 +206,6 @@ export function AdminInventoryPanel({
     <div className="grid lg:grid-cols-2 gap-4">
       <form onSubmit={submit} className="admin-panel p-5 space-y-3">
         <h2 className="font-semibold text-lg">Stock in / stock out</h2>
-        <p className="text-sm text-[var(--huza-muted)]">
-          Manual adjustments for warehouse corrections. Customer sales and PO receives also create
-          stock movements automatically — you do not enter those by hand.
-        </p>
         <div>
           <label className="label">Product</label>
           <select name="productId" className="input-field" required>

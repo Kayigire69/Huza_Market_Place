@@ -196,9 +196,6 @@ export function AdminCustomersClient() {
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Customers</h1>
-        <p className="admin-panel-sub">
-          Profiles, order & spending history, favorites, saved addresses, and support notes.
-        </p>
       </div>
 
       {msg ? (

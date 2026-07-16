@@ -89,10 +89,6 @@ export default function AdminSecurityPage() {
     <div className="space-y-4 max-w-xl">
       <div>
         <h1 className="admin-panel-title">Super Admin security</h1>
-        <p className="admin-panel-sub">
-          Enable two-factor authentication so a stolen password alone cannot access the most powerful
-          account in the system.
-        </p>
       </div>
 
       <div className="admin-panel space-y-3 p-5">

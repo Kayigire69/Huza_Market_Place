@@ -1,35 +1,36 @@
 /**
- * Reset the primary Super Admin to the temporary setup password.
+ * Reset the primary Super Admin to the known login password.
  *
  * Usage (from project root):
  *   node scripts/reset-owner-password.cjs
  *
- * Then sign in with:
+ * Sign in with:
  *   owner@huza.rw / Huza@2026!
- * and set a new password when prompted.
+ *
+ * Password change is optional later (account / security settings).
  */
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 
 const EMAIL = "owner@huza.rw";
-const TEMP_PASSWORD = "Huza@2026!";
+const PASSWORD = "Huza@2026!";
 
 async function main() {
   const prisma = new PrismaClient();
   try {
-    const passwordHash = await bcrypt.hash(TEMP_PASSWORD, 10);
+    const passwordHash = await bcrypt.hash(PASSWORD, 10);
     const user = await prisma.user.upsert({
       where: { email: EMAIL },
       update: {
         passwordHash,
-        mustChangePassword: true,
+        mustChangePassword: false,
         isActive: true,
         deletedAt: null,
         role: "SUPER_ADMIN",
         isPrimarySuperAdmin: true,
         totpEnabled: false,
         totpSecret: null,
-        passwordChangedAt: null,
+        passwordChangedAt: new Date(),
       },
       create: {
         email: EMAIL,
@@ -37,16 +38,15 @@ async function main() {
         passwordHash,
         fullName: "YOUTH HUZA Owner",
         role: "SUPER_ADMIN",
-        mustChangePassword: true,
+        mustChangePassword: false,
         isPrimarySuperAdmin: true,
       },
     });
 
     console.log("Owner Super Admin reset.");
     console.log(`  Email:    ${user.email}`);
-    console.log(`  Password: ${TEMP_PASSWORD}`);
-    console.log("  Next: sign in, then set a new password on the forced change screen.");
-    console.log("  After that you stay signed in — no need to log in again.");
+    console.log(`  Password: ${PASSWORD}`);
+    console.log("  Forced password change is OFF — you can change it later if you want.");
   } finally {
     await prisma.$disconnect();
   }

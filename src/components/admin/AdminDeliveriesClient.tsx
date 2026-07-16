@@ -181,9 +181,6 @@ export function AdminDeliveriesClient() {
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Deliveries</h1>
-        <p className="admin-panel-sub">
-          Drivers, assignment, zone routes, status, proof of delivery, and failed trips.
-        </p>
       </div>
 
       {msg ? (

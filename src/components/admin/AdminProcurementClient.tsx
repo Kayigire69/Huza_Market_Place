@@ -159,18 +159,10 @@ export function AdminProcurementClient({
         ? "Purchase Orders"
         : "Goods Received";
 
-  const sub =
-    view === "requests"
-      ? "Accept farm offers, negotiate price, then create a purchase order."
-      : view === "orders"
-        ? "Receive delivery → quality inspect → publish to shop → pay farmer."
-        : "History of received, inspected, and paid purchase orders.";
-
   return (
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">{title}</h1>
-        <p className="admin-panel-sub">{sub}</p>
       </div>
 
       {/* Pipeline explanation */}

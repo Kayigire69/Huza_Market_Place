@@ -434,7 +434,6 @@ export function AdminProductsClient() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="admin-panel-title">Products</h1>
-            <p className="admin-panel-sub">Select a category to view and manage its products.</p>
           </div>
           <Button type="button" variant="ghost" disabled title="Pick a category first">
             <Plus className="size-4" />
@@ -488,11 +487,6 @@ export function AdminProductsClient() {
               ))}
             </div>
           )}
-          {!loadingCats && categories.length > 0 ? (
-            <p className="mt-6 text-center text-sm text-[var(--admin-muted)]">
-              Select a category to view products. Nothing is loaded until you choose one.
-            </p>
-          ) : null}
         </div>
       </div>
     );
@@ -519,9 +513,6 @@ export function AdminProductsClient() {
           <h1 className="admin-panel-title">
             {emojiFor(selected.slug)} {selected.nameEn}
           </h1>
-          <p className="admin-panel-sub">
-            Products › {selected.nameEn} · {products.length} shown
-          </p>
         </div>
         <Button type="button" onClick={openCreate}>
           <Plus className="size-4" />

@@ -155,10 +155,6 @@ export function AdminInventoryClient() {
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Inventory</h1>
-        <p className="admin-panel-sub">
-          All stock, low stock, out of stock, expiring batches, and recent inbound / outbound
-          movements.
-        </p>
       </div>
 
       {msg ? (

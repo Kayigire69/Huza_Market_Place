@@ -247,10 +247,6 @@ export function AdminFarmersClient() {
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Farmers</h1>
-        <p className="admin-panel-sub">
-          Registration, profiles, products, purchase history, payments, ratings, and notifications.
-          Pending opens first.
-        </p>
       </div>
 
       {msg ? (

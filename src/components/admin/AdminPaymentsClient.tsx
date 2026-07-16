@@ -218,9 +218,6 @@ export function AdminPaymentsClient() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="admin-panel-title">Payments</h1>
-          <p className="admin-panel-sub">
-            MTN MoMo & Airtel Money — history, refunds, failed payments, and reconciliation.
-          </p>
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={() => void loadReconcile()}>
           Reconciliation

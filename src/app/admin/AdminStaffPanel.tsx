@@ -85,10 +85,6 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
     <div className="space-y-4">
       <div className="admin-panel p-5 space-y-3">
         <h2 className="admin-panel-title text-xl">Staff accounts</h2>
-        <p className="text-sm text-[var(--huza-muted)]">
-          Only the Super Admin manages employees. Normal Administrators never see this page, the
-          audit log, or system settings. Never share one login across shifts.
-        </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

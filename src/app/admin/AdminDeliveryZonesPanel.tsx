@@ -71,9 +71,6 @@ export function AdminDeliveryZonesPanel() {
     <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-4">
       <div>
         <h2 className="font-semibold">Delivery zones &amp; ETAs</h2>
-        <p className="mt-1 text-sm text-[var(--huza-muted)]">
-          Fees and estimated times shown at cart and checkout. Super Admin only.
-        </p>
       </div>
       {msg && <p className="text-sm text-[var(--huza-green-dark)]">{msg}</p>}
       <div className="space-y-4">

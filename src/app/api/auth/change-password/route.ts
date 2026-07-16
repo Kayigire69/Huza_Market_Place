@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
 import { clearRateLimit, clientIp } from "@/lib/rate-limit";
 
-/** Change password — clears mustChangePassword (forced first login for Super Admin). */
+/** Change password — optional for signed-in users (no longer forced at first login). */
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {

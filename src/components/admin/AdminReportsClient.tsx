@@ -169,10 +169,6 @@ export function AdminReportsClient() {
       <div className="space-y-5">
         <div>
           <h1 className="admin-panel-title">Reports</h1>
-          <p className="admin-panel-sub">
-            Sales, inventory, procurement, farmers, customers, payments, and deliveries — export
-            PDF or Excel.
-          </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {CATEGORIES.map((c) => (
@@ -189,7 +185,6 @@ export function AdminReportsClient() {
             >
               <c.icon className="size-5 text-[var(--huza-green)]" />
               <h2 className="mt-2 text-base font-semibold">{c.label}</h2>
-              <p className="mt-1 text-sm text-[var(--admin-muted)]">{c.description}</p>
             </button>
           ))}
         </div>
@@ -212,7 +207,6 @@ export function AdminReportsClient() {
       </button>
       <div>
         <h1 className="admin-panel-title">{category.label}</h1>
-        <p className="admin-panel-sub">{category.description}</p>
       </div>
 
       <form

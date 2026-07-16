@@ -85,10 +85,6 @@ export function AdminApprovalsClient() {
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Product Approvals</h1>
-        <p className="admin-panel-sub">
-          Step 1 of buying: inspect farmer-listed products. After approve, continue with Purchase
-          Requests → PO → receive → QC → shop.
-        </p>
       </div>
 
       {msg ? (
