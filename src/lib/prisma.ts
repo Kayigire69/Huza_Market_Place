@@ -6,10 +6,23 @@ const globalForPrisma = globalThis as unknown as {
   prismaConnecting: Promise<void> | undefined;
 };
 
+function isProductionBuild(): boolean {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build"
+  );
+}
+
 function createPrismaClient() {
+  const raw = process.env.DATABASE_URL?.trim();
+  // Next.js imports this module while compiling pages. Allow build without a live DB.
+  const url = raw
+    ? resolveDatabaseUrl(raw)
+    : "postgresql://build:build@127.0.0.1:5432/build?schema=public";
+
   return new PrismaClient({
     datasources: {
-      db: { url: resolveDatabaseUrl(process.env.DATABASE_URL) },
+      db: { url },
     },
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
@@ -36,7 +49,11 @@ async function connectWithRetry(client: PrismaClient) {
   throw lastError;
 }
 
-if (!globalForPrisma.prismaConnecting) {
+if (
+  !globalForPrisma.prismaConnecting &&
+  process.env.DATABASE_URL?.trim() &&
+  !isProductionBuild()
+) {
   globalForPrisma.prismaConnecting = connectWithRetry(prisma).catch((err) => {
     console.error("[prisma] database connect failed after retries:", err);
   });

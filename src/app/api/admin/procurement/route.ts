@@ -391,6 +391,8 @@ async function handlePoAction(
     expiryDate?: string;
     saleAmount?: number;
     commissionRate?: number;
+    officialImageUrls?: string[] | string;
+    imageUrls?: string[] | string;
   }
 ) {
   const po = await prisma.purchaseOrder.findUnique({
