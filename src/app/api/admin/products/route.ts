@@ -428,36 +428,80 @@ export async function PATCH(req: Request) {
     return NextResponse.json(product);
   }
 
-  // --- Set / replace customer-facing HUZA images ---
+  // --- Set / replace customer-facing HUZA images (official only — never farmer photos) ---
   if (action === "set_storefront_images") {
     const imageUrls = Array.isArray(body.imageUrls)
       ? (body.imageUrls as unknown[]).map(String).map((u) => u.trim()).filter(Boolean)
       : [];
     if (imageUrls.length === 0) {
-      return NextResponse.json({ error: "Upload at least one storefront image" }, { status: 400 });
+      return NextResponse.json({ error: "Upload at least one official HUZA image" }, { status: 400 });
     }
-    const limited = imageUrls.slice(0, 5);
-    const coverIndex = Math.max(0, Math.min(Number(body.coverIndex) || 0, limited.length - 1));
-    await prisma.$transaction([
-      prisma.productImage.deleteMany({ where: { productId: id, kind: "STOREFRONT" } }),
-      prisma.productImage.createMany({
-        data: limited.map((url, i) => ({
-          productId: id,
-          url,
-          alt: `${existing.nameEn} ${i + 1}`,
-          sortOrder: i,
-          kind: "STOREFRONT",
-          isCover: i === coverIndex,
-        })),
-      }),
-    ]);
+    const { publishOfficialProductImages } = await import("@/lib/official-product-images");
+    try {
+      await publishOfficialProductImages({
+        productId: id,
+        imageUrls,
+        productName: existing.nameEn,
+        batchId: body.batchId ? String(body.batchId) : null,
+        coverIndex: Number(body.coverIndex) || 0,
+      });
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Could not save official images" },
+        { status: 400 }
+      );
+    }
     await auditAdminAction(req, session, {
       action: "product.set_storefront_images",
       entity: "Product",
       entityId: id,
-      details: `${existing.nameEn}: ${limited.length} storefront image(s)`,
+      details: `${existing.nameEn}: ${Math.min(imageUrls.length, 5)} official storefront image(s)`,
     });
-    await cacheDel(CacheKeys.homeCatalog);
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] } },
+    });
+    return NextResponse.json(product);
+  }
+
+  // --- Publish official images from an inventory batch (newest batch replaces website) ---
+  if (action === "publish_batch_official_images") {
+    const batchId = String(body.batchId || "");
+    if (!batchId) return NextResponse.json({ error: "batchId required" }, { status: 400 });
+    const batch = await prisma.stockBatch.findFirst({
+      where: { id: batchId, productId: id },
+    });
+    if (!batch) return NextResponse.json({ error: "Batch not found for this product" }, { status: 404 });
+    const urls = Array.isArray(body.imageUrls)
+      ? (body.imageUrls as unknown[]).map(String).map((u) => u.trim()).filter(Boolean)
+      : batch.officialImageUrls;
+    if (!urls.length) {
+      return NextResponse.json(
+        { error: "Provide officialImageUrls or save them on the batch first" },
+        { status: 400 }
+      );
+    }
+    const { publishOfficialProductImages } = await import("@/lib/official-product-images");
+    try {
+      await publishOfficialProductImages({
+        productId: id,
+        imageUrls: urls,
+        productName: existing.nameEn,
+        batchId: batch.id,
+        coverIndex: Number(body.coverIndex) || 0,
+      });
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Publish failed" },
+        { status: 400 }
+      );
+    }
+    await auditAdminAction(req, session, {
+      action: "product.publish_batch_official_images",
+      entity: "StockBatch",
+      entityId: batch.id,
+      details: `${existing.nameEn} batch ${batch.batchNumber}: published ${Math.min(urls.length, 5)} official image(s) to website`,
+    });
     const product = await prisma.product.findUnique({
       where: { id },
       include: { images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] } },
@@ -493,48 +537,35 @@ export async function PATCH(req: Request) {
         isCover: current.length === 0 && i === 0,
       })),
     });
-    await cacheDel(CacheKeys.homeCatalog);
     const images = await prisma.productImage.findMany({
       where: { productId: id, kind: "STOREFRONT" },
       orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
     });
+    // Keep newest inventory batch in sync with the full official gallery
+    const latest = await prisma.stockBatch.findFirst({
+      where: { productId: id },
+      orderBy: { receivedAt: "desc" },
+      select: { id: true },
+    });
+    if (latest) {
+      await prisma.stockBatch.update({
+        where: { id: latest.id },
+        data: { officialImageUrls: images.map((i) => i.url) },
+      });
+    }
+    await cacheDel(CacheKeys.homeCatalog);
     return NextResponse.json({ ok: true, images });
   }
 
-  // --- Promote farmer inspection photos into storefront (temporary draft) ---
+  // --- Promote farmer inspection photos is forbidden (official HUZA images only on website) ---
   if (action === "promote_inspection_images") {
-    const inspection = await prisma.productImage.findMany({
-      where: { productId: id, kind: "INSPECTION" },
-      orderBy: { sortOrder: "asc" },
-    });
-    if (inspection.length === 0) {
-      return NextResponse.json({ error: "No farmer inspection photos to copy" }, { status: 400 });
-    }
-    await prisma.$transaction([
-      prisma.productImage.deleteMany({ where: { productId: id, kind: "STOREFRONT" } }),
-      prisma.productImage.createMany({
-        data: inspection.map((img, i) => ({
-          productId: id,
-          url: img.url,
-          alt: img.alt || `${existing.nameEn} ${i + 1}`,
-          sortOrder: i,
-          kind: "STOREFRONT",
-          isCover: i === 0,
-        })),
-      }),
-    ]);
-    await auditAdminAction(req, session, {
-      action: "product.promote_inspection_images",
-      entity: "Product",
-      entityId: id,
-      details: `${existing.nameEn}: copied ${inspection.length} inspection photo(s) to storefront (replace with HUZA photos when ready)`,
-    });
-    await cacheDel(CacheKeys.homeCatalog);
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: { images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] } },
-    });
-    return NextResponse.json(product);
+    return NextResponse.json(
+      {
+        error:
+          "Farmer photos are for inspection only and cannot appear on the website. Upload official HUZA photos instead.",
+      },
+      { status: 403 }
+    );
   }
 
   // --- Set cover image among storefront gallery ---
