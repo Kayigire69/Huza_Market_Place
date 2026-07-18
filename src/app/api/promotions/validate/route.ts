@@ -35,7 +35,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ valid: false, error: "This code has expired" }, { status: 400 });
   }
 
-  if (promo.isRedeem && promo.loyaltyPoints) {
+  // Schema field is isLoyalty; API still exposes isRedeem for checkout clients
+  const isRedeem = Boolean(promo.isLoyalty && promo.loyaltyPoints);
+
+  if (isRedeem && promo.loyaltyPoints) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
     discountAmt: promo.discountAmt,
     freeDelivery: promo.freeDelivery,
     title: promo.titleEn,
-    isRedeem: Boolean(promo.isRedeem),
-    loyaltyPointsRequired: promo.isRedeem ? promo.loyaltyPoints : null,
+    isRedeem,
+    loyaltyPointsRequired: isRedeem ? promo.loyaltyPoints : null,
   });
 }

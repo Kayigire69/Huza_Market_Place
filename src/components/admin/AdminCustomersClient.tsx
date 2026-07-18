@@ -59,7 +59,6 @@ type CustomerProfile = CustomerRow & {
       price: number;
       unit: string;
       isActive: boolean;
-      slug: string;
     } | null;
   }[];
   orders?: {
