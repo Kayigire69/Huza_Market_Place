@@ -26,5 +26,8 @@ declare module "next-auth/jwt" {
     mustChangePassword?: boolean;
     totpEnabled?: boolean;
     isPrimarySuperAdmin?: boolean;
+    lastDbSync?: number;
+    lastPwSync?: number;
+    error?: string;
   }
 }

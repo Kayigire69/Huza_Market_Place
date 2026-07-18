@@ -45,7 +45,9 @@ export default function ChangePasswordPage() {
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">Change your password</h1>
       <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
-        Optional — update your password whenever you want. You stay signed in after saving.
+        {session?.user?.mustChangePassword
+          ? "You must set a new password before continuing. You stay signed in after saving."
+          : "Optional — update your password whenever you want. You stay signed in after saving."}
       </p>
       <form
         onSubmit={onSubmit}

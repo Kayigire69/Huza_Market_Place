@@ -17,6 +17,7 @@ export async function requireAdminSession(
 ): Promise<Session | null> {
   const session = await getServerSession(authOptions);
   if (!session?.user || !isAdminPortalRole(session.user.role)) return null;
+  if (session.user.mustChangePassword) return null;
   if (isSuperAdmin(session.user.role)) return session;
   if (options?.modules?.length) {
     const ok = options.modules.some((m) => roleCanAccessModule(session.user.role, m));
