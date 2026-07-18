@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { paymentService } from "@/services/payment.service";
 import { canAccessOrder } from "@/lib/security-access";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { isAdminPortalRole } from "@/lib/rbac";
+import { isAdminPortalRole, canMutateCustomerPayments } from "@/lib/rbac";
 
 /** GET /api/payments/status?orderId=... or ?orderNumber=... (&phone= for guests) */
 export async function GET(req: Request) {
@@ -86,10 +86,12 @@ export async function POST(req: Request) {
 
   if (action === "confirm") {
     const session = await getServerSession(authOptions);
-    const role = session?.user?.role;
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    if (!canMutateCustomerPayments(session?.user?.role)) {
       return NextResponse.json(
-        { error: "Payment can only be confirmed by the payment system or an admin." },
+        {
+          error:
+            "Payment can only be confirmed by the payment system or Finance/Admin.",
+        },
         { status: 403 }
       );
     }
@@ -109,9 +111,18 @@ export async function POST(req: Request) {
     }
 
     const session = await getServerSession(authOptions);
-    const isStaff = session?.user?.role && isAdminPortalRole(session.user.role);
+    const isFinanceStaff = canMutateCustomerPayments(session?.user?.role);
+    const isOtherStaff =
+      Boolean(session?.user?.role && isAdminPortalRole(session.user.role)) &&
+      !isFinanceStaff;
+    if (isOtherStaff) {
+      return NextResponse.json(
+        { error: "Only Finance or Admin can cancel payments from the portal." },
+        { status: 403 }
+      );
+    }
     const allowed =
-      isStaff ||
+      isFinanceStaff ||
       (await canAccessOrder(order, {
         req,
         orderNumber: order.orderNumber,

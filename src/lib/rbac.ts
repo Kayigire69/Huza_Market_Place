@@ -36,6 +36,15 @@ export function isSuperAdmin(role?: string | null): boolean {
   return role === "SUPER_ADMIN";
 }
 
+/** Confirm / fail / refund / sync customer payments — not SUPPORT. */
+const PAYMENT_MUTATION_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "FINANCE"] as const;
+
+export function canMutateCustomerPayments(role?: string | null): boolean {
+  return Boolean(
+    role && (PAYMENT_MUTATION_ROLES as readonly string[]).includes(role)
+  );
+}
+
 /** Staff / Audit / Settings — Super Admin only */
 export function isSuperAdminOnlyPath(pathname: string): boolean {
   return SUPER_ADMIN_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

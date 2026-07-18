@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/rbac-server";
+import { canMutateCustomerPayments } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentMethod, PaymentStatus } from "@prisma/client";
 import { auditAdminAction } from "@/lib/audit";
@@ -279,6 +280,14 @@ export async function PATCH(req: Request) {
     reason?: string;
     transactionRef?: string;
   };
+
+  // SUPPORT may view payments (GET) but cannot confirm/fail/refund/sync/set_ref.
+  if (!canMutateCustomerPayments(session.user.role)) {
+    return NextResponse.json(
+      { error: "Only Finance or Admin can change payment status." },
+      { status: 403 }
+    );
+  }
 
   const before = await prisma.payment.findUnique({
     where: { id },
