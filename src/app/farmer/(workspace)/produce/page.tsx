@@ -63,7 +63,20 @@ export default async function FarmerProducePage({
           panel="submit"
         />
       ) : tab === "approvals" ? (
-        <FarmerApprovalsClient products={products} />
+        <FarmerApprovalsClient
+          account={{
+            businessName: farmer.businessName,
+            status: farmer.status,
+            isVerified: Boolean(farmer.isVerified),
+            farmingType: farmer.farmingType,
+            rejectionReason: farmer.rejectionReason ?? null,
+            adminNotes: farmer.adminNotes ?? null,
+            inspectionScheduledAt: farmer.inspectionScheduledAt
+              ? farmer.inspectionScheduledAt.toISOString()
+              : null,
+          }}
+          crops={products}
+        />
       ) : (
         <FarmerMyCropsPanel products={products} />
       )}
