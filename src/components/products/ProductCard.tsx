@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -55,7 +55,7 @@ function StarRow({ rating }: { rating: number }) {
   );
 }
 
-export function ProductCard({
+function ProductCardInner({
   product,
   variant = "auto",
 }: {
@@ -112,7 +112,8 @@ export function ProductCard({
       imageUrl: image,
       supplierId: product.supplier?.id ?? "",
       supplierName: "Youth Huza",
-      stockQty: product.stockQty,
+      // Cap cart qty on available (stock − reserved), not raw stockQty
+      stockQty: available,
     });
     showToast(`✅ ${t("addedToCart")}`);
   };
@@ -232,3 +233,5 @@ export function ProductCard({
     </article>
   );
 }
+
+export const ProductCard = memo(ProductCardInner);

@@ -7,6 +7,17 @@ async function requireAdmin() {
   return requireAdminSession({ modules: ["inventory"] });
 }
 
+const productStockSelect = {
+  id: true,
+  nameEn: true,
+  unit: true,
+  stockQty: true,
+  reservedQty: true,
+  lowStockAt: true,
+  isActive: true,
+  category: { select: { nameEn: true } },
+} satisfies Prisma.ProductSelect;
+
 export async function GET(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -20,7 +31,13 @@ export async function GET(req: Request) {
   if (mode === "movements") {
     const movements = await prisma.stockMovement.findMany({
       where: productId ? { productId } : undefined,
-      include: {
+      select: {
+        id: true,
+        type: true,
+        quantity: true,
+        reason: true,
+        createdAt: true,
+        productId: true,
         product: { select: { id: true, nameEn: true, unit: true, stockQty: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -38,7 +55,11 @@ export async function GET(req: Request) {
         quantity: { gt: 0 },
         expiryDate: { not: null, lte: in7 },
       },
-      include: {
+      select: {
+        id: true,
+        batchNumber: true,
+        quantity: true,
+        expiryDate: true,
         product: {
           select: {
             id: true,
@@ -63,6 +84,60 @@ export async function GET(req: Request) {
     });
   }
 
+  const searchSql = q
+    ? Prisma.sql`AND (
+        p."nameEn" ILIKE ${"%" + q + "%"}
+        OR p."nameFr" ILIKE ${"%" + q + "%"}
+        OR p."nameRw" ILIKE ${"%" + q + "%"}
+      )`
+    : Prisma.empty;
+
+  // Push stock filters into SQL (same available = stockQty - reservedQty rule as before).
+  if (filter === "out" || filter === "low") {
+    const rows = await prisma.$queryRaw<
+      Array<{
+        id: string;
+        nameEn: string;
+        unit: string;
+        stockQty: number;
+        reservedQty: number;
+        lowStockAt: number | null;
+        isActive: boolean;
+        categoryNameEn: string | null;
+      }>
+    >`
+      SELECT p.id, p."nameEn", p.unit, p."stockQty", p."reservedQty", p."lowStockAt", p."isActive",
+             c."nameEn" AS "categoryNameEn"
+      FROM "Product" p
+      LEFT JOIN "Category" c ON c.id = p."categoryId"
+      WHERE p."deletedAt" IS NULL
+        ${searchSql}
+        AND (
+          ${
+            filter === "out"
+              ? Prisma.sql`(p."stockQty" - p."reservedQty") <= 0`
+              : Prisma.sql`(p."stockQty" - p."reservedQty") > 0
+                  AND (p."stockQty" - p."reservedQty") <= COALESCE(p."lowStockAt", 5)`
+          }
+        )
+      ORDER BY p."nameEn" ASC
+      LIMIT 200
+    `;
+
+    return NextResponse.json({
+      products: rows.map((p) => ({
+        id: p.id,
+        nameEn: p.nameEn,
+        unit: p.unit,
+        stockQty: p.stockQty,
+        reservedQty: p.reservedQty,
+        lowStockAt: p.lowStockAt,
+        isActive: p.isActive,
+        category: p.categoryNameEn ? { nameEn: p.categoryNameEn } : null,
+      })),
+    });
+  }
+
   const search: Prisma.ProductWhereInput = q
     ? {
         OR: [
@@ -75,20 +150,10 @@ export async function GET(req: Request) {
 
   const products = await prisma.product.findMany({
     where: { deletedAt: null, ...search },
-    include: {
-      category: { select: { nameEn: true } },
-    },
+    select: productStockSelect,
     orderBy: { nameEn: "asc" },
     take: 200,
   });
 
-  const filtered = products.filter((p) => {
-    const available = Math.max(0, p.stockQty - p.reservedQty);
-    const min = p.lowStockAt ?? 5;
-    if (filter === "out") return available <= 0;
-    if (filter === "low") return available > 0 && available <= min;
-    return true;
-  });
-
-  return NextResponse.json({ products: filtered });
+  return NextResponse.json({ products });
 }

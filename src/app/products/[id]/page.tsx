@@ -185,7 +185,7 @@ export default async function ProductDetailPage({
                 {r.comment && <p className="mt-2 text-sm text-[var(--huza-muted)]">{r.comment}</p>}
                 {r.photoUrl && (
                   <div className="relative mt-3 h-24 w-24 overflow-hidden rounded-lg">
-                    <Image src={r.photoUrl} alt="Review" fill className="object-cover" />
+                    <Image src={r.photoUrl} alt="Review" fill sizes="96px" className="object-cover" />
                   </div>
                 )}
               </div>

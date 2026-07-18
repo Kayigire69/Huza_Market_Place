@@ -8,6 +8,7 @@ import {
 } from "@prisma/client";
 import { getBusinessStatus } from "@/lib/business-hours";
 import { initiateMobileMoneyPayment, normalizeMsisdn } from "@/lib/payments/mobile-money";
+import { isValidRwandaMomoPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { productRepository, availableQty } from "@/repositories/product.repository";
 import { enqueueAnalytics, enqueueJob } from "@/jobs/queue";
@@ -82,6 +83,23 @@ export const orderService = {
     if (!data.paymentPhone || data.paymentPhone.length < 8) {
       throw new Error("Enter your MoMo / Airtel phone number (e.g. 078xxxxxxx)");
     }
+    if (!isValidRwandaMomoPhone(data.paymentPhone)) {
+      throw new Error("Enter a valid MTN (078/079) or Airtel (072/073) phone number");
+    }
+    if (!isValidRwandaMomoPhone(data.phone)) {
+      throw new Error("Enter a valid Rwandan mobile number for delivery contact");
+    }
+
+    // Merge duplicate product lines before stock lookup
+    const mergedQty = new Map<string, number>();
+    for (const item of data.items) {
+      const qty = Math.max(0.01, Number(item.quantity) || 0);
+      mergedQty.set(item.productId, (mergedQty.get(item.productId) || 0) + qty);
+    }
+    data.items = [...mergedQty.entries()].map(([productId, quantity]) => ({
+      productId,
+      quantity,
+    }));
 
     const methodOk = await isPaymentMethodEnabled(
       data.paymentMethod as "MTN_MOMO" | "AIRTEL_MONEY"
@@ -160,6 +178,7 @@ export const orderService = {
     const fulfillment = cartFulfillmentEta(
       data.items.map((i) => ({
         stockQty: productMap[i.productId].stockQty,
+        reservedQty: productMap[i.productId].reservedQty,
         quantity: i.quantity,
       })),
       zoneKey,
@@ -173,6 +192,7 @@ export const orderService = {
     let deliveryFee = await getDeliveryFee(data.deliveryZone);
     let discount = 0;
     let appliedPromo: string | null = null;
+    let loyaltyPointsToSpend = 0;
 
     if (data.promoCode) {
       const code = data.promoCode.trim().toUpperCase();
@@ -188,7 +208,10 @@ export const orderService = {
         if (promo.freeDelivery) deliveryFee = 0;
         if (promo.discountPct) discount += Math.round((subtotal * promo.discountPct) / 100);
         if (promo.discountAmt) discount += promo.discountAmt;
-        if (promo.isLoyalty && promo.loyaltyPoints && userId) {
+        if (promo.isRedeem && promo.loyaltyPoints) {
+          if (!userId) {
+            throw new Error("Log in to redeem loyalty rewards");
+          }
           const user = await prisma.user.findUnique({
             where: { id: userId },
             select: { loyaltyPoints: true },
@@ -196,10 +219,7 @@ export const orderService = {
           if (!user || user.loyaltyPoints < promo.loyaltyPoints) {
             throw new Error(`Need ${promo.loyaltyPoints} loyalty points to use this reward`);
           }
-          await prisma.user.update({
-            where: { id: userId },
-            data: { loyaltyPoints: { decrement: promo.loyaltyPoints } },
-          });
+          loyaltyPointsToSpend = promo.loyaltyPoints;
         }
       }
     }
@@ -215,6 +235,16 @@ export const orderService = {
 
     // Step 1 — create pending order and reserve stock (backorders allowed)
     const order = await prisma.$transaction(async (tx) => {
+      if (loyaltyPointsToSpend > 0 && userId) {
+        const updated = await tx.user.updateMany({
+          where: { id: userId, loyaltyPoints: { gte: loyaltyPointsToSpend } },
+          data: { loyaltyPoints: { decrement: loyaltyPointsToSpend } },
+        });
+        if (updated.count === 0) {
+          throw new Error(`Need ${loyaltyPointsToSpend} loyalty points to use this reward`);
+        }
+      }
+
       for (const item of lineItems) {
         const updated = await productRepository.reserveStock(tx, item.productId, item.quantity, {
           allowBackorder: item.allowBackorder,
@@ -355,6 +385,12 @@ export const orderService = {
       await prisma.$transaction(async (tx) => {
         for (const item of lineItems) {
           await productRepository.releaseReservation(tx, item.productId, item.quantity);
+        }
+        if (userId && loyaltyPointsToSpend > 0) {
+          await tx.user.update({
+            where: { id: userId },
+            data: { loyaltyPoints: { increment: loyaltyPointsToSpend } },
+          });
         }
       });
       await prisma.order.update({

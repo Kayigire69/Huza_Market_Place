@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -33,6 +35,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ valid: false, error: "This code has expired" }, { status: 400 });
   }
 
+  if (promo.isRedeem && promo.loyaltyPoints) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { valid: false, error: "Log in to redeem loyalty rewards", isRedeem: true },
+        { status: 401 }
+      );
+    }
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { loyaltyPoints: true },
+    });
+    if (!user || user.loyaltyPoints < promo.loyaltyPoints) {
+      return NextResponse.json(
+        {
+          valid: false,
+          error: `Need ${promo.loyaltyPoints} loyalty points to use this reward`,
+          isRedeem: true,
+          loyaltyPointsRequired: promo.loyaltyPoints,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   return NextResponse.json({
     valid: true,
     code: promo.code,
@@ -40,5 +67,7 @@ export async function POST(req: Request) {
     discountAmt: promo.discountAmt,
     freeDelivery: promo.freeDelivery,
     title: promo.titleEn,
+    isRedeem: Boolean(promo.isRedeem),
+    loyaltyPointsRequired: promo.isRedeem ? promo.loyaltyPoints : null,
   });
 }

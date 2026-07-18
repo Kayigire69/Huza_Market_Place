@@ -11,7 +11,12 @@ export const dynamic = "force-dynamic";
 export default async function ProcurementPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (session.user.role !== "PROCUREMENT" && session.user.role !== "ADMIN") {
+  if (
+    session.user.role !== "PROCUREMENT" &&
+    session.user.role !== "ADMIN" &&
+    session.user.role !== "SUPER_ADMIN" &&
+    session.user.role !== "MANAGER"
+  ) {
     redirect("/account");
   }
 

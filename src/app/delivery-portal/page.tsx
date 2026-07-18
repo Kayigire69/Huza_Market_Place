@@ -10,12 +10,19 @@ export const dynamic = "force-dynamic";
 export default async function DeliveryPortalPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (session.user.role !== "DELIVERY" && session.user.role !== "ADMIN") {
+  if (
+    session.user.role !== "DELIVERY" &&
+    session.user.role !== "ADMIN" &&
+    session.user.role !== "SUPER_ADMIN" &&
+    session.user.role !== "MANAGER"
+  ) {
     redirect("/account");
   }
 
   const where =
-    session.user.role === "ADMIN"
+    session.user.role === "ADMIN" ||
+    session.user.role === "SUPER_ADMIN" ||
+    session.user.role === "MANAGER"
       ? {}
       : {
           OR: [

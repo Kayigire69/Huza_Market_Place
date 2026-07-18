@@ -2,21 +2,20 @@ import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listDeliveryZones } from "@/services/settings.service";
-import { FLAT_DELIVERY_FEE_RWF } from "@/lib/utils";
+import { listDeliveryZones, getDeliveryFee } from "@/services/settings.service";
 import { ZONE_ETA_LABELS, ZONE_ETA_MINUTES } from "@/lib/delivery-eta";
 import CheckoutPage from "./CheckoutClient";
 
 export default async function Page() {
   const session = await getServerSession(authOptions);
-  const rows = await listDeliveryZones();
+  const [rows, deliveryFee] = await Promise.all([listDeliveryZones(), getDeliveryFee("KIGALI")]);
   const zones = rows.map((z) => {
     const code = z.code as keyof typeof ZONE_ETA_LABELS;
     return {
       id: z.id,
       code: z.code,
       labelEn: z.labelEn,
-      feeRwf: FLAT_DELIVERY_FEE_RWF,
+      feeRwf: Number.isFinite(z.feeRwf) ? z.feeRwf : deliveryFee,
       etaMinutes: ZONE_ETA_MINUTES[code] ?? z.etaMinutes,
       etaLabelEn: ZONE_ETA_LABELS[code] ?? z.etaLabelEn ?? `${z.etaMinutes} minutes`,
     };

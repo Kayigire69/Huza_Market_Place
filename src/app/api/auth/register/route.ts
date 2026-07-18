@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
+import { isValidRwandaMomoPhone } from "@/lib/phone";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -51,6 +52,12 @@ function toUrlList(value?: string | string[]) {
 export async function POST(req: Request) {
   try {
     const data = schema.parse(await req.json());
+    if (!isValidRwandaMomoPhone(data.phone)) {
+      return NextResponse.json(
+        { error: "Enter a valid MTN (078/079) or Airtel (072/073) phone number" },
+        { status: 400 }
+      );
+    }
     const existing = await prisma.user.findFirst({
       where: {
         OR: [

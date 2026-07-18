@@ -117,12 +117,28 @@ export async function GET(req: Request) {
       take: 100,
     });
 
-    const enriched = await Promise.all(
-      purchaseOrders.map(async (po) => {
-        const liveSales = await customerSalesForProduct(po.productId);
-        return { ...po, liveSales };
-      })
-    );
+    const productIds = [
+      ...new Set(purchaseOrders.map((po) => po.productId).filter(Boolean)),
+    ] as string[];
+    const salesByProduct = new Map<string, number>();
+    if (productIds.length > 0) {
+      const grouped = await prisma.orderItem.groupBy({
+        by: ["productId"],
+        where: {
+          productId: { in: productIds },
+          order: { status: { in: [...PAID_ORDER_STATUSES] } },
+        },
+        _sum: { lineTotal: true },
+      });
+      for (const row of grouped) {
+        salesByProduct.set(row.productId, row._sum.lineTotal ?? 0);
+      }
+    }
+
+    const enriched = purchaseOrders.map((po) => ({
+      ...po,
+      liveSales: po.productId ? salesByProduct.get(po.productId) ?? 0 : 0,
+    }));
 
     return NextResponse.json({ offers: [], purchaseOrders: enriched });
   }
@@ -478,6 +494,30 @@ async function handlePoAction(
         recommendation: body.recommendation?.trim() || null,
       };
       if (po.productId) {
+        if (
+          po.status === PurchaseOrderStatus.RECEIVED ||
+          po.status === PurchaseOrderStatus.INSPECTED
+        ) {
+          const qty = Math.floor(po.quantity);
+          if (qty > 0) {
+            const { stockService } = await import("@/services/stock.service");
+            await stockService.stockOut(
+              po.productId,
+              qty,
+              `PO ${po.poNumber} QC reject — reverse receive`,
+              session.user.id,
+              "ADJUST"
+            );
+          }
+          await prisma.stockBatch.updateMany({
+            where: {
+              productId: po.productId,
+              notes: { contains: `From PO ${po.poNumber}` },
+              quantity: { gt: 0 },
+            },
+            data: { quantity: 0 },
+          });
+        }
         await prisma.product.update({
           where: { id: po.productId },
           data: {
@@ -531,6 +571,7 @@ async function handlePoAction(
       const { commissionAmount, farmerNetAmount } = calcCommission(saleAmount, rate);
 
       data = {
+        status: PurchaseOrderStatus.ACCEPTED,
         saleAmount,
         commissionRate: rate,
         commissionAmount,

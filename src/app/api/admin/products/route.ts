@@ -52,10 +52,23 @@ export async function GET(req: Request) {
     if (!categoryId) {
       return NextResponse.json({ error: "categoryId required" }, { status: 400 });
     }
+
+    const statusWhere =
+      filter === "active"
+        ? { isActive: true }
+        : filter === "hidden"
+          ? { isActive: false }
+          : filter === "featured"
+            ? { isFeatured: true }
+            : filter === "bestseller"
+              ? { isBestSeller: true }
+              : {};
+
     const products = await prisma.product.findMany({
       where: {
         deletedAt: null,
         categoryId,
+        ...statusWhere,
         ...(q
           ? {
               OR: [
@@ -66,12 +79,30 @@ export async function GET(req: Request) {
             }
           : {}),
       },
-      include: {
+      select: {
+        id: true,
+        nameEn: true,
+        nameFr: true,
+        nameRw: true,
+        descriptionEn: true,
+        price: true,
+        unit: true,
+        stockQty: true,
+        reservedQty: true,
+        lowStockAt: true,
+        isActive: true,
+        isFeatured: true,
+        isBestSeller: true,
+        isNewArrival: true,
+        isOrganic: true,
+        reviewStatus: true,
+        categoryId: true,
         category: { select: { id: true, nameEn: true, slug: true } },
         images: {
           where: { kind: "STOREFRONT" },
           orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
           take: 5,
+          select: { id: true, url: true, isCover: true, sortOrder: true },
         },
       },
       orderBy:
@@ -83,16 +114,14 @@ export async function GET(req: Request) {
       take: 300,
     });
 
-    const filtered = products.filter((p) => {
-      const available = Math.max(0, p.stockQty - p.reservedQty);
-      if (filter === "active") return p.isActive;
-      if (filter === "hidden") return !p.isActive;
-      if (filter === "out") return available <= 0;
-      if (filter === "low") return available > 0 && available <= (p.lowStockAt ?? 5);
-      if (filter === "featured") return p.isFeatured;
-      if (filter === "bestseller") return p.isBestSeller;
-      return true;
-    });
+    const filtered =
+      filter === "out" || filter === "low"
+        ? products.filter((p) => {
+            const available = Math.max(0, p.stockQty - p.reservedQty);
+            if (filter === "out") return available <= 0;
+            return available > 0 && available <= (p.lowStockAt ?? 5);
+          })
+        : products;
 
     return NextResponse.json({ products: filtered });
   }
@@ -100,10 +129,25 @@ export async function GET(req: Request) {
   if (mode === "catalog") {
     const products = await prisma.product.findMany({
       where: { deletedAt: null },
-      include: {
-        category: true,
+      select: {
+        id: true,
+        nameEn: true,
+        price: true,
+        unit: true,
+        stockQty: true,
+        reservedQty: true,
+        isActive: true,
+        isFeatured: true,
+        isBestSeller: true,
+        reviewStatus: true,
+        updatedAt: true,
+        category: { select: { id: true, nameEn: true, slug: true } },
         supplier: { select: { id: true, businessName: true, farmingType: true } },
-        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        images: {
+          orderBy: { sortOrder: "asc" },
+          take: 1,
+          select: { url: true },
+        },
       },
       orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
       take: 120,
@@ -113,10 +157,33 @@ export async function GET(req: Request) {
 
   const products = await prisma.product.findMany({
     where: { reviewStatus: "PENDING", isActive: false },
-    include: {
-      supplier: true,
-      category: true,
-      images: { orderBy: { sortOrder: "asc" }, take: 4 },
+    select: {
+      id: true,
+      nameEn: true,
+      descriptionEn: true,
+      price: true,
+      unit: true,
+      stockQty: true,
+      isOrganic: true,
+      reviewStatus: true,
+      reviewNote: true,
+      createdAt: true,
+      supplier: {
+        select: {
+          id: true,
+          businessName: true,
+          district: true,
+          phone: true,
+          farmingType: true,
+          user: { select: { fullName: true, phone: true } },
+        },
+      },
+      category: { select: { id: true, nameEn: true, slug: true } },
+      images: {
+        orderBy: { sortOrder: "asc" },
+        take: 4,
+        select: { id: true, url: true, alt: true },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 50,

@@ -5,7 +5,13 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 function canWarehouse(role?: string) {
-  return role === "WAREHOUSE" || role === "ADMIN";
+  return (
+    role === "WAREHOUSE" ||
+    role === "INVENTORY" ||
+    role === "ADMIN" ||
+    role === "SUPER_ADMIN" ||
+    role === "MANAGER"
+  );
 }
 
 function receiptNumber() {

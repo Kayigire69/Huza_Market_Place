@@ -7,6 +7,7 @@ import {
   isSuperAdmin,
   isSuperAdminOnlyPath,
 } from "@/lib/rbac";
+import { portalPathForRole } from "@/lib/auth-redirect";
 
 /**
  * Staff & partner portals are never advertised on the customer storefront.
@@ -63,6 +64,10 @@ export default withAuth(
       const roles = match ? allowed[match] : ["ADMIN", "SUPER_ADMIN"];
 
       if (!role || !roles.includes(role)) {
+        // Logged-in wrong role → their portal; guests → login
+        if (role) {
+          return NextResponse.redirect(new URL(portalPathForRole(role), req.url));
+        }
         const login = new URL("/auth/login", req.url);
         login.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(login);
@@ -83,6 +88,9 @@ export default withAuth(
 
     if (isFarmerPath(pathname) && !isPublicFarmerEntry(pathname)) {
       if (role !== "SUPPLIER" && !isAdminPortalRole(role)) {
+        if (role) {
+          return NextResponse.redirect(new URL(portalPathForRole(role), req.url));
+        }
         const login = new URL("/auth/login", req.url);
         login.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(login);

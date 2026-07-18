@@ -12,6 +12,6 @@ export async function GET(req: Request) {
 
   const suggestions = await getSearchSuggestions(q);
   const payload = { suggestions };
-  if (q.trim().length >= 2) await cacheSet(key, payload, 45);
+  if (q.trim().length >= 2) await cacheSet(key, payload, 90);
   return NextResponse.json(payload);
 }
