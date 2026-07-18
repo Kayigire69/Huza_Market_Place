@@ -4,19 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
 import { PurchaseOrderStatus } from "@prisma/client";
-
-async function resolveSupplier(userId: string, role?: string) {
-  const supplier = await prisma.supplier.findUnique({ where: { userId } });
-  if (supplier) return supplier;
-  if (role === "ADMIN") {
-    return prisma.supplier.findFirst({ where: { status: "APPROVED" } });
-  }
-  return null;
-}
+import { findSupplierForUser } from "@/lib/supplier-context";
 
 async function notifyProcurement(title: string, body: string) {
   const staff = await prisma.user.findMany({
-    where: { role: { in: ["PROCUREMENT", "ADMIN"] } },
+    where: { role: { in: ["PROCUREMENT", "ADMIN", "SUPER_ADMIN"] } },
     select: { id: true },
     take: 20,
   });
@@ -38,7 +30,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supplier = await resolveSupplier(session.user.id, session.user.role);
+  const supplier = await findSupplierForUser(session.user.id);
   if (!supplier) {
     return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
   }
@@ -58,7 +50,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supplier = await resolveSupplier(session.user.id, session.user.role);
+  const supplier = await findSupplierForUser(session.user.id);
   if (!supplier) {
     return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
   }

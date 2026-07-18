@@ -25,16 +25,15 @@ export default async function FarmerPage() {
     redirect("/account");
   }
 
-  const farmer = await prisma.supplier.findFirst({
-    where:
-      (session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN") &&
-      !session.user.supplierId
-        ? { status: "APPROVED" }
-        : { userId: session.user.id },
+  const farmer = await prisma.supplier.findUnique({
+    where: { userId: session.user.id },
     select: { id: true },
   });
 
   if (!farmer) {
+    if (session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN") {
+      redirect("/admin");
+    }
     return <FarmerPortalChrome mode="apply" />;
   }
 
