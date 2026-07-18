@@ -105,6 +105,12 @@ export async function uploadFiles(files: File[], folder: UploadFolder): Promise<
   const urls: string[] = [];
   const useCloud = cloudinaryConfigured();
 
+  if (process.env.NODE_ENV === "production" && !useCloud) {
+    throw new Error(
+      "Cloudinary is required in production. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."
+    );
+  }
+
   for (const file of files) {
     if (!ALLOWED.has(file.type)) {
       throw new Error(`Unsupported file type: ${file.type || file.name}`);

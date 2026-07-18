@@ -64,14 +64,12 @@ export function SupportCenterClient({
           </p>
         </Link>
         <a
-          href="https://wa.me/250788000000"
-          target="_blank"
-          rel="noreferrer"
+          href="mailto:info@youthhuza.rw"
           className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 hover:border-[var(--huza-green)] transition"
         >
-          <p className="font-semibold text-[var(--huza-green-dark)]">WhatsApp</p>
+          <p className="font-semibold text-[var(--huza-green-dark)]">Email</p>
           <p className="text-sm text-[var(--huza-muted)] mt-1">
-            Chat with Youth Huza on +250 788 000 000.
+            Write to Youth Huza at info@youthhuza.rw (WhatsApp available after the number is set).
           </p>
         </a>
       </div>

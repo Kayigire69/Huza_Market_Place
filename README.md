@@ -171,40 +171,26 @@ After **Place order**, HUZA FRESH sends a **request-to-pay** to the customer’s
 
 See `.env.example` for `MTN_MOMO_*` and `AIRTEL_*` variables. Register apps at [MTN MoMo Developer](https://momodeveloper.mtn.com/) and [Airtel Africa Developers](https://developers.airtel.africa/).
 
-## Demo accounts
+## Demo accounts (local seed only — change before production)
 
 | Role | Login | Password |
 |------|-------|----------|
-| Admin | `admin@youthhuza.rw` | `password123` |
+| Super Admin (owner) | `owner@huza.rw` | `Huza@2026!` |
+| Admin | `alice@huza.rw` | `password123` |
 | Customer | `customer@example.com` | `password123` |
-| Supplier | `greenvalley@farm.rw` | `password123` |
-| Delivery | `delivery@youthhuza.rw` | `password123` |
+| Farmer | `greenvalley@farm.rw` | `password123` |
 
-## Useful scripts
-
-```bash
-npm run dev          # development server
-npm run build        # production build
-npm run db:studio    # Prisma Studio GUI
-npm run db:seed      # reseed sample data
-npm run lint         # ESLint
-```
-
-## Project structure
-
-```
-prisma/           # schema, migrations, seed
-public/           # logo + product images
-src/app/          # pages + API routes
-src/components/   # UI components
-src/lib/          # prisma, auth, i18n, cart, business hours
-```
+Do **not** use seed passwords on the live site. Change the owner password after first login.
 
 ## Notes for production
 
-- Replace `NEXTAUTH_SECRET` and DB credentials
-- Integrate real MTN MoMo / Airtel Money APIs (current flow verifies payments in demo mode)
-- Connect SMS/Email providers for notifications
-- Host Postgres (e.g. Neon, Railway, or self-hosted) and deploy Next.js (Vercel or Node host)
+1. Copy `.env.example` → `.env` and set real secrets.
+2. Set `NEXTAUTH_URL` to `https://www.youthhuza.rw` (must match the live domain).
+3. Run `npx prisma migrate deploy` then seed only on a fresh DB.
+4. Configure **Resend** (`RESEND_API_KEY`) so password-reset emails send.
+5. Configure **Cloudinary** — required in production for product/farm uploads.
+6. Set WhatsApp URL in Admin → Settings (or `WHATSAPP_URL`) when the business number is ready.
+7. Add MTN MoMo / Airtel keys when available — until then checkout stays in demo mode.
+8. Schedule `/api/jobs/process` with `JOBS_SECRET` for background email/payment jobs.
 
 Built for **Youth Huza** · HUZA FRESH

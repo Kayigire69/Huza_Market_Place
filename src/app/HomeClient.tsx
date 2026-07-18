@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 import { resolveCategoryImage } from "@/lib/catalog-images";
+import { isWhatsAppConfigured } from "@/lib/brand-contact";
 
 type Category = {
   id: string;
@@ -117,7 +118,7 @@ export function HomePage({
   testimonials,
   customerReviews = [],
   isOpen,
-  whatsappUrl = "https://wa.me/250788000000",
+  whatsappUrl = "",
 }: {
   popularNow: ProductCardData[];
   readyToEat: ProductCardData[];
@@ -174,12 +175,17 @@ export function HomePage({
         }))
   ).slice(0, 3);
 
-  const waHref = whatsappUrl.startsWith("http")
-    ? whatsappUrl
-    : `https://wa.me/${whatsappUrl.replace(/\D/g, "")}`;
-  const waUpdatesHref = `${waHref}${waHref.includes("?") ? "&" : "?"}text=${encodeURIComponent(
-    "Hello HUZA, please add me to weekly fresh deals updates."
-  )}`;
+  const waConfigured = isWhatsAppConfigured(whatsappUrl);
+  const waHref = waConfigured
+    ? whatsappUrl.startsWith("http")
+      ? whatsappUrl
+      : `https://wa.me/${whatsappUrl.replace(/\D/g, "")}`
+    : "";
+  const waUpdatesHref = waHref
+    ? `${waHref}${waHref.includes("?") ? "&" : "?"}text=${encodeURIComponent(
+        "Hello HUZA, please add me to weekly fresh deals updates."
+      )}`
+    : "";
 
   return (
     <div className="home-surface">
@@ -404,7 +410,8 @@ export function HomePage({
         </section>
       )}
 
-      {/* 9. WhatsApp ordering card */}
+      {/* 9. WhatsApp ordering card — shown once WhatsApp Business URL is configured */}
+      {waConfigured ? (
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
         <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#25D366]/40 bg-[#f3fff7] p-5 sm:flex-row sm:items-center sm:p-6">
           <div>
@@ -425,8 +432,10 @@ export function HomePage({
           </a>
         </div>
       </section>
+      ) : null}
 
-      {/* 10. WhatsApp updates (replaces newsletter) */}
+      {/* 10. Contact / WhatsApp updates */}
+      {waConfigured ? (
       <section className="mx-auto mb-4 mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
         <div className="rounded-3xl bg-[var(--huza-green-dark)] p-6 text-white sm:p-8">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold sm:text-3xl">
@@ -444,6 +453,25 @@ export function HomePage({
           </a>
         </div>
       </section>
+      ) : (
+      <section className="mx-auto mb-4 mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
+        <div className="rounded-3xl bg-[var(--huza-green-dark)] p-6 text-white sm:p-8">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold sm:text-3xl">
+            Contact HUZA FRESH
+          </h2>
+          <p className="mt-2 max-w-xl text-sm text-[#C8E8D4]">
+            Email us at info@youthhuza.rw. WhatsApp chat will appear here once our business number is
+            connected.
+          </p>
+          <a
+            href="mailto:info@youthhuza.rw"
+            className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--huza-gold)] px-5 text-sm font-semibold text-[var(--huza-ink)] transition hover:brightness-105"
+          >
+            Email info@youthhuza.rw
+          </a>
+        </div>
+      </section>
+      )}
 
       <RecentlyViewedSection />
     </div>

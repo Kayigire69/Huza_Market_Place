@@ -50,7 +50,7 @@ type Product = {
 
 export function ProductDetailClient({
   product,
-  whatsappUrl = "https://wa.me/250788000000",
+  whatsappUrl = "",
 }: {
   product: Product;
   whatsappUrl?: string;
@@ -107,8 +107,12 @@ export function ProductDetailClient({
     return t("inStock");
   }, [available, fulfillment.inStock, product.availability, product.lowStockAt, t]);
 
-  const waNumber = whatsappUrl.replace(/.*wa\.me\//, "").replace(/\D/g, "") || "250788000000";
+  const waNumber = whatsappUrl.replace(/.*wa\.me\//, "").replace(/\D/g, "");
   const orderViaWhatsApp = () => {
+    if (!waNumber) {
+      showToast("WhatsApp order will be available once our business number is set.");
+      return;
+    }
     const message = encodeURIComponent(
       `Hello HUZA,\n\nI would like to order:\n\nProduct:\n${name}\n\nQuantity:\n${qty} ${formatUnit(product.unit)}\n\nPrice:\n${formatRwf(product.price)}/${formatUnit(product.unit)}\n\nPlease help me complete this order.\n\nThank you.`
     );
@@ -293,15 +297,17 @@ export function ProductDetailClient({
             <ShoppingCart className="size-5" aria-hidden />
             {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
           </Button>
-          <Button
-            className="w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebe57] text-white"
-            size="lg"
-            variant="secondary"
-            onClick={orderViaWhatsApp}
-          >
-            <MessageCircle className="size-4 mr-2 inline" />
-            Order via WhatsApp
-          </Button>
+          {waNumber ? (
+            <Button
+              className="w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebe57] text-white"
+              size="lg"
+              variant="secondary"
+              onClick={orderViaWhatsApp}
+            >
+              <MessageCircle className="size-4 mr-2 inline" />
+              Order via WhatsApp
+            </Button>
+          ) : null}
         </div>
 
         <div className="mt-6">

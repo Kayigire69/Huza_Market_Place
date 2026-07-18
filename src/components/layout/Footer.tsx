@@ -1,11 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { HuzaFreshLogo } from "@/components/brand/HuzaFreshLogo";
+import { isWhatsAppConfigured, SUPPORT_EMAIL } from "@/lib/brand-contact";
 
 export function Footer() {
   const { t } = useLocale();
+  const [whatsappUrl, setWhatsappUrl] = useState("");
+  const [email, setEmail] = useState(SUPPORT_EMAIL);
+
+  useEffect(() => {
+    fetch("/api/public/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.whatsapp_url) setWhatsappUrl(data.whatsapp_url);
+        if (data?.email) setEmail(data.email);
+      })
+      .catch(() => undefined);
+  }, []);
 
   return (
     <footer className="mt-20 border-t border-[var(--huza-line)] bg-[var(--huza-green-dark)] text-[#E8F5EE]">
@@ -13,6 +27,11 @@ export function Footer() {
         <div className="lg:col-span-1">
           <HuzaFreshLogo size="md" variant="onDark" />
           <p className="mt-4 text-sm leading-relaxed text-[#C8E8D4]">{t("footerAbout")}</p>
+          <p className="mt-3 text-sm text-[#C8E8D4]">
+            <a href={`mailto:${email}`} className="hover:text-white">
+              {email}
+            </a>
+          </p>
         </div>
 
         <div>
@@ -106,16 +125,13 @@ export function Footer() {
                 Instagram
               </a>
             </li>
-            <li>
-              <a
-                href="https://wa.me/250788000000"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-white"
-              >
-                WhatsApp
-              </a>
-            </li>
+            {isWhatsAppConfigured(whatsappUrl) ? (
+              <li>
+                <a href={whatsappUrl} target="_blank" rel="noreferrer" className="hover:text-white">
+                  WhatsApp
+                </a>
+              </li>
+            ) : null}
           </ul>
         </div>
       </div>

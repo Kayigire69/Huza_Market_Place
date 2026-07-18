@@ -143,7 +143,7 @@ export default async function ProductDetailPage({
   }
 
   const { storefrontProduct, fbt, recommended, reviews } = payload;
-  const whatsappUrl = await getSetting("whatsapp_url", "https://wa.me/250788000000");
+  const whatsappUrl = await getSetting("whatsapp_url", "");
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">

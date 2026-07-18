@@ -23,12 +23,11 @@ export default function PrivacyPage() {
         </p>
         <p>
           You may request access, correction, or deletion of your account data by contacting
-          hello@youthhuza.rw. Guest checkout data is retained as needed for order history and legal
+          info@youthhuza.rw. Guest checkout data is retained as needed for order history and legal
           compliance.
         </p>
         <p>
-          For questions about this policy, contact Youth Huza at hello@youthhuza.rw or +250 788 000
-          000.
+          For questions about this policy, contact Youth Huza at info@youthhuza.rw.
         </p>
       </div>
     </div>

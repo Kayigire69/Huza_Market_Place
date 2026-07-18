@@ -2,15 +2,13 @@
 
 import { MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { isWhatsAppConfigured } from "@/lib/brand-contact";
 
-export function WhatsAppFab({
-  href = "https://wa.me/250788000000",
-}: {
-  href?: string;
-}) {
+export function WhatsAppFab({ href = "" }: { href?: string }) {
   const [ready, setReady] = useState(false);
   useEffect(() => setReady(true), []);
   if (!ready) return null;
+  if (!isWhatsAppConfigured(href)) return null;
 
   return (
     <a

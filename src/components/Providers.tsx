@@ -51,7 +51,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const checkout = isCheckout(pathname);
   const noMobileNav = hideMobileNav(pathname);
   const storefrontChrome = !partner && !checkout;
-  const [whatsappUrl, setWhatsappUrl] = useState("https://wa.me/250788000000");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
   const prefetchRoutes = useMemo(() => {
     if (pathname?.startsWith("/admin")) return ADMIN_PREFETCH;
     if (pathname === "/farmer" || pathname?.startsWith("/farmer/")) return FARMER_PREFETCH;
@@ -92,7 +92,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </main>
         {storefrontChrome && <Footer />}
         {storefrontChrome && !noMobileNav && <MobileBottomNav />}
-        {storefrontChrome && <WhatsAppFab href={whatsappUrl} />}
+        {storefrontChrome && whatsappUrl ? <WhatsAppFab href={whatsappUrl} /> : null}
         {!partner && <ToastHost />}
       </LocaleProvider>
     </SessionProvider>
