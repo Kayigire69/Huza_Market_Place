@@ -21,9 +21,9 @@ export function FarmerQualityReviewCard({
   status = "Rejected",
   reason,
   recommendation,
-  guideHref = "/farmer/support?topic=quality-standards",
-  agronomistHref = "/farmer/agronomist",
-  resubmitHref = "/farmer/products/submit",
+  guideHref = "/farmer/training?topic=quality-standards",
+  agronomistHref = "/farmer/agronomy",
+  resubmitHref = "/farmer/produce?tab=submit",
 }: Props) {
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-red-200 bg-gradient-to-br from-red-50/90 to-white">

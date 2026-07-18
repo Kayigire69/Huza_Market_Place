@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { FARMER_NAV_SECTIONS, isFarmerNavActive } from "@/lib/farmer-nav";
+import { FARMER_NAV_SECTIONS, farmerMobileQuickLinks, isFarmerNavActive } from "@/lib/farmer-nav";
 
 type Props = {
   children: React.ReactNode;
@@ -132,7 +132,7 @@ export function FarmerWorkspaceShell({
             Menu
           </button>
           <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
-            {FARMER_NAV_SECTIONS.find((s) => s.id === "selling")?.items.map((item) => {
+            {farmerMobileQuickLinks().map((item) => {
               const active = isFarmerNavActive(pathname, item);
               return (
                 <Link
