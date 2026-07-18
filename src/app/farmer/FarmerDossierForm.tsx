@@ -59,6 +59,9 @@ export type FarmerDossierValues = {
   priceAfterSale?: number | null;
   proofOfPaymentUrl?: string | null;
   farmerComments?: string | null;
+  paymentMomo?: string | null;
+  bankAccount?: string | null;
+  bankName?: string | null;
 };
 
 async function uploadOne(file: File, folder: string): Promise<string> {
@@ -433,6 +436,31 @@ export function FarmerDossierForm({
               </a>
             )}
             <input type="hidden" name="proofOfPaymentUrl" value={proofUrl} />
+          </div>
+          <div>
+            <label className="label">{t("mobileMoneyNumber")}</label>
+            <input
+              name="paymentMomo"
+              defaultValue={initial.paymentMomo || ""}
+              className="input-field"
+              placeholder="078xxxxxxx"
+            />
+          </div>
+          <div>
+            <label className="label">{t("bankAccountOptional")}</label>
+            <input
+              name="bankAccount"
+              defaultValue={initial.bankAccount || ""}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="label">{t("bankNameOptional")}</label>
+            <input
+              name="bankName"
+              defaultValue={initial.bankName || ""}
+              className="input-field"
+            />
           </div>
         </div>
       </section>

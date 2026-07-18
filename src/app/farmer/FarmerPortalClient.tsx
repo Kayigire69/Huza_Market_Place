@@ -59,6 +59,9 @@ type Farmer = FarmerDossierValues & {
   productsOffered?: string | null;
   huzaPurchaseAgreement?: string | null;
   agreedToHuzaTerms?: boolean;
+  paymentMomo?: string | null;
+  bankAccount?: string | null;
+  bankName?: string | null;
   products?: ProductRow[];
   user?: { fullName?: string } | null;
 };
@@ -336,6 +339,61 @@ export function FarmerPortalClient({
             {farmer.agreedToHuzaTerms ? t("huzaTermsAccepted") : t("huzaTermsPending")}
           </p>
           <p className="text-xs text-[var(--huza-muted)]">{t("standardAgreementEditHint")}</p>
+
+          <form
+            className="border-t border-[var(--huza-line)] pt-4 space-y-3"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setBusy(true);
+              setMsg("");
+              const form = new FormData(e.currentTarget);
+              const res = await fetch("/api/supplier/profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  paymentMomo: String(form.get("paymentMomo") || "").trim() || null,
+                  bankAccount: String(form.get("bankAccount") || "").trim() || null,
+                  bankName: String(form.get("bankName") || "").trim() || null,
+                }),
+              });
+              const data = await res.json().catch(() => ({}));
+              setBusy(false);
+              setMsg(res.ok ? t("farmerInfoSaved") : data.error || t("saveFailed"));
+              if (res.ok) refresh();
+            }}
+          >
+            <h3 className="font-semibold text-base">{t("paymentOptions")}</h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="label">{t("mobileMoneyNumber")}</label>
+                <input
+                  name="paymentMomo"
+                  defaultValue={farmer.paymentMomo || ""}
+                  className="input-field"
+                  placeholder="078xxxxxxx"
+                />
+              </div>
+              <div>
+                <label className="label">{t("bankAccountOptional")}</label>
+                <input
+                  name="bankAccount"
+                  defaultValue={farmer.bankAccount || ""}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label">{t("bankNameOptional")}</label>
+                <input
+                  name="bankName"
+                  defaultValue={farmer.bankName || ""}
+                  className="input-field"
+                />
+              </div>
+            </div>
+            <Button type="submit" size="sm" disabled={busy}>
+              {busy ? t("saving") : t("saveFarmerInfo")}
+            </Button>
+          </form>
         </div>
       )}
 
