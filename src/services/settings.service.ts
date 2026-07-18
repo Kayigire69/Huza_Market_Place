@@ -98,3 +98,76 @@ export async function generateOrderNumber(): Promise<string> {
   });
   return `HZ-${year}-${String(seq.lastValue).padStart(6, "0")}`;
 }
+
+/** Defaults for Admin → Settings (required by /api/admin/settings). */
+export const SETTING_DEFAULTS: Record<string, string> = {
+  brand_name: "HUZA FRESH",
+  company_name: "Youth Huza",
+  company_tagline: "Fresh produce marketplace",
+  phone: "",
+  email: "info@youthhuza.rw",
+  company_address: "Kigali, Rwanda",
+  whatsapp_url: "",
+  delivery_fee_rwf: String(FLAT_DELIVERY_FEE_RWF),
+  merchant_phone: "",
+  merchant_name: "Youth Huza",
+  payment_mtn_enabled: "true",
+  payment_airtel_enabled: "true",
+  notify_inapp_enabled: "true",
+  notify_sms_enabled: "true",
+  notify_email_enabled: "true",
+  notify_new_order_enabled: "true",
+  notify_low_stock_enabled: "true",
+  notify_new_farmer_enabled: "true",
+};
+
+export async function getAdminSettingsBundle(): Promise<Record<string, string>> {
+  const out = { ...SETTING_DEFAULTS };
+  try {
+    const rows = await prisma.websiteSetting.findMany({
+      where: { key: { in: Object.keys(SETTING_DEFAULTS) } },
+    });
+    for (const row of rows) out[row.key] = row.value;
+  } catch {
+    /* ignore */
+  }
+  return out;
+}
+
+export async function setSettingsBulk(entries: Record<string, string>) {
+  await Promise.all(
+    Object.entries(entries).map(([key, value]) =>
+      prisma.websiteSetting.upsert({
+        where: { key },
+        create: { key, value: String(value ?? "") },
+        update: { value: String(value ?? "") },
+      })
+    )
+  );
+}
+
+export async function syncAllZoneFees(feeRwf: number) {
+  const fee = Math.round(feeRwf);
+  if (!Number.isFinite(fee) || fee < 0) return;
+  try {
+    await prisma.deliveryZoneConfig.updateMany({ data: { feeRwf: fee } });
+  } catch {
+    /* table may not exist yet */
+  }
+}
+
+export async function isPaymentMethodEnabled(
+  method: "MTN_MOMO" | "AIRTEL_MONEY"
+): Promise<boolean> {
+  const key = method === "MTN_MOMO" ? "payment_mtn_enabled" : "payment_airtel_enabled";
+  const value = await getSetting(key, "true");
+  return value !== "false";
+}
+
+export async function getHuzaPayee(): Promise<{ name: string; phone: string }> {
+  const settings = await getSettings(["merchant_name", "merchant_phone", "company_name", "phone"]);
+  return {
+    name: settings.merchant_name || settings.company_name || "Youth Huza",
+    phone: settings.merchant_phone || settings.phone || "0788000000",
+  };
+}
