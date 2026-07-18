@@ -106,10 +106,25 @@ export const authOptions: NextAuthOptions = {
         token.totpEnabled = Boolean(u.totpEnabled);
         token.isPrimarySuperAdmin = Boolean(u.isPrimarySuperAdmin);
         token.lastDbSync = Date.now();
+        token.lastPwSync = Date.now();
+      }
+
+      // Keep mustChangePassword fresh (password resets / new staff accounts)
+      const uid = (token.id as string) || (token.sub as string);
+      const lastPwSync = Number(token.lastPwSync || 0);
+      if (uid && Date.now() - lastPwSync > 30_000) {
+        const flags = await prisma.user.findUnique({
+          where: { id: uid },
+          select: { mustChangePassword: true, isActive: true, deletedAt: true },
+        });
+        if (!flags || !flags.isActive || flags.deletedAt) {
+          return { ...token, role: undefined, error: "inactive" };
+        }
+        token.mustChangePassword = Boolean(flags.mustChangePassword);
+        token.lastPwSync = Date.now();
       }
 
       // Revalidate role / active flags from DB at least every 5 minutes
-      const uid = (token.id as string) || (token.sub as string);
       const lastSync = Number(token.lastDbSync || 0);
       if (uid && Date.now() - lastSync > 5 * 60_000) {
         const dbUser = await prisma.user.findFirst({

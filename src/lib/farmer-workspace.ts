@@ -53,6 +53,10 @@ export const requireFarmerWorkspace = cache(async () => {
     redirect("/account");
   }
 
+  if (session.user.mustChangePassword) {
+    redirect("/auth/change-password");
+  }
+
   const farmer = await prisma.supplier.findUnique({
     where: { userId: session.user.id },
     include: {

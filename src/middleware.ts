@@ -44,6 +44,14 @@ export default withAuth(
     const token = req.nextauth.token;
     const role = token?.role as string | undefined;
 
+    // Temp passwords must be changed before any staff/farmer portal access.
+    if (
+      token?.mustChangePassword &&
+      pathname !== "/auth/change-password"
+    ) {
+      return NextResponse.redirect(new URL("/auth/change-password", req.url));
+    }
+
     if (isStaffPath(pathname)) {
       const allowed: Record<string, string[]> = {
         "/admin": [
@@ -107,6 +115,8 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
+
+        if (pathname === "/auth/change-password") return !!token;
 
         if (isPublicFarmerEntry(pathname)) return true;
         if (pathname === "/supplier" || pathname.startsWith("/supplier/")) return true;

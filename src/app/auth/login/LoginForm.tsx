@@ -57,7 +57,16 @@ export default function LoginForm() {
     const session = await getSession();
     const role = session?.user?.role;
     setLoading(false);
-    router.push(portalPathForRole(role));
+    if (session?.user?.mustChangePassword) {
+      router.push("/auth/change-password");
+    } else {
+      const callback = sp.get("callbackUrl");
+      if (callback && callback.startsWith("/") && !callback.startsWith("//")) {
+        router.push(callback);
+      } else {
+        router.push(portalPathForRole(role));
+      }
+    }
     router.refresh();
   };
 
