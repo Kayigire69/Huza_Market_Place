@@ -157,7 +157,7 @@ export const paymentService = {
       // Restore loyalty points spent on a redeem promo if payment failed
       if (payment.order.userId && payment.order.promoCode) {
         const promo = await tx.promotion.findFirst({
-          where: { code: payment.order.promoCode, isRedeem: true },
+          where: { code: payment.order.promoCode, isLoyalty: true },
           select: { loyaltyPoints: true },
         });
         if (promo?.loyaltyPoints && promo.loyaltyPoints > 0) {

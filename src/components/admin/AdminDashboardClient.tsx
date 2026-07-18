@@ -275,40 +275,45 @@ export function AdminDashboardClient({
           })),
         ].slice(0, 8);
 
-  const kpis: Kpi[] = [
-    {
-      label: "Today's Sales",
-      value: formatCompactRwf(c.revenueToday),
-      href: "/admin/reports",
-      module: "reports",
-      hint: c.revenueGrowthPct != null ? `Month ${c.revenueGrowthPct > 0 ? "+" : ""}${c.revenueGrowthPct}%` : undefined,
-    },
-    {
-      label: "Orders Today",
-      value: String(c.todayOrders),
-      href: "/admin/orders",
-      module: "orders",
-    },
-    {
-      label: "Pending Orders",
-      value: String(pendingOrders),
-      href: "/admin/orders?tab=pending",
-      module: "orders",
-      hint: "Not yet delivered",
-    },
-    {
-      label: "Low Stock",
-      value: String(c.lowStock),
-      href: "/admin/inventory?tab=low",
-      module: "inventory",
-    },
-    {
-      label: "Farmers Waiting",
-      value: String(pendingFarmers),
-      href: "/admin/suppliers",
-      module: "farmers",
-    },
-  ].filter((k) => !k.module || roleCanAccessModule(role, k.module));
+  const kpis: Kpi[] = (
+    [
+      {
+        label: "Today's Sales",
+        value: formatCompactRwf(c.revenueToday),
+        href: "/admin/reports",
+        module: "reports" as AdminModule,
+        hint:
+          c.revenueGrowthPct != null
+            ? `Month ${c.revenueGrowthPct > 0 ? "+" : ""}${c.revenueGrowthPct}%`
+            : undefined,
+      },
+      {
+        label: "Orders Today",
+        value: String(c.todayOrders),
+        href: "/admin/orders",
+        module: "orders" as AdminModule,
+      },
+      {
+        label: "Pending Orders",
+        value: String(pendingOrders),
+        href: "/admin/orders?tab=pending",
+        module: "orders" as AdminModule,
+        hint: "Not yet delivered",
+      },
+      {
+        label: "Low Stock",
+        value: String(c.lowStock),
+        href: "/admin/inventory?tab=low",
+        module: "inventory" as AdminModule,
+      },
+      {
+        label: "Farmers Waiting",
+        value: String(pendingFarmers),
+        href: "/admin/suppliers",
+        module: "farmers" as AdminModule,
+      },
+    ] satisfies Kpi[]
+  ).filter((k) => !k.module || roleCanAccessModule(role, k.module));
 
   const quick = [
     { href: "/admin/orders", label: "View Orders", icon: ShoppingBag, module: "orders" as const },

@@ -69,7 +69,6 @@ export async function GET(req: Request) {
                 price: true,
                 unit: true,
                 isActive: true,
-                slug: true,
               },
             },
           },

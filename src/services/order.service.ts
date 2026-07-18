@@ -208,7 +208,7 @@ export const orderService = {
         if (promo.freeDelivery) deliveryFee = 0;
         if (promo.discountPct) discount += Math.round((subtotal * promo.discountPct) / 100);
         if (promo.discountAmt) discount += promo.discountAmt;
-        if (promo.isRedeem && promo.loyaltyPoints) {
+        if (promo.isLoyalty && promo.loyaltyPoints) {
           if (!userId) {
             throw new Error("Log in to redeem loyalty rewards");
           }

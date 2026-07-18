@@ -31,7 +31,11 @@ export function FarmerAgronomyClient() {
   const [mode, setMode] = useState<"advice" | "visit">("advice");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
-  const [advice, setAdvice] = useState({ topic: ADVICE_TOPICS[0], crop: "", description: "" });
+  const [advice, setAdvice] = useState<{
+    topic: (typeof ADVICE_TOPICS)[number];
+    crop: string;
+    description: string;
+  }>({ topic: ADVICE_TOPICS[0], crop: "", description: "" });
   const [visit, setVisit] = useState({
     reason: "",
     crop: "",
@@ -112,7 +116,12 @@ export function FarmerAgronomyClient() {
                 <select
                   className="w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
                   value={advice.topic}
-                  onChange={(e) => setAdvice((a) => ({ ...a, topic: e.target.value }))}
+                  onChange={(e) =>
+                    setAdvice((a) => ({
+                      ...a,
+                      topic: e.target.value as (typeof ADVICE_TOPICS)[number],
+                    }))
+                  }
                 >
                   {ADVICE_TOPICS.map((t) => (
                     <option key={t} value={t}>
