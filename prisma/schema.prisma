@@ -302,6 +302,8 @@ model Supplier {
   farmGatePrice          Int?
   priceUponDelivery      Int?
   priceAfterSale         Int?
+  /// Default commission % when Huza sells on behalf of this farmer (e.g. 10).
+  defaultCommissionRate  Int?              @default(10)
   proofOfPaymentUrl      String?
   farmerComments         String?
 
@@ -366,6 +368,8 @@ model Product {
   price         Int
   /// Latest wholesale / farm-gate cost Huza pays (internal — never shown to customers)
   purchasePrice Int?
+  /// OWNED = Huza bought stock; COMMISSION = Huza sells on behalf of farmer (internal only)
+  ownershipMode String?  @default("OWNED")
   unit          UnitType @default(KG)
   stockQty      Int      @default(0)
   /// Held for pending (unpaid) orders — available = stockQty - reservedQty
@@ -822,6 +826,12 @@ enum PurchaseOrderStatus {
   CANCELLED
 }
 
+/// How Youth Huza takes the produce: buy outright or sell on commission.
+enum ProcurementDealType {
+  OUTRIGHT_BUY
+  COMMISSION
+}
+
 /// Youth Huza purchase from an approved supplier (procurement).
 model PurchaseOrder {
   id               String              @id @default(cuid())
@@ -829,6 +839,8 @@ model PurchaseOrder {
   supplierId       String
   offerId          String?
   status           PurchaseOrderStatus @default(DRAFT)
+  /// Buy now (Huza owns stock) vs commission (Huza sells, then settles farmer).
+  dealType         ProcurementDealType @default(OUTRIGHT_BUY)
   productName      String
   category         String?
   unit             UnitType            @default(KG)
@@ -836,6 +848,12 @@ model PurchaseOrder {
   negotiatedPrice  Int
   totalAmount      Int
   retailPrice      Int?
+  /// Commission % for COMMISSION deals (e.g. 10 = 10%).
+  commissionRate   Int?
+  /// Customer sales total used for settlement (RWF).
+  saleAmount       Int?
+  commissionAmount Int?
+  farmerNetAmount  Int?
   qualityNotes     String?
   rejectionReason  String?
   /// What the farmer should do next after a quality rejection
@@ -859,6 +877,7 @@ model PurchaseOrder {
   @@index([supplierId])
   @@index([status])
   @@index([poNumber])
+  @@index([dealType])
 }
 
 model WarehouseLocation {

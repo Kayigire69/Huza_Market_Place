@@ -11,7 +11,7 @@ export default async function FarmerPaymentsPage() {
     <div>
       <FarmerPageHeader
         title="Payments"
-        subtitle="Paid and waiting payouts for accepted purchase orders."
+        subtitle="Paid and waiting payouts — including commission sale breakdowns."
       />
       <FarmerPaymentsClient orders={purchaseOrders} />
     </div>

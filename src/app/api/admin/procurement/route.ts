@@ -3,22 +3,64 @@ import type { Session } from "next-auth";
 import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
-import { OfferStatus, PurchaseOrderStatus, UnitType } from "@prisma/client";
+import {
+  OfferStatus,
+  ProcurementDealType,
+  PurchaseOrderStatus,
+  UnitType,
+} from "@prisma/client";
 
 function poNumber() {
   const n = Date.now().toString(36).toUpperCase();
   return `PO-${n.slice(-8)}`;
 }
 
+const PAID_ORDER_STATUSES = [
+  "PAID",
+  "CONFIRMED",
+  "PREPARING",
+  "PACKED",
+  "READY_FOR_DISPATCH",
+  "READY_FOR_PICKUP",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+] as const;
+
+async function customerSalesForProduct(productId: string | null | undefined) {
+  if (!productId) return 0;
+  const agg = await prisma.orderItem.aggregate({
+    where: {
+      productId,
+      order: { status: { in: [...PAID_ORDER_STATUSES] } },
+    },
+    _sum: { lineTotal: true },
+  });
+  return agg._sum.lineTotal ?? 0;
+}
+
+function calcCommission(saleAmount: number, ratePercent: number) {
+  const commissionAmount = Math.round((saleAmount * ratePercent) / 100);
+  const farmerNetAmount = Math.max(0, saleAmount - commissionAmount);
+  return { commissionAmount, farmerNetAmount };
+}
+
 /**
  * Admin procurement:
- * - offer actions: accept | reject | purchase (creates PO + inventory)
- * - PO actions: receive | inspect_accept | inspect_reject | pay | cancel
+ * - offer actions: accept | reject | purchase (creates PO + draft product)
+ * - PO actions: receive | inspect_accept | inspect_reject | settle | pay | cancel
+ * - views: requests | orders | received | commission | payments | history
  */
-
 export async function GET(req: Request) {
   const session = await requireAdminSession({
-    modules: ["purchase_requests", "purchase_orders", "goods_received", "farmers"],
+    modules: [
+      "purchase_requests",
+      "purchase_orders",
+      "goods_received",
+      "commission_sales",
+      "farmer_payments",
+      "procurement_history",
+      "farmers",
+    ],
   });
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -27,10 +69,27 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const view = searchParams.get("view") || "requests";
 
+  const poInclude = {
+    supplier: {
+      select: {
+        businessName: true,
+        defaultCommissionRate: true,
+        paymentMomo: true,
+        bankAccount: true,
+      },
+    },
+    offer: { select: { title: true } },
+  } as const;
+
   if (view === "requests") {
     const offers = await prisma.supplierOffer.findMany({
       where: { status: { in: ["PENDING", "ACCEPTED"] } },
-      include: { supplier: { select: { businessName: true } }, category: true },
+      include: {
+        supplier: {
+          select: { businessName: true, defaultCommissionRate: true },
+        },
+        category: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 80,
     });
@@ -40,23 +99,59 @@ export async function GET(req: Request) {
   if (view === "received") {
     const purchaseOrders = await prisma.purchaseOrder.findMany({
       where: { status: { in: ["RECEIVED", "INSPECTED", "ACCEPTED", "PAID"] } },
-      include: {
-        supplier: { select: { businessName: true } },
-        offer: { select: { title: true } },
-      },
+      include: poInclude,
       orderBy: { updatedAt: "desc" },
       take: 80,
     });
     return NextResponse.json({ offers: [], purchaseOrders });
   }
 
-  // Active POs awaiting receive / inspect / pay
+  if (view === "commission") {
+    const purchaseOrders = await prisma.purchaseOrder.findMany({
+      where: {
+        dealType: ProcurementDealType.COMMISSION,
+        status: { in: ["INSPECTED", "ACCEPTED", "PAID", "RECEIVED", "ORDERED"] },
+      },
+      include: poInclude,
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    });
+
+    const enriched = await Promise.all(
+      purchaseOrders.map(async (po) => {
+        const liveSales = await customerSalesForProduct(po.productId);
+        return { ...po, liveSales };
+      })
+    );
+
+    return NextResponse.json({ offers: [], purchaseOrders: enriched });
+  }
+
+  if (view === "payments") {
+    const purchaseOrders = await prisma.purchaseOrder.findMany({
+      where: {
+        status: { in: ["INSPECTED", "ACCEPTED", "PAID"] },
+      },
+      include: poInclude,
+      orderBy: [{ paidAt: "desc" }, { updatedAt: "desc" }],
+      take: 100,
+    });
+    return NextResponse.json({ offers: [], purchaseOrders });
+  }
+
+  if (view === "history") {
+    const purchaseOrders = await prisma.purchaseOrder.findMany({
+      include: poInclude,
+      orderBy: { updatedAt: "desc" },
+      take: 120,
+    });
+    return NextResponse.json({ offers: [], purchaseOrders });
+  }
+
+  // Active POs awaiting receive / inspect / pay (outright buy pay on orders)
   const purchaseOrders = await prisma.purchaseOrder.findMany({
     where: { status: { in: ["DRAFT", "ORDERED", "RECEIVED", "INSPECTED"] } },
-    include: {
-      supplier: { select: { businessName: true } },
-      offer: { select: { title: true } },
-    },
+    include: poInclude,
     orderBy: { createdAt: "desc" },
     take: 80,
   });
@@ -65,7 +160,13 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   const session = await requireAdminSession({
-    modules: ["purchase_requests", "purchase_orders", "goods_received"],
+    modules: [
+      "purchase_requests",
+      "purchase_orders",
+      "goods_received",
+      "commission_sales",
+      "farmer_payments",
+    ],
   });
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -77,13 +178,24 @@ export async function PATCH(req: Request) {
     return handlePoAction(req, session, body);
   }
 
-  const { offerId, action, adminNote, retailPrice, purchasedQty, negotiatedPrice } = body as {
+  const {
+    offerId,
+    action,
+    adminNote,
+    retailPrice,
+    purchasedQty,
+    negotiatedPrice,
+    dealType,
+    commissionRate,
+  } = body as {
     offerId: string;
     action: "accept" | "reject" | "purchase";
     adminNote?: string;
     retailPrice?: number;
     purchasedQty?: number;
     negotiatedPrice?: number;
+    dealType?: "OUTRIGHT_BUY" | "COMMISSION";
+    commissionRate?: number;
   };
 
   const offer = await prisma.supplierOffer.findUnique({
@@ -109,8 +221,25 @@ export async function PATCH(req: Request) {
 
   if (action === "purchase") {
     const qty = purchasedQty ?? offer.quantityOffered;
-    const unitPrice = negotiatedPrice ?? offer.askPrice;
-    const sellPrice = retailPrice ?? offer.suggestedRetail ?? Math.round(unitPrice * 1.25);
+    const deal =
+      dealType === "COMMISSION"
+        ? ProcurementDealType.COMMISSION
+        : ProcurementDealType.OUTRIGHT_BUY;
+    const rate =
+      deal === ProcurementDealType.COMMISSION
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              commissionRate ?? offer.supplier.defaultCommissionRate ?? 10
+            )
+          )
+        : null;
+    const unitPrice =
+      deal === ProcurementDealType.COMMISSION
+        ? Math.max(0, negotiatedPrice ?? 0)
+        : (negotiatedPrice ?? offer.askPrice);
+    const sellPrice = retailPrice ?? offer.suggestedRetail ?? Math.round((unitPrice || offer.askPrice) * 1.25);
     const categoryId =
       offer.categoryId ||
       (await prisma.category.findFirst({ orderBy: { sortOrder: "asc" } }))?.id;
@@ -119,7 +248,10 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "No category available" }, { status: 400 });
     }
 
-    // Draft product: not sold on the shop until goods are received & quality-checked
+    if (deal === ProcurementDealType.COMMISSION && (rate == null || Number.isNaN(rate))) {
+      return NextResponse.json({ error: "Commission rate required" }, { status: 400 });
+    }
+
     const product = await prisma.product.create({
       data: {
         supplierId: offer.supplierId,
@@ -137,7 +269,8 @@ export async function PATCH(req: Request) {
           offer.description ||
           `${offer.title} bishya bigurishwa na Youth Huza kuri HUZA FRESH.`,
         price: sellPrice,
-        purchasePrice: unitPrice,
+        purchasePrice: deal === ProcurementDealType.OUTRIGHT_BUY ? unitPrice : null,
+        ownershipMode: deal === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
         unit: offer.unit as UnitType,
         stockQty: 0,
         isNewArrival: true,
@@ -160,17 +293,22 @@ export async function PATCH(req: Request) {
           ],
         },
         reviewStatus: "APPROVED",
-        reviewNote: "From procurement — awaiting delivery & QC before shop publish",
+        reviewNote:
+          deal === ProcurementDealType.COMMISSION
+            ? "Commission listing — awaiting delivery & QC before shop publish"
+            : "From procurement — awaiting delivery & QC before shop publish",
       },
     });
 
-    const totalAmount = Math.round(unitPrice * qty);
+    const totalAmount =
+      deal === ProcurementDealType.COMMISSION ? 0 : Math.round(unitPrice * qty);
     const purchaseOrder = await prisma.purchaseOrder.create({
       data: {
         poNumber: poNumber(),
         supplierId: offer.supplierId,
         offerId: offer.id,
         status: PurchaseOrderStatus.ORDERED,
+        dealType: deal,
         productName: offer.title,
         category: offer.categoryId || null,
         unit: offer.unit as UnitType,
@@ -178,12 +316,18 @@ export async function PATCH(req: Request) {
         negotiatedPrice: unitPrice,
         totalAmount,
         retailPrice: sellPrice,
+        commissionRate: rate,
         orderedAt: new Date(),
         notes: adminNote || null,
         productId: product.id,
         createdById: session.user.id,
       },
     });
+
+    const dealLabel =
+      deal === ProcurementDealType.COMMISSION
+        ? `Commission sale (${rate}%)`
+        : `Outright buy at ${unitPrice} RWF`;
 
     const updated = await prisma.supplierOffer.update({
       where: { id: offerId },
@@ -193,7 +337,7 @@ export async function PATCH(req: Request) {
         productId: product.id,
         adminNote:
           adminNote ||
-          `PO ${purchaseOrder.poNumber}: ordered at ${unitPrice} RWF; retail ${sellPrice} RWF — awaiting delivery`,
+          `PO ${purchaseOrder.poNumber}: ${dealLabel}; retail ${sellPrice} RWF — awaiting delivery`,
       },
     });
 
@@ -202,8 +346,14 @@ export async function PATCH(req: Request) {
         userId: offer.supplier.userId,
         type: "SUPPLIER_STATUS",
         channel: "IN_APP",
-        title: "Youth Huza created a purchase order",
-        body: `PO ${purchaseOrder.poNumber}: Huza ordered ${qty} ${offer.unit.toLowerCase()} of ${offer.title} at ${unitPrice} RWF/${offer.unit.toLowerCase()}. Please deliver for inspection.`,
+        title:
+          deal === ProcurementDealType.COMMISSION
+            ? "Youth Huza will sell on commission"
+            : "Youth Huza created a purchase order",
+        body:
+          deal === ProcurementDealType.COMMISSION
+            ? `PO ${purchaseOrder.poNumber}: Huza will sell ${qty} ${offer.unit.toLowerCase()} of ${offer.title} on commission (${rate}%). Deliver for inspection. Customers still buy from HUZA FRESH only.`
+            : `PO ${purchaseOrder.poNumber}: Huza ordered ${qty} ${offer.unit.toLowerCase()} of ${offer.title} at ${unitPrice} RWF/${offer.unit.toLowerCase()}. Please deliver for inspection.`,
       },
     });
 
@@ -211,7 +361,7 @@ export async function PATCH(req: Request) {
       action: "offer.purchase",
       entity: "PurchaseOrder",
       entityId: purchaseOrder.id,
-      details: `PO ${purchaseOrder.poNumber}; product ${product.id}; qty ${qty}; wholesale ${unitPrice}; retail ${sellPrice}; status ORDERED`,
+      details: `PO ${purchaseOrder.poNumber}; ${deal}; product ${product.id}; qty ${qty}; wholesale ${unitPrice}; retail ${sellPrice}; rate ${rate ?? "-"}`,
     });
 
     return NextResponse.json({ offer: updated, product, purchaseOrder });
@@ -233,6 +383,8 @@ async function handlePoAction(
     paymentMethod?: string;
     notes?: string;
     expiryDate?: string;
+    saleAmount?: number;
+    commissionRate?: number;
   }
 ) {
   const po = await prisma.purchaseOrder.findUnique({
@@ -243,6 +395,8 @@ async function handlePoAction(
 
   const now = new Date();
   let data: Record<string, unknown> = {};
+  let notifyTitle = `Purchase order ${body.poAction}`;
+  let notifyBody = `PO ${po.poNumber} is now ${body.poAction}.`;
 
   switch (body.poAction) {
     case "receive": {
@@ -267,12 +421,10 @@ async function handlePoAction(
           session.user.id,
           "RECEIVE"
         );
-        // Keep off the shop until quality inspection passes
         await prisma.product.update({
           where: { id: po.productId },
           data: { isActive: false },
         });
-        // Track batch for juices/salads expiry workflows
         const batchNumber = `B-${po.poNumber}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
         await prisma.stockBatch.create({
           data: {
@@ -284,6 +436,8 @@ async function handlePoAction(
           },
         });
       }
+      notifyTitle = "Goods received";
+      notifyBody = `PO ${po.poNumber}: Youth Huza received your delivery. Quality inspection is next.`;
       break;
     }
     case "inspect_accept": {
@@ -301,11 +455,18 @@ async function handlePoAction(
             reviewStatus: "APPROVED",
             reviewNote: "Passed QC — published to HUZA FRESH shop",
             reviewedAt: now,
+            ownershipMode:
+              po.dealType === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
           },
         });
         const { cacheDel, CacheKeys } = await import("@/lib/redis");
         await cacheDel(CacheKeys.homeCatalog);
       }
+      notifyTitle = "Quality passed — live on HUZA FRESH";
+      notifyBody =
+        po.dealType === ProcurementDealType.COMMISSION
+          ? `PO ${po.poNumber}: Your produce passed QC and is selling on HUZA FRESH. Payment after sales (commission ${po.commissionRate ?? 10}%).`
+          : `PO ${po.poNumber}: Quality accepted. Product is live. Farmer payment can be processed.`;
       break;
     }
     case "inspect_reject": {
@@ -329,18 +490,110 @@ async function handlePoAction(
           },
         });
       }
+      notifyTitle = "Quality rejected";
+      notifyBody = `PO ${po.poNumber}: ${body.rejectionReason || "Quality rejected"}${
+        body.recommendation ? ` Recommendation: ${body.recommendation}` : ""
+      }`;
       break;
     }
-    case "pay":
+    case "settle": {
+      if (po.dealType !== ProcurementDealType.COMMISSION) {
+        return NextResponse.json(
+          { error: "Settle applies only to commission sales" },
+          { status: 400 }
+        );
+      }
+      if (po.status === PurchaseOrderStatus.PAID) {
+        return NextResponse.json({ error: "Already paid" }, { status: 400 });
+      }
+      if (
+        po.status !== PurchaseOrderStatus.INSPECTED &&
+        po.status !== PurchaseOrderStatus.ACCEPTED
+      ) {
+        return NextResponse.json(
+          { error: "Settle after QC pass (INSPECTED)" },
+          { status: 400 }
+        );
+      }
+
+      const liveSales = await customerSalesForProduct(po.productId);
+      const saleAmount = Math.max(
+        0,
+        Math.round(body.saleAmount != null ? Number(body.saleAmount) : liveSales)
+      );
+      const rate = Math.max(
+        0,
+        Math.min(
+          100,
+          body.commissionRate ?? po.commissionRate ?? po.supplier.defaultCommissionRate ?? 10
+        )
+      );
+      const { commissionAmount, farmerNetAmount } = calcCommission(saleAmount, rate);
+
       data = {
-        status: PurchaseOrderStatus.PAID,
-        paidAt: now,
-        paymentRef: body.paymentRef || `PAY-${po.poNumber}`,
-        paymentMethod: body.paymentMethod || "MTN_MOMO",
+        saleAmount,
+        commissionRate: rate,
+        commissionAmount,
+        farmerNetAmount,
+        totalAmount: farmerNetAmount,
+        notes:
+          body.notes ||
+          po.notes ||
+          `Commission settlement: sale ${saleAmount}, rate ${rate}%, Huza ${commissionAmount}, farmer ${farmerNetAmount}`,
       };
+      notifyTitle = "Commission calculated";
+      notifyBody = `PO ${po.poNumber}: Sales ${saleAmount.toLocaleString()} RWF. Huza commission ${rate}% = ${commissionAmount.toLocaleString()} RWF. You receive ${farmerNetAmount.toLocaleString()} RWF (pending payout).`;
       break;
+    }
+    case "pay": {
+      if (po.dealType === ProcurementDealType.COMMISSION) {
+        const liveSales = await customerSalesForProduct(po.productId);
+        const saleAmount = Math.max(
+          0,
+          Math.round(
+            body.saleAmount != null
+              ? Number(body.saleAmount)
+              : (po.saleAmount ?? liveSales)
+          )
+        );
+        const rate = Math.max(
+          0,
+          Math.min(
+            100,
+            body.commissionRate ?? po.commissionRate ?? po.supplier.defaultCommissionRate ?? 10
+          )
+        );
+        const { commissionAmount, farmerNetAmount } = calcCommission(saleAmount, rate);
+        data = {
+          status: PurchaseOrderStatus.PAID,
+          paidAt: now,
+          paymentRef: body.paymentRef || `PAY-${po.poNumber}`,
+          paymentMethod: body.paymentMethod || "MTN_MOMO",
+          saleAmount,
+          commissionRate: rate,
+          commissionAmount,
+          farmerNetAmount,
+          totalAmount: farmerNetAmount,
+        };
+        notifyTitle = "Commission payment sent";
+        notifyBody = `PO ${po.poNumber}: Paid. Sale ${saleAmount.toLocaleString()} RWF − commission ${commissionAmount.toLocaleString()} RWF (${rate}%) = ${farmerNetAmount.toLocaleString()} RWF to you. Ref ${data.paymentRef}.`;
+      } else {
+        data = {
+          status: PurchaseOrderStatus.PAID,
+          paidAt: now,
+          paymentRef: body.paymentRef || `PAY-${po.poNumber}`,
+          paymentMethod: body.paymentMethod || "MTN_MOMO",
+          farmerNetAmount: po.totalAmount,
+        };
+        notifyTitle = "Payment sent";
+        notifyBody = `PO ${po.poNumber}: Youth Huza paid ${po.totalAmount.toLocaleString()} RWF. Ref ${data.paymentRef}.`;
+      }
+      break;
+    }
     case "cancel":
       data = { status: PurchaseOrderStatus.CANCELLED, notes: body.notes || po.notes };
+      notifyTitle = "Purchase order cancelled";
+      notifyBody = `PO ${po.poNumber} was cancelled.`;
       break;
     default:
       return NextResponse.json({ error: "Invalid PO action" }, { status: 400 });
@@ -356,13 +609,13 @@ async function handlePoAction(
       userId: po.supplier.userId,
       type: "SUPPLIER_STATUS",
       channel: "IN_APP",
-      title: `Purchase order ${updated.status}`,
-      body: `PO ${po.poNumber} is now ${updated.status}.`,
+      title: notifyTitle,
+      body: notifyBody,
     },
   });
 
   await auditAdminAction(req, session, {
-      action: `po.${body.poAction}`,
+    action: `po.${body.poAction}`,
     entity: "PurchaseOrder",
     entityId: body.poId,
     details: JSON.stringify(data),
@@ -389,6 +642,8 @@ export async function POST(req: Request) {
     negotiatedPrice,
     retailPrice,
     notes,
+    dealType,
+    commissionRate,
   } = body as {
     supplierId: string;
     offerId?: string;
@@ -398,11 +653,18 @@ export async function POST(req: Request) {
     negotiatedPrice: number;
     retailPrice?: number;
     notes?: string;
+    dealType?: "OUTRIGHT_BUY" | "COMMISSION";
+    commissionRate?: number;
   };
 
-  if (!supplierId || !productName || !quantity || !negotiatedPrice) {
+  if (!supplierId || !productName || !quantity || negotiatedPrice == null) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+
+  const deal =
+    dealType === "COMMISSION"
+      ? ProcurementDealType.COMMISSION
+      : ProcurementDealType.OUTRIGHT_BUY;
 
   const po = await prisma.purchaseOrder.create({
     data: {
@@ -410,19 +672,27 @@ export async function POST(req: Request) {
       supplierId,
       offerId: offerId || null,
       status: PurchaseOrderStatus.DRAFT,
+      dealType: deal,
       productName,
       unit: (unit as UnitType) || UnitType.KG,
       quantity,
       negotiatedPrice,
-      totalAmount: Math.round(negotiatedPrice * quantity),
+      totalAmount:
+        deal === ProcurementDealType.COMMISSION
+          ? 0
+          : Math.round(negotiatedPrice * quantity),
       retailPrice: retailPrice || null,
+      commissionRate:
+        deal === ProcurementDealType.COMMISSION
+          ? commissionRate ?? 10
+          : null,
       notes: notes || null,
       createdById: session.user.id,
     },
   });
 
   await auditAdminAction(req, session, {
-      action: "po.create",
+    action: "po.create",
     entity: "PurchaseOrder",
     entityId: po.id,
     details: po.poNumber,

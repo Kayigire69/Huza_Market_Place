@@ -20,6 +20,8 @@
  *   login error/rate-limit UX; password change is optional, not forced)
  * - Phase 14 Support (tickets, live chat, contact inbox; optional password change;
  *   admin subtitle polish)
+ * - Phase 15 Procurement commission (buy vs commission agreements, Commission Sales
+ *   settlement, Farmer Payments, Procurement History)
  *
  * NEXT:
  * - (Admin portal phases complete — expand only on request)
@@ -41,6 +43,11 @@ export const ADMIN_PHASES = {
   SETTINGS: { id: 12, name: "Settings", status: "locked" as const },
   SUPER_ADMIN: { id: 13, name: "Super Admin", status: "locked" as const },
   SUPPORT: { id: 14, name: "Support", status: "locked" as const },
+  PROCUREMENT_COMMISSION: {
+    id: 15,
+    name: "Procurement Commission",
+    status: "locked" as const,
+  },
 } as const;
 
 export function isAdminPhaseLocked(phase: keyof typeof ADMIN_PHASES): boolean {

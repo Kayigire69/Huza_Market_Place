@@ -145,19 +145,26 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
                 </h3>
                 <p className="mt-1 text-sm text-[var(--huza-muted)]">
                   {po.quantity.toLocaleString()} {formatUnit(po.unit)}
-                  {po.category ? ` · ${po.category}` : ""} · {formatRwf(po.negotiatedPrice)}/
-                  {formatUnit(po.unit)}
+                  {po.category ? ` · ${po.category}` : ""} ·{" "}
+                  {po.dealType === "COMMISSION"
+                    ? `Commission ${po.commissionRate ?? 10}%`
+                    : `${formatRwf(po.negotiatedPrice)}/${formatUnit(po.unit)}`}
                 </p>
               </div>
-              <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusChip(po.status)}`}>
-                {po.status}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusChip(po.status)}`}>
+                  {po.status}
+                </span>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--huza-muted)] ring-1 ring-[var(--huza-line)]">
+                  {po.dealType === "COMMISSION" ? "Commission" : "Buy"}
+                </span>
+              </div>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <div className="rounded-xl bg-[var(--huza-mint)]/50 px-3 py-2">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--huza-muted)]">
-                  Order value
+                  {po.dealType === "COMMISSION" ? "You receive" : "Order value"}
                 </p>
                 <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-green-dark)]">
                   {formatRwf(po.totalAmount)}
