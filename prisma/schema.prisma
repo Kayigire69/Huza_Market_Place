@@ -899,6 +899,8 @@ model StockBatch {
   locationId  String?
   receivedAt  DateTime  @default(now())
   notes       String?
+  /// Official HUZA photos taken at receive/QC — drive website STOREFRONT when published
+  officialImageUrls String[] @default([])
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   location    WarehouseLocation? @relation(fields: [locationId], references: [id])
 

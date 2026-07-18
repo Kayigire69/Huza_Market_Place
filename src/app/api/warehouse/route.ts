@@ -33,6 +33,10 @@ async function handleAction(
     const purchaseOrderId = body.purchaseOrderId ? String(body.purchaseOrderId) : null;
     const notes = body.notes ? String(body.notes) : null;
     const expiry = body.expiry ? new Date(String(body.expiry)) : null;
+    const { normalizeOfficialImageUrls, publishOfficialProductImages } = await import(
+      "@/lib/official-product-images"
+    );
+    const officialImageUrls = normalizeOfficialImageUrls(body.officialImageUrls ?? body.imageUrls);
 
     if (!productId || qty <= 0 || !batchNumber) {
       return NextResponse.json(
@@ -85,7 +89,7 @@ async function handleAction(
       });
 
       if (goodQty > 0) {
-        await tx.stockBatch.create({
+        const batch = await tx.stockBatch.create({
           data: {
             productId: product.id,
             batchNumber,
@@ -93,6 +97,7 @@ async function handleAction(
             expiryDate: expiry,
             locationId,
             notes: notes || undefined,
+            officialImageUrls,
           },
         });
 
@@ -118,6 +123,27 @@ async function handleAction(
             reason: `Receive ${receipt.receiptNumber} batch ${batchNumber}`,
           },
         });
+
+        if (damageQty > 0) {
+          await tx.stockMovement.create({
+            data: {
+              productId: product.id,
+              type: StockMovementType.DAMAGE,
+              quantity: damageQty,
+              reason: `Damaged on receive ${receipt.receiptNumber}`,
+              actorId: session.user.id,
+            },
+          });
+        }
+
+        if (purchaseOrderId) {
+          await tx.purchaseOrder.update({
+            where: { id: purchaseOrderId },
+            data: { status: "RECEIVED", receivedAt: new Date() },
+          });
+        }
+
+        return { receipt, batchId: batch.id };
       }
 
       if (damageQty > 0) {
@@ -139,10 +165,19 @@ async function handleAction(
         });
       }
 
-      return receipt;
+      return { receipt, batchId: null as string | null };
     });
 
-    return NextResponse.json(result);
+    if (officialImageUrls.length > 0 && result.batchId) {
+      await publishOfficialProductImages({
+        productId: product.id,
+        imageUrls: officialImageUrls,
+        productName: product.nameEn,
+        batchId: result.batchId,
+      });
+    }
+
+    return NextResponse.json(result.receipt);
   }
 
   if (action === "pack" || action === "ready_for_dispatch") {

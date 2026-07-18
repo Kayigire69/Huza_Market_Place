@@ -297,17 +297,7 @@ export async function PATCH(req: Request) {
           offer.availableDistricts.length > 0
             ? offer.availableDistricts
             : [offer.supplier.district],
-        images: {
-          create: [
-            {
-              url: "/images/products/mushroom.svg",
-              alt: offer.title,
-              sortOrder: 0,
-              kind: "STOREFRONT",
-              isCover: true,
-            },
-          ],
-        },
+        // No STOREFRONT yet — official HUZA photos are uploaded at receive/QC
         reviewStatus: "APPROVED",
         reviewNote:
           deal === ProcurementDealType.COMMISSION
@@ -442,6 +432,10 @@ async function handlePoAction(
           data: { isActive: false },
         });
         const batchNumber = `B-${po.poNumber}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
+        const { normalizeOfficialImageUrls } = await import("@/lib/official-product-images");
+        const officialImageUrls = normalizeOfficialImageUrls(
+          body.officialImageUrls ?? body.imageUrls
+        );
         await prisma.stockBatch.create({
           data: {
             productId: po.productId,
@@ -449,8 +443,28 @@ async function handlePoAction(
             quantity: Math.floor(po.quantity),
             expiryDate: body.expiryDate ? new Date(body.expiryDate) : null,
             notes: `From PO ${po.poNumber}`,
+            officialImageUrls,
           },
         });
+        if (officialImageUrls.length > 0) {
+          const { publishOfficialProductImages } = await import("@/lib/official-product-images");
+          const product = await prisma.product.findUnique({
+            where: { id: po.productId },
+            select: { nameEn: true },
+          });
+          const latest = await prisma.stockBatch.findFirst({
+            where: { productId: po.productId, batchNumber },
+            orderBy: { receivedAt: "desc" },
+          });
+          if (product && latest) {
+            await publishOfficialProductImages({
+              productId: po.productId,
+              imageUrls: officialImageUrls,
+              productName: product.nameEn,
+              batchId: latest.id,
+            });
+          }
+        }
       }
       notifyTitle = "Goods received";
       notifyBody = `PO ${po.poNumber}: Youth Huza received your delivery. Quality inspection is next.`;
@@ -463,6 +477,34 @@ async function handlePoAction(
         qualityNotes: body.qualityNotes || "Quality accepted — ready for shop",
       };
       if (po.productId) {
+        const { normalizeOfficialImageUrls, publishOfficialProductImages } = await import(
+          "@/lib/official-product-images"
+        );
+        const officialFromBody = normalizeOfficialImageUrls(
+          body.officialImageUrls ?? body.imageUrls
+        );
+        const latestBatch = await prisma.stockBatch.findFirst({
+          where: { productId: po.productId },
+          orderBy: { receivedAt: "desc" },
+        });
+        const urlsToPublish =
+          officialFromBody.length > 0
+            ? officialFromBody
+            : latestBatch?.officialImageUrls || [];
+
+        if (urlsToPublish.length > 0) {
+          const product = await prisma.product.findUnique({
+            where: { id: po.productId },
+            select: { nameEn: true },
+          });
+          await publishOfficialProductImages({
+            productId: po.productId,
+            imageUrls: urlsToPublish,
+            productName: product?.nameEn,
+            batchId: latestBatch?.id || null,
+          });
+        }
+
         await prisma.product.update({
           where: { id: po.productId },
           data: {

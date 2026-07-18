@@ -78,12 +78,7 @@ export async function POST(req: Request) {
   }
 
   const imageUrls = parseImageUrls(body);
-  if (imageUrls.length === 0) {
-    return NextResponse.json(
-      { error: "Add at least one product photo so Huza agents can review it" },
-      { status: 400 }
-    );
-  }
+  // Photos are optional — for Huza inspection/ID only, never shown on the shop
 
   const cropRaw = pickProductCropFields(body);
   const isStandard = supplier?.farmingType === "STANDARD";
@@ -99,6 +94,10 @@ export async function POST(req: Request) {
     Number(crop.pricePerUnit) ||
     Number(!isStandard ? cropRaw.farmGatePrice : 0) ||
     0;
+
+  const harvestDateRaw = body.harvestDate ? new Date(String(body.harvestDate)) : null;
+  const harvestDate =
+    harvestDateRaw && !Number.isNaN(harvestDateRaw.getTime()) ? harvestDateRaw : null;
 
   // STANDARD (non-organic) farmers never list organic badges
   const isOrganic = isStandard ? false : Boolean(body.isOrganic);
@@ -122,6 +121,7 @@ export async function POST(req: Request) {
       isNewArrival: true,
       isActive: false,
       reviewStatus: "PENDING",
+      harvestDate,
       location: supplier?.location,
       originDistrict: body.originDistrict || supplier?.district || null,
       fieldType: !isStandard ? (crop.fieldType as string | undefined) : undefined,
@@ -154,15 +154,18 @@ export async function POST(req: Request) {
         ? (cropRaw.proofOfPaymentUrl as string | undefined)
         : undefined,
       farmerComments: !isStandard ? (cropRaw.farmerComments as string | undefined) : undefined,
-      images: {
-        create: imageUrls.map((url, i) => ({
-          url,
-          alt: `${body.nameEn} inspection ${i + 1}`,
-          sortOrder: i,
-          kind: "INSPECTION" as const,
-          isCover: false,
-        })),
-      },
+      images:
+        imageUrls.length > 0
+          ? {
+              create: imageUrls.map((url, i) => ({
+                url,
+                alt: `${body.nameEn} inspection ${i + 1}`,
+                sortOrder: i,
+                kind: "INSPECTION" as const,
+                isCover: false,
+              })),
+            }
+          : undefined,
       stockLogs: {
         create: {
           change: Number(body.stockQty) || Number(body.totalQuantityHarvested) || 0,
