@@ -32,7 +32,12 @@ export const productCardSelect = {
   lowStockAt: true,
   isOrganic: true,
   ratingAvg: true,
+  availableDistricts: true,
+  originDistrict: true,
+  nutritionalInfo: true,
   reviewStatus: true,
+  reviewedAt: true,
+  harvestDate: true,
   images: {
     where: { kind: "STOREFRONT" as const },
     orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],

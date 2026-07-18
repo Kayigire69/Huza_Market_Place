@@ -38,8 +38,8 @@ export type FarmerPurchaseOrderRow = {
 };
 
 /**
- * Authenticated supplier context for workspace pages.
- * Wrapped in React.cache so layout + page in the same request share one DB load.
+ * Authenticated supplier context for workspace pages. Guests are sent to /farmer.
+ * React.cache dedupes layout + page in the same request (no UI change).
  */
 export const requireFarmerWorkspace = cache(async () => {
   const session = await getServerSession(authOptions);
@@ -60,31 +60,9 @@ export const requireFarmerWorkspace = cache(async () => {
     include: {
       user: { select: { fullName: true } },
       products: {
-        select: {
-          id: true,
-          nameEn: true,
-          descriptionEn: true,
-          price: true,
-          unit: true,
-          stockQty: true,
-          lowStockAt: true,
-          isActive: true,
-          isOrganic: true,
-          reviewStatus: true,
-          reviewNote: true,
-          reviewRecommendation: true,
-          reviewedAt: true,
-          updatedAt: true,
-          qualityGeneral: true,
-          fieldType: true,
-          currentCrop: true,
-          categoryId: true,
-          category: { select: { id: true, nameEn: true, slug: true } },
-          images: {
-            orderBy: { sortOrder: "asc" as const },
-            take: 2,
-            select: { id: true, url: true, alt: true },
-          },
+        include: {
+          category: true,
+          images: { orderBy: { sortOrder: "asc" } },
         },
         orderBy: { updatedAt: "desc" },
       },
@@ -95,47 +73,47 @@ export const requireFarmerWorkspace = cache(async () => {
     redirect("/farmer");
   }
 
-  const [categories, purchaseOrdersRaw] = await Promise.all([
-    prisma.category.findMany({
-      where: { slug: { in: [...FARMER_SUPPLY_CATEGORY_SLUGS] } },
-      orderBy: { sortOrder: "asc" },
-    }),
-    prisma.purchaseOrder.findMany({
-      where: { supplierId: farmer.id },
-      orderBy: { createdAt: "desc" },
-      take: 60,
-      select: {
-        id: true,
-        poNumber: true,
-        status: true,
-        dealType: true,
-        productName: true,
-        category: true,
-        unit: true,
-        quantity: true,
-        negotiatedPrice: true,
-        totalAmount: true,
-        commissionRate: true,
-        saleAmount: true,
-        commissionAmount: true,
-        farmerNetAmount: true,
-        qualityNotes: true,
-        rejectionReason: true,
-        recommendation: true,
-        inspectedAt: true,
-        orderedAt: true,
-        receivedAt: true,
-        createdAt: true,
-        paidAt: true,
-        paymentRef: true,
-        paymentMethod: true,
-      },
-    }),
-  ]);
+  /** Only crop categories farmers can supply — not Huza kitchen (salads/juices). */
+  const categories = await prisma.category.findMany({
+    where: { slug: { in: [...FARMER_SUPPLY_CATEGORY_SLUGS] } },
+    orderBy: { sortOrder: "asc" },
+  });
 
   /** Hide prepared storefront lines that may be seed-linked to a supplier by mistake. */
   const farmProducts = filterFarmerSupplyProducts(farmer.products);
   const farmerForPortal = { ...farmer, products: farmProducts };
+
+  const purchaseOrdersRaw = await prisma.purchaseOrder.findMany({
+    where: { supplierId: farmer.id },
+    orderBy: { createdAt: "desc" },
+    take: 60,
+    select: {
+      id: true,
+      poNumber: true,
+      status: true,
+      dealType: true,
+      productName: true,
+      category: true,
+      unit: true,
+      quantity: true,
+      negotiatedPrice: true,
+      totalAmount: true,
+      commissionRate: true,
+      saleAmount: true,
+      commissionAmount: true,
+      farmerNetAmount: true,
+      qualityNotes: true,
+      rejectionReason: true,
+      recommendation: true,
+      inspectedAt: true,
+      orderedAt: true,
+      receivedAt: true,
+      createdAt: true,
+      paidAt: true,
+      paymentRef: true,
+      paymentMethod: true,
+    },
+  });
 
   const purchaseOrders: FarmerPurchaseOrderRow[] = purchaseOrdersRaw.map((po) => {
     const payoutAmount =
