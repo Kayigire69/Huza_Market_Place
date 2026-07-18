@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useLocale } from "@/lib/locale-context";
 import { ProductCard, type ProductCardData } from "@/components/products/ProductCard";
 import { HeroSection } from "@/components/home/HeroSection";
@@ -18,14 +17,9 @@ import {
   Leaf,
   MessageCircle,
 } from "lucide-react";
+import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 import { resolveCategoryImage } from "@/lib/catalog-images";
 import { isWhatsAppConfigured } from "@/lib/brand-contact";
-
-const RecentlyViewedSection = dynamic(
-  () =>
-    import("@/components/products/RecentlyViewedSection").then((m) => m.RecentlyViewedSection),
-  { ssr: false }
-);
 
 type Category = {
   id: string;
