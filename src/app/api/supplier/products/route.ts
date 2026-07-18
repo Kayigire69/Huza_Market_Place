@@ -4,16 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UnitType } from "@prisma/client";
 import { pickProductCropFields } from "@/lib/farmer-dossier";
-
-async function getSupplierId(userId: string, role?: string) {
-  const supplier = await prisma.supplier.findUnique({ where: { userId } });
-  if (supplier) return supplier.id;
-  if (role === "ADMIN") {
-    const first = await prisma.supplier.findFirst({ where: { status: "APPROVED" } });
-    return first?.id ?? null;
-  }
-  return null;
-}
+import { findSupplierIdForUser } from "@/lib/supplier-context";
 
 function parseImageUrls(body: Record<string, unknown>): string[] {
   const raw = body.imageUrls;
@@ -34,7 +25,7 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const supplierId = await getSupplierId(session.user.id, session.user.role);
+  const supplierId = await findSupplierIdForUser(session.user.id);
   if (!supplierId) return NextResponse.json({ error: "Farmer not found" }, { status: 404 });
 
   const products = await prisma.product.findMany({
@@ -49,11 +40,11 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const supplierId = await getSupplierId(session.user.id, session.user.role);
+  const supplierId = await findSupplierIdForUser(session.user.id);
   if (!supplierId) return NextResponse.json({ error: "Farmer not found" }, { status: 404 });
 
   const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
-  if (supplier?.status !== "APPROVED" && session.user.role !== "ADMIN") {
+  if (supplier?.status !== "APPROVED") {
     return NextResponse.json({ error: "Farmer not approved yet" }, { status: 403 });
   }
 

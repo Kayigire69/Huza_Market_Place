@@ -32,7 +32,7 @@ export async function PATCH(
     include: { supplier: true },
   });
   if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (product.supplier.userId !== session.user.id && session.user.role !== "ADMIN") {
+  if (product.supplier.userId !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

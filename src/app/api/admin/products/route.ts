@@ -212,15 +212,13 @@ export async function POST(req: Request) {
   });
   if (!category) return NextResponse.json({ error: "Category not found" }, { status: 404 });
 
-  // Prefer Youth Huza retail supplier if present; otherwise first approved supplier
-  const supplier =
-    (await prisma.supplier.findFirst({
-      where: { status: "APPROVED", businessName: { contains: "Huza", mode: "insensitive" } },
-    })) ||
-    (await prisma.supplier.findFirst({ where: { status: "APPROVED" } }));
+  // Admin-created catalog lines must belong to Youth Huza retail — never a random farmer.
+  const supplier = await prisma.supplier.findFirst({
+    where: { status: "APPROVED", businessName: { contains: "Huza", mode: "insensitive" } },
+  });
   if (!supplier) {
     return NextResponse.json(
-      { error: "No approved supplier available to own this product" },
+      { error: "No Youth Huza supplier available to own this product" },
       { status: 400 }
     );
   }

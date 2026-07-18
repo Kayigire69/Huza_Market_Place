@@ -40,6 +40,7 @@ export type FarmerPurchaseOrderRow = {
 /**
  * Authenticated supplier context for workspace pages. Guests are sent to /farmer.
  * React.cache dedupes layout + page in the same request (no UI change).
+ * Staff without their own supplier profile are sent to /admin (no random-farm bind).
  */
 export const requireFarmerWorkspace = cache(async () => {
   const session = await getServerSession(authOptions);
@@ -52,11 +53,8 @@ export const requireFarmerWorkspace = cache(async () => {
     redirect("/account");
   }
 
-  const farmer = await prisma.supplier.findFirst({
-    where:
-      (session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN") && !session.user.supplierId
-        ? { status: "APPROVED" }
-        : { userId: session.user.id },
+  const farmer = await prisma.supplier.findUnique({
+    where: { userId: session.user.id },
     include: {
       user: { select: { fullName: true } },
       products: {
@@ -70,6 +68,9 @@ export const requireFarmerWorkspace = cache(async () => {
   });
 
   if (!farmer) {
+    if (session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN") {
+      redirect("/admin");
+    }
     redirect("/farmer");
   }
 
