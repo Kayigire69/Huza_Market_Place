@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { memo, useState } from "react";
+import { useState } from "react";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -55,7 +55,7 @@ function StarRow({ rating }: { rating: number }) {
   );
 }
 
-function ProductCardInner({
+export function ProductCard({
   product,
   variant = "auto",
 }: {
@@ -233,5 +233,3 @@ function ProductCardInner({
     </article>
   );
 }
-
-export const ProductCard = memo(ProductCardInner);

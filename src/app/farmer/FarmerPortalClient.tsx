@@ -705,11 +705,18 @@ export function FarmerPortalClient({
           {(panel === "products" || !panel) && (
           <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
             <h2 className="font-semibold mb-4">
-              {t("submittedProducts")}
+              {panel === "approvals" ? "Approval status" : t("submittedProducts")}
             </h2>
-            <p className="mb-4 text-sm text-[var(--huza-muted)]">
-              Submitted crops and stock. Use Submit Product to add a new listing.
-            </p>
+            {panel === "products" && (
+              <p className="mb-4 text-sm text-[var(--huza-muted)]">
+                Submitted crops and stock. Use Submit Product to add a new listing.
+              </p>
+            )}
+            {panel === "approvals" && (
+              <p className="mb-4 text-sm text-[var(--huza-muted)]">
+                Quality review status for each crop. Rejected items include feedback for the next harvest.
+              </p>
+            )}
             <div className="space-y-3 max-h-[720px] overflow-y-auto">
               {products.length === 0 ? (
                 <p className="text-sm text-[var(--huza-muted)]">{t("noProductsYet")}</p>
