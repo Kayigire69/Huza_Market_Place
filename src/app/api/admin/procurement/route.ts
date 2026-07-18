@@ -543,13 +543,21 @@ async function handlePoAction(
           const qty = Math.floor(po.quantity);
           if (qty > 0) {
             const { stockService } = await import("@/services/stock.service");
-            await stockService.stockOut(
-              po.productId,
-              qty,
-              `PO ${po.poNumber} QC reject — reverse receive`,
-              session.user.id,
-              "ADJUST"
-            );
+            // Reverse only this PO's receive — never wipe unrelated stock.
+            const current = await prisma.product.findUnique({
+              where: { id: po.productId },
+              select: { stockQty: true },
+            });
+            const reverseQty = Math.min(qty, Math.max(0, current?.stockQty ?? 0));
+            if (reverseQty > 0) {
+              await stockService.stockOut(
+                po.productId,
+                reverseQty,
+                `PO ${po.poNumber} QC reject — reverse receive`,
+                session.user.id,
+                "ADJUST"
+              );
+            }
           }
           await prisma.stockBatch.updateMany({
             where: {
@@ -560,11 +568,11 @@ async function handlePoAction(
             data: { quantity: 0 },
           });
         }
+        // Do not set stockQty: 0 — other POs/batches for this SKU must remain.
         await prisma.product.update({
           where: { id: po.productId },
           data: {
             isActive: false,
-            stockQty: 0,
             reviewStatus: "REJECTED",
             reviewNote: body.rejectionReason || "Quality rejected",
             reviewRecommendation: body.recommendation?.trim() || null,
