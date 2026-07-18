@@ -48,8 +48,8 @@ export async function POST(req: Request) {
     // Production mail provider: queue so the HTTP response stays fast.
     if (process.env.RESEND_API_KEY) {
       await enqueueEmail(user.email, subject, text);
-    } else {
-      // Console-only mode: keep sync send so local recoveryLink still works.
+    } else if (process.env.NODE_ENV !== "production") {
+      // Dev only: console send + optional recovery link for local testing
       const sent = await sendEmail({ to: user.email, subject, text });
       if (sent.mode === "console") {
         return NextResponse.json({
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
         });
       }
     }
+    // Production without mail: never return the raw token
   }
 
   return NextResponse.json({

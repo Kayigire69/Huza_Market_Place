@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { PaymentMethod } from "@prisma/client";
+import { demoPaymentsAllowed } from "@/lib/security-access";
 
 export type PaymentRequestInput = {
   method: Extract<PaymentMethod, "MTN_MOMO" | "AIRTEL_MONEY">;
@@ -85,6 +86,12 @@ export async function initiateMobileMoneyPayment(
   }
 
   // Demo / sandbox without credentials — mimics the real phone prompt flow
+  if (!demoPaymentsAllowed()) {
+    throw new Error(
+      "Mobile Money is not configured. Set MTN/Airtel credentials or ALLOW_DEMO_PAYMENTS=true for non-production testing."
+    );
+  }
+
   return {
     externalId,
     status: "PENDING",

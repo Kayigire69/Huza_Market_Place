@@ -41,10 +41,66 @@ function extFor(type: string) {
   return "jpg";
 }
 
+/** Detect type from magic bytes — do not trust browser Content-Type alone. */
+async function detectMime(buffer: Buffer, claimed: string): Promise<string> {
+  if (buffer.length >= 4 && buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46) {
+    return "application/pdf";
+  }
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    return "image/png";
+  }
+  if (
+    buffer.length >= 6 &&
+    buffer[0] === 0x47 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x38
+  ) {
+    return "image/gif";
+  }
+  if (
+    buffer.length >= 12 &&
+    buffer.toString("ascii", 0, 4) === "RIFF" &&
+    buffer.toString("ascii", 8, 12) === "WEBP"
+  ) {
+    return "image/webp";
+  }
+
+  // Fall back to sharp metadata for odd JPEGs
+  try {
+    const meta = await sharp(buffer, { failOn: "none" }).metadata();
+    if (meta.format === "jpeg") return "image/jpeg";
+    if (meta.format === "png") return "image/png";
+    if (meta.format === "webp") return "image/webp";
+    if (meta.format === "gif") return "image/gif";
+  } catch {
+    /* ignore */
+  }
+
+  if (claimed && ALLOWED.has(claimed)) {
+    throw new Error("File content does not match the declared type");
+  }
+  throw new Error("Unsupported or unrecognized file type");
+}
+
 async function compressImage(file: File): Promise<{ buffer: Buffer; mime: string; ext: string }> {
   const input = Buffer.from(await file.arrayBuffer());
-  if (file.type === "application/pdf" || file.type === "image/gif") {
-    return { buffer: input, mime: file.type, ext: extFor(file.type) };
+  const mime = await detectMime(input, file.type || "");
+  if (!ALLOWED.has(mime)) {
+    throw new Error(`Unsupported file type: ${mime}`);
+  }
+
+  if (mime === "application/pdf" || mime === "image/gif") {
+    return { buffer: input, mime, ext: extFor(mime) };
   }
 
   try {
@@ -57,11 +113,11 @@ async function compressImage(file: File): Promise<{ buffer: Buffer; mime: string
         withoutEnlargement: true,
       });
 
-    // Prefer webp for local storefront assets — smaller payloads for next/image.
     const buffer = await pipeline.webp({ quality: 78 }).toBuffer();
     return { buffer, mime: "image/webp", ext: "webp" };
   } catch {
-    return { buffer: input, mime: file.type, ext: extFor(file.type) };
+    // Never write untrusted raw bytes as a spoofed image
+    throw new Error("Could not process image. Upload a valid JPEG, PNG, or WebP.");
   }
 }
 
@@ -77,7 +133,7 @@ async function uploadLocal(file: File, folder: UploadFolder): Promise<string> {
 async function uploadCloudinary(file: File, folder: UploadFolder): Promise<string> {
   ensureCloudinary();
   const compressed = await compressImage(file);
-  const resourceType = file.type === "application/pdf" ? "raw" : "image";
+  const resourceType = compressed.mime === "application/pdf" ? "raw" : "image";
   const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -112,12 +168,10 @@ export async function uploadFiles(files: File[], folder: UploadFolder): Promise<
   }
 
   for (const file of files) {
-    if (!ALLOWED.has(file.type)) {
-      throw new Error(`Unsupported file type: ${file.type || file.name}`);
-    }
     if (file.size > MAX_BYTES) {
       throw new Error(`${file.name} is larger than 8MB`);
     }
+    // Type is verified from magic bytes inside compressImage / detectMime
     urls.push(useCloud ? await uploadCloudinary(file, folder) : await uploadLocal(file, folder));
   }
 

@@ -6,8 +6,14 @@ import { verifyTotp } from "./security";
 
 export { portalPathForRole } from "./auth-redirect";
 
+const isProd = process.env.NODE_ENV === "production";
+
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    // Staff sessions should not live forever with stale roles
+    maxAge: 8 * 60 * 60,
+  },
   pages: {
     signIn: "/auth/login",
   },
@@ -99,19 +105,49 @@ export const authOptions: NextAuthOptions = {
         token.mustChangePassword = Boolean(u.mustChangePassword);
         token.totpEnabled = Boolean(u.totpEnabled);
         token.isPrimarySuperAdmin = Boolean(u.isPrimarySuperAdmin);
+        token.lastDbSync = Date.now();
       }
-      // Allow client updateSession() after password change / 2FA toggle
-      if (trigger === "update" && session) {
-        if (typeof session.mustChangePassword === "boolean") {
-          token.mustChangePassword = session.mustChangePassword;
+
+      // Revalidate role / active flags from DB at least every 5 minutes
+      const uid = (token.id as string) || (token.sub as string);
+      const lastSync = Number(token.lastDbSync || 0);
+      if (uid && Date.now() - lastSync > 5 * 60_000) {
+        const dbUser = await prisma.user.findFirst({
+          where: { id: uid, deletedAt: null },
+          include: { supplier: { select: { id: true, status: true } } },
+        });
+        if (!dbUser || !dbUser.isActive) {
+          // Force session invalidation on next request
+          return { ...token, role: undefined, error: "inactive" };
         }
-        if (typeof session.totpEnabled === "boolean") {
-          token.totpEnabled = session.totpEnabled;
+        token.role = dbUser.role;
+        token.supplierId = dbUser.supplier?.id ?? null;
+        token.supplierStatus = dbUser.supplier?.status ?? null;
+        token.mustChangePassword = Boolean(dbUser.mustChangePassword);
+        token.totpEnabled = Boolean(dbUser.totpEnabled);
+        token.isPrimarySuperAdmin = Boolean(dbUser.isPrimarySuperAdmin);
+        token.lastDbSync = Date.now();
+      }
+
+      // Client updateSession may clear mustChangePassword after a real password change only
+      if (trigger === "update" && session && uid) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: uid },
+          select: { mustChangePassword: true, totpEnabled: true, isActive: true, deletedAt: true },
+        });
+        if (!dbUser || !dbUser.isActive || dbUser.deletedAt) {
+          return { ...token, role: undefined, error: "inactive" };
         }
+        token.mustChangePassword = Boolean(dbUser.mustChangePassword);
+        token.totpEnabled = Boolean(dbUser.totpEnabled);
+        token.lastDbSync = Date.now();
       }
       return token;
     },
     async session({ session, token }) {
+      if (token.error === "inactive") {
+        return { ...session, user: undefined as never };
+      }
       if (session.user) {
         const uid = (token.id as string) || (token.sub as string);
         (session.user as { id?: string }).id = uid;
@@ -131,5 +167,17 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  cookies: {
+    sessionToken: {
+      name: isProd ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+  },
+  useSecureCookies: isProd,
   secret: process.env.NEXTAUTH_SECRET,
 };

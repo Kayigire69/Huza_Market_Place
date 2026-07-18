@@ -15,6 +15,7 @@ export type ConfirmationPayload = {
   deliveryAddress?: string;
   dayLabel?: string;
   windowLabel?: string;
+  docAccessToken?: string;
 };
 
 const STORAGE_KEY = "huza_order_confirmation";
@@ -141,7 +142,13 @@ export default function ConfirmationClient({
             </Button>
           </Link>
           <a
-            href={`/api/receipts/${encodeURIComponent(data.orderNumber)}?format=pdf`}
+            href={`/api/receipts/${encodeURIComponent(data.orderNumber)}?format=pdf${
+              data.docAccessToken
+                ? `&token=${encodeURIComponent(data.docAccessToken)}`
+                : data.payerPhone
+                  ? `&phone=${encodeURIComponent(data.payerPhone)}`
+                  : ""
+            }`}
             className="text-center text-sm font-semibold text-[var(--huza-green-dark)] underline"
           >
             Download receipt

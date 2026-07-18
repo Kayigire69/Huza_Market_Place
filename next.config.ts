@@ -13,7 +13,6 @@ const nextConfig: NextConfig = {
   compress: true,
   images: {
     formats: ["image/avif", "image/webp"],
-    // Allow qualities used by next/image (default 75 + hero banners at 78)
     qualities: [75, 78],
     remotePatterns: [
       {
@@ -22,17 +21,36 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    // Image optimizer CSP sandboxes SVGs; catalog fallbacks may use SVG placeholders
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // Keep recently visited pages warm in the client router so forward
-  // navigation feels closer to Back (without changing UI or features).
   experimental: {
     staleTimes: {
       dynamic: 60,
       static: 300,
     },
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self), payment=()",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
+    ];
   },
 };
 

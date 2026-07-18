@@ -16,6 +16,7 @@ import { cacheDel, CacheKeys } from "@/lib/redis";
 import { generateOrderNumber, getDeliveryFee, getHuzaPayee, isPaymentMethodEnabled } from "@/services/settings.service";
 import { writeAuditLog } from "@/lib/audit";
 import { notifyAdmins } from "@/lib/notify-admins";
+import { createOrderDocToken } from "@/lib/security-access";
 import {
   cartFulfillmentEta,
   formatBackorderEta,
@@ -451,6 +452,7 @@ export const orderService = {
       payeeName: merchant.name,
       payeePhone: merchant.phone,
       method: data.paymentMethod,
+      docAccessToken: createOrderDocToken(order.orderNumber),
     };
   },
 };

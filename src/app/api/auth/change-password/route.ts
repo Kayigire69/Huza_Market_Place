@@ -4,13 +4,23 @@ import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
-import { clearRateLimit, clientIp } from "@/lib/rate-limit";
+import { clearRateLimit, clientIp, rateLimit } from "@/lib/rate-limit";
+import { BCRYPT_ROUNDS } from "@/lib/security-access";
 
 /** Change password — optional for signed-in users (no longer forced at first login). */
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = await rateLimit({
+    key: `pwchange:${session.user.id}`,
+    limit: 8,
+    windowMs: 15 * 60_000,
+  });
+  if (!rl.ok) {
+    return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
   }
 
   const body = await req.json();
@@ -44,7 +54,7 @@ export async function POST(req: Request) {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      passwordHash: await bcrypt.hash(newPassword, 10),
+      passwordHash: await bcrypt.hash(newPassword, BCRYPT_ROUNDS),
       mustChangePassword: false,
       passwordChangedAt: new Date(),
     },

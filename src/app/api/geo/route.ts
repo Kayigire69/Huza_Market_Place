@@ -4,9 +4,19 @@ import {
   resolvePlace,
   reverseGeocode,
 } from "@/lib/geo/delivery-location";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 /** Server proxy for reverse geocode / Places (keeps Google key off the client). */
 export async function GET(req: Request) {
+  const rl = await rateLimit({
+    key: `geo:${clientIp(req)}`,
+    limit: 60,
+    windowMs: 60_000,
+  });
+  if (!rl.ok) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const { searchParams } = new URL(req.url);
   const action = searchParams.get("action");
 
