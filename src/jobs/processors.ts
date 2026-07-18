@@ -3,21 +3,28 @@ import { jobRepository } from "@/repositories/job.repository";
 import { paymentService } from "@/services/payment.service";
 import { enqueueJob } from "@/jobs/queue";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
 
 type Payload = Record<string, unknown>;
 
 async function processSendEmail(payload: Payload) {
   const to = String(payload.to || "");
   const subject = String(payload.subject || "");
-  const body = String(payload.body || "");
-  // Provider hook — logs until SMTP/Resend is configured
-  console.info("[job:SEND_EMAIL]", { to, subject, body: body.slice(0, 120) });
+  const body = String(payload.body || payload.text || "");
+  const html = payload.html ? String(payload.html) : undefined;
+
+  if (!to || !subject) {
+    throw new Error("SEND_EMAIL requires to and subject");
+  }
+
+  const result = await sendEmail({ to, subject, text: body, html });
+
   await prisma.notification.create({
     data: {
       type: "ORDER_CONFIRMATION",
       channel: "EMAIL",
       title: subject || "Email",
-      body: `To: ${to} — ${body}`.slice(0, 500),
+      body: `To: ${to} [${result.mode}] — ${body}`.slice(0, 500),
     },
   });
 }

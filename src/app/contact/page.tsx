@@ -36,10 +36,10 @@ export default function ContactPage() {
       </p>
       <div className="mb-8 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm space-y-2">
         <p>
-          <strong>Phone:</strong> +250 788 000 000
+          <strong>Email:</strong> info@youthhuza.rw
         </p>
         <p>
-          <strong>Email:</strong> hello@youthhuza.rw
+          <strong>Phone / WhatsApp:</strong> Add your business number in Admin → Settings when ready
         </p>
         <p>
           <strong>Address:</strong> Kigali, Rwanda

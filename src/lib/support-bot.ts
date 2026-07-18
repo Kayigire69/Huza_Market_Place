@@ -131,10 +131,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Nambari za maagizo zinaonekana kama HZ-2026-000245. Unaiona baada ya malipo, katika arifa, na Akaunti → Maagizo.",
   },
   cancelOrder: {
-    en: "To cancel or change an order, message us here with your order number, open a Support ticket, or call +250 788 000 000 as soon as possible — before the rider leaves.",
-    fr: "Pour annuler ou modifier, écrivez-nous ici avec votre numéro, créez un ticket Support, ou appelez +250 788 000 000 rapidement — avant le départ du livreur.",
-    rw: "Kugira ngo uhagarike cyangwa uhindure, twandikire hano ufite numero, ukore ticket, cyangwa hamagara +250 788 000 000 vuba — mbere y'uko umutangaji agenda.",
-    sw: "Kughairi au kubadilisha, tuandikie hapa na nambari ya agizo, fungua tiketi ya Support, au piga +250 788 000 000 haraka — kabla dereva hajaondoka.",
+    en: "To cancel or change an order, message us here with your order number, open a Support ticket, or email info@youthhuza.rw as soon as possible — before the rider leaves.",
+    fr: "Pour annuler ou modifier, écrivez-nous ici avec votre numéro, créez un ticket Support, ou envoyez un e-mail à info@youthhuza.rw rapidement — avant le départ du livreur.",
+    rw: "Kugira ngo uhagarike cyangwa uhindure, twandikire hano ufite numero, ukore ticket, cyangwa andika info@youthhuza.rw vuba — mbere y'uko umutangaji agenda.",
+    sw: "Kughairi au kubadilisha, tuandikie hapa na nambari ya agizo, fungua tiketi ya Support, au andika info@youthhuza.rw haraka — kabla dereva hajaondoka.",
   },
 
   // 6 Products / prices / quality
@@ -185,10 +185,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Jisajili au ingia kuona Maagizo, Vipendwa, Anwani, Arifa, na Ankara. Wageni wanaweza kuagiza na kufuatilia kwa nambari + simu.",
   },
   password: {
-    en: "Forgot your password? Log in page issues are helped via Support ticket or call +250 788 000 000. After login, change password under My Account.",
-    fr: "Mot de passe oublié ? Créez un ticket Support ou appelez +250 788 000 000. Après connexion, changez-le dans Mon compte.",
-    rw: "Wibagiwe ijambo ry'ibanga? Kora ticket cyangwa hamagara +250 788 000 000. Nyuma yo kwinjira, uhindure muri Konti.",
-    sw: "Umesahau nenosiri? Fungua tiketi ya Support au piga +250 788 000 000. Baada ya kuingia, badilisha katika Akaunti.",
+    en: "Forgot your password? Open a Support ticket or email info@youthhuza.rw. After login, change password under My Account.",
+    fr: "Mot de passe oublié ? Créez un ticket Support ou écrivez à info@youthhuza.rw. Après connexion, changez-le dans Mon compte.",
+    rw: "Wibagiwe ijambo ry'ibanga? Kora ticket cyangwa andika info@youthhuza.rw. Nyuma yo kwinjira, uhindure muri Konti.",
+    sw: "Umesahau nenosiri? Fungua tiketi ya Support au andika info@youthhuza.rw. Baada ya kuingia, badilisha katika Akaunti.",
   },
 
   // 9 Farmers
@@ -201,10 +201,10 @@ const replies: Record<string, Record<Locale, string>> = {
 
   // 10 Contact / about / language
   contact: {
-    en: "Contact Youth Huza: +250 788 000 000 · hello@youthhuza.rw · WhatsApp from the website footer. Or keep chatting here.",
-    fr: "Contact : +250 788 000 000 · hello@youthhuza.rw · WhatsApp via le pied de page. Ou continuez ici.",
-    rw: "Twandikire: +250 788 000 000 · hello@youthhuza.rw · WhatsApp kuri footer. Cyangwa ukomeze hano.",
-    sw: "Wasiliana: +250 788 000 000 · hello@youthhuza.rw · WhatsApp kupitia footer. Au endelea hapa.",
+    en: "Contact Youth Huza: info@youthhuza.rw · WhatsApp from the website once configured. Or keep chatting here.",
+    fr: "Contact : info@youthhuza.rw · WhatsApp via le pied de page une fois configuré. Ou continuez ici.",
+    rw: "Twandikire: info@youthhuza.rw · WhatsApp kuri footer iyo yashyizweho. Cyangwa ukomeze hano.",
+    sw: "Wasiliana: info@youthhuza.rw · WhatsApp kupitia footer baada ya kusanidiwa. Au endelea hapa.",
   },
   about: {
     en: "HUZA FRESH is powered by Youth Huza. We buy from verified farms, quality-check produce, and deliver under one trusted brand. Read more on About, Mission, and Vision pages.",
@@ -250,10 +250,10 @@ const replies: Record<string, Record<Locale, string>> = {
   },
 
   fallback: {
-    en: "Thanks! I can help with: opening hours & closing time, days we work, delivery zones/fees/ETA, payments (MoMo/Airtel — card soon), tracking (HZ-… numbers), products & prices, refunds, account, farmers portal, contact, and more. Ask in EN, FR, RW, or SW — or call +250 788 000 000.",
-    fr: "Merci ! Je peux aider pour : horaires & fermeture, jours d’ouverture, livraison (zones/frais/délais), paiements (MoMo/Airtel — carte bientôt), suivi (HZ-…), produits & prix, remboursements, compte, agriculteurs, contact. EN/FR/RW/SW — ou +250 788 000 000.",
-    rw: "Murakoze! Nshobora kugufasha ku: amasaha n'igifungo, iminsi dukora, gutanga, kwishyura (MoMo/Airtel — ikarita vuba), gukurikirana (HZ-…), ibicuruzwa, gusubizwa, konti, abahinzi, twandikire. EN/FR/RW/SW — cyangwa +250 788 000 000.",
-    sw: "Asante! Naweza kusaidia kuhusu: saa za kufungua/kufunga, siku za kazi, uwasilishaji, malipo (MoMo/Airtel — kadi hivi karibuni), ufuatiliaji (HZ-…), bidhaa na bei, marejesho, akaunti, wakulima, mawasiliano. EN/FR/RW/SW — au +250 788 000 000.",
+    en: "Thanks! I can help with: opening hours & closing time, days we work, delivery zones/fees/ETA, payments (MoMo/Airtel — card soon), tracking (HZ-… numbers), products & prices, refunds, account, farmers portal, contact, and more. Ask in EN, FR, RW, or SW — or email info@youthhuza.rw.",
+    fr: "Merci ! Je peux aider pour : horaires & fermeture, jours d’ouverture, livraison (zones/frais/délais), paiements (MoMo/Airtel — carte bientôt), suivi (HZ-…), produits & prix, remboursements, compte, agriculteurs, contact. EN/FR/RW/SW — ou info@youthhuza.rw.",
+    rw: "Murakoze! Nshobora kugufasha ku: amasaha n'igifungo, iminsi dukora, gutanga, kwishyura (MoMo/Airtel — ikarita vuba), gukurikirana (HZ-…), ibicuruzwa, gusubizwa, konti, abahinzi, twandikire. EN/FR/RW/SW — cyangwa info@youthhuza.rw.",
+    sw: "Asante! Naweza kusaidia kuhusu: saa za kufungua/kufunga, siku za kazi, uwasilishaji, malipo (MoMo/Airtel — kadi hivi karibuni), ufuatiliaji (HZ-…), bidhaa na bei, marejesho, akaunti, wakulima, mawasiliano. EN/FR/RW/SW — au info@youthhuza.rw.",
   },
 };
 

@@ -602,12 +602,13 @@ async function main() {
     data: [
       { key: "company_name", value: "Youth Huza" },
       { key: "brand_name", value: "HUZA FRESH" },
-      { key: "phone", value: "+250 788 000 000" },
-      { key: "email", value: "hello@youthhuza.rw" },
+      { key: "phone", value: "" },
+      { key: "email", value: "info@youthhuza.rw" },
       { key: "currency", value: "RWF" },
       { key: "facebook_url", value: "https://facebook.com" },
       { key: "instagram_url", value: "https://instagram.com" },
-      { key: "whatsapp_url", value: "https://wa.me/250788000000" },
+      // Set real WhatsApp Business URL in Admin → Settings before going live
+      { key: "whatsapp_url", value: "" },
     ],
   });
 

@@ -1,6 +1,7 @@
 import { HomePage } from "./HomeClient";
 import { catalogService } from "@/services/catalog.service";
 import { getSetting } from "@/services/settings.service";
+import { resolveWhatsAppUrl } from "@/lib/brand-contact";
 
 /** Cache home for a short window — catalogService also caches in Redis/memory. */
 export const revalidate = 90;
@@ -16,10 +17,10 @@ export default async function Page() {
       customerReviews,
       isOpen,
     },
-    whatsappUrl,
+    whatsappSetting,
   ] = await Promise.all([
     catalogService.getHomeCatalog(),
-    getSetting("whatsapp_url", "https://wa.me/250788000000"),
+    getSetting("whatsapp_url", ""),
   ]);
 
   return (
@@ -31,7 +32,7 @@ export default async function Page() {
       testimonials={testimonials}
       customerReviews={customerReviews}
       isOpen={isOpen}
-      whatsappUrl={whatsappUrl}
+      whatsappUrl={resolveWhatsAppUrl(whatsappSetting)}
     />
   );
 }

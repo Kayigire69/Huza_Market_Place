@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSettings } from "@/services/settings.service";
+import { SUPPORT_EMAIL, resolveWhatsAppUrl } from "@/lib/brand-contact";
 
 export async function GET() {
   const settings = await getSettings([
@@ -15,9 +16,9 @@ export async function GET() {
     "payment_airtel_enabled",
   ]);
   return NextResponse.json({
-    whatsapp_url: settings.whatsapp_url || "https://wa.me/250788000000",
+    whatsapp_url: resolveWhatsAppUrl(settings.whatsapp_url),
     phone: settings.phone || "",
-    email: settings.email || "",
+    email: settings.email || SUPPORT_EMAIL,
     company_name: settings.company_name || "Youth Huza",
     brand_name: settings.brand_name || "HUZA FRESH",
     company_tagline: settings.company_tagline || "",
