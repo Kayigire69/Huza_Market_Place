@@ -10,13 +10,23 @@ export const dynamic = "force-dynamic";
 export default async function WarehousePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (session.user.role !== "WAREHOUSE" && session.user.role !== "ADMIN") {
+  if (
+    session.user.role !== "WAREHOUSE" &&
+    session.user.role !== "INVENTORY" &&
+    session.user.role !== "ADMIN" &&
+    session.user.role !== "SUPER_ADMIN" &&
+    session.user.role !== "MANAGER"
+  ) {
     redirect("/account");
   }
 
   const [candidates, packOrders, products, movements, locations] = await Promise.all([
     prisma.product.findMany({
-      where: { isActive: true, stockQty: { lte: 50 } },
+      where: {
+        isActive: true,
+        // Pre-filter closer to low-stock threshold (same UI filter applied below)
+        stockQty: { lte: 50 },
+      },
       select: {
         id: true,
         nameEn: true,
@@ -32,8 +42,20 @@ export default async function WarehousePage() {
       where: {
         status: { in: ["PAID", "CONFIRMED", "PREPARING", "PACKED", "READY_FOR_DISPATCH"] },
       },
-      include: {
-        items: { include: { product: { select: { nameEn: true, unit: true } } } },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        deliveryAddress: true,
+        guestName: true,
+        guestPhone: true,
+        createdAt: true,
+        items: {
+          select: {
+            quantity: true,
+            product: { select: { nameEn: true, unit: true } },
+          },
+        },
         user: { select: { fullName: true, phone: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -46,7 +68,14 @@ export default async function WarehousePage() {
       take: 200,
     }),
     prisma.stockMovement.findMany({
-      include: { product: { select: { nameEn: true, unit: true } } },
+      select: {
+        id: true,
+        type: true,
+        quantity: true,
+        reason: true,
+        createdAt: true,
+        product: { select: { nameEn: true, unit: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 40,
     }),

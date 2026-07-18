@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   if (action === "confirm") {
     const session = await getServerSession(authOptions);
     const role = (session?.user as { role?: string } | undefined)?.role;
-    if (role !== "ADMIN") {
+    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Payment can only be confirmed by the payment system or an admin." },
         { status: 403 }

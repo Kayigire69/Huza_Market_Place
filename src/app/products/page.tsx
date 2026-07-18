@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Prisma } from "@prisma/client";
 import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
+import { productCardSelect } from "@/repositories/product.repository";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -18,35 +19,7 @@ type ProductsPayload = {
 async function fetchProducts(where: Prisma.ProductWhereInput, skip: number, take: number) {
   return prisma.product.findMany({
     where,
-    select: {
-      id: true,
-      nameEn: true,
-      nameFr: true,
-      nameRw: true,
-      price: true,
-      unit: true,
-      stockQty: true,
-      reservedQty: true,
-      lowStockAt: true,
-      isOrganic: true,
-      ratingAvg: true,
-      availableDistricts: true,
-      originDistrict: true,
-      nutritionalInfo: true,
-      reviewStatus: true,
-      reviewedAt: true,
-      harvestDate: true,
-      images: {
-        where: { kind: "STOREFRONT" },
-        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-        take: 2,
-        select: { url: true, isCover: true },
-      },
-      supplier: { select: { id: true } },
-      category: {
-        select: { nameEn: true, nameFr: true, nameRw: true, slug: true },
-      },
-    },
+    select: productCardSelect,
     orderBy: [{ isFeatured: "desc" }, { ratingAvg: "desc" }],
     skip,
     take,
@@ -114,7 +87,7 @@ async function ProductsResults({ searchParams }: { searchParams: SearchParams })
       newArrivals,
       page,
       take: PAGE_SIZE,
-      v: 3,
+      v: 4,
     })
   );
 

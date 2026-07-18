@@ -48,7 +48,7 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-white">
+              <Link href="/careers" className="hover:text-white">
                 {t("careers")}
               </Link>
             </li>

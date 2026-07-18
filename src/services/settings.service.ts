@@ -57,7 +57,9 @@ export async function listDeliveryZones(): Promise<
 }
 
 export async function getDeliveryFee(_code: string): Promise<number> {
-  return FLAT_DELIVERY_FEE_RWF;
+  const raw = await getSetting("delivery_fee_rwf", String(FLAT_DELIVERY_FEE_RWF));
+  const fee = Number(raw);
+  return Number.isFinite(fee) && fee >= 0 ? Math.round(fee) : FLAT_DELIVERY_FEE_RWF;
 }
 
 export async function getSetting(key: string, fallback = ""): Promise<string> {

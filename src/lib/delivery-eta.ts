@@ -40,8 +40,14 @@ export function zoneEtaMinutes(zone: string, _zones?: DeliveryZoneDto[]): number
   return ZONE_ETA_MINUTES.KIGALI;
 }
 
-/** Flat 5,000 RWF for every destination. */
-export function zoneFee(_zone?: string, _zones?: DeliveryZoneDto[]): number {
+/** Flat delivery fee: prefer zone config when provided, else constant fallback. */
+export function zoneFee(zone?: string, zones?: DeliveryZoneDto[]): number {
+  if (zones && zones.length > 0) {
+    const match = (zone && zones.find((z) => z.code === zone)) || zones[0];
+    if (match && Number.isFinite(match.feeRwf) && match.feeRwf >= 0) {
+      return Math.round(match.feeRwf);
+    }
+  }
   return FLAT_DELIVERY_FEE_RWF;
 }
 
@@ -102,13 +108,17 @@ export type FulfillmentEta = {
 
 /** Cart / checkout overall ETA as a calendar day + clock window */
 export function cartFulfillmentEta(
-  items: Array<{ stockQty: number; quantity?: number }>,
+  items: Array<{ stockQty: number; reservedQty?: number; quantity?: number }>,
   zone: string,
   slot: "TODAY" | "TOMORROW" | "SCHEDULED" = "TODAY",
   zones?: DeliveryZoneDto[]
 ): FulfillmentEta {
   const zoneKey: DeliveryZoneKey = isDeliveryZoneKey(zone) ? zone : "KIGALI";
-  const needsRestock = items.some((i) => i.stockQty <= 0);
+  const needsRestock = items.some((i) => {
+    const available = Math.max(0, i.stockQty - (i.reservedQty ?? 0));
+    const qty = i.quantity ?? 1;
+    return available < qty;
+  });
 
   if (needsRestock) {
     const start = new Date();

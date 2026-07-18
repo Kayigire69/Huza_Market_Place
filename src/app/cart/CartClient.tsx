@@ -51,7 +51,13 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
                 className="flex gap-4 rounded-2xl border border-[var(--huza-line)] bg-white p-4"
               >
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[var(--huza-mint)]">
-                  <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.name}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{item.name}</p>

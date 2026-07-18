@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
       dynamic: 60,
       static: 300,
     },
+    optimizePackageImports: ["lucide-react"],
   },
 };
 
