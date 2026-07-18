@@ -165,28 +165,28 @@ export const productRepository = {
       images: { some: { kind: "STOREFRONT" as const } },
     };
 
-    const [categories, bestSellers, featured, readyToEat] = await Promise.all([
-      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
-      prisma.product.findMany({
-        where: { ...active, isBestSeller: true },
-        select: productCardSelect,
-        take,
-      }),
-      prisma.product.findMany({
-        where: { ...active, isFeatured: true },
-        select: productCardSelect,
-        take,
-      }),
-      prisma.product.findMany({
-        where: {
-          ...active,
-          category: { slug: { in: ["fruit-salads", "fresh-juices"] } },
-        },
-        select: productCardSelect,
-        orderBy: [{ isBestSeller: "desc" }, { isFeatured: "desc" }, { updatedAt: "desc" }],
-        take: 8,
-      }),
-    ]);
+    // Sequential queries — same results as Promise.all, but one pool connection at a time
+    // (avoids P2024 when Neon connection_limit is small and home + APIs run together).
+    const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
+    const bestSellers = await prisma.product.findMany({
+      where: { ...active, isBestSeller: true },
+      select: productCardSelect,
+      take,
+    });
+    const featured = await prisma.product.findMany({
+      where: { ...active, isFeatured: true },
+      select: productCardSelect,
+      take,
+    });
+    const readyToEat = await prisma.product.findMany({
+      where: {
+        ...active,
+        category: { slug: { in: ["fruit-salads", "fresh-juices"] } },
+      },
+      select: productCardSelect,
+      orderBy: [{ isBestSeller: "desc" }, { isFeatured: "desc" }, { updatedAt: "desc" }],
+      take: 8,
+    });
 
     // One curated "Popular now" rail — prefer bestsellers, fill from featured
     const seen = new Set<string>();
