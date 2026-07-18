@@ -39,12 +39,12 @@ export function resolveDatabaseUrl(raw: string | undefined): string {
   }
 
   if (!url.searchParams.has("pool_timeout")) {
-    url.searchParams.set("pool_timeout", "20");
+    url.searchParams.set("pool_timeout", "30");
   }
 
   if (!url.searchParams.has("connection_limit")) {
-    // Keep Prisma's own pool small when an external pooler (Neon) is in front.
-    url.searchParams.set("connection_limit", looksLikePooler ? "5" : "10");
+    // Neon PgBouncer + Next.js: allow a modest pool; home catalog no longer opens 4 at once.
+    url.searchParams.set("connection_limit", looksLikePooler ? "10" : "15");
   }
 
   return url.toString();

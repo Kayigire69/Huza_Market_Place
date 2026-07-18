@@ -32,8 +32,10 @@ export const catalogService = {
     }
 
     const now = new Date();
-    const [lists, promotions, testimonials, customerReviews, status] = await Promise.all([
-      productRepository.findHomeLists(8),
+    // Cap concurrent Prisma work: home lists run sequentially inside findHomeLists;
+    // keep the remaining reads in a small Promise.all (not nested 4+4).
+    const lists = await productRepository.findHomeLists(8);
+    const [promotions, testimonials, customerReviews, status] = await Promise.all([
       prisma.promotion.findMany({
         where: {
           isActive: true,
