@@ -12,7 +12,8 @@ export async function sendEmail(input: {
   const from = process.env.EMAIL_FROM || "HUZA FRESH <noreply@youthhuza.rw>";
 
   if (!apiKey) {
-    console.info("[email:dev]", { to: input.to, subject: input.subject, text: input.text });
+    // Never log reset tokens / full message bodies
+    console.info("[email:dev]", { to: input.to, subject: input.subject, preview: input.text.slice(0, 80) });
     return { ok: true, mode: "console" as const };
   }
 

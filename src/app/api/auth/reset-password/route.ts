@@ -3,9 +3,19 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { hashToken } from "@/lib/security";
 import { writeAuditLog } from "@/lib/audit";
-import { clientIp } from "@/lib/rate-limit";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { BCRYPT_ROUNDS } from "@/lib/security-access";
 
 export async function POST(req: Request) {
+  const rl = await rateLimit({
+    key: `reset:${clientIp(req)}`,
+    limit: 10,
+    windowMs: 15 * 60_000,
+  });
+  if (!rl.ok) {
+    return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
+  }
+
   const body = await req.json();
   const token = String(body.token || "");
   const newPassword = String(body.newPassword || "");
@@ -33,7 +43,7 @@ export async function POST(req: Request) {
     prisma.user.update({
       where: { id: record.userId },
       data: {
-        passwordHash: await bcrypt.hash(newPassword, 10),
+        passwordHash: await bcrypt.hash(newPassword, BCRYPT_ROUNDS),
         mustChangePassword: false,
         passwordChangedAt: new Date(),
       },

@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { canManageStaff, isSuperAdmin } from "@/lib/rbac";
+import { BCRYPT_ROUNDS } from "@/lib/security-access";
 
 /** Roles Super Admin may create for employees (not Super Admin by default). */
 const EMPLOYEE_ROLES: Role[] = [
@@ -99,7 +100,7 @@ export async function POST(req: Request) {
       email,
       phone,
       role,
-      passwordHash: await bcrypt.hash(password, 10),
+      passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS),
       isActive: true,
       mustChangePassword: false,
       isPrimarySuperAdmin: false,
@@ -223,7 +224,7 @@ export async function PATCH(req: Request) {
     const user = await prisma.user.update({
       where: { id },
       data: {
-        passwordHash: await bcrypt.hash(password, 10),
+        passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS),
         mustChangePassword: false,
         passwordChangedAt: new Date(),
       },

@@ -5,8 +5,9 @@ import {
   loadOrderDocument,
 } from "@/lib/documents/order-docs";
 import { pdfResponse } from "@/lib/documents/pdf";
+import { canAccessOrder } from "@/lib/security-access";
 
-/** Customer invoice — HTML (default) or PDF (?format=pdf) */
+/** Customer invoice — HTML (default) or PDF (?format=pdf). Requires access proof. */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ orderNumber: string }> }
@@ -18,7 +19,18 @@ export async function GET(
     return new NextResponse("Order not found", { status: 404 });
   }
 
-  const format = new URL(req.url).searchParams.get("format") || "html";
+  const url = new URL(req.url);
+  const allowed = await canAccessOrder(order, {
+    req,
+    orderNumber,
+    phone: url.searchParams.get("phone"),
+    token: url.searchParams.get("token"),
+  });
+  if (!allowed) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  const format = url.searchParams.get("format") || "html";
 
   if (format === "pdf") {
     const buffer = await buildInvoicePdf(order);

@@ -4,12 +4,14 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { isValidRwandaMomoPhone } from "@/lib/phone";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { BCRYPT_ROUNDS } from "@/lib/security-access";
 
 const schema = z.object({
   fullName: z.string().min(2),
   phone: z.string().min(8),
   email: z.string().email().optional().or(z.literal("")),
-  password: z.string().min(6),
+  password: z.string().min(8),
   role: z.enum(["CUSTOMER", "SUPPLIER"]).default("CUSTOMER"),
   farmingType: z.enum(["ORGANIC", "STANDARD"]).optional(),
   businessName: z.string().optional(),
@@ -51,6 +53,15 @@ function toUrlList(value?: string | string[]) {
 
 export async function POST(req: Request) {
   try {
+    const rl = await rateLimit({
+      key: `register:${clientIp(req)}`,
+      limit: 8,
+      windowMs: 15 * 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
+    }
+
     const data = schema.parse(await req.json());
     if (!isValidRwandaMomoPhone(data.phone)) {
       return NextResponse.json(
@@ -95,7 +106,7 @@ export async function POST(req: Request) {
     }
 
     const farmingType = data.farmingType || "ORGANIC";
-    const passwordHash = await bcrypt.hash(data.password, 10);
+    const passwordHash = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
     const user = await prisma.user.create({
       data: {
         fullName: data.fullName,

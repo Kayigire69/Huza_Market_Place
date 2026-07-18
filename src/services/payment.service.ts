@@ -8,6 +8,7 @@ import { enqueueAnalytics, enqueueEmail, enqueueSms } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 import { writeAuditLog } from "@/lib/audit";
 import { notifyAdmins } from "@/lib/notify-admins";
+import { createOrderDocToken, demoPaymentsAllowed } from "@/lib/security-access";
 
 export const paymentService = {
   async confirmPayment(paymentId: string) {
@@ -108,8 +109,9 @@ export const paymentService = {
       `HUZA FRESH: Payment of ${payment.amount} RWF for ${payment.order.orderNumber} confirmed.`
     );
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const receiptLink = `${baseUrl}/api/receipts/${payment.order.orderNumber}?format=pdf`;
-    const invoiceLink = `${baseUrl}/api/invoices/${payment.order.orderNumber}?format=pdf`;
+    const docToken = createOrderDocToken(payment.order.orderNumber);
+    const receiptLink = `${baseUrl}/api/receipts/${payment.order.orderNumber}?format=pdf&token=${encodeURIComponent(docToken)}`;
+    const invoiceLink = `${baseUrl}/api/invoices/${payment.order.orderNumber}?format=pdf&token=${encodeURIComponent(docToken)}`;
     if (payment.order.guestPhone || payment.order.userId) {
       await enqueueEmail(
         `${payment.order.guestPhone || "customer"}@notify.huza.local`,
@@ -221,9 +223,10 @@ export const paymentService = {
     /**
      * Demo / no live MoMo credentials: the *server* simulates a provider confirmation
      * after a short delay. Customers never self-confirm in the browser.
+     * Disabled in production unless ALLOW_DEMO_PAYMENTS=true.
      */
     const isDemoRef = Boolean(payment.transactionRef?.startsWith("DEMO-"));
-    if (isDemoRef) {
+    if (isDemoRef && demoPaymentsAllowed()) {
       const ageMs = Date.now() - new Date(payment.createdAt).getTime();
       const DEMO_CONFIRM_AFTER_MS = 12_000;
       if (ageMs >= DEMO_CONFIRM_AFTER_MS) {

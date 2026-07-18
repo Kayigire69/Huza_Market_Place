@@ -195,13 +195,13 @@ function TrackForm() {
           </div>
           <div className="flex flex-wrap gap-4">
             <a
-              href={`/api/receipts/${data.orderNumber}?format=pdf`}
+              href={`/api/receipts/${data.orderNumber}?format=pdf&phone=${encodeURIComponent(phone.trim())}`}
               className="inline-block text-sm font-semibold text-[var(--huza-green-dark)]"
             >
               Download receipt ↓
             </a>
             <a
-              href={`/api/invoices/${data.orderNumber}?format=pdf`}
+              href={`/api/invoices/${data.orderNumber}?format=pdf&phone=${encodeURIComponent(phone.trim())}`}
               className="inline-block text-sm font-semibold text-[var(--huza-green)]"
             >
               Download invoice ↓

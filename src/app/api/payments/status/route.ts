@@ -2,20 +2,51 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { paymentService } from "@/services/payment.service";
-import { processDueJobs } from "@/jobs/processors";
+import { canAccessOrder } from "@/lib/security-access";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { isAdminPortalRole } from "@/lib/rbac";
 
-/** GET /api/payments/status?orderId=... or ?orderNumber=... */
+/** GET /api/payments/status?orderId=... or ?orderNumber=... (&phone= for guests) */
 export async function GET(req: Request) {
+  const rl = await rateLimit({
+    key: `paystatus:${clientIp(req)}`,
+    limit: 60,
+    windowMs: 60_000,
+  });
+  if (!rl.ok) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const { searchParams } = new URL(req.url);
   const orderId = searchParams.get("orderId") || undefined;
   const orderNumber = searchParams.get("orderNumber") || undefined;
-
-  // Opportunistically drain a few background jobs (payment verify, SMS, etc.)
-  void processDueJobs(3).catch(() => null);
+  const phone = searchParams.get("phone");
+  const token = searchParams.get("token");
 
   const order = await paymentService.getStatus({ orderId, orderNumber });
   if (!order?.payment) {
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+  }
+
+  const allowed = await canAccessOrder(order, {
+    req,
+    orderNumber: order.orderNumber,
+    phone,
+    token,
+  });
+
+  // Public poll (checkout waiting screen): status only — no phones / PII
+  if (!allowed) {
+    return NextResponse.json({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      orderStatus: order.status,
+      paymentStatus: order.payment.status,
+      amount: order.payment.amount,
+      method: order.payment.method,
+      message: order.payment.providerMessage,
+      verifiedAt: order.payment.verifiedAt,
+    });
   }
 
   const payment = order.payment;
@@ -36,15 +67,16 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/payments/status
- * - action: "fail" — customer Cancel on waiting screen (abandons pending payment)
- * - action: "confirm" — ADMIN ONLY (never customer-facing; system confirms via callback/poll)
+ * - action: "fail" — cancel pending payment (owner phone or session required)
+ * - action: "confirm" — ADMIN / SUPER_ADMIN only
  */
 export async function POST(req: Request) {
   const body = await req.json();
-  const { orderId, orderNumber, action } = body as {
+  const { orderId, orderNumber, action, phone } = body as {
     orderId?: string;
     orderNumber?: string;
     action: "confirm" | "fail";
+    phone?: string;
   };
 
   const order = await paymentService.getStatus({ orderId, orderNumber });
@@ -54,7 +86,7 @@ export async function POST(req: Request) {
 
   if (action === "confirm") {
     const session = await getServerSession(authOptions);
-    const role = (session?.user as { role?: string } | undefined)?.role;
+    const role = session?.user?.role;
     if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Payment can only be confirmed by the payment system or an admin." },
@@ -69,13 +101,30 @@ export async function POST(req: Request) {
   }
 
   if (action === "fail") {
-    // Customers may cancel a pending request; never mark paid from the browser.
     if (order.payment.status !== "PENDING") {
       return NextResponse.json(
         { error: "This payment is no longer pending.", paymentStatus: order.payment.status },
         { status: 409 }
       );
     }
+
+    const session = await getServerSession(authOptions);
+    const isStaff = session?.user?.role && isAdminPortalRole(session.user.role);
+    const allowed =
+      isStaff ||
+      (await canAccessOrder(order, {
+        req,
+        orderNumber: order.orderNumber,
+        phone: phone || undefined,
+      }));
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Provide the order phone number to cancel this payment." },
+        { status: 403 }
+      );
+    }
+
     await paymentService.failPayment(order.payment.id, "Payment cancelled by customer");
     return NextResponse.json({
       paymentStatus: "FAILED",

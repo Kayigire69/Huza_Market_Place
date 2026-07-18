@@ -53,6 +53,7 @@ type PaymentSuccess = {
   dayLabel?: string;
   windowLabel?: string;
   totals: OrderSummaryTotals;
+  docAccessToken?: string;
 };
 
 type CheckoutPhase = "form" | "awaiting" | "paid" | "failed" | "expired";
@@ -189,6 +190,7 @@ export default function CheckoutClient({
       deliveryAddress: p.deliveryAddress,
       dayLabel: p.dayLabel,
       windowLabel: p.windowLabel,
+      docAccessToken: p.docAccessToken,
     });
     clear();
     router.push(`/checkout/confirmation?order=${encodeURIComponent(p.orderNumber)}`);
@@ -227,7 +229,11 @@ export default function CheckoutClient({
         void fetch("/api/payments/status", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderNumber, action: "fail" }),
+          body: JSON.stringify({
+            orderNumber,
+            action: "fail",
+            phone: payment?.payerPhone,
+          }),
         });
       }
     }, 500);
@@ -293,6 +299,7 @@ export default function CheckoutClient({
         dayLabel: fulfillment.dayLabel,
         windowLabel: fulfillment.windowLabel,
         totals: frozenTotals,
+        docAccessToken: data.docAccessToken,
       };
       setPayment(success);
       setAwaitStartedAt(Date.now());
@@ -317,7 +324,11 @@ export default function CheckoutClient({
       await fetch("/api/payments/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderNumber: payment.orderNumber, action: "fail" }),
+        body: JSON.stringify({
+          orderNumber: payment.orderNumber,
+          action: "fail",
+          phone: payment.payerPhone,
+        }),
       });
     } catch {
       /* ignore */
