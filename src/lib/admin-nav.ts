@@ -20,6 +20,9 @@ import {
   Shield,
   ScrollText,
   UserCog,
+  Handshake,
+  Banknote,
+  History,
 } from "lucide-react";
 
 /** Stable module keys for role-aware admin sidebar + route guards */
@@ -39,6 +42,9 @@ export type AdminModule =
   | "purchase_requests"
   | "purchase_orders"
   | "goods_received"
+  | "commission_sales"
+  | "farmer_payments"
+  | "procurement_history"
   | "reports"
   | "settings";
 
@@ -120,6 +126,24 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
         label: "Goods Received",
         icon: PackageCheck,
       },
+      {
+        module: "commission_sales",
+        href: "/admin/procurement/commission",
+        label: "Commission Sales",
+        icon: Handshake,
+      },
+      {
+        module: "farmer_payments",
+        href: "/admin/procurement/payments",
+        label: "Farmer Payments",
+        icon: Banknote,
+      },
+      {
+        module: "procurement_history",
+        href: "/admin/procurement/history",
+        label: "Procurement History",
+        icon: History,
+      },
     ],
   },
   {
@@ -175,13 +199,19 @@ function withProcurement(modules: AdminModule[]): AdminModule[] {
     set.has("farmers") ||
     set.has("purchase_orders") ||
     set.has("purchase_requests") ||
-    set.has("approvals")
+    set.has("approvals") ||
+    set.has("commission_sales") ||
+    set.has("farmer_payments") ||
+    set.has("procurement_history")
   ) {
     set.add("farmers");
     set.add("approvals");
     set.add("purchase_requests");
     set.add("purchase_orders");
     set.add("goods_received");
+    set.add("commission_sales");
+    set.add("farmer_payments");
+    set.add("procurement_history");
   }
   return [...set];
 }
@@ -201,10 +231,21 @@ export const ADMIN_ROLE_MODULES: Record<string, AdminModule[]> = {
       "purchase_requests",
       "purchase_orders",
       "goods_received",
+      "commission_sales",
+      "farmer_payments",
+      "procurement_history",
       "products",
     ])
   ),
-  FINANCE: ["dashboard", "payments", "reports", "orders"],
+  FINANCE: withProcurement([
+    "dashboard",
+    "payments",
+    "reports",
+    "orders",
+    "commission_sales",
+    "farmer_payments",
+    "procurement_history",
+  ]),
 };
 
 export function modulesForRole(role?: string | null): AdminModule[] {
@@ -232,6 +273,9 @@ export function moduleForAdminPath(pathname: string): AdminModule | null {
   if (pathname.startsWith("/admin/procurement/requests")) return "purchase_requests";
   if (pathname.startsWith("/admin/procurement/orders")) return "purchase_orders";
   if (pathname.startsWith("/admin/procurement/received")) return "goods_received";
+  if (pathname.startsWith("/admin/procurement/commission")) return "commission_sales";
+  if (pathname.startsWith("/admin/procurement/payments")) return "farmer_payments";
+  if (pathname.startsWith("/admin/procurement/history")) return "procurement_history";
   if (pathname.startsWith("/admin/procurement")) return "purchase_orders";
   if (pathname.startsWith("/admin/reports")) return "reports";
   if (

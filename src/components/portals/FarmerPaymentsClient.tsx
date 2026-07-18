@@ -10,8 +10,16 @@ import { ArrowRight, Wallet } from "lucide-react";
 
 type Filter = "all" | "pending" | "paid";
 
+function payoutAmount(po: FarmerPurchaseOrderRow) {
+  if (po.dealType === "COMMISSION") {
+    return po.farmerNetAmount ?? po.totalAmount;
+  }
+  return po.totalAmount;
+}
+
 /**
  * Phase 4 Payments — farmer payouts tied to Huza purchase orders.
+ * Commission lines are read-only (settlement happens in Admin).
  */
 export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRow[] }) {
   const [filter, setFilter] = useState<Filter>("all");
@@ -27,8 +35,8 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
   const paid = payoutOrders.filter((po) => po.paidAt);
   const pending = payoutOrders.filter((po) => !po.paidAt);
 
-  const paidTotal = paid.reduce((sum, po) => sum + po.totalAmount, 0);
-  const pendingTotal = pending.reduce((sum, po) => sum + po.totalAmount, 0);
+  const paidTotal = paid.reduce((sum, po) => sum + payoutAmount(po), 0);
+  const pendingTotal = pending.reduce((sum, po) => sum + payoutAmount(po), 0);
 
   const visible = useMemo(() => {
     if (filter === "paid") return paid;
@@ -108,6 +116,8 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
       <div className="space-y-3">
         {visible.map((po) => {
           const isPaid = Boolean(po.paidAt);
+          const isCommission = po.dealType === "COMMISSION";
+          const amount = payoutAmount(po);
           return (
             <FarmerPanel
               key={po.id}
@@ -120,12 +130,13 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
                   </p>
                   <h3 className="mt-0.5 font-semibold text-[var(--huza-ink)]">{po.productName}</h3>
                   <p className="mt-1 text-xs text-[var(--huza-muted)]">
-                    {po.quantity.toLocaleString()} {formatUnit(po.unit)} · Order {po.status}
+                    {po.quantity.toLocaleString()} {formatUnit(po.unit)} · Order {po.status} ·{" "}
+                    {isCommission ? "Commission sale" : "Outright buy"}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-ink)]">
-                    {formatRwf(po.totalAmount)}
+                    {formatRwf(amount)}
                   </p>
                   <span
                     className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
@@ -139,6 +150,37 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
                 </div>
               </div>
 
+              {isCommission ? (
+                <div className="mt-3 rounded-lg border border-[var(--huza-line)] bg-white px-3 py-2 text-sm">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--huza-muted)]">
+                    Commission breakdown
+                  </p>
+                  {po.saleAmount != null ? (
+                    <ul className="mt-1.5 space-y-0.5 text-xs text-[var(--huza-ink)]">
+                      <li className="flex justify-between gap-3">
+                        <span>Sale amount</span>
+                        <strong>{formatRwf(po.saleAmount)}</strong>
+                      </li>
+                      <li className="flex justify-between gap-3">
+                        <span>HUZA commission ({po.commissionRate ?? 0}%)</span>
+                        <strong>{formatRwf(po.commissionAmount ?? 0)}</strong>
+                      </li>
+                      <li className="flex justify-between gap-3 border-t border-[var(--huza-line)] pt-1">
+                        <span>You receive</span>
+                        <strong className="text-[var(--huza-green-dark)]">
+                          {formatRwf(po.farmerNetAmount ?? amount)}
+                        </strong>
+                      </li>
+                    </ul>
+                  ) : (
+                    <p className="mt-1 text-xs text-[var(--huza-muted)]">
+                      Youth Huza is selling this on HUZA FRESH. After sales, commission (
+                      {po.commissionRate ?? 10}%) is deducted and your share is paid here.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
               {isPaid ? (
                 <div className="mt-3 rounded-lg bg-[var(--huza-mint)]/40 px-3 py-2 text-sm">
                   <p className="font-medium text-[var(--huza-green-dark)]">
@@ -151,8 +193,9 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
                 </div>
               ) : (
                 <p className="mt-3 text-sm text-[var(--huza-muted)]">
-                  Youth Huza will mark this paid after the purchase order is accepted and settled. Keep
-                  your registered payment details current on My Profile.
+                  {isCommission
+                    ? "Payment follows commission settlement in Admin after customer sales. Keep your MoMo / bank details current on My Profile."
+                    : "Youth Huza will mark this paid after the purchase order is accepted and settled. Keep your registered payment details current on My Profile."}
                 </p>
               )}
 

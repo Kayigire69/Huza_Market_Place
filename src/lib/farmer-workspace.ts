@@ -11,12 +11,18 @@ export type FarmerPurchaseOrderRow = {
   id: string;
   poNumber: string;
   status: string;
+  /** OUTRIGHT_BUY | COMMISSION */
+  dealType: string;
   productName: string;
   category: string | null;
   unit: string;
   quantity: number;
   negotiatedPrice: number;
   totalAmount: number;
+  commissionRate: number | null;
+  saleAmount: number | null;
+  commissionAmount: number | null;
+  farmerNetAmount: number | null;
   qualityNotes: string | null;
   rejectionReason: string | null;
   recommendation: string | null;
@@ -81,12 +87,17 @@ export async function requireFarmerWorkspace() {
       id: true,
       poNumber: true,
       status: true,
+      dealType: true,
       productName: true,
       category: true,
       unit: true,
       quantity: true,
       negotiatedPrice: true,
       totalAmount: true,
+      commissionRate: true,
+      saleAmount: true,
+      commissionAmount: true,
+      farmerNetAmount: true,
       qualityNotes: true,
       rejectionReason: true,
       recommendation: true,
@@ -100,28 +111,39 @@ export async function requireFarmerWorkspace() {
     },
   });
 
-  const purchaseOrders: FarmerPurchaseOrderRow[] = purchaseOrdersRaw.map((po) => ({
-    id: po.id,
-    poNumber: po.poNumber,
-    status: po.status,
-    productName: po.productName,
-    category: po.category,
-    unit: po.unit,
-    quantity: po.quantity,
-    negotiatedPrice: po.negotiatedPrice,
-    totalAmount: po.totalAmount,
-    qualityNotes: po.qualityNotes,
-    rejectionReason: po.rejectionReason,
-    recommendation: po.recommendation,
-    inspectedAt: po.inspectedAt?.toISOString() ?? null,
-    orderedAt: po.orderedAt?.toISOString() ?? null,
-    receivedAt: po.receivedAt?.toISOString() ?? null,
-    paymentStatus: po.paidAt ? `Paid${po.paymentRef ? ` · ${po.paymentRef}` : ""}` : "Pending",
-    paymentMethod: po.paymentMethod,
-    paidAt: po.paidAt?.toISOString() ?? null,
-    paymentRef: po.paymentRef,
-    createdAt: po.createdAt.toISOString(),
-  }));
+  const purchaseOrders: FarmerPurchaseOrderRow[] = purchaseOrdersRaw.map((po) => {
+    const payoutAmount =
+      po.dealType === "COMMISSION"
+        ? (po.farmerNetAmount ?? po.totalAmount)
+        : po.totalAmount;
+    return {
+      id: po.id,
+      poNumber: po.poNumber,
+      status: po.status,
+      dealType: po.dealType,
+      productName: po.productName,
+      category: po.category,
+      unit: po.unit,
+      quantity: po.quantity,
+      negotiatedPrice: po.negotiatedPrice,
+      totalAmount: payoutAmount,
+      commissionRate: po.commissionRate,
+      saleAmount: po.saleAmount,
+      commissionAmount: po.commissionAmount,
+      farmerNetAmount: po.farmerNetAmount,
+      qualityNotes: po.qualityNotes,
+      rejectionReason: po.rejectionReason,
+      recommendation: po.recommendation,
+      inspectedAt: po.inspectedAt?.toISOString() ?? null,
+      orderedAt: po.orderedAt?.toISOString() ?? null,
+      receivedAt: po.receivedAt?.toISOString() ?? null,
+      paymentStatus: po.paidAt ? `Paid${po.paymentRef ? ` · ${po.paymentRef}` : ""}` : "Pending",
+      paymentMethod: po.paymentMethod,
+      paidAt: po.paidAt?.toISOString() ?? null,
+      paymentRef: po.paymentRef,
+      createdAt: po.createdAt.toISOString(),
+    };
+  });
 
   const pendingReviews = farmProducts.filter(
     (p) => !p.reviewStatus || p.reviewStatus === "PENDING"
