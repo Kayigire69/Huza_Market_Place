@@ -68,6 +68,9 @@ export type FarmerDossierFields = {
   priceAfterSale?: number | null;
   proofOfPaymentUrl?: string | null;
   farmerComments?: string | null;
+  paymentMomo?: string | null;
+  bankAccount?: string | null;
+  bankName?: string | null;
 };
 
 export function pickFarmerDossier(body: Record<string, unknown>): Record<string, unknown> {
@@ -117,7 +120,24 @@ export function pickFarmerDossier(body: Record<string, unknown>): Record<string,
     farmerComments: str("farmerComments"),
     description: str("description") || str("farmerComments"),
     email: str("email"),
-    paymentMomo: str("paymentMomo"),
+    paymentMomo:
+      body.paymentMomo !== undefined
+        ? body.paymentMomo === null || String(body.paymentMomo).trim() === ""
+          ? null
+          : String(body.paymentMomo).trim()
+        : undefined,
+    bankAccount:
+      body.bankAccount !== undefined
+        ? body.bankAccount === null || String(body.bankAccount).trim() === ""
+          ? null
+          : String(body.bankAccount).trim()
+        : undefined,
+    bankName:
+      body.bankName !== undefined
+        ? body.bankName === null || String(body.bankName).trim() === ""
+          ? null
+          : String(body.bankName).trim()
+        : undefined,
   };
 }
 

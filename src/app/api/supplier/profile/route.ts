@@ -4,27 +4,42 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AvailabilityStatus } from "@prisma/client";
 import { pickFarmerDossier } from "@/lib/farmer-dossier";
+import { findSupplierForUser } from "@/lib/supplier-context";
+import { isValidRwandaMomoPhone } from "@/lib/phone";
 
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const body = await req.json();
-  const supplier = await prisma.supplier.findUnique({ where: { userId: session.user.id } });
-  if (!supplier && session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const id = supplier?.id ?? body.supplierId;
-  if (!id) return NextResponse.json({ error: "Farmer required" }, { status: 400 });
+  const supplier = await findSupplierForUser(session.user.id);
+  if (!supplier) {
+    return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
+  }
 
+  const body = await req.json();
   const dossier = pickFarmerDossier(body);
+
+  if (
+    typeof dossier.paymentMomo === "string" &&
+    dossier.paymentMomo.trim() &&
+    !isValidRwandaMomoPhone(dossier.paymentMomo)
+  ) {
+    return NextResponse.json(
+      { error: "Enter a valid MTN (078/079) or Airtel (072/073) MoMo number" },
+      { status: 400 }
+    );
+  }
+
   const cleaned = Object.fromEntries(
-    Object.entries(dossier).filter(([, v]) => v !== undefined && !(typeof v === "number" && Number.isNaN(v)))
+    Object.entries(dossier).filter(
+      ([, v]) => v !== undefined && !(typeof v === "number" && Number.isNaN(v))
+    )
   );
 
   const updated = await prisma.supplier.update({
-    where: { id },
+    where: { id: supplier.id },
     data: {
       ...cleaned,
       availability: body.availability
@@ -35,7 +50,7 @@ export async function PATCH(req: Request) {
     },
   });
 
-  if (body.fullName && supplier) {
+  if (body.fullName) {
     await prisma.user.update({
       where: { id: supplier.userId },
       data: { fullName: String(body.fullName) },
