@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 
 /**
- * Farmers Portal login — fits one phone screen (no page scroll).
+ * Compact centered login card — designed to fit a PC viewport without scrolling,
+ * so the same layout stays clean on mobile.
  */
 export function FarmerLoginForm() {
   const { t } = useLocale();
@@ -56,24 +57,24 @@ export function FarmerLoginForm() {
   };
 
   return (
-    <div className="flex h-full flex-col justify-center px-3 py-3 sm:px-4">
+    <div className="flex h-full items-center justify-center overflow-hidden px-4 py-4">
       <form
         onSubmit={onSubmit}
-        className="mx-auto w-full max-w-sm space-y-3 rounded-3xl border border-[var(--huza-line)] bg-white p-4 shadow-md sm:max-w-md sm:space-y-4 sm:p-6"
+        className="w-full max-w-[400px] shrink-0 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-5 shadow-lg sm:p-6"
       >
         <div className="text-center">
-          <h1 className="text-xl font-bold text-[var(--huza-ink)] sm:text-2xl">{t("farmerLogin")}</h1>
-          <p className="mt-1 text-xs text-[var(--huza-muted)] sm:text-sm">
-            Phone + last 4 of National ID. No password.
+          <h1 className="text-xl font-bold text-[var(--huza-ink)]">{t("farmerLogin")}</h1>
+          <p className="mt-1 text-sm text-[var(--huza-muted)]">
+            Phone + last 4 of National ID · no password
           </p>
         </div>
 
         <div>
-          <label className="label text-sm sm:text-base">{t("phone")}</label>
+          <label className="label">{t("phone")}</label>
           <input
             name="phone"
             required
-            className="input-field mt-1 min-h-12 text-base sm:min-h-14 sm:text-lg"
+            className="input-field mt-1 h-11 text-base"
             placeholder="0788123456"
             inputMode="tel"
             autoComplete="tel"
@@ -81,11 +82,11 @@ export function FarmerLoginForm() {
           />
         </div>
         <div>
-          <label className="label text-sm sm:text-base">Last 4 digits of National ID</label>
+          <label className="label">Last 4 digits of National ID</label>
           <input
             name="nationalIdLast4"
             required
-            className="input-field mt-1 min-h-12 text-center text-xl tracking-[0.35em] sm:min-h-14 sm:text-2xl"
+            className="input-field mt-1 h-11 text-center text-xl tracking-[0.35em]"
             placeholder="4827"
             inputMode="numeric"
             pattern="[0-9]{4}"
@@ -94,26 +95,24 @@ export function FarmerLoginForm() {
           />
         </div>
 
-        <label className="flex items-center gap-2.5 text-sm text-[var(--huza-ink)]">
-          <input name="rememberDevice" type="checkbox" className="size-5 shrink-0" defaultChecked />
+        <label className="flex items-center gap-2 text-sm text-[var(--huza-ink)]">
+          <input name="rememberDevice" type="checkbox" className="size-4 shrink-0" defaultChecked />
           <span>Remember this device (90 days)</span>
         </label>
 
-        {error && (
-          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-        )}
+        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
 
-        <Button type="submit" className="w-full min-h-12 text-base" size="lg" disabled={loading}>
+        <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
           {loading ? "Signing in…" : "Login"}
         </Button>
 
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs sm:text-sm">
+        <p className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-center text-sm">
           <Link href="/farmer/register" className="font-bold text-[var(--huza-green-dark)] underline">
             New farmer?
           </Link>
           <button
             type="button"
-            className="font-semibold text-[var(--huza-muted)] underline"
+            className="text-[var(--huza-muted)] underline"
             onClick={() => setShowHelp((v) => !v)}
           >
             Need help?
@@ -121,12 +120,12 @@ export function FarmerLoginForm() {
           <Link href="/farmer" className="text-[var(--huza-muted)]">
             ← Home
           </Link>
-        </div>
+        </p>
 
         {showHelp && (
-          <p className="rounded-xl bg-[var(--huza-mint)]/50 px-3 py-2 text-xs text-[var(--huza-ink)]">
-            If you changed your phone number or cannot access your account, contact HUZA Support or
-            visit a HUZA office for verification.
+          <p className="rounded-lg bg-[var(--huza-mint)]/50 px-3 py-2 text-xs text-[var(--huza-ink)]">
+            If you changed your phone or cannot access your account, contact HUZA Support or visit a
+            HUZA office.
           </p>
         )}
       </form>
