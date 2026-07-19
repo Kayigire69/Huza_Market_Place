@@ -51,24 +51,58 @@ export function AdminApprovalsClient() {
     try {
       let note: string | undefined;
       let recommendation: string | undefined;
+      let confirmedQty: number | undefined;
+      let qualityGrade: string | undefined;
       if (action === "reject") {
         note =
           window.prompt("Rejection reason (shown to farmer)", "Pesticide residue above accepted level") ||
           undefined;
-        if (!note) {
+        if (!note?.trim()) {
           setBusy(null);
+          setMsg("Rejection cancelled — reason is required for the farmer");
           return;
         }
         recommendation =
           window.prompt(
-            "Recommendation — what should the farmer do next?",
+            "What should the farmer do next? (required — partnership guidance)",
             "Wait the recommended number of days after spraying before harvesting."
           ) || undefined;
+        if (!recommendation?.trim()) {
+          setBusy(null);
+          setMsg("Rejection cancelled — recommendation is required so the farmer can improve");
+          return;
+        }
+      } else {
+        const product = products.find((p) => p.id === id);
+        if (product && product.stockQty <= 0) {
+          const qtyRaw = window.prompt(
+            "Verified harvest quantity to stock (required — no invented qty)",
+            ""
+          );
+          if (!qtyRaw?.trim()) {
+            setBusy(null);
+            setMsg("Approval cancelled — enter verified quantity");
+            return;
+          }
+          confirmedQty = Number(qtyRaw);
+          if (!Number.isFinite(confirmedQty) || confirmedQty <= 0) {
+            setBusy(null);
+            setMsg("Enter a valid verified quantity");
+            return;
+          }
+        }
+        const gradeRaw = window.prompt("Quality grade required (1 / 2 / 3 or A / B / C)", "1");
+        if (!gradeRaw?.trim()) {
+          setBusy(null);
+          setMsg("Approval cancelled — grade is required");
+          return;
+        }
+        qualityGrade = gradeRaw.trim();
       }
       const res = await fetch("/api/admin/products", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action, note, recommendation }),
+        body: JSON.stringify({ id, action, note, recommendation, confirmedQty, qualityGrade }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Action failed");

@@ -379,28 +379,89 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
     case "inventory": {
       const movements = await prisma.stockMovement.findMany({
         where: { createdAt },
-        include: { product: { select: { nameEn: true, stockQty: true } } },
+        include: {
+          product: {
+            select: {
+              nameEn: true,
+              stockQty: true,
+              reservedQty: true,
+              reviewStatus: true,
+              inventorySource: true,
+              purchaseMethod: true,
+              qualityGrade: true,
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
         take: 250,
       });
       const products = await prisma.product.findMany({
-        where: { deletedAt: null, isActive: true },
-        select: { stockQty: true, lowStockAt: true },
+        where: { deletedAt: null },
+        select: {
+          stockQty: true,
+          reservedQty: true,
+          lowStockAt: true,
+          isActive: true,
+          reviewStatus: true,
+          inventorySource: true,
+          purchaseMethod: true,
+          qualityGrade: true,
+        },
       });
-      const lowStock = products.filter((p) => p.stockQty <= p.lowStockAt).length;
+      const active = products.filter((p) => p.isActive);
+      const lowStock = active.filter((p) => p.stockQty <= p.lowStockAt).length;
+      const { countInventoryOpsStatuses, deriveInventoryOpsStatus } = await import(
+        "@/lib/inventory-meta"
+      );
+      const statusCounts = countInventoryOpsStatuses(products);
+      const bySource = { FARMER: 0, MARKET: 0, unset: 0 };
+      const byMethod = { DIRECT: 0, COMMISSION: 0, MARKET: 0, unset: 0 };
+      const byGrade = { "1": 0, "2": 0, "3": 0, unset: 0 };
+      for (const p of products) {
+        if (p.inventorySource === "FARMER" || p.inventorySource === "MARKET") {
+          bySource[p.inventorySource] += 1;
+        } else bySource.unset += 1;
+        if (
+          p.purchaseMethod === "DIRECT" ||
+          p.purchaseMethod === "COMMISSION" ||
+          p.purchaseMethod === "MARKET"
+        ) {
+          byMethod[p.purchaseMethod] += 1;
+        } else byMethod.unset += 1;
+        if (p.qualityGrade === "1" || p.qualityGrade === "2" || p.qualityGrade === "3") {
+          byGrade[p.qualityGrade] += 1;
+        } else byGrade.unset += 1;
+      }
       return {
         summary: [
           `Stock movements: ${movements.length}`,
-          `Products at/below low-stock threshold: ${lowStock}`,
+          `Active products at/below low-stock threshold: ${lowStock}`,
+          `Ops status — Available: ${statusCounts.Available} · Reserved: ${statusCounts.Reserved} · Sold Out: ${statusCounts["Sold Out"]} · Rejected: ${statusCounts.Rejected}`,
+          `By source — Farmer: ${bySource.FARMER} · Market: ${bySource.MARKET} · Unset: ${bySource.unset}`,
+          `By method — Direct: ${byMethod.DIRECT} · Commission: ${byMethod.COMMISSION} · Market: ${byMethod.MARKET} · Unset: ${byMethod.unset}`,
+          `By grade — 1: ${byGrade["1"]} · 2: ${byGrade["2"]} · 3: ${byGrade["3"]} · Unset: ${byGrade.unset}`,
         ],
-        headers: ["Date", "Product", "Type", "Qty", "Reason", "On hand"],
-        widths: [70, 115, 60, 40, 105, 50],
+        headers: [
+          "Date",
+          "Product",
+          "Source",
+          "Method",
+          "Grade",
+          "Ops status",
+          "Type",
+          "Qty",
+          "On hand",
+        ],
+        widths: [50, 85, 45, 50, 30, 50, 45, 30, 40],
         rows: movements.map((m) => [
           m.createdAt.toLocaleDateString("en-GB"),
           m.product.nameEn,
+          m.product.inventorySource || "—",
+          m.product.purchaseMethod || "—",
+          m.product.qualityGrade || "—",
+          deriveInventoryOpsStatus(m.product),
           m.type,
           String(m.quantity),
-          m.reason || "—",
           String(m.product.stockQty),
         ]),
       };

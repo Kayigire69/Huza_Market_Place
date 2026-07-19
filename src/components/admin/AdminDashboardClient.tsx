@@ -44,6 +44,7 @@ type LivePayload = {
     revenueGrowthPct?: number | null;
     openAgronomy?: number;
     harvestSoonCrops?: number;
+    openRestockRequests?: number;
     readyCrops?: number;
     needingPhotos?: number;
   };
@@ -252,6 +253,12 @@ export function AdminDashboardClient({
         tone: "amber",
         label: `${c.lowStock} product${c.lowStock === 1 ? "" : "s"} low in stock`,
         href: "/admin/inventory",
+        module: "inventory" as AdminModule,
+      },
+      (c.openRestockRequests || 0) > 0 && {
+        tone: "orange",
+        label: `${c.openRestockRequests} customer restock request${c.openRestockRequests === 1 ? "" : "s"}`,
+        href: "/admin/restock",
         module: "inventory" as AdminModule,
       },
       (c.pendingPayments ?? c.pendingPayment) > 0 && {

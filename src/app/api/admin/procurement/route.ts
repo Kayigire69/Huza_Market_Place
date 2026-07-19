@@ -287,6 +287,8 @@ export async function PATCH(req: Request) {
         price: sellPrice,
         purchasePrice: deal === ProcurementDealType.OUTRIGHT_BUY ? unitPrice : null,
         ownershipMode: deal === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
+        inventorySource: "FARMER",
+        purchaseMethod: deal === ProcurementDealType.COMMISSION ? "COMMISSION" : "DIRECT",
         unit: offer.unit as UnitType,
         stockQty: 0,
         isNewArrival: true,
@@ -393,6 +395,7 @@ async function handlePoAction(
     commissionRate?: number;
     officialImageUrls?: string[] | string;
     imageUrls?: string[] | string;
+    qualityGrade?: string;
   }
 ) {
   const po = await prisma.purchaseOrder.findUnique({
@@ -473,15 +476,29 @@ async function handlePoAction(
       break;
     }
     case "inspect_accept": {
+      const { normalizeOfficialImageUrls, publishOfficialProductImages } = await import(
+        "@/lib/official-product-images"
+      );
+      const { normalizeQualityGrade, purchaseMethodFromDealType } = await import(
+        "@/lib/inventory-meta"
+      );
+      const grade =
+        normalizeQualityGrade(body.qualityGrade) ||
+        normalizeQualityGrade(po.qualityGrade);
+      if (!grade) {
+        return NextResponse.json(
+          { error: "Quality grade (1 / 2 / 3) is required to accept QC" },
+          { status: 400 }
+        );
+      }
+
       data = {
         status: PurchaseOrderStatus.INSPECTED,
         inspectedAt: now,
         qualityNotes: body.qualityNotes || "Quality accepted — ready for shop",
+        qualityGrade: grade,
       };
       if (po.productId) {
-        const { normalizeOfficialImageUrls, publishOfficialProductImages } = await import(
-          "@/lib/official-product-images"
-        );
         const officialFromBody = normalizeOfficialImageUrls(
           body.officialImageUrls ?? body.imageUrls
         );
@@ -507,6 +524,13 @@ async function handlePoAction(
           });
         }
 
+        if (latestBatch) {
+          await prisma.stockBatch.update({
+            where: { id: latestBatch.id },
+            data: { qualityGrade: grade },
+          });
+        }
+
         await prisma.product.update({
           where: { id: po.productId },
           data: {
@@ -517,6 +541,9 @@ async function handlePoAction(
             reviewedAt: now,
             ownershipMode:
               po.dealType === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
+            inventorySource: "FARMER",
+            purchaseMethod: purchaseMethodFromDealType(po.dealType),
+            qualityGrade: grade,
           },
         });
         const { cacheDel, CacheKeys } = await import("@/lib/redis");
@@ -525,8 +552,8 @@ async function handlePoAction(
       notifyTitle = "Quality passed — live on HUZA FRESH";
       notifyBody =
         po.dealType === ProcurementDealType.COMMISSION
-          ? `PO ${po.poNumber}: Your produce passed QC and is selling on HUZA FRESH. Payment after sales (commission ${po.commissionRate ?? 10}%).`
-          : `PO ${po.poNumber}: Quality accepted. Product is live. Farmer payment can be processed.`;
+          ? `PO ${po.poNumber}: Your produce passed QC (grade ${grade}) and is selling on HUZA FRESH. Payment after sales (commission ${po.commissionRate ?? 10}%).`
+          : `PO ${po.poNumber}: Quality accepted (grade ${grade}). Product is live. Farmer payment can be processed.`;
       break;
     }
     case "inspect_reject": {

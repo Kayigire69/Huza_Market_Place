@@ -4,6 +4,7 @@ import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { ensureMarketDeskSupplier, marketPurchaseNumber } from "@/lib/market-desk";
+import { normalizeQualityGrade } from "@/lib/inventory-meta";
 
 const UNIT_TYPES: UnitType[] = ["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"];
 
@@ -35,6 +36,19 @@ export async function GET(req: Request) {
       : { status: { not: MarketPurchaseStatus.CANCELLED } },
     orderBy: { purchaseDate: "desc" },
     take: 100,
+    include: {
+      product: {
+        select: {
+          id: true,
+          nameEn: true,
+          stockQty: true,
+          isActive: true,
+          qualityGrade: true,
+          inventorySource: true,
+          purchaseMethod: true,
+        },
+      },
+    },
   });
 
   const [recorded, inspected, stocked] = await Promise.all([
@@ -140,14 +154,19 @@ export async function PATCH(req: Request) {
   if (!purchase) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (action === "inspect") {
+    const grade = normalizeQualityGrade(body.qualityGrade) || normalizeQualityGrade(purchase.qualityGrade);
+    if (!grade) {
+      return NextResponse.json(
+        { error: "Quality grade (1 / 2 / 3) is required before inspection can be saved" },
+        { status: 400 }
+      );
+    }
     const updated = await prisma.marketPurchase.update({
       where: { id },
       data: {
         status: MarketPurchaseStatus.INSPECTED,
         inspectedAt: new Date(),
-        qualityGrade: body.qualityGrade
-          ? String(body.qualityGrade).trim()
-          : purchase.qualityGrade,
+        qualityGrade: grade,
         inspectionNotes: body.inspectionNotes
           ? String(body.inspectionNotes).trim()
           : purchase.inspectionNotes,
@@ -160,7 +179,7 @@ export async function PATCH(req: Request) {
       action: "market_purchase.inspect",
       entity: "MarketPurchase",
       entityId: id,
-      details: updated.qualityGrade || "inspected",
+      details: `grade ${grade}`,
     });
     return NextResponse.json(updated);
   }
@@ -171,6 +190,19 @@ export async function PATCH(req: Request) {
     }
     if (purchase.status === MarketPurchaseStatus.CANCELLED) {
       return NextResponse.json({ error: "Cancelled purchase cannot be stocked" }, { status: 400 });
+    }
+    if (purchase.status !== MarketPurchaseStatus.INSPECTED) {
+      return NextResponse.json(
+        { error: "Inspect and grade this purchase before stocking to inventory" },
+        { status: 400 }
+      );
+    }
+    const grade = normalizeQualityGrade(purchase.qualityGrade);
+    if (!grade) {
+      return NextResponse.json(
+        { error: "Quality grade is required — re-inspect with grade 1 / 2 / 3" },
+        { status: 400 }
+      );
     }
 
     const desk = await ensureMarketDeskSupplier();
@@ -199,6 +231,9 @@ export async function PATCH(req: Request) {
         price: sellPrice,
         purchasePrice: purchase.unitPrice,
         ownershipMode: "OWNED",
+        inventorySource: "MARKET",
+        purchaseMethod: "MARKET",
+        qualityGrade: grade,
         unit: purchase.unit,
         stockQty: 0,
         isNewArrival: true,
@@ -226,7 +261,8 @@ export async function PATCH(req: Request) {
         productId: product.id,
         batchNumber,
         quantity: qty,
-        notes: `${purchase.marketName} · ${purchase.vendorName}`,
+        qualityGrade: grade,
+        notes: `${purchase.marketName} · ${purchase.vendorName} · Grade ${grade}`,
         officialImageUrls: purchase.photoUrls,
       },
     });

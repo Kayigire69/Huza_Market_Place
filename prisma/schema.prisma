@@ -163,6 +163,8 @@ enum NotificationType {
   FAILED_PAYMENT
   /// Farmer crop harvest window approaching — procurement prep
   HARVEST_ALERT
+  /// Customer asked to restock a missing product
+  RESTOCK_REQUEST
 }
 
 model User {
@@ -201,6 +203,7 @@ model User {
   supportTickets SupportTicket[]
   reviewReplies Review[] @relation("ReviewReplies")
   passwordResetTokens PasswordResetToken[]
+  restockRequests     RestockRequest[]
 }
 
 model PasswordResetToken {
@@ -409,6 +412,12 @@ model Product {
   purchasePrice Int?
   /// OWNED = Huza bought stock; COMMISSION = Huza sells on behalf of farmer (internal only)
   ownershipMode String?  @default("OWNED")
+  /// Inventory provenance: FARMER | MARKET (internal — not shown on storefront by default)
+  inventorySource String?
+  /// How Huza acquired stock: DIRECT | COMMISSION | MARKET (internal)
+  purchaseMethod  String?
+  /// QC grade 1 | 2 | 3 (internal; maps from A/B/C where used)
+  qualityGrade    String?
   unit          UnitType @default(KG)
   stockQty      Int      @default(0)
   /// Held for pending (unpaid) orders — available = stockQty - reservedQty
@@ -475,6 +484,9 @@ model Product {
   batches    StockBatch[]
   movements  StockMovement[]
   goodsReceiptItems GoodsReceiptItem[]
+  marketPurchases MarketPurchase[]
+  restockRequests RestockRequest[]
+  stockAlertLogs  StockAlertLog[]
 
   @@index([isActive, deletedAt])
   @@index([categoryId])
@@ -484,6 +496,8 @@ model Product {
   @@index([stockQty])
   @@index([nameEn])
   @@index([ratingAvg])
+  @@index([inventorySource])
+  @@index([purchaseMethod])
 }
 
 model ProductImage {
@@ -956,9 +970,12 @@ model MarketPurchase {
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
   @@index([status])
   @@index([purchaseDate])
   @@index([marketName])
+  @@index([productId])
 }
 
 /// Farmer agronomy advice / farm-visit requests (Farmers Portal → Admin inbox).
@@ -1024,6 +1041,55 @@ model AgronomyFollowUp {
   @@index([type])
 }
 
+/// Customer demand when a product is unavailable — drives Huza sourcing.
+enum RestockRequestStatus {
+  OPEN
+  SOURCING
+  FULFILLED
+  CLOSED
+}
+
+model RestockRequest {
+  id             String               @id @default(cuid())
+  productId      String
+  userId         String?
+  quantityWanted Int?
+  customerName   String?
+  customerPhone  String?
+  note           String?
+  status         RestockRequestStatus @default(OPEN)
+  /// Soft promise shown to customer (not a hard SLA)
+  softEtaLabel   String               @default("Usually within a few hours in Kigali")
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId, status])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+/// Throttles LOW / EMPTY / RESTOCK_DEMAND admin alerts (min interval between sends).
+model StockAlertLog {
+  id          String   @id @default(cuid())
+  productId   String
+  /// LOW | EMPTY | RESTOCK_DEMAND
+  kind        String
+  available   Int
+  /// 0–100 vs soft capacity (lowStockAt × 4, min 10)
+  percentLeft Int
+  title       String
+  body        String
+  sentAt      DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, kind, sentAt])
+  @@index([sentAt])
+}
+
 model WarehouseLocation {
   id        String   @id @default(cuid())
   code      String   @unique
@@ -1043,6 +1109,8 @@ model StockBatch {
   locationId  String?
   receivedAt  DateTime  @default(now())
   notes       String?
+  /// QC grade 1 | 2 | 3 copied at receive / inspect (internal)
+  qualityGrade String?
   /// Official HUZA photos taken at receive/QC — drive website STOREFRONT when published
   officialImageUrls String[] @default([])
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -1050,6 +1118,7 @@ model StockBatch {
 
   @@index([productId])
   @@index([batchNumber])
+  @@index([qualityGrade])
 }
 
 model GoodsReceipt {

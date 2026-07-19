@@ -59,6 +59,8 @@ export function ProductDetailClient({
   const addItem = useCart((s) => s.addItem);
   const showToast = useToastStore((s) => s.show);
   const [qty, setQty] = useState(1);
+  const [restockBusy, setRestockBusy] = useState(false);
+  const [restockDone, setRestockDone] = useState(false);
   const coverIdx = Math.max(
     0,
     product.images.findIndex((i) => i.isCover)
@@ -97,9 +99,9 @@ export function ProductDetailClient({
   const prepared = getPreparedMeta(product);
 
   const availabilityLabel = useMemo(() => {
-    if (product.availability === "COMING_SOON") return "Coming soon";
+    if (product.availability === "COMING_SOON") return t("outOfStock");
     if (!fulfillment.inStock || product.availability === "OUT_OF_STOCK") {
-      return "Out of Stock";
+      return t("outOfStock");
     }
     if (available <= (product.lowStockAt ?? 5) || product.availability === "LOW_STOCK") {
       return t("lowStock");
@@ -114,9 +116,32 @@ export function ProductDetailClient({
       return;
     }
     const message = encodeURIComponent(
-      `Hello HUZA,\n\nI would like to order:\n\nProduct:\n${name}\n\nQuantity:\n${qty} ${formatUnit(product.unit)}\n\nPrice:\n${formatRwf(product.price)}/${formatUnit(product.unit)}\n\nPlease help me complete this order.\n\nThank you.`
+      fulfillment.inStock
+        ? `Hello HUZA,\n\nI would like to order:\n\nProduct:\n${name}\n\nQuantity:\n${qty} ${formatUnit(product.unit)}\n\nPrice:\n${formatRwf(product.price)}/${formatUnit(product.unit)}\n\nPlease help me complete this order.\n\nThank you.`
+        : `Hello HUZA,\n\nI am interested in:\n\nProduct:\n${name}\n\nPlease tell me when fresh stock is available again.\n\nThank you.`
     );
     window.open(`https://wa.me/${waNumber}?text=${message}`, "_blank", "noopener,noreferrer");
+  };
+
+  const requestRestock = async () => {
+    if (restockBusy || restockDone) return;
+    setRestockBusy(true);
+    try {
+      const res = await fetch("/api/restock-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, quantityWanted: qty }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(typeof data.error === "string" ? data.error : "Could not send request");
+        return;
+      }
+      setRestockDone(true);
+      showToast(`✅ ${t("requestSent")} — ${t("softRestockEta")}`);
+    } finally {
+      setRestockBusy(false);
+    }
   };
 
   return (
@@ -273,31 +298,52 @@ export function ProductDetailClient({
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <Button
-            className="w-full sm:w-auto"
-            size="lg"
-            disabled={!fulfillment.inStock}
-            onClick={() => {
-              addItem(
-                {
-                  productId: product.id,
-                  name,
-                  price: product.price,
-                  unit: product.unit,
-                  imageUrl: cover,
-                  supplierId: product.supplier?.id ?? "",
-                  supplierName: "Youth Huza",
-                  stockQty: product.stockQty,
-                },
-                qty
-              );
-              showToast(`✅ ${t("addedToCart")}`);
-            }}
-          >
-            <ShoppingCart className="size-5" aria-hidden />
-            {fulfillment.inStock ? t("addToCart") : "Out of Stock"}
-          </Button>
-          {waNumber ? (
+          {fulfillment.inStock ? (
+            <Button
+              className="w-full sm:w-auto"
+              size="lg"
+              onClick={() => {
+                addItem(
+                  {
+                    productId: product.id,
+                    name,
+                    price: product.price,
+                    unit: product.unit,
+                    imageUrl: cover,
+                    supplierId: product.supplier?.id ?? "",
+                    supplierName: "Youth Huza",
+                    stockQty: product.stockQty,
+                  },
+                  qty
+                );
+                showToast(`✅ ${t("addedToCart")}`);
+              }}
+            >
+              <ShoppingCart className="size-5" aria-hidden />
+              {t("addToCart")}
+            </Button>
+          ) : (
+            <>
+              <Button
+                className="w-full sm:w-auto"
+                size="lg"
+                disabled={restockBusy || restockDone}
+                onClick={() => void requestRestock()}
+              >
+                {restockDone ? t("requestSent") : t("requestThisProduct")}
+              </Button>
+              <Button
+                className="w-full sm:w-auto"
+                size="lg"
+                variant="secondary"
+                onClick={orderViaWhatsApp}
+              >
+                <MessageCircle className="size-4 mr-2 inline" aria-hidden />
+                {t("askWhenBack")}
+              </Button>
+            </>
+          )}
+          {waNumber && fulfillment.inStock ? (
             <Button
               className="w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebe57] text-white"
               size="lg"
@@ -309,6 +355,11 @@ export function ProductDetailClient({
             </Button>
           ) : null}
         </div>
+        {!fulfillment.inStock ? (
+          <p className="mt-2 text-sm text-[var(--huza-muted)]">
+            {t("outOfStockHint")} · {t("softRestockEta")}
+          </p>
+        ) : null}
 
         <div className="mt-6">
           <p className="label">{t("share")}</p>

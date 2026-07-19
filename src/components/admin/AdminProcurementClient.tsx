@@ -452,7 +452,19 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                         <Button
                           size="sm"
                           disabled={busy === po.id}
-                          onClick={() => void poAction(po.id, "inspect_accept")}
+                          onClick={() => {
+                            const grade = window.prompt(
+                              "Quality grade required (1 / 2 / 3 or A / B / C)",
+                              "1"
+                            );
+                            if (!grade?.trim()) {
+                              setMsg("QC accept cancelled — grade is required");
+                              return;
+                            }
+                            void poAction(po.id, "inspect_accept", {
+                              qualityGrade: grade.trim(),
+                            });
+                          }}
                         >
                           QC pass → publish to shop
                         </Button>

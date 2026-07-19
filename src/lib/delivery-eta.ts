@@ -59,7 +59,7 @@ export type StockStatus = "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
 
 /**
  * Customer-facing stock + delivery line.
- * Zero available = Out of Stock (blocked from cart).
+ * Zero available = not addable to cart; customer copy stays hopeful ("Coming back soon").
  */
 export function productFulfillmentLabel(
   stockQty: number,
@@ -80,7 +80,7 @@ export function productFulfillmentLabel(
     return {
       inStock: false,
       stockStatus: "OUT_OF_STOCK",
-      stockLabel: "Out of Stock",
+      stockLabel: "Coming back soon",
       etaLabel: formatBackorderEta(),
       available: 0,
       onlyNLeft: null,

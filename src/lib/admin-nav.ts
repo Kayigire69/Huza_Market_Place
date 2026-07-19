@@ -27,6 +27,7 @@ import {
   Sprout,
   Camera,
   Store,
+  Inbox,
 } from "lucide-react";
 
 /** Stable module keys for role-aware admin sidebar + route guards */
@@ -102,6 +103,12 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     id: "ops",
     items: [
       { module: "inventory", href: "/admin/inventory", label: "Inventory", icon: Boxes },
+      {
+        module: "inventory",
+        href: "/admin/restock",
+        label: "Restock Requests",
+        icon: Inbox,
+      },
       { module: "deliveries", href: "/admin/delivery", label: "Deliveries", icon: Truck },
     ],
   },
@@ -316,6 +323,7 @@ export function moduleForAdminPath(pathname: string): AdminModule | null {
   if (pathname.startsWith("/admin/crops")) return "crop_monitoring";
   if (pathname.startsWith("/admin/photography")) return "photography";
   if (pathname.startsWith("/admin/inventory")) return "inventory";
+  if (pathname.startsWith("/admin/restock")) return "inventory";
   if (pathname.startsWith("/admin/delivery")) return "deliveries";
   if (pathname.startsWith("/admin/suppliers")) return "farmers";
   if (pathname.startsWith("/admin/procurement/market")) return "market_procurement";

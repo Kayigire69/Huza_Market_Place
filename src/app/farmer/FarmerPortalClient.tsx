@@ -20,6 +20,10 @@ import {
 import { useLocale } from "@/lib/locale-context";
 import { FarmerDossierForm, type FarmerDossierValues } from "./FarmerDossierForm";
 import { maskNationalId } from "@/lib/farmer-id";
+import {
+  FarmerQualityReviewCard,
+  defaultQualityRecommendation,
+} from "@/components/portals/FarmerQualityReviewCard";
 
 type Category = { id: string; nameEn: string; slug: string };
 type ProductImage = { id?: string; url: string; alt?: string | null };
@@ -36,6 +40,7 @@ type ProductRow = {
   isOrganic: boolean;
   reviewStatus?: string;
   reviewNote?: string | null;
+  reviewRecommendation?: string | null;
   reviewedAt?: string | Date | null;
   qualityGeneral?: string | null;
   fieldType?: string | null;
@@ -877,11 +882,25 @@ export function FarmerPortalClient({
                             Reviewed: {new Date(p.reviewedAt).toLocaleDateString()}
                           </p>
                         )}
-                        {p.reviewNote && (
+                        {p.reviewNote && p.reviewStatus !== "REJECTED" && (
                           <p className="text-[11px] text-[var(--huza-muted)]">
                             Feedback: {p.reviewNote}
                           </p>
                         )}
+                        {p.reviewStatus === "REJECTED" ? (
+                          <FarmerQualityReviewCard
+                            productName={p.nameEn}
+                            status="Needs improvement"
+                            reason={
+                              p.reviewNote ||
+                              "This submission did not meet Huza quality standards."
+                            }
+                            recommendation={
+                              p.reviewRecommendation ||
+                              defaultQualityRecommendation(p.reviewNote || "")
+                            }
+                          />
+                        ) : null}
                         {panel === "products" && (
                           <form
                             className="mt-3 flex flex-wrap items-end gap-2"

@@ -122,12 +122,16 @@ export function AdminMarketProcurementClient() {
 
   const inspect = (p: MarketPurchase) => {
     const grade =
-      window.prompt("Quality grade (A / B / C)", p.qualityGrade || "A") || undefined;
-    if (grade === undefined && !p.qualityGrade) return;
+      window.prompt("Quality grade required (1 / 2 / 3 or A / B / C)", p.qualityGrade || "1") ||
+      "";
+    if (!grade.trim()) {
+      setMsg("Inspection cancelled — grade is required");
+      return;
+    }
     const notes =
       window.prompt("Inspection notes", p.inspectionNotes || "") || undefined;
     void act(p.id, "inspect", {
-      ...(grade != null ? { qualityGrade: grade } : {}),
+      qualityGrade: grade.trim(),
       ...(notes != null ? { inspectionNotes: notes } : {}),
     });
   };
@@ -306,7 +310,7 @@ export function AdminMarketProcurementClient() {
                     Inspect / grade
                   </Button>
                 ) : null}
-                {p.status !== "STOCKED" && p.status !== "CANCELLED" ? (
+                {p.status === "INSPECTED" ? (
                   <Button
                     type="button"
                     size="sm"
@@ -315,6 +319,11 @@ export function AdminMarketProcurementClient() {
                   >
                     Stock to inventory
                   </Button>
+                ) : null}
+                {p.status === "RECORDED" ? (
+                  <span className="self-center text-xs text-[var(--admin-muted)]">
+                    Inspect &amp; grade first
+                  </span>
                 ) : null}
                 {p.status !== "STOCKED" && p.status !== "CANCELLED" ? (
                   <Button
@@ -329,7 +338,7 @@ export function AdminMarketProcurementClient() {
                 ) : null}
                 {p.productId ? (
                   <span className="self-center text-xs text-[var(--admin-muted)]">
-                    Product linked
+                    Linked product {p.productId.slice(0, 8)}…
                   </span>
                 ) : null}
               </div>

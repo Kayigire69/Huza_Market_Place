@@ -5,6 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { stockService } from "@/services/stock.service";
 import { cacheDel, CacheKeys } from "@/lib/redis";
+import {
+  normalizeQualityGrade,
+  purchaseMethodFromOwnership,
+  resolveConfirmedStockQty,
+} from "@/lib/inventory-meta";
+import { MARKET_DESK_NAME } from "@/lib/market-desk";
 
 const UNIT_TYPES: UnitType[] = ["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"];
 
@@ -225,6 +231,18 @@ export async function POST(req: Request) {
 
   const stockQty = Math.max(0, Math.floor(Number(body.stockQty) || 0));
   const unit = parseUnitType(body.unit);
+  const isMarketDesk = supplier.businessName === MARKET_DESK_NAME;
+  const ownershipMode =
+    String(body.ownershipMode || "").toUpperCase() === "COMMISSION" ? "COMMISSION" : "OWNED";
+  const inventorySource =
+    body.inventorySource === "MARKET" || isMarketDesk ? "MARKET" : "FARMER";
+  const purchaseMethod =
+    body.purchaseMethod === "MARKET" || inventorySource === "MARKET"
+      ? "MARKET"
+      : body.purchaseMethod === "COMMISSION" || ownershipMode === "COMMISSION"
+        ? "COMMISSION"
+        : "DIRECT";
+  const qualityGrade = normalizeQualityGrade(body.qualityGrade);
 
   const product = await prisma.product.create({
     data: {
@@ -237,8 +255,16 @@ export async function POST(req: Request) {
       descriptionFr: String(body.descriptionFr || body.description || "").trim() || nameEn,
       descriptionRw: String(body.descriptionRw || body.description || "").trim() || nameEn,
       price,
+      purchasePrice:
+        body.purchasePrice != null && body.purchasePrice !== ""
+          ? Math.round(Number(body.purchasePrice))
+          : null,
       unit,
       stockQty,
+      ownershipMode,
+      inventorySource,
+      purchaseMethod,
+      qualityGrade,
       isActive: Boolean(body.isActive ?? true),
       isFeatured: Boolean(body.isFeatured ?? false),
       isBestSeller: Boolean(body.isBestSeller ?? false),
@@ -268,19 +294,10 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { id, action, note, recommendation } = body as {
-    id?: string;
-    action?: string;
-    note?: string;
-    /** Actionable next step shown to the farmer after rejection */
-    recommendation?: string;
-    price?: number;
-    quantity?: number;
-    reason?: string;
-    isFeatured?: boolean;
-    isBestSeller?: boolean;
-    isActive?: boolean;
-  };
+  const action = String(body.action || "");
+  const note = body.note != null ? String(body.note) : undefined;
+  const recommendation =
+    body.recommendation != null ? String(body.recommendation) : undefined;
 
   if (!action) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -329,6 +346,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: true, count: ids.length });
   }
 
+  const id = body.id ? String(body.id) : "";
   if (!id) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -353,6 +371,56 @@ export async function PATCH(req: Request) {
       }
     }
 
+    const grade = normalizeQualityGrade(body.qualityGrade) || normalizeQualityGrade(existing.qualityGrade);
+    if (action === "approve" && !grade) {
+      return NextResponse.json(
+        { error: "Quality grade (1 / 2 / 3) is required before approving" },
+        { status: 400 }
+      );
+    }
+    if (action === "reject") {
+      const reason = String(note || "").trim();
+      const nextStep = String(recommendation || "").trim();
+      if (!reason) {
+        return NextResponse.json(
+          { error: "Rejection reason is required so the farmer knows what to fix" },
+          { status: 400 }
+        );
+      }
+      if (!nextStep) {
+        return NextResponse.json(
+          {
+            error:
+              "Recommendation is required — tell the farmer what to change before they resubmit",
+          },
+          { status: 400 }
+        );
+      }
+    }
+    const inventorySource = existing.inventorySource || "FARMER";
+    const purchaseMethod =
+      existing.purchaseMethod ||
+      purchaseMethodFromOwnership(existing.ownershipMode);
+
+    // Stock-in only when approving an empty shelf — never invent qty=1.
+    let stockInQty: number | null = null;
+    if (action === "approve" && existing.stockQty <= 0) {
+      stockInQty = resolveConfirmedStockQty({
+        confirmedQty: body.confirmedQty,
+        stockQty: existing.stockQty,
+        totalQuantityHarvested: existing.totalQuantityHarvested,
+      });
+      if (!stockInQty) {
+        return NextResponse.json(
+          {
+            error:
+              "Confirm harvest quantity before approving (no stock on hand). Enter the verified quantity.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {
@@ -368,6 +436,9 @@ export async function PATCH(req: Request) {
               isActive: true,
               isNewArrival: true,
               isFeatured: true,
+              inventorySource,
+              purchaseMethod,
+              qualityGrade: grade!,
             }
           : {
               isActive: false,
@@ -377,15 +448,35 @@ export async function PATCH(req: Request) {
       include: { supplier: true, images: true },
     });
 
-    // Auto stock-in when approving a product with no inventory yet
-    if (action === "approve" && existing.stockQty <= 0) {
+    if (action === "approve" && stockInQty) {
       await stockService.stockIn(
         id,
-        1,
-        "Initial stock on product approval (admin)",
+        stockInQty,
+        `Verified harvest qty on product approval (${stockInQty}) · Grade ${grade}`,
         session.user.id,
         "RECEIVE"
       );
+      const batchNumber = `B-APPR-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+      await prisma.stockBatch.create({
+        data: {
+          productId: id,
+          batchNumber,
+          quantity: stockInQty,
+          qualityGrade: grade!,
+          notes: `Approved harvest · Grade ${grade}`,
+        },
+      });
+    } else if (action === "approve" && grade) {
+      const latest = await prisma.stockBatch.findFirst({
+        where: { productId: id },
+        orderBy: { receivedAt: "desc" },
+      });
+      if (latest && !latest.qualityGrade) {
+        await prisma.stockBatch.update({
+          where: { id: latest.id },
+          data: { qualityGrade: grade },
+        });
+      }
     }
 
     await prisma.notification.create({
@@ -397,9 +488,7 @@ export async function PATCH(req: Request) {
         body:
           action === "approve"
             ? `${product.nameEn} was accepted and may be sold on HUZA FRESH.`
-            : `${product.nameEn} was rejected. Reason: ${note || "See Approval Status."}${
-                recommendation ? ` Recommendation: ${recommendation}` : ""
-              } Open Approval Status for details.`,
+            : `${product.nameEn} needs improvement before Huza can accept it.\n\nReason: ${note}\n\nWhat to do next: ${recommendation}\n\nOpen Approval Status in your Farmers Portal for guides and to resubmit.`,
       },
     });
 
@@ -412,6 +501,7 @@ export async function PATCH(req: Request) {
         reviewStatus: existing.reviewStatus,
         isActive: existing.isActive,
         price: existing.price,
+        stockQty: existing.stockQty,
       },
       after: {
         reviewStatus: product.reviewStatus,
@@ -419,6 +509,8 @@ export async function PATCH(req: Request) {
         price: product.price,
         reviewNote: product.reviewNote,
         reviewRecommendation: product.reviewRecommendation,
+        stockInQty,
+        qualityGrade: grade,
       },
     });
 
