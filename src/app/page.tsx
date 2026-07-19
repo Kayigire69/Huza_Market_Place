@@ -3,8 +3,17 @@ import { catalogService } from "@/services/catalog.service";
 import { getSetting } from "@/services/settings.service";
 import { resolveWhatsAppUrl } from "@/lib/brand-contact";
 
-/** Cache home for a short window — catalogService also caches in Redis/memory. */
-export const revalidate = 90;
+/** Always read live catalog after seed — avoid a permanently empty static homepage. */
+export const dynamic = "force-dynamic";
+
+function isMissingTableError(err: unknown): boolean {
+  const code =
+    err && typeof err === "object" && "code" in err
+      ? String((err as { code?: unknown }).code)
+      : "";
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  return code === "P2021" || /does not exist|relation .* not found/i.test(message);
+}
 
 export default async function Page() {
   try {
@@ -36,8 +45,9 @@ export default async function Page() {
         whatsappUrl={resolveWhatsAppUrl(whatsappSetting)}
       />
     );
-  } catch {
-    // Pre-migrate / empty DB during App Platform build
+  } catch (err) {
+    // Only swallow missing-table errors during first App Platform build.
+    if (!isMissingTableError(err)) throw err;
     return (
       <HomePage
         categories={[]}
