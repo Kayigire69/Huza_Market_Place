@@ -68,7 +68,7 @@ export function FarmerRegisterForm() {
       const products = String(new FormData(form).get("productsOffered") || "").trim();
       const agreement = String(new FormData(form).get("huzaPurchaseAgreement") || "").trim();
       if (!products || !agreement) {
-        setError("Open Farm details and fill products + purchase agreement.");
+        setError(t("farmerRegisterNeedFarm"));
         setFarmOpen(true);
         return;
       }
@@ -109,9 +109,9 @@ export function FarmerRegisterForm() {
   };
 
   const typeOptions: { value: FarmingTypeChoice; short: string; icon: typeof Leaf }[] = [
-    { value: "ORGANIC", short: "Organic", icon: Leaf },
-    { value: "CONVERSION", short: "Conversion", icon: RefreshCw },
-    { value: "STANDARD", short: "Conventional", icon: Sprout },
+    { value: "ORGANIC", short: t("pathOrganicShort"), icon: Leaf },
+    { value: "CONVERSION", short: t("pathConversionShort"), icon: RefreshCw },
+    { value: "STANDARD", short: t("pathConventionalShort"), icon: Sprout },
   ];
 
   return (
@@ -127,7 +127,7 @@ export function FarmerRegisterForm() {
             {t("farmerRegistration")}
           </h2>
           <p className="mt-1 text-center text-sm text-[var(--huza-muted)]">
-            Login later with phone + last 4 of National ID
+            {t("farmerRegisterHint")}
           </p>
 
           <fieldset className="mt-4">
@@ -184,7 +184,7 @@ export function FarmerRegisterForm() {
               />
             </div>
             <div>
-              <label className="label">National ID Number</label>
+              <label className="label">{t("nationalIdFull")}</label>
               <input
                 name="nationalId"
                 required
@@ -201,8 +201,8 @@ export function FarmerRegisterForm() {
             onClick={() => setFarmOpen(true)}
             className="mt-3 flex h-11 w-full items-center justify-between rounded-xl border border-dashed border-[var(--huza-green)] bg-[var(--huza-mint)]/35 px-3 text-sm font-semibold text-[var(--huza-green-dark)]"
           >
-            <span>Farm details{farmRequired ? " (required)" : " (optional)"}</span>
-            <span>Open →</span>
+            <span>{farmRequired ? t("farmDetailsRequired") : t("farmDetailsOptional")}</span>
+            <span>{t("farmDetailsOpen")}</span>
           </button>
 
           <label className="mt-3 flex items-start gap-2 text-sm leading-snug">
@@ -221,7 +221,7 @@ export function FarmerRegisterForm() {
               className="h-11 shrink-0"
               onClick={(ev) => saveDraft((ev.currentTarget as HTMLButtonElement).form)}
             >
-              Save
+              {t("saveDraft")}
             </Button>
             <Button type="submit" className="h-11 flex-1" disabled={loading}>
               {loading ? t("submitting") : t("submitApplication")}
@@ -234,7 +234,7 @@ export function FarmerRegisterForm() {
               {t("farmerLogin")}
             </Link>
             {" · "}
-            <Link href="/farmer">Home</Link>
+            <Link href="/farmer">{t("home")}</Link>
           </p>
         </div>
 
@@ -250,13 +250,13 @@ export function FarmerRegisterForm() {
           <div className="flex max-h-[min(560px,85dvh)] w-full max-w-lg flex-col rounded-2xl bg-white shadow-xl">
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--huza-line)] px-4 py-3">
               <h3 className="font-bold text-[var(--huza-ink)]">
-                {needsFullDossier ? "Farm details" : "What you sell to HUZA"}
+                {needsFullDossier ? t("farmDetailsTitle") : t("whatYouSellTitle")}
               </h3>
               <button
                 type="button"
                 className="rounded-full p-2 text-[var(--huza-muted)] hover:bg-[var(--huza-mint)]"
                 onClick={() => setFarmOpen(false)}
-                aria-label="Close"
+                aria-label={t("closeDialog")}
               >
                 <X className="size-5" />
               </button>
@@ -448,7 +448,7 @@ export function FarmerRegisterForm() {
             {farmOpen && (
               <div className="shrink-0 border-t border-[var(--huza-line)] p-3">
                 <Button type="button" className="h-11 w-full" onClick={() => setFarmOpen(false)}>
-                  Done
+                  {t("farmDetailsDone")}
                 </Button>
               </div>
             )}

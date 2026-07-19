@@ -2025,7 +2025,22 @@ const sw: Dict = {
 
 };
 
-const dictionaries: Record<Locale, Dict> = { en, fr, rw, sw };
+import {
+  farmerAuthEn,
+  farmerAuthFr,
+  farmerAuthRw,
+  farmerAuthSw,
+  farmerGapFr,
+  farmerGapRw,
+  farmerGapSw,
+} from "./i18n-farmer-portal";
+
+const dictionaries: Record<Locale, Dict> = {
+  en: { ...en, ...farmerAuthEn },
+  fr: { ...fr, ...farmerAuthFr, ...farmerGapFr },
+  rw: { ...rw, ...farmerAuthRw, ...farmerGapRw },
+  sw: { ...sw, ...farmerAuthSw, ...farmerGapSw },
+};
 
 export function t(locale: Locale, key: string): string {
   return dictionaries[locale][key] ?? dictionaries.en[key] ?? key;
