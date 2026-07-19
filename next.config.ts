@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
   // pdfkit ships AFM font files; bundling into .next breaks Helvetica paths
   serverExternalPackages: ["pdfkit"],
+  // App Platform omits most devDependencies; typecheck still runs.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   poweredByHeader: false,
   compress: true,
   images: {
