@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 
 type Address = {
@@ -167,6 +168,22 @@ export function AccountActions({
           Update password
         </Button>
       </form>
+
+      <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
+        <h2 className="font-semibold">Session</h2>
+        <p className="mt-1 text-sm text-[var(--huza-muted)]">
+          Sign out to switch accounts (customer, farmer, or staff).
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="mt-3 w-full"
+          onClick={() => signOut({ callbackUrl: "/" })}
+        >
+          Log out
+        </Button>
+      </div>
     </div>
   );
 }
