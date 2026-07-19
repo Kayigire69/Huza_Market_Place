@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { CategoriesClient } from "./CategoriesClient";
 import { cacheGet, cacheSet } from "@/lib/redis";
 
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 const CACHE_KEY = "huza:categories:list";
 
@@ -13,15 +13,21 @@ export default async function CategoriesPage() {
   };
 
   let categories = await cacheGet<Row[]>(CACHE_KEY);
-  if (!categories) {
+  if (!categories || categories.length === 0) {
     try {
       categories = await prisma.category.findMany({
         orderBy: { sortOrder: "asc" },
         include: { _count: { select: { products: true } } },
       });
-      await cacheSet(CACHE_KEY, categories, 120);
-    } catch {
-      // Empty DB / pre-migrate builds must not fail `next build`
+      if (categories.length > 0) {
+        await cacheSet(CACHE_KEY, categories, 120);
+      }
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code?: unknown }).code)
+          : "";
+      if (code !== "P2021") throw err;
       categories = [];
     }
   }

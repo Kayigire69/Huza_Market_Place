@@ -308,7 +308,7 @@ async function main() {
   const companySupplierUser = await prisma.user.create({
     data: {
       email: "catalog@youthhuza.rw",
-      phone: "0780000001",
+      phone: "0780000099",
       passwordHash: password,
       fullName: "Youth Huza",
       role: Role.SUPPLIER,
@@ -321,7 +321,7 @@ async function main() {
       description: "Company catalogue for HUZA FRESH — products Youth Huza sells after buying/preparing.",
       location: "Kigali",
       district: "Gasabo",
-      phone: "0780000001",
+      phone: "0780000099",
       status: SupplierStatus.APPROVED,
       availability: AvailabilityStatus.OPEN,
       approvedAt: new Date(),

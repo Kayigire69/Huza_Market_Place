@@ -22,10 +22,13 @@ type HomeCatalog = Awaited<ReturnType<typeof productRepository.findHomeLists>> &
 export const catalogService = {
   async getHomeCatalog(): Promise<HomeCatalog> {
     const cached = await cacheGet<HomeCatalog>(CacheKeys.homeCatalog);
+    // Never treat an empty catalog as a cache hit — that freezes a pre-seed homepage.
     if (
-      cached?.popularNow &&
-      cached?.readyToEat &&
-      cached?.categories &&
+      cached &&
+      Array.isArray(cached.categories) &&
+      cached.categories.length > 0 &&
+      Array.isArray(cached.popularNow) &&
+      Array.isArray(cached.readyToEat) &&
       Array.isArray(cached.customerReviews)
     ) {
       return cached;
@@ -76,8 +79,11 @@ export const catalogService = {
       isOpen: status.isOpen,
     };
 
-    await cacheSet(CacheKeys.homeCatalog, payload, 90);
-    await cacheSet(CacheKeys.bestSellers, lists.bestSellers, 90);
+    // Only cache when the shop has categories; empty results are usually pre-seed.
+    if (payload.categories.length > 0) {
+      await cacheSet(CacheKeys.homeCatalog, payload, 90);
+      await cacheSet(CacheKeys.bestSellers, lists.bestSellers, 90);
+    }
     return payload;
   },
 
