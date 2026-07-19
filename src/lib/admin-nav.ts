@@ -23,6 +23,10 @@ import {
   Handshake,
   Banknote,
   History,
+  Leaf,
+  Sprout,
+  Camera,
+  Store,
 } from "lucide-react";
 
 /** Stable module keys for role-aware admin sidebar + route guards */
@@ -39,12 +43,16 @@ export type AdminModule =
   | "deliveries"
   | "farmers"
   | "approvals"
+  | "agronomy"
+  | "crop_monitoring"
+  | "photography"
   | "purchase_requests"
   | "purchase_orders"
   | "goods_received"
   | "commission_sales"
   | "farmer_payments"
   | "procurement_history"
+  | "market_procurement"
   | "reports"
   | "settings";
 
@@ -107,6 +115,30 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
         href: "/admin/approvals",
         label: "Product Approvals",
         icon: ClipboardCheck,
+      },
+      {
+        module: "agronomy",
+        href: "/admin/agronomy",
+        label: "Agronomy Support",
+        icon: Leaf,
+      },
+      {
+        module: "crop_monitoring",
+        href: "/admin/crops",
+        label: "Crop Monitoring",
+        icon: Sprout,
+      },
+      {
+        module: "photography",
+        href: "/admin/photography",
+        label: "Photography Queue",
+        icon: Camera,
+      },
+      {
+        module: "market_procurement",
+        href: "/admin/procurement/market",
+        label: "Market Procurement",
+        icon: Store,
       },
       {
         module: "purchase_requests",
@@ -200,12 +232,20 @@ function withProcurement(modules: AdminModule[]): AdminModule[] {
     set.has("purchase_orders") ||
     set.has("purchase_requests") ||
     set.has("approvals") ||
+    set.has("agronomy") ||
+    set.has("crop_monitoring") ||
+    set.has("photography") ||
+    set.has("market_procurement") ||
     set.has("commission_sales") ||
     set.has("farmer_payments") ||
     set.has("procurement_history")
   ) {
     set.add("farmers");
     set.add("approvals");
+    set.add("agronomy");
+    set.add("crop_monitoring");
+    set.add("photography");
+    set.add("market_procurement");
     set.add("purchase_requests");
     set.add("purchase_orders");
     set.add("goods_received");
@@ -228,6 +268,10 @@ export const ADMIN_ROLE_MODULES: Record<string, AdminModule[]> = {
       "dashboard",
       "farmers",
       "approvals",
+      "agronomy",
+      "crop_monitoring",
+      "photography",
+      "market_procurement",
       "purchase_requests",
       "purchase_orders",
       "goods_received",
@@ -245,6 +289,7 @@ export const ADMIN_ROLE_MODULES: Record<string, AdminModule[]> = {
     "commission_sales",
     "farmer_payments",
     "procurement_history",
+    "market_procurement",
   ]),
 };
 
@@ -267,9 +312,13 @@ export function moduleForAdminPath(pathname: string): AdminModule | null {
   if (pathname.startsWith("/admin/products")) return "products";
   if (pathname.startsWith("/admin/offers")) return "promotions";
   if (pathname.startsWith("/admin/approvals")) return "approvals";
+  if (pathname.startsWith("/admin/agronomy")) return "agronomy";
+  if (pathname.startsWith("/admin/crops")) return "crop_monitoring";
+  if (pathname.startsWith("/admin/photography")) return "photography";
   if (pathname.startsWith("/admin/inventory")) return "inventory";
   if (pathname.startsWith("/admin/delivery")) return "deliveries";
   if (pathname.startsWith("/admin/suppliers")) return "farmers";
+  if (pathname.startsWith("/admin/procurement/market")) return "market_procurement";
   if (pathname.startsWith("/admin/procurement/requests")) return "purchase_requests";
   if (pathname.startsWith("/admin/procurement/orders")) return "purchase_orders";
   if (pathname.startsWith("/admin/procurement/received")) return "goods_received";
