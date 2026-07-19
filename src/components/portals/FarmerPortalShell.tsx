@@ -64,7 +64,11 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <header className="relative z-20 shrink-0 bg-[var(--huza-green-dark)] shadow-[0_8px_24px_rgba(7,44,27,0.22)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2.5 sm:px-6 sm:py-3.5">
+        <div
+          className={`mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 sm:px-6 ${
+            isAuthScreen ? "py-2 sm:py-2.5" : "py-2.5 sm:py-3.5"
+          }`}
+        >
           <Link href="/farmer" className="flex items-center gap-2 sm:gap-3">
             <span className="rounded-xl bg-white px-2 py-1 shadow-sm ring-1 ring-white/40">
               <Image
@@ -72,7 +76,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
                 alt="Youth Huza"
                 width={148}
                 height={72}
-                className="h-9 w-auto sm:h-14"
+                className={isAuthScreen ? "h-8 w-auto sm:h-10" : "h-9 w-auto sm:h-14"}
                 priority
               />
             </span>

@@ -13,8 +13,8 @@ type FarmingTypeChoice = "ORGANIC" | "STANDARD" | "CONVERSION";
 const DRAFT_KEY = "huza_farmer_register_draft_v3";
 
 /**
- * Registration fits one phone screen.
- * Farm fields open in a full-screen sheet (sheet scrolls; main page does not).
+ * Compact centered registration card — fits a PC screen without page scroll.
+ * Extra farm fields open in a dialog (dialog may scroll; the page does not).
  */
 export function FarmerRegisterForm() {
   const router = useRouter();
@@ -68,7 +68,7 @@ export function FarmerRegisterForm() {
       const products = String(new FormData(form).get("productsOffered") || "").trim();
       const agreement = String(new FormData(form).get("huzaPurchaseAgreement") || "").trim();
       if (!products || !agreement) {
-        setError("Tap “Farm details” and fill products + purchase agreement.");
+        setError("Open Farm details and fill products + purchase agreement.");
         setFarmOpen(true);
         return;
       }
@@ -115,31 +115,34 @@ export function FarmerRegisterForm() {
   ];
 
   return (
-    <div className="flex h-full flex-col px-3 py-2 sm:px-4 sm:py-3">
+    <div className="flex h-full items-center justify-center overflow-hidden px-4 py-4">
       <form
         key={formKey}
         id="farmer-register-form"
         onSubmit={onSubmit}
-        className="mx-auto flex h-full w-full max-w-md flex-col"
+        className="relative w-full max-w-[520px] shrink-0"
       >
-        <div className="flex min-h-0 flex-1 flex-col rounded-3xl border border-[var(--huza-line)] bg-white p-3 shadow-md sm:p-5">
-          <h2 className="shrink-0 text-center text-lg font-bold text-[var(--huza-ink)] sm:text-xl">
+        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 shadow-lg sm:p-6">
+          <h2 className="text-center text-xl font-bold text-[var(--huza-ink)]">
             {t("farmerRegistration")}
           </h2>
+          <p className="mt-1 text-center text-sm text-[var(--huza-muted)]">
+            Login later with phone + last 4 of National ID
+          </p>
 
-          <fieldset className="mt-2 shrink-0">
-            <legend className="sr-only">{t("chooseFarmingType")}</legend>
-            <div className="grid grid-cols-3 gap-1.5">
+          <fieldset className="mt-4">
+            <legend className="label mb-1.5">{t("chooseFarmingType")}</legend>
+            <div className="grid grid-cols-3 gap-2">
               {typeOptions.map((opt) => {
                 const Icon = opt.icon;
                 const selected = farmingType === opt.value;
                 return (
                   <label
                     key={opt.value}
-                    className={`flex min-h-12 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-2 text-center ${
+                    className={`flex h-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border ${
                       selected
                         ? "border-[var(--huza-green)] bg-[var(--huza-mint)]/70"
-                        : "border-[var(--huza-line)]"
+                        : "border-[var(--huza-line)] hover:bg-[var(--huza-mint)]/30"
                     }`}
                   >
                     <input
@@ -149,112 +152,102 @@ export function FarmerRegisterForm() {
                       onChange={() => setFarmingType(opt.value)}
                     />
                     <Icon className="size-4 text-[var(--huza-green-dark)]" />
-                    <span className="text-[11px] font-bold leading-tight text-[var(--huza-ink)]">
-                      {opt.short}
-                    </span>
+                    <span className="text-xs font-bold text-[var(--huza-ink)]">{opt.short}</span>
                   </label>
                 );
               })}
             </div>
           </fieldset>
 
-          <div className="mt-3 min-h-0 flex-1 space-y-2.5 overflow-hidden">
-            <div>
-              <label className="label text-sm">{t("fullNameContact")}</label>
+          {/* Compact 2-column on PC so the card stays short */}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="label">{t("fullNameContact")}</label>
               <input
                 name="fullName"
                 required
                 defaultValue={defaults.fullName || ""}
-                className="input-field mt-0.5 min-h-11 text-base"
+                className="input-field mt-1 h-11"
                 autoComplete="name"
               />
             </div>
             <div>
-              <label className="label text-sm">{t("phone")}</label>
+              <label className="label">{t("phone")}</label>
               <input
                 name="phone"
                 required
                 defaultValue={defaults.phone || ""}
-                className="input-field mt-0.5 min-h-11 text-base"
+                className="input-field mt-1 h-11"
                 placeholder="078xxxxxxx"
                 inputMode="tel"
                 autoComplete="tel"
               />
             </div>
             <div>
-              <label className="label text-sm">National ID Number</label>
+              <label className="label">National ID Number</label>
               <input
                 name="nationalId"
                 required
                 defaultValue={defaults.nationalId || ""}
-                className="input-field mt-0.5 min-h-11 text-base"
+                className="input-field mt-1 h-11"
                 inputMode="numeric"
                 autoComplete="off"
               />
             </div>
-
-            <button
-              type="button"
-              onClick={() => setFarmOpen(true)}
-              className="flex w-full min-h-11 items-center justify-between rounded-xl border border-dashed border-[var(--huza-green)] bg-[var(--huza-mint)]/40 px-3 text-left text-sm font-semibold text-[var(--huza-green-dark)]"
-            >
-              <span>
-                Farm details{farmRequired ? " *" : " (optional)"}
-              </span>
-              <span className="text-xs font-bold">Open →</span>
-            </button>
-
-            <label className="flex items-start gap-2 text-xs leading-snug sm:text-sm">
-              <input
-                name="agreedToHuzaTerms"
-                type="checkbox"
-                required
-                className="mt-0.5 size-4 shrink-0 sm:size-5"
-              />
-              <span>{t("agreeHuzaBuyTerms")}</span>
-            </label>
-
-            {error && (
-              <p className="rounded-lg bg-red-50 px-2 py-1.5 text-xs text-red-800">{error}</p>
-            )}
           </div>
 
-          <div className="mt-2 flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => setFarmOpen(true)}
+            className="mt-3 flex h-11 w-full items-center justify-between rounded-xl border border-dashed border-[var(--huza-green)] bg-[var(--huza-mint)]/35 px-3 text-sm font-semibold text-[var(--huza-green-dark)]"
+          >
+            <span>Farm details{farmRequired ? " (required)" : " (optional)"}</span>
+            <span>Open →</span>
+          </button>
+
+          <label className="mt-3 flex items-start gap-2 text-sm leading-snug">
+            <input name="agreedToHuzaTerms" type="checkbox" required className="mt-0.5 size-4 shrink-0" />
+            <span>{t("agreeHuzaBuyTerms")}</span>
+          </label>
+
+          {error && (
+            <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
+          )}
+
+          <div className="mt-4 flex gap-2">
             <Button
               type="button"
               variant="secondary"
-              className="min-h-11 shrink-0 px-3"
+              className="h-11 shrink-0"
               onClick={(ev) => saveDraft((ev.currentTarget as HTMLButtonElement).form)}
             >
               Save
             </Button>
-            <Button type="submit" className="min-h-11 flex-1 text-base" disabled={loading} size="lg">
+            <Button type="submit" className="h-11 flex-1" disabled={loading}>
               {loading ? t("submitting") : t("submitApplication")}
             </Button>
           </div>
 
-          <p className="mt-2 shrink-0 text-center text-xs text-[var(--huza-muted)]">
+          <p className="mt-3 text-center text-sm text-[var(--huza-muted)]">
             {t("alreadyRegistered")}{" "}
             <Link href="/farmer/login" className="font-bold text-[var(--huza-green-dark)] underline">
               {t("farmerLogin")}
             </Link>
             {" · "}
-            <Link href="/farmer" className="text-[var(--huza-muted)]">
-              Home
-            </Link>
+            <Link href="/farmer">Home</Link>
           </p>
         </div>
 
-        {/* Farm sheet — stays in DOM so values submit; only visible when open */}
+        {/* Farm dialog — centered on PC; page behind stays fixed */}
         <div
           className={
             farmOpen
-              ? "fixed inset-0 z-50 flex flex-col bg-black/40"
-              : "absolute left-[-9999px] h-0 w-0 overflow-hidden opacity-0"
+              ? "fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+              : "pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
           }
           aria-hidden={!farmOpen}
         >
-          <div className="mt-auto flex max-h-[92dvh] flex-col rounded-t-3xl bg-white shadow-xl sm:mx-auto sm:mt-8 sm:max-h-[85dvh] sm:w-full sm:max-w-lg sm:rounded-3xl">
+          <div className="flex max-h-[min(560px,85dvh)] w-full max-w-lg flex-col rounded-2xl bg-white shadow-xl">
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--huza-line)] px-4 py-3">
               <h3 className="font-bold text-[var(--huza-ink)]">
                 {needsFullDossier ? "Farm details" : "What you sell to HUZA"}
@@ -278,7 +271,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="businessName"
                       defaultValue={defaults.businessName || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -286,7 +279,7 @@ export function FarmerRegisterForm() {
                     <textarea
                       name="productsOffered"
                       defaultValue={defaults.productsOffered || ""}
-                      className="input-field min-h-24"
+                      className="input-field min-h-20"
                       placeholder={t("productsOfferedPlaceholder")}
                     />
                   </div>
@@ -295,19 +288,19 @@ export function FarmerRegisterForm() {
                     <textarea
                       name="huzaPurchaseAgreement"
                       defaultValue={defaults.huzaPurchaseAgreement || ""}
-                      className="input-field min-h-24"
+                      className="input-field min-h-20"
                       placeholder={t("huzaPurchaseAgreementPlaceholder")}
                     />
                   </div>
                 </>
               ) : (
-                <>
-                  <div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
                     <label className="label">{t("farmBusinessName")}</label>
                     <input
                       name="businessName"
                       defaultValue={defaults.businessName || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -315,7 +308,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="location"
                       defaultValue={defaults.location || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -323,7 +316,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="district"
                       defaultValue={defaults.district || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -331,7 +324,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="sector"
                       defaultValue={defaults.sector || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -339,7 +332,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="productCategories"
                       defaultValue={defaults.productCategories || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -347,17 +340,9 @@ export function FarmerRegisterForm() {
                     <input
                       name="paymentMomo"
                       defaultValue={defaults.paymentMomo || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                       placeholder="078xxxxxxx"
                       inputMode="tel"
-                    />
-                  </div>
-                  <div>
-                    <label className="label">{t("aboutYourFarm")}</label>
-                    <textarea
-                      name="description"
-                      defaultValue={defaults.description || ""}
-                      className="input-field min-h-20"
                     />
                   </div>
                   <div>
@@ -365,7 +350,15 @@ export function FarmerRegisterForm() {
                     <input
                       name="farmSize"
                       defaultValue={defaults.farmSize || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="label">{t("aboutYourFarm")}</label>
+                    <textarea
+                      name="description"
+                      defaultValue={defaults.description || ""}
+                      className="input-field min-h-16"
                     />
                   </div>
                   <div>
@@ -373,23 +366,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="productionCapacity"
                       defaultValue={defaults.productionCapacity || ""}
-                      className="input-field min-h-11"
-                    />
-                  </div>
-                  <div>
-                    <label className="label">{t("bankAccountOptional")}</label>
-                    <input
-                      name="bankAccount"
-                      defaultValue={defaults.bankAccount || ""}
-                      className="input-field min-h-11"
-                    />
-                  </div>
-                  <div>
-                    <label className="label">{t("bankNameOptional")}</label>
-                    <input
-                      name="bankName"
-                      defaultValue={defaults.bankName || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -397,7 +374,23 @@ export function FarmerRegisterForm() {
                     <input
                       name="tin"
                       defaultValue={defaults.tin || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">{t("bankAccountOptional")}</label>
+                    <input
+                      name="bankAccount"
+                      defaultValue={defaults.bankAccount || ""}
+                      className="input-field h-11"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">{t("bankNameOptional")}</label>
+                    <input
+                      name="bankName"
+                      defaultValue={defaults.bankName || ""}
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -405,7 +398,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="nationalIdUrl"
                       defaultValue={defaults.nationalIdUrl || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                       placeholder="https://..."
                     />
                   </div>
@@ -414,7 +407,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="businessCertUrl"
                       defaultValue={defaults.businessCertUrl || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -422,7 +415,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="foodSafetyUrl"
                       defaultValue={defaults.foodSafetyUrl || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -430,7 +423,7 @@ export function FarmerRegisterForm() {
                     <input
                       name="organicCertUrl"
                       defaultValue={defaults.organicCertUrl || ""}
-                      className="input-field min-h-11"
+                      className="input-field h-11"
                     />
                   </div>
                   <div>
@@ -438,7 +431,7 @@ export function FarmerRegisterForm() {
                     <textarea
                       name="productPhotoUrls"
                       defaultValue={defaults.productPhotoUrls || ""}
-                      className="input-field min-h-16"
+                      className="input-field min-h-14"
                     />
                   </div>
                   <div>
@@ -446,21 +439,16 @@ export function FarmerRegisterForm() {
                     <textarea
                       name="farmPhotoUrls"
                       defaultValue={defaults.farmPhotoUrls || ""}
-                      className="input-field min-h-16"
+                      className="input-field min-h-14"
                     />
                   </div>
-                </>
+                </div>
               )}
             </div>
             {farmOpen && (
-              <div className="shrink-0 border-t border-[var(--huza-line)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                <Button
-                  type="button"
-                  className="w-full min-h-12"
-                  size="lg"
-                  onClick={() => setFarmOpen(false)}
-                >
-                  Done — back to form
+              <div className="shrink-0 border-t border-[var(--huza-line)] p-3">
+                <Button type="button" className="h-11 w-full" onClick={() => setFarmOpen(false)}>
+                  Done
                 </Button>
               </div>
             )}
