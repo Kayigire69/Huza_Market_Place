@@ -186,7 +186,7 @@ Do **not** use seed passwords on the live site. Change the owner password after 
 
 1. Copy `.env.example` → `.env` and set real secrets.
 2. Set `NEXTAUTH_URL` to `https://www.youthhuza.rw` (must match the live domain).
-3. On Neon/App Platform set both `DATABASE_URL` (pooler) and `DIRECT_URL` (non-pooler). Migrations need `DIRECT_URL` or `prisma migrate deploy` times out with P1002.
+3. On Neon/App Platform use the pooler `DATABASE_URL`. Production build auto-derives a non-pooler URL for `prisma migrate deploy` (or set optional `DIRECT_URL`).
 4. Run `npx prisma migrate deploy` then seed only on a fresh DB.
 5. Configure **Resend** (`RESEND_API_KEY`) so password-reset emails send.
 6. Configure **Cloudinary** — required in production for product/farm uploads.
