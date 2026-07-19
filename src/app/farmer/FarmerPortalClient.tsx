@@ -19,7 +19,7 @@ import {
 } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { FarmerDossierForm, type FarmerDossierValues } from "./FarmerDossierForm";
-import { maskNationalId } from "@/lib/farmer-auth";
+import { maskNationalId } from "@/lib/farmer-id";
 
 type Category = { id: string; nameEn: string; slug: string };
 type ProductImage = { id?: string; url: string; alt?: string | null };

@@ -21,7 +21,7 @@ import {
 import { useLocale } from "@/lib/locale-context";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
-import { maskNationalId } from "@/lib/farmer-auth";
+import { maskNationalId } from "@/lib/farmer-id";
 
 export type FarmerDossierValues = {
   profilePhotoUrl?: string | null;
