@@ -1,10 +1,7 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { FarmerApprovalsClient } from "@/components/portals/FarmerApprovalsClient";
-import { FarmerHubTabs, PRODUCE_TABS } from "@/components/portals/FarmerHubTabs";
 import { FarmerMyCropsPanel } from "@/components/portals/FarmerMyCropsPanel";
-import { FarmerPageHeader } from "@/components/portals/FarmerUi";
-import { Button } from "@/components/ui/Button";
+import { FarmerProduceHeader } from "@/components/portals/FarmerProduceHeader";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 import { FarmerPortalClient } from "../../FarmerPortalClient";
 
@@ -81,21 +78,8 @@ export default async function FarmerProducePage({
 
   return (
     <div>
-      <FarmerPageHeader
-        title="My Produce"
-        subtitle="Register crops you intend to sell to Youth Huza. Fruit salads and juices are prepared by HUZA FRESH."
-        action={
-          tab !== "submit" ? (
-            <Link href="/farmer/produce?tab=submit">
-              <Button variant={stats.listed === 0 ? "primary" : "ghost"}>
-                {stats.listed === 0 ? "Submit my main crop" : "Submit another crop"}
-              </Button>
-            </Link>
-          ) : null
-        }
-      />
       <Suspense fallback={null}>
-        <FarmerHubTabs tabs={PRODUCE_TABS} />
+        <FarmerProduceHeader tab={tab} listed={stats.listed} />
       </Suspense>
 
       {tab === "submit" ? (

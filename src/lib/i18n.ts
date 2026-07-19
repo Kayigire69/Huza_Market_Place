@@ -2034,12 +2034,13 @@ import {
   farmerGapRw,
   farmerGapSw,
 } from "./i18n-farmer-portal";
+import { wsEn, wsFr, wsRw, wsSw } from "./i18n-farmer-workspace";
 
 const dictionaries: Record<Locale, Dict> = {
-  en: { ...en, ...farmerAuthEn },
-  fr: { ...fr, ...farmerAuthFr, ...farmerGapFr },
-  rw: { ...rw, ...farmerAuthRw, ...farmerGapRw },
-  sw: { ...sw, ...farmerAuthSw, ...farmerGapSw },
+  en: { ...en, ...farmerAuthEn, ...wsEn },
+  fr: { ...fr, ...farmerAuthFr, ...farmerGapFr, ...wsFr },
+  rw: { ...rw, ...farmerAuthRw, ...farmerGapRw, ...wsRw },
+  sw: { ...sw, ...farmerAuthSw, ...farmerGapSw, ...wsSw },
 };
 
 export function t(locale: Locale, key: string): string {
