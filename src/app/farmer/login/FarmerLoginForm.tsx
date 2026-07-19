@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 
 /**
- * Compact centered login card — designed to fit a PC viewport without scrolling,
- * so the same layout stays clean on mobile.
+ * Compact centered login card — all copy via i18n (EN / FR / RW / SW).
  */
 export function FarmerLoginForm() {
   const { t } = useLocale();
@@ -38,10 +37,10 @@ export function FarmerLoginForm() {
     if (res?.error) {
       setLoading(false);
       if (String(res.error) === "RATE_LIMITED") {
-        setError("Too many tries. Wait a few minutes and try again.");
+        setError(t("farmerLoginRateLimited"));
         return;
       }
-      setError("Phone number or National ID digits do not match. Check and try again.");
+      setError(t("farmerLoginMismatch"));
       return;
     }
 
@@ -64,9 +63,7 @@ export function FarmerLoginForm() {
       >
         <div className="text-center">
           <h1 className="text-xl font-bold text-[var(--huza-ink)]">{t("farmerLogin")}</h1>
-          <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            Phone + last 4 of National ID · no password
-          </p>
+          <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("farmerLoginHint")}</p>
         </div>
 
         <div>
@@ -82,7 +79,7 @@ export function FarmerLoginForm() {
           />
         </div>
         <div>
-          <label className="label">Last 4 digits of National ID</label>
+          <label className="label">{t("nationalIdLast4")}</label>
           <input
             name="nationalIdLast4"
             required
@@ -97,36 +94,36 @@ export function FarmerLoginForm() {
 
         <label className="flex items-center gap-2 text-sm text-[var(--huza-ink)]">
           <input name="rememberDevice" type="checkbox" className="size-4 shrink-0" defaultChecked />
-          <span>Remember this device (90 days)</span>
+          <span>{t("rememberDeviceShort")}</span>
         </label>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
 
         <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
-          {loading ? "Signing in…" : "Login"}
+          {loading ? t("signingIn") : t("loginAction")}
         </Button>
 
         <p className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-center text-sm">
           <Link href="/farmer/register" className="font-bold text-[var(--huza-green-dark)] underline">
-            New farmer?
+            {t("newFarmerQuestion")}
           </Link>
           <button
             type="button"
             className="text-[var(--huza-muted)] underline"
             onClick={() => setShowHelp((v) => !v)}
           >
-            Need help?
+            {t("needHelpAccess")}
           </button>
           <Link href="/farmer" className="text-[var(--huza-muted)]">
-            ← Home
+            {t("backToFarmerHome")}
           </Link>
         </p>
 
         {showHelp && (
-          <p className="rounded-lg bg-[var(--huza-mint)]/50 px-3 py-2 text-xs text-[var(--huza-ink)]">
-            If you changed your phone or cannot access your account, contact HUZA Support or visit a
-            HUZA office.
-          </p>
+          <div className="rounded-lg bg-[var(--huza-mint)]/50 px-3 py-2 text-xs text-[var(--huza-ink)]">
+            <p className="font-bold">{t("needHelpAccessTitle")}</p>
+            <p className="mt-1">{t("needHelpAccessBody")}</p>
+          </div>
         )}
       </form>
     </div>

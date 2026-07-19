@@ -75,17 +75,13 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
             />
           </div>
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--huza-green-dark)]">
-            Youth Huza · Farmers Portal
+            Youth Huza · {t("farmerPortal")}
           </p>
           <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--huza-ink)] sm:text-3xl">
-            {t("farmerPortalWelcomeTitle") !== "farmerPortalWelcomeTitle"
-              ? t("farmerPortalWelcomeTitle")
-              : "Your digital farming companion"}
+            {t("farmerPortalWelcomeTitle")}
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[var(--huza-muted)] sm:text-base">
-            {t("farmerPortalWelcomeBody") !== "farmerPortalWelcomeBody"
-              ? t("farmerPortalWelcomeBody")
-              : "Youth Huza is an agricultural partner: we visit farms, share agronomy advice, train farmers, plan harvests, and buy or market produce through HUZA FRESH — so you grow better and sell with confidence."}
+            {t("farmerPortalWelcomeBody")}
           </p>
           <Link
             href="/farmer/login"
@@ -97,9 +93,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
         <div className="rounded-3xl border border-[var(--huza-line)] bg-white p-5 shadow-sm sm:p-6">
           <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-ink)]">
-            {t("howHuzaSupportsFarmers") !== "howHuzaSupportsFarmers"
-              ? t("howHuzaSupportsFarmers")
-              : "How Youth Huza supports farmers"}
+            {t("howHuzaSupportsFarmers")}
           </h2>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {BENEFITS.map((b) => (
@@ -108,7 +102,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
                 className="flex gap-2.5 rounded-2xl bg-[var(--huza-mint)]/40 px-3 py-3 text-sm text-[var(--huza-ink)]"
               >
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[var(--huza-green)]" />
-                <span>{t(b.key) !== b.key ? t(b.key) : b.fallback}</span>
+                <span>{t(b.key)}</span>
               </li>
             ))}
           </ul>
@@ -116,14 +110,10 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
         <div className="rounded-3xl border border-[var(--huza-line)] bg-white p-5 shadow-sm sm:p-6">
           <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-ink)]">
-            {t("chooseFarmingType") !== "chooseFarmingType"
-              ? t("chooseFarmingType")
-              : "Choose your farming type"}
+            {t("chooseFarmingType")}
           </h2>
           <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            {t("chooseFarmingTypeHint") !== "chooseFarmingTypeHint"
-              ? t("chooseFarmingTypeHint")
-              : "Pick the path that matches your farm. You will complete registration next — simple steps, large buttons."}
+            {t("chooseFarmingTypeHint")}
           </p>
 
           <div className="mt-5 grid gap-4">
@@ -137,9 +127,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
               </p>
               <Link href="/farmer/register?type=ORGANIC" className="mt-4 block">
                 <Button className="w-full" size="lg">
-                  {t("registerOrganicFarmer") !== "registerOrganicFarmer"
-                    ? t("registerOrganicFarmer")
-                    : "Register as Organic Farmer"}
+                  {t("registerOrganicFarmer")}
                 </Button>
               </Link>
             </div>
@@ -147,20 +135,14 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
             <div className="rounded-2xl border border-[var(--huza-line)] bg-[#f8faf9] p-4 text-left">
               <RefreshCw className="size-7 text-[var(--huza-green-dark)]" />
               <h3 className="mt-2 text-base font-bold text-[var(--huza-ink)]">
-                {t("conversionFarmerPath") !== "conversionFarmerPath"
-                  ? t("conversionFarmerPath")
-                  : "In Organic Conversion"}
+                {t("conversionFarmerPath")}
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-[var(--huza-muted)]">
-                {t("conversionFarmerPathHint") !== "conversionFarmerPathHint"
-                  ? t("conversionFarmerPathHint")
-                  : "You are moving toward organic practices. We walk with you on the conversion journey — farm visits, training, and clear next steps."}
+                {t("conversionFarmerPathHint")}
               </p>
               <Link href="/farmer/register?type=CONVERSION" className="mt-4 block">
                 <Button className="w-full" size="lg" variant="secondary">
-                  {t("startOrganicJourney") !== "startOrganicJourney"
-                    ? t("startOrganicJourney")
-                    : "Start Organic Journey"}
+                  {t("startOrganicJourney")}
                 </Button>
               </Link>
             </div>
@@ -175,9 +157,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
               </p>
               <Link href="/farmer/register?type=STANDARD" className="mt-4 block">
                 <Button className="w-full" size="lg" variant="secondary">
-                  {t("registerConventionalFarmer") !== "registerConventionalFarmer"
-                    ? t("registerConventionalFarmer")
-                    : "Register as Conventional Farmer"}
+                  {t("registerConventionalFarmer")}
                 </Button>
               </Link>
             </div>
