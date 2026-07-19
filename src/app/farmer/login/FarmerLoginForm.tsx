@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 
 /**
- * Farmers Portal login — one short mobile screen: phone + last 4 of National ID.
+ * Farmers Portal login — fits one phone screen (no page scroll).
  */
 export function FarmerLoginForm() {
   const { t } = useLocale();
@@ -16,6 +16,7 @@ export function FarmerLoginForm() {
   const sp = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,25 +56,24 @@ export function FarmerLoginForm() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md px-3 pb-28 pt-6 sm:px-4 sm:pb-10 sm:pt-12">
-      <h1 className="text-center text-2xl font-bold text-[var(--huza-ink)] sm:text-3xl">
-        {t("farmerLogin")}
-      </h1>
-      <p className="mt-2 text-center text-sm leading-relaxed text-[var(--huza-muted)]">
-        Phone number + last 4 digits of National ID. No password.
-      </p>
-
+    <div className="flex h-full flex-col justify-center px-3 py-3 sm:px-4">
       <form
-        id="farmer-login-form"
         onSubmit={onSubmit}
-        className="mt-5 space-y-4 rounded-3xl border border-[var(--huza-line)] bg-white p-4 shadow-sm sm:mt-8 sm:space-y-5 sm:p-8"
+        className="mx-auto w-full max-w-sm space-y-3 rounded-3xl border border-[var(--huza-line)] bg-white p-4 shadow-md sm:max-w-md sm:space-y-4 sm:p-6"
       >
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-[var(--huza-ink)] sm:text-2xl">{t("farmerLogin")}</h1>
+          <p className="mt-1 text-xs text-[var(--huza-muted)] sm:text-sm">
+            Phone + last 4 of National ID. No password.
+          </p>
+        </div>
+
         <div>
-          <label className="label text-base">{t("phone")}</label>
+          <label className="label text-sm sm:text-base">{t("phone")}</label>
           <input
             name="phone"
             required
-            className="input-field mt-1 min-h-14 text-lg"
+            className="input-field mt-1 min-h-12 text-base sm:min-h-14 sm:text-lg"
             placeholder="0788123456"
             inputMode="tel"
             autoComplete="tel"
@@ -81,84 +81,55 @@ export function FarmerLoginForm() {
           />
         </div>
         <div>
-          <label className="label text-base">Last 4 digits of National ID</label>
+          <label className="label text-sm sm:text-base">Last 4 digits of National ID</label>
           <input
             name="nationalIdLast4"
             required
-            className="input-field mt-1 min-h-14 text-center text-2xl tracking-[0.4em]"
+            className="input-field mt-1 min-h-12 text-center text-xl tracking-[0.35em] sm:min-h-14 sm:text-2xl"
             placeholder="4827"
             inputMode="numeric"
             pattern="[0-9]{4}"
             maxLength={4}
             autoComplete="off"
           />
-          <p className="mt-1.5 text-xs text-[var(--huza-muted)]">
-            Example: if your ID ends in …4827, type 4827 only.
-          </p>
         </div>
 
-        <label className="flex items-start gap-3 text-sm text-[var(--huza-ink)]">
-          <input name="rememberDevice" type="checkbox" className="mt-1 size-5 shrink-0" defaultChecked />
-          <span>
-            <strong>Remember this device</strong>
-            <span className="mt-0.5 block text-[var(--huza-muted)]">
-              Stay signed in up to 90 days, or until you log out.
-            </span>
-          </span>
+        <label className="flex items-center gap-2.5 text-sm text-[var(--huza-ink)]">
+          <input name="rememberDevice" type="checkbox" className="size-5 shrink-0" defaultChecked />
+          <span>Remember this device (90 days)</span>
         </label>
 
         {error && (
           <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
         )}
 
-        {/* Desktop login button */}
-        <Button
-          type="submit"
-          className="hidden w-full min-h-14 text-base sm:inline-flex"
-          size="lg"
-          disabled={loading}
-        >
+        <Button type="submit" className="w-full min-h-12 text-base" size="lg" disabled={loading}>
           {loading ? "Signing in…" : "Login"}
         </Button>
 
-        <details className="rounded-2xl bg-[var(--huza-mint)]/40 open:pb-1">
-          <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-[var(--huza-ink)]">
-            Need help accessing your account?
-          </summary>
-          <p className="border-t border-[var(--huza-line)]/40 px-4 py-3 text-sm text-[var(--huza-muted)]">
-            If you changed your phone number or cannot access your account, please contact HUZA
-            Support or visit a HUZA office for account verification.
-          </p>
-        </details>
-
-        <p className="text-center text-sm text-[var(--huza-muted)]">
-          New farmer?{" "}
-          <Link
-            href="/farmer/register"
-            className="font-bold text-[var(--huza-green-dark)] underline underline-offset-4"
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs sm:text-sm">
+          <Link href="/farmer/register" className="font-bold text-[var(--huza-green-dark)] underline">
+            New farmer?
+          </Link>
+          <button
+            type="button"
+            className="font-semibold text-[var(--huza-muted)] underline"
+            onClick={() => setShowHelp((v) => !v)}
           >
-            {t("newFarmerApplication")}
+            Need help?
+          </button>
+          <Link href="/farmer" className="text-[var(--huza-muted)]">
+            ← Home
           </Link>
-        </p>
-        <p className="text-center text-sm">
-          <Link href="/farmer" className="font-semibold text-[var(--huza-green-dark)]">
-            ← Farmers Portal home
-          </Link>
-        </p>
-      </form>
+        </div>
 
-      {/* Mobile sticky Login — always reachable with keyboard open */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--huza-line)] bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
-        <Button
-          type="submit"
-          form="farmer-login-form"
-          className="w-full min-h-14 text-base"
-          size="lg"
-          disabled={loading}
-        >
-          {loading ? "Signing in…" : "Login"}
-        </Button>
-      </div>
+        {showHelp && (
+          <p className="rounded-xl bg-[var(--huza-mint)]/50 px-3 py-2 text-xs text-[var(--huza-ink)]">
+            If you changed your phone number or cannot access your account, contact HUZA Support or
+            visit a HUZA office for verification.
+          </p>
+        )}
+      </form>
     </div>
   );
 }

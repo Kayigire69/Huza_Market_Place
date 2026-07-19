@@ -1,16 +1,15 @@
 import { Suspense } from "react";
-import { FarmerPortalChrome } from "../FarmerPortalChrome";
 import { FarmerRegisterForm } from "../FarmerRegisterForm";
 
 export const dynamic = "force-dynamic";
 
-/** One-page farmer registration — farming type + all fields on a single form. */
+/** Full-viewport registration — no outer chrome that forces scroll. */
 export default function FarmerRegisterPage() {
   return (
-    <FarmerPortalChrome mode="register">
-      <Suspense fallback={<p className="mt-8 text-center text-sm">Loading registration…</p>}>
+    <div className="h-full">
+      <Suspense fallback={<p className="p-6 text-center text-sm">Loading…</p>}>
         <FarmerRegisterForm />
       </Suspense>
-    </FarmerPortalChrome>
+    </div>
   );
 }

@@ -3,11 +3,13 @@ import { FarmerLoginForm } from "./FarmerLoginForm";
 
 export const dynamic = "force-dynamic";
 
-/** Standalone one-page farmer login — no multi-step chrome. */
+/** Full-viewport login — no page scroll. */
 export default function FarmerLoginPage() {
   return (
-    <Suspense fallback={<p className="mx-auto mt-16 max-w-md px-4 text-center text-sm">Loading…</p>}>
-      <FarmerLoginForm />
-    </Suspense>
+    <div className="h-full">
+      <Suspense fallback={<p className="p-6 text-center text-sm">Loading…</p>}>
+        <FarmerLoginForm />
+      </Suspense>
+    </div>
   );
 }
