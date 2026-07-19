@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { deriveInventoryOpsStatus } from "@/lib/inventory-meta";
 
 async function requireAdmin() {
   return requireAdminSession({ modules: ["inventory"] });
@@ -15,8 +16,75 @@ const productStockSelect = {
   reservedQty: true,
   lowStockAt: true,
   isActive: true,
+  price: true,
+  purchasePrice: true,
+  ownershipMode: true,
+  inventorySource: true,
+  purchaseMethod: true,
+  qualityGrade: true,
+  reviewStatus: true,
   category: { select: { nameEn: true } },
+  supplier: {
+    select: {
+      id: true,
+      businessName: true,
+      user: { select: { fullName: true } },
+    },
+  },
 } satisfies Prisma.ProductSelect;
+
+function mapInventoryRow<
+  T extends {
+    id: string;
+    nameEn: string;
+    unit: string;
+    stockQty: number;
+    reservedQty: number;
+    lowStockAt: number | null;
+    isActive: boolean;
+    price?: number | null;
+    purchasePrice?: number | null;
+    ownershipMode?: string | null;
+    inventorySource?: string | null;
+    purchaseMethod?: string | null;
+    qualityGrade?: string | null;
+    reviewStatus?: string | null;
+    category?: { nameEn: string } | null;
+    supplier?: {
+      id: string;
+      businessName: string;
+      user?: { fullName: string } | null;
+    } | null;
+  },
+>(p: T) {
+  const inventoryStatus = deriveInventoryOpsStatus(p);
+
+  return {
+    id: p.id,
+    nameEn: p.nameEn,
+    unit: p.unit,
+    stockQty: p.stockQty,
+    reservedQty: p.reservedQty,
+    lowStockAt: p.lowStockAt,
+    isActive: p.isActive,
+    price: p.price ?? null,
+    purchasePrice: p.purchasePrice ?? null,
+    ownershipMode: p.ownershipMode ?? null,
+    inventorySource: p.inventorySource ?? null,
+    purchaseMethod: p.purchaseMethod ?? null,
+    qualityGrade: p.qualityGrade ?? null,
+    reviewStatus: p.reviewStatus ?? null,
+    inventoryStatus,
+    category: p.category ? { nameEn: p.category.nameEn } : null,
+    supplier: p.supplier
+      ? {
+          id: p.supplier.id,
+          businessName: p.supplier.businessName,
+          farmerName: p.supplier.user?.fullName ?? null,
+        }
+      : null,
+  };
+}
 
 export async function GET(req: Request) {
   const session = await requireAdmin();
@@ -27,6 +95,18 @@ export async function GET(req: Request) {
   const filter = searchParams.get("filter") || "all";
   const q = searchParams.get("q")?.trim() || "";
   const productId = searchParams.get("productId") || undefined;
+  const source = searchParams.get("source")?.trim().toUpperCase() || "";
+  const method = searchParams.get("method")?.trim().toUpperCase() || "";
+  const grade = searchParams.get("grade")?.trim() || "";
+  const statusFilter = searchParams.get("status")?.trim() || "";
+
+  const metaWhere: Prisma.ProductWhereInput = {
+    ...(source === "FARMER" || source === "MARKET" ? { inventorySource: source } : {}),
+    ...(method === "DIRECT" || method === "COMMISSION" || method === "MARKET"
+      ? { purchaseMethod: method }
+      : {}),
+    ...(grade === "1" || grade === "2" || grade === "3" ? { qualityGrade: grade } : {}),
+  };
 
   if (mode === "movements") {
     const movements = await prisma.stockMovement.findMany({
@@ -92,6 +172,19 @@ export async function GET(req: Request) {
       )`
     : Prisma.empty;
 
+  const sourceSql =
+    source === "FARMER" || source === "MARKET"
+      ? Prisma.sql`AND p."inventorySource" = ${source}`
+      : Prisma.empty;
+  const methodSql =
+    method === "DIRECT" || method === "COMMISSION" || method === "MARKET"
+      ? Prisma.sql`AND p."purchaseMethod" = ${method}`
+      : Prisma.empty;
+  const gradeSql =
+    grade === "1" || grade === "2" || grade === "3"
+      ? Prisma.sql`AND p."qualityGrade" = ${grade}`
+      : Prisma.empty;
+
   // Push stock filters into SQL (same available = stockQty - reservedQty rule as before).
   if (filter === "out" || filter === "low") {
     const rows = await prisma.$queryRaw<
@@ -103,15 +196,33 @@ export async function GET(req: Request) {
         reservedQty: number;
         lowStockAt: number | null;
         isActive: boolean;
+        price: number;
+        purchasePrice: number | null;
+        ownershipMode: string | null;
+        inventorySource: string | null;
+        purchaseMethod: string | null;
+        qualityGrade: string | null;
+        reviewStatus: string | null;
         categoryNameEn: string | null;
+        supplierId: string | null;
+        supplierName: string | null;
+        farmerName: string | null;
       }>
     >`
       SELECT p.id, p."nameEn", p.unit, p."stockQty", p."reservedQty", p."lowStockAt", p."isActive",
-             c."nameEn" AS "categoryNameEn"
+             p.price, p."purchasePrice", p."ownershipMode", p."inventorySource", p."purchaseMethod",
+             p."qualityGrade", p."reviewStatus",
+             c."nameEn" AS "categoryNameEn",
+             s.id AS "supplierId", s."businessName" AS "supplierName", u."fullName" AS "farmerName"
       FROM "Product" p
       LEFT JOIN "Category" c ON c.id = p."categoryId"
+      LEFT JOIN "Supplier" s ON s.id = p."supplierId"
+      LEFT JOIN "User" u ON u.id = s."userId"
       WHERE p."deletedAt" IS NULL
         ${searchSql}
+        ${sourceSql}
+        ${methodSql}
+        ${gradeSql}
         AND (
           ${
             filter === "out"
@@ -125,16 +236,41 @@ export async function GET(req: Request) {
     `;
 
     return NextResponse.json({
-      products: rows.map((p) => ({
-        id: p.id,
-        nameEn: p.nameEn,
-        unit: p.unit,
-        stockQty: p.stockQty,
-        reservedQty: p.reservedQty,
-        lowStockAt: p.lowStockAt,
-        isActive: p.isActive,
-        category: p.categoryNameEn ? { nameEn: p.categoryNameEn } : null,
-      })),
+      products: rows
+        .map((p) =>
+          mapInventoryRow({
+            id: p.id,
+            nameEn: p.nameEn,
+            unit: p.unit,
+            stockQty: p.stockQty,
+            reservedQty: p.reservedQty,
+            lowStockAt: p.lowStockAt,
+            isActive: p.isActive,
+            price: p.price,
+            purchasePrice: p.purchasePrice,
+            ownershipMode: p.ownershipMode,
+            inventorySource: p.inventorySource,
+            purchaseMethod: p.purchaseMethod,
+            qualityGrade: p.qualityGrade,
+            reviewStatus: p.reviewStatus,
+            category: p.categoryNameEn ? { nameEn: p.categoryNameEn } : null,
+            supplier: p.supplierId
+              ? {
+                  id: p.supplierId,
+                  businessName: p.supplierName || "",
+                  user: p.farmerName ? { fullName: p.farmerName } : null,
+                }
+              : null,
+          })
+        )
+        .filter((p) =>
+          statusFilter === "Available" ||
+          statusFilter === "Reserved" ||
+          statusFilter === "Sold Out" ||
+          statusFilter === "Rejected"
+            ? p.inventoryStatus === statusFilter
+            : true
+        ),
     });
   }
 
@@ -149,11 +285,21 @@ export async function GET(req: Request) {
     : {};
 
   const products = await prisma.product.findMany({
-    where: { deletedAt: null, ...search },
+    where: { deletedAt: null, ...search, ...metaWhere },
     select: productStockSelect,
     orderBy: { nameEn: "asc" },
-    take: 200,
+    take: 400,
   });
 
-  return NextResponse.json({ products });
+  let mapped = products.map(mapInventoryRow);
+  if (
+    statusFilter === "Available" ||
+    statusFilter === "Reserved" ||
+    statusFilter === "Sold Out" ||
+    statusFilter === "Rejected"
+  ) {
+    mapped = mapped.filter((p) => p.inventoryStatus === statusFilter);
+  }
+
+  return NextResponse.json({ products: mapped.slice(0, 200) });
 }

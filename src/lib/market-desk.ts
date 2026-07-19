@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { AvailabilityStatus, SupplierStatus } from "@prisma/client";
 
+export const MARKET_DESK_NAME = "HUZA Market Desk";
 const MARKET_DESK_EMAIL = "market-desk@huza.internal";
-const MARKET_DESK_NAME = "HUZA Market Desk";
 
 /**
  * Internal supplier used when market purchases are stocked into catalog products.

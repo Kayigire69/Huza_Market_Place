@@ -33,7 +33,7 @@ const CATEGORIES: {
   {
     id: "inventory",
     label: "Inventory",
-    description: "Stock movements and low-stock snapshot",
+    description: "Stock movements with source, method, and grade breakdown",
     icon: Boxes,
     types: ["inventory"],
   },

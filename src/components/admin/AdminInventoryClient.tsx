@@ -14,6 +14,10 @@ type StockProduct = {
   lowStockAt: number | null;
   unit: string;
   isActive: boolean;
+  inventorySource?: string | null;
+  purchaseMethod?: string | null;
+  qualityGrade?: string | null;
+  inventoryStatus?: string | null;
   category?: { nameEn: string } | null;
 };
 
@@ -69,6 +73,10 @@ export function AdminInventoryClient() {
     TABS.some((t) => t.key === initialTab) ? initialTab : "all"
   );
   const [q, setQ] = useState("");
+  const [source, setSource] = useState("");
+  const [method, setMethod] = useState("");
+  const [grade, setGrade] = useState("");
+  const [opsStatus, setOpsStatus] = useState("");
   const [products, setProducts] = useState<StockProduct[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [batches, setBatches] = useState<ExpiryBatch[]>([]);
@@ -98,6 +106,10 @@ export function AdminInventoryClient() {
       } else {
         const params = new URLSearchParams({ mode: "stock", filter: tab });
         if (q.trim()) params.set("q", q.trim());
+        if (source) params.set("source", source);
+        if (method) params.set("method", method);
+        if (grade) params.set("grade", grade);
+        if (opsStatus) params.set("status", opsStatus);
         const res = await fetch(`/api/admin/inventory?${params}`);
         const data = await res.json();
         if (res.ok) setProducts(data.products || []);
@@ -108,7 +120,7 @@ export function AdminInventoryClient() {
     } finally {
       setLoading(false);
     }
-  }, [tab, q]);
+  }, [tab, q, source, method, grade, opsStatus]);
 
   useEffect(() => {
     const t = setTimeout(() => void load(), tab === "recent" ? 0 : 200);
@@ -177,15 +189,61 @@ export function AdminInventoryClient() {
       </div>
 
       {tab !== "recent" && tab !== "expiring" ? (
-        <label className="relative block max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-muted)]" />
-          <input
-            className="admin-input pl-9"
-            placeholder="Search products…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </label>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="relative block min-w-[200px] flex-1 max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-muted)]" />
+            <input
+              className="admin-input pl-9"
+              placeholder="Search products…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </label>
+          <select
+            className="admin-input w-auto"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            aria-label="Source"
+          >
+            <option value="">All sources</option>
+            <option value="FARMER">Farmer</option>
+            <option value="MARKET">Market</option>
+          </select>
+          <select
+            className="admin-input w-auto"
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            aria-label="Purchase method"
+          >
+            <option value="">All methods</option>
+            <option value="DIRECT">Direct</option>
+            <option value="COMMISSION">Commission</option>
+            <option value="MARKET">Market</option>
+          </select>
+          <select
+            className="admin-input w-auto"
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            aria-label="Grade"
+          >
+            <option value="">All grades</option>
+            <option value="1">Grade 1</option>
+            <option value="2">Grade 2</option>
+            <option value="3">Grade 3</option>
+          </select>
+          <select
+            className="admin-input w-auto"
+            value={opsStatus}
+            onChange={(e) => setOpsStatus(e.target.value)}
+            aria-label="Ops status"
+          >
+            <option value="">All statuses</option>
+            <option value="Available">Available</option>
+            <option value="Reserved">Reserved</option>
+            <option value="Sold Out">Sold Out</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
       ) : null}
 
       <div className="admin-panel overflow-hidden">
@@ -304,15 +362,19 @@ export function AdminInventoryClient() {
               <thead>
                 <tr>
                   <th>Product</th>
+                  <th>Source</th>
+                  <th>Method</th>
+                  <th>Grade</th>
                   <th>Current Stock</th>
-                  <th>Minimum</th>
-                  <th>Status</th>
+                  <th>Ops status</th>
+                  <th>Stock</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((p) => {
                   const st = stockStatus(p);
+                  const ops = p.inventoryStatus || "—";
                   return (
                     <tr key={p.id}>
                       <td>
@@ -321,10 +383,27 @@ export function AdminInventoryClient() {
                           {p.category?.nameEn || "—"}
                         </p>
                       </td>
+                      <td className="text-xs">{p.inventorySource || "—"}</td>
+                      <td className="text-xs">{p.purchaseMethod || "—"}</td>
+                      <td className="text-xs tabular-nums">
+                        {p.qualityGrade ? `G${p.qualityGrade}` : "—"}
+                      </td>
                       <td className="tabular-nums font-semibold">
                         {available(p)} {formatUnit(p.unit)}
                       </td>
-                      <td className="tabular-nums">{p.lowStockAt ?? 5}</td>
+                      <td>
+                        <span
+                          className={
+                            ops === "Available"
+                              ? "admin-status admin-status-ok"
+                              : ops === "Rejected" || ops === "Sold Out"
+                                ? "admin-status admin-status-warn"
+                                : "admin-status"
+                          }
+                        >
+                          {ops}
+                        </span>
+                      </td>
                       <td>
                         <span className={st.className}>{st.label}</span>
                       </td>

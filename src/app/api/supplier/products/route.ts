@@ -112,6 +112,8 @@ export async function POST(req: Request) {
       isNewArrival: true,
       isActive: false,
       reviewStatus: "PENDING",
+      inventorySource: "FARMER",
+      purchaseMethod: "DIRECT",
       harvestDate,
       location: supplier?.location,
       originDistrict: body.originDistrict || supplier?.district || null,

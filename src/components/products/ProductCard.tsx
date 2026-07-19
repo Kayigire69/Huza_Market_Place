@@ -142,8 +142,8 @@ export function ProductCard({
               sizes="(max-width:768px) 45vw, 22vw"
             />
             {out && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/45">
-                <span className="rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700 sm:text-xs">
+              <div className="absolute inset-0 flex items-center justify-center bg-[var(--huza-green-dark)]/45">
+                <span className="rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--huza-green-dark)] sm:text-xs">
                   {t("outOfStock")}
                 </span>
               </div>
@@ -213,21 +213,32 @@ export function ProductCard({
         </p>
 
         <div className="mt-auto pt-2 sm:pt-3">
-          <button
-            type="button"
-            onClick={addToCart}
-            disabled={out}
-            aria-label={t("addToCart")}
-            className={cn(
-              "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-white transition disabled:pointer-events-none disabled:opacity-50",
-              prepared
-                ? "bg-[#F97316] hover:bg-[#ea580c]"
-                : "bg-[var(--huza-green)] hover:bg-[var(--huza-green-dark)]"
-            )}
-          >
-            <ShoppingCart className="size-4" aria-hidden />
-            {out ? t("outOfStock") : t("addToCart")}
-          </button>
+          {out ? (
+            <Link
+              href={`/products/${product.id}`}
+              className={cn(
+                "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition",
+                "border border-[var(--huza-green)] text-[var(--huza-green-dark)] hover:bg-[var(--huza-mint)]"
+              )}
+            >
+              {t("requestThisProduct")}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={addToCart}
+              aria-label={t("addToCart")}
+              className={cn(
+                "inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-white transition",
+                prepared
+                  ? "bg-[#F97316] hover:bg-[#ea580c]"
+                  : "bg-[var(--huza-green)] hover:bg-[var(--huza-green-dark)]"
+              )}
+            >
+              <ShoppingCart className="size-4" aria-hidden />
+              {t("addToCart")}
+            </button>
+          )}
         </div>
       </div>
     </article>

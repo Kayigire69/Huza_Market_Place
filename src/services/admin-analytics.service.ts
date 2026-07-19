@@ -21,7 +21,8 @@ async function farmOpsCounts() {
   const now = new Date();
   const in14 = new Date(now);
   in14.setDate(in14.getDate() + 14);
-  const [openAgronomy, harvestSoonCrops, readyCrops, needingPhotos] = await Promise.all([
+  const [openAgronomy, harvestSoonCrops, readyCrops, needingPhotos, openRestockRequests] =
+    await Promise.all([
     countOpenAgronomyRequests(),
     prisma.farmCrop.count({
       where: {
@@ -37,8 +38,9 @@ async function farmOpsCounts() {
         images: { none: { kind: "STOREFRONT" } },
       },
     }),
+    prisma.restockRequest.count({ where: { status: { in: ["OPEN", "SOURCING"] } } }),
   ]);
-  return { openAgronomy, harvestSoonCrops, readyCrops, needingPhotos };
+  return { openAgronomy, harvestSoonCrops, readyCrops, needingPhotos, openRestockRequests };
 }
 
 /** Last 7 calendar days (Mon–Sun style labels relative to today). */
