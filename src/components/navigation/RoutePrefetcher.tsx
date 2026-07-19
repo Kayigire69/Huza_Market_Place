@@ -61,4 +61,4 @@ export const ADMIN_PREFETCH = [
   "/admin/inventory",
 ];
 
-export const FARMER_PREFETCH = ["/farmer", "/auth/login"];
+export const FARMER_PREFETCH = ["/farmer", "/farmer/login", "/farmer/register"];

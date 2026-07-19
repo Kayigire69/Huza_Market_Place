@@ -175,29 +175,32 @@ async function main() {
   const supplierUsers = await Promise.all([
     prisma.user.create({
       data: {
-        email: "greenvalley@farm.rw",
+        email: null,
         phone: "0781111001",
         passwordHash: password,
         fullName: "Mukamana Alice",
         role: Role.SUPPLIER,
+        mustChangePassword: false,
       },
     }),
     prisma.user.create({
       data: {
-        email: "freshfields@farm.rw",
+        email: null,
         phone: "0781111002",
         passwordHash: password,
         fullName: "Habimana Jean",
         role: Role.SUPPLIER,
+        mustChangePassword: false,
       },
     }),
     prisma.user.create({
       data: {
-        email: "lakeharvest@farm.rw",
+        email: null,
         phone: "0781111003",
         passwordHash: password,
         fullName: "Ingabire Claire",
         role: Role.SUPPLIER,
+        mustChangePassword: false,
       },
     }),
   ]);
@@ -211,6 +214,7 @@ async function main() {
         location: "Musanze",
         district: "Musanze",
         phone: "0781111001",
+        nationalId: "1199080012344827",
         status: SupplierStatus.APPROVED,
         availability: AvailabilityStatus.OPEN,
         ratingAvg: 4.8,
@@ -228,6 +232,7 @@ async function main() {
         location: "Ruyenzi, Kamonyi",
         district: "Kamonyi",
         phone: "0781111002",
+        nationalId: "1199070056789012",
         status: SupplierStatus.APPROVED,
         availability: AvailabilityStatus.OPEN,
         ratingAvg: 4.6,
@@ -245,6 +250,7 @@ async function main() {
         location: "Nyamata, Bugesera",
         district: "Bugesera",
         phone: "0781111003",
+        nationalId: "1199060098765433",
         status: SupplierStatus.APPROVED,
         availability: AvailabilityStatus.OPEN,
         ratingAvg: 4.7,
@@ -258,11 +264,12 @@ async function main() {
 
   const pendingSupplierUser = await prisma.user.create({
     data: {
-      email: "newfarm@example.rw",
+      email: null,
       phone: "0781111999",
       passwordHash: password,
       fullName: "Bizimana Paul",
       role: Role.SUPPLIER,
+      mustChangePassword: false,
     },
   });
 
@@ -274,6 +281,7 @@ async function main() {
       location: "Kayonza",
       district: "Kayonza",
       phone: "0781111999",
+      nationalId: "1199050011112222",
       status: SupplierStatus.PENDING,
       availability: AvailabilityStatus.CLOSED,
     },
@@ -660,7 +668,10 @@ async function main() {
   console.log("  procurement@huza.rw → Farmers, Purchases");
   console.log("  finance@huza.rw    → Payments, Reports, Orders");
   console.log("Customer: customer@example.com / password123");
-  console.log("Farmer: greenvalley@farm.rw / password123");
+  console.log("Farmers Portal login (phone + last 4 of National ID):");
+  console.log("  0781111001 / 4827  (Green Valley — Mukamana Alice)");
+  console.log("  0781111002 / 9012  (Fresh Fields — Habimana Jean)");
+  console.log("  0781111003 / 5433  (Lake Harvest — Ingabire Claire)");
 }
 
 main()

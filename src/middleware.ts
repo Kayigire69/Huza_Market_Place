@@ -33,6 +33,8 @@ function isFarmerPath(pathname: string) {
 function isPublicFarmerEntry(pathname: string) {
   return (
     pathname === "/farmer" ||
+    pathname === "/farmer/login" ||
+    pathname.startsWith("/farmer/login/") ||
     pathname === "/farmer/register" ||
     pathname.startsWith("/farmer/register/")
   );
@@ -44,9 +46,10 @@ export default withAuth(
     const token = req.nextauth.token;
     const role = token?.role as string | undefined;
 
-    // Temp passwords must be changed before any staff/farmer portal access.
+    // Temp passwords must be changed before staff portal access (not Farmers Portal NID auth).
     if (
       token?.mustChangePassword &&
+      role !== "SUPPLIER" &&
       pathname !== "/auth/change-password"
     ) {
       return NextResponse.redirect(new URL("/auth/change-password", req.url));
@@ -99,7 +102,7 @@ export default withAuth(
         if (role) {
           return NextResponse.redirect(new URL(portalPathForRole(role), req.url));
         }
-        const login = new URL("/auth/login", req.url);
+        const login = new URL("/farmer/login", req.url);
         login.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(login);
       }

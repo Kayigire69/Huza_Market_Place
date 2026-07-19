@@ -2,28 +2,32 @@ import type { ComponentType } from "react";
 import {
   LayoutDashboard,
   LandPlot,
-  Package,
-  Wallet,
   Sprout,
-  BookOpen,
+  ShoppingBasket,
+  Leaf,
+  Wallet,
   BarChart3,
   MessageSquare,
   Bell,
-  Settings,
+  UserRound,
+  Package,
+  BookOpen,
 } from "lucide-react";
 
 export type FarmerModule =
   | "dashboard"
   | "my_farm"
+  | "crops"
   | "produce"
+  | "sell"
   | "sales"
+  | "grow"
   | "agronomy"
   | "training"
   | "reports"
   | "messages"
   | "notifications"
   | "settings"
-  /** Legacy deep-link modules (kept for redirects / active state) */
   | "products"
   | "submit"
   | "approvals"
@@ -36,35 +40,31 @@ export type FarmerModule =
 export type FarmerNavItem = {
   module: FarmerModule;
   href: string;
-  label: string;
+  /** i18n key — translated in FarmerWorkspaceShell via t() */
+  labelKey: string;
   exact?: boolean;
   upcoming?: boolean;
-  /** Show in mobile quick strip */
   mobile?: boolean;
   icon: ComponentType<{ className?: string }>;
 };
 
 export type FarmerNavSection = {
   id: string;
-  label: string;
+  labelKey: string;
   tone: "selling" | "support" | "account";
   items: FarmerNavItem[];
 };
 
-/**
- * Final Farmers Portal IA (10 primary destinations).
- * Deep links under My Produce / Sales remain for Phase 3–5 workflows.
- */
 export const FARMER_NAV_SECTIONS: FarmerNavSection[] = [
   {
     id: "overview",
-    label: "Overview",
+    labelKey: "navHome",
     tone: "selling",
     items: [
       {
         module: "dashboard",
         href: "/farmer/dashboard",
-        label: "Dashboard",
+        labelKey: "navDashboard",
         exact: true,
         mobile: true,
         icon: LayoutDashboard,
@@ -72,87 +72,106 @@ export const FARMER_NAV_SECTIONS: FarmerNavSection[] = [
       {
         module: "my_farm",
         href: "/farmer/my-farm",
-        label: "My Farm",
+        labelKey: "navMyFarm",
         mobile: true,
         icon: LandPlot,
+      },
+      {
+        module: "crops",
+        href: "/farmer/crops",
+        labelKey: "navMyCrops",
+        mobile: true,
+        icon: Sprout,
       },
     ],
   },
   {
     id: "selling",
-    label: "Sell to HUZA",
+    labelKey: "navSellSection",
     tone: "selling",
     items: [
       {
+        module: "sell",
+        href: "/farmer/sell",
+        labelKey: "navSellToHuza",
+        mobile: true,
+        icon: ShoppingBasket,
+      },
+      {
         module: "produce",
         href: "/farmer/produce",
-        label: "My Produce",
-        mobile: true,
+        labelKey: "navMyProduce",
         icon: Package,
       },
       {
         module: "sales",
         href: "/farmer/sales",
-        label: "Sales",
-        mobile: true,
+        labelKey: "navPaymentsOrders",
         icon: Wallet,
       },
     ],
   },
   {
     id: "grow",
-    label: "Grow better",
+    labelKey: "navGrowSection",
     tone: "support",
     items: [
       {
+        module: "grow",
+        href: "/farmer/grow-better",
+        labelKey: "navGrowBetter",
+        mobile: true,
+        icon: Leaf,
+      },
+      {
         module: "agronomy",
         href: "/farmer/agronomy",
-        label: "Agronomy Support",
+        labelKey: "navAgronomy",
         icon: Sprout,
       },
       {
         module: "training",
         href: "/farmer/training",
-        label: "Training & Advisory",
+        labelKey: "navTraining",
         icon: BookOpen,
       },
     ],
   },
   {
     id: "insights",
-    label: "Insights",
+    labelKey: "navInsights",
     tone: "support",
     items: [
       {
         module: "reports",
         href: "/farmer/reports",
-        label: "Reports",
+        labelKey: "navReports",
         icon: BarChart3,
       },
     ],
   },
   {
     id: "account",
-    label: "Account",
+    labelKey: "navAccountSection",
     tone: "account",
     items: [
       {
         module: "messages",
         href: "/farmer/messages",
-        label: "Messages",
+        labelKey: "navMessages",
         icon: MessageSquare,
       },
       {
         module: "notifications",
         href: "/farmer/notifications",
-        label: "Notifications",
+        labelKey: "navNotifications",
         icon: Bell,
       },
       {
         module: "settings",
         href: "/farmer/settings",
-        label: "Settings",
-        icon: Settings,
+        labelKey: "navAccount",
+        icon: UserRound,
       },
     ],
   },
@@ -165,6 +184,20 @@ export function farmerMobileQuickLinks(): FarmerNavItem[] {
 export function isFarmerNavActive(pathname: string, item: FarmerNavItem): boolean {
   if (item.exact) return pathname === item.href;
 
+  if (item.module === "crops") {
+    return pathname.startsWith("/farmer/crops");
+  }
+  if (item.module === "sell") {
+    return pathname === "/farmer/sell" || pathname.startsWith("/farmer/sell/");
+  }
+  if (item.module === "grow") {
+    return (
+      pathname.startsWith("/farmer/grow-better") ||
+      pathname.startsWith("/farmer/agronomy") ||
+      pathname.startsWith("/farmer/training") ||
+      pathname.startsWith("/farmer/support")
+    );
+  }
   if (item.module === "produce") {
     return (
       pathname.startsWith("/farmer/produce") ||

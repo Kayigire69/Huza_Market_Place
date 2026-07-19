@@ -21,6 +21,7 @@ import {
 import { useLocale } from "@/lib/locale-context";
 import { Button } from "@/components/ui/Button";
 import { OptimizedImage } from "@/components/media/OptimizedImage";
+import { maskNationalId } from "@/lib/farmer-auth";
 
 export type FarmerDossierValues = {
   profilePhotoUrl?: string | null;
@@ -174,7 +175,13 @@ export function FarmerDossierForm({
           </div>
           <div>
             <label className="label">{t("idNumber")}</label>
-            <input name="nationalId" defaultValue={initial.nationalId || ""} className="input-field" required />
+            <p className="input-field flex items-center bg-[var(--huza-mint)]/30 font-mono tracking-wide">
+              {maskNationalId(initial.nationalId)}
+            </p>
+            <input type="hidden" name="nationalId" value={initial.nationalId || ""} />
+            <p className="mt-1 text-xs text-[var(--huza-muted)]">
+              Shown masked for security. Contact HUZA Support to change your National ID.
+            </p>
           </div>
           <div>
             <label className="label">{t("gender")}</label>

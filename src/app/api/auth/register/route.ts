@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { isValidRwandaMomoPhone } from "@/lib/phone";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import {
+  digitsOnly,
+  normalizeRwandaPhone,
+  unusedFarmerPasswordHash,
+} from "@/lib/farmer-auth";
+import bcrypt from "bcryptjs";
 import { BCRYPT_ROUNDS } from "@/lib/security-access";
 
 const schema = z.object({
   fullName: z.string().min(2),
   phone: z.string().min(8),
   email: z.string().email().optional().or(z.literal("")),
-  password: z.string().min(8),
+  /** Required for customers; ignored for farmers (NID auth). */
+  password: z.string().min(8).optional().or(z.literal("")),
   role: z.enum(["CUSTOMER", "SUPPLIER"]).default("CUSTOMER"),
-  farmingType: z.enum(["ORGANIC", "STANDARD"]).optional(),
+  farmingType: z.enum(["ORGANIC", "STANDARD", "CONVERSION"]).optional(),
   businessName: z.string().optional(),
   location: z.string().optional(),
   district: z.string().optional(),
@@ -63,31 +69,25 @@ export async function POST(req: Request) {
     }
 
     const data = schema.parse(await req.json());
-    if (!isValidRwandaMomoPhone(data.phone)) {
+    const phone = normalizeRwandaPhone(data.phone);
+    if (!isValidRwandaMomoPhone(phone)) {
       return NextResponse.json(
         { error: "Enter a valid MTN (078/079) or Airtel (072/073) phone number" },
         { status: 400 }
       );
     }
-    const existing = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { phone: data.phone },
-          ...(data.email ? [{ email: data.email }] : []),
-        ],
-      },
-    });
-    if (existing) {
-      return NextResponse.json({ error: "Phone or email already registered" }, { status: 400 });
-    }
 
     if (data.role === "SUPPLIER") {
-      if (!data.nationalId || data.nationalId.trim().length < 5) {
-        return NextResponse.json({ error: "National ID is required for farmers" }, { status: 400 });
-      }
       if (!data.agreedToHuzaTerms) {
         return NextResponse.json(
           { error: "You must agree to how Huza will buy from you" },
+          { status: 400 }
+        );
+      }
+      const nid = digitsOnly(data.nationalId || "");
+      if (nid.length < 5) {
+        return NextResponse.json(
+          { error: "Enter your full National ID number" },
           { status: 400 }
         );
       }
@@ -103,61 +103,104 @@ export async function POST(req: Request) {
           );
         }
       }
+
+      const phoneTaken = await prisma.user.findFirst({ where: { phone } });
+      if (phoneTaken) {
+        return NextResponse.json(
+          { error: "This phone number is already registered" },
+          { status: 400 }
+        );
+      }
+      const nidTaken = await prisma.supplier.findFirst({
+        where: { nationalId: nid },
+      });
+      if (nidTaken) {
+        return NextResponse.json(
+          { error: "This National ID is already registered" },
+          { status: 400 }
+        );
+      }
+
+      const passwordHash = await unusedFarmerPasswordHash();
+      const user = await prisma.user.create({
+        data: {
+          fullName: data.fullName,
+          phone,
+          email: null,
+          passwordHash,
+          role: Role.SUPPLIER,
+          mustChangePassword: false,
+          supplier: {
+            create: {
+              businessName: data.businessName || `${data.fullName}'s Farm`,
+              location: data.location || "Rwanda",
+              district: data.district || "Kigali",
+              sector: data.sector || null,
+              phone,
+              email: null,
+              description: data.description || null,
+              nationalId: nid,
+              companyRegNo: data.companyRegNo || null,
+              tin: data.tin || null,
+              farmSize: data.farmSize || null,
+              productionCapacity: data.productionCapacity || null,
+              productCategories: data.productCategories || data.productsOffered || null,
+              productsOffered: data.productsOffered || null,
+              huzaPurchaseAgreement: data.huzaPurchaseAgreement || null,
+              farmingType,
+              agreedToHuzaTerms: true,
+              agreedToHuzaTermsAt: new Date(),
+              paymentMomo: data.paymentMomo || null,
+              bankAccount: data.bankAccount || null,
+              bankName: data.bankName || null,
+              nationalIdUrl: data.nationalIdUrl || null,
+              businessCertUrl: data.businessCertUrl || null,
+              tinDocUrl: data.tinDocUrl || null,
+              foodSafetyUrl: data.foodSafetyUrl || null,
+              organicCertUrl: data.organicCertUrl || null,
+              permitUrl: data.permitUrl || null,
+              documentsUrl: data.documentsUrl || null,
+              farmPhotoUrls: toUrlList(data.farmPhotoUrls),
+              productPhotoUrls: toUrlList(data.productPhotoUrls),
+              status: "PENDING",
+            },
+          },
+        },
+      });
+
+      return NextResponse.json({
+        id: user.id,
+        farmingType,
+        phone,
+        nationalIdLast4: nid.slice(-4),
+      });
     }
 
-    const farmingType = data.farmingType || "ORGANIC";
+    // Customer registration (unchanged password flow)
+    if (!data.password || data.password.length < 8) {
+      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+    }
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [{ phone }, ...(data.email ? [{ email: data.email }] : [])],
+      },
+    });
+    if (existing) {
+      return NextResponse.json({ error: "Phone or email already registered" }, { status: 400 });
+    }
+
     const passwordHash = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
     const user = await prisma.user.create({
       data: {
         fullName: data.fullName,
-        phone: data.phone,
+        phone,
         email: data.email || null,
         passwordHash,
-        role: data.role as Role,
-        ...(data.role === "SUPPLIER"
-          ? {
-              supplier: {
-                create: {
-                  businessName: data.businessName || `${data.fullName}'s Farm`,
-                  location: data.location || "Rwanda",
-                  district: data.district || "Kigali",
-                  sector: data.sector || null,
-                  phone: data.phone,
-                  email: data.email || null,
-                  description: data.description || null,
-                  nationalId: data.nationalId || null,
-                  companyRegNo: data.companyRegNo || null,
-                  tin: data.tin || null,
-                  farmSize: data.farmSize || null,
-                  productionCapacity: data.productionCapacity || null,
-                  productCategories:
-                    data.productCategories || data.productsOffered || null,
-                  productsOffered: data.productsOffered || null,
-                  huzaPurchaseAgreement: data.huzaPurchaseAgreement || null,
-                  farmingType,
-                  agreedToHuzaTerms: Boolean(data.agreedToHuzaTerms),
-                  agreedToHuzaTermsAt: data.agreedToHuzaTerms ? new Date() : null,
-                  paymentMomo: data.paymentMomo || null,
-                  bankAccount: data.bankAccount || null,
-                  bankName: data.bankName || null,
-                  nationalIdUrl: data.nationalIdUrl || null,
-                  businessCertUrl: data.businessCertUrl || null,
-                  tinDocUrl: data.tinDocUrl || null,
-                  foodSafetyUrl: data.foodSafetyUrl || null,
-                  organicCertUrl: data.organicCertUrl || null,
-                  permitUrl: data.permitUrl || null,
-                  documentsUrl: data.documentsUrl || null,
-                  farmPhotoUrls: toUrlList(data.farmPhotoUrls),
-                  productPhotoUrls: toUrlList(data.productPhotoUrls),
-                  status: "PENDING",
-                },
-              },
-            }
-          : {}),
+        role: Role.CUSTOMER,
       },
     });
 
-    return NextResponse.json({ id: user.id, farmingType });
+    return NextResponse.json({ id: user.id });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Registration failed" }, { status: 400 });

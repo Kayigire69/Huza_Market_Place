@@ -1,4 +1,5 @@
 import { FarmerWorkspaceShell } from "@/components/portals/FarmerWorkspaceShell";
+import { FarmerPendingBanner } from "@/components/portals/FarmerPendingBanner";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +21,10 @@ export default async function FarmerWorkspaceLayout({
       pendingReviews={stats.pendingReviews}
     >
       {farmer.status !== "APPROVED" && (
-        <div className="mb-5 rounded-xl border border-[var(--huza-gold)] bg-[#FFF8E6] px-4 py-3 text-sm text-[var(--huza-ink)]">
-          Your farm account is <strong>{farmer.status}</strong>. You can explore the portal. Product
-          submissions unlock after Youth Huza approval.
-          {farmer.rejectionReason ? (
-            <span className="mt-1 block text-red-700">Reason: {farmer.rejectionReason}</span>
-          ) : null}
-        </div>
+        <FarmerPendingBanner
+          status={farmer.status}
+          rejectionReason={farmer.rejectionReason}
+        />
       )}
       {children}
     </FarmerWorkspaceShell>

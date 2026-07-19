@@ -167,5 +167,26 @@ export async function POST(req: Request) {
     include: { images: true, category: true },
   });
 
+  const farmCropId = typeof body.farmCropId === "string" ? body.farmCropId.trim() : "";
+  if (farmCropId) {
+    const owned = await prisma.farmCrop.findFirst({
+      where: { id: farmCropId, supplierId },
+    });
+    if (owned) {
+      await prisma.farmCrop.update({
+        where: { id: farmCropId },
+        data: {
+          productId: product.id,
+          growthStage: "harvested",
+          actualQty:
+            Number(body.stockQty) ||
+            Number(body.totalQuantityHarvested) ||
+            owned.actualQty ||
+            null,
+        },
+      });
+    }
+  }
+
   return NextResponse.json(product);
 }

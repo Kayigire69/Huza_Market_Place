@@ -19,6 +19,7 @@ import {
 } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { FarmerDossierForm, type FarmerDossierValues } from "./FarmerDossierForm";
+import { maskNationalId } from "@/lib/farmer-auth";
 
 type Category = { id: string; nameEn: string; slug: string };
 type ProductImage = { id?: string; url: string; alt?: string | null };
@@ -138,12 +139,29 @@ export function FarmerPortalClient({
   categories,
   purchaseOrders = [],
   panel,
+  cropPrefill,
 }: {
   farmer: Farmer;
   categories: Category[];
   purchaseOrders?: PurchaseOrderRow[];
   /** When set, hides legacy pill tabs and shows the matching workspace section. */
   panel?: FarmerPanelKey;
+  /** Prefill from My Crops → Send to My Produce (farmer still confirms). */
+  cropPrefill?: {
+    id: string;
+    nameEn: string;
+    expectedQty: number | null;
+    actualQty: number | null;
+    unit: string;
+    farmStatus: string | null;
+    fertilizerUsed: string | null;
+    pesticidesUsed: string | null;
+    diseases: string | null;
+    pests: string | null;
+    irrigation: string | null;
+    notes: string | null;
+    expectedHarvestDate: string | null;
+  } | null;
 }) {
   const { t } = useLocale();
   const router = useRouter();
@@ -218,6 +236,7 @@ export function FarmerPortalClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...payload,
+          farmCropId: cropPrefill?.id || payload.farmCropId || undefined,
           price: Number(payload.pricePerUnit || payload.price || 0),
           stockQty: Number(payload.stockQty || payload.totalQuantityHarvested || 0),
           isOrganic: isOrganicFarmer && form.get("isOrganic") === "on",
@@ -314,7 +333,7 @@ export function FarmerPortalClient({
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("nationalIdOrReg")}</p>
-              <p className="font-medium">{farmer.nationalId || "—"}</p>
+              <p className="font-medium">{maskNationalId(farmer.nationalId)}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("phone")}</p>
@@ -432,6 +451,13 @@ export function FarmerPortalClient({
                   Focus on <strong>one crop</strong> and the <strong>quantity you can supply</strong>. Clear
                   photos and honest stock help acceptance.
                 </p>
+                {cropPrefill ? (
+                  <div className="rounded-xl border border-[var(--huza-green)]/35 bg-[var(--huza-mint)]/40 px-3 py-3 text-sm text-[var(--huza-ink)]">
+                    <strong>From My Crops:</strong> {cropPrefill.nameEn}. Review the prefilled
+                    details, add harvest photos, then submit. Nothing is sent until you confirm.
+                    <input type="hidden" name="farmCropId" value={cropPrefill.id} />
+                  </div>
+                ) : null}
               </>
             ) : (
               <>
@@ -453,6 +479,7 @@ export function FarmerPortalClient({
                   placeholder={t("productCropName")}
                   className="input-field mt-1"
                   required
+                  defaultValue={cropPrefill?.nameEn || ""}
                 />
               </label>
               <textarea
@@ -463,6 +490,7 @@ export function FarmerPortalClient({
                     : t("shortDescription")
                 }
                 className="input-field min-h-16"
+                defaultValue={cropPrefill?.notes || ""}
               />
               <label className="block text-xs font-semibold text-[var(--huza-muted)]">
                 Crop type (raw farm produce only)
@@ -512,7 +540,18 @@ export function FarmerPortalClient({
                 <h3 className="text-sm font-semibold">
                   {panel === "submit" ? "Field details (organic path)" : t("fieldInformation")}
                 </h3>
-                <select name="fieldType" className="input-field" defaultValue={farmer.fieldType || ""} required>
+                <select
+                  name="fieldType"
+                  className="input-field"
+                  defaultValue={
+                    cropPrefill?.farmStatus === "greenhouse"
+                      ? "Greenhouse"
+                      : cropPrefill?.farmStatus === "open_field"
+                        ? "Open field"
+                        : farmer.fieldType || ""
+                  }
+                  required
+                >
                   <option value="">{t("greenhouseOrOpen")}</option>
                   {FIELD_TYPES.map((f) => (
                     <option key={f} value={f}>
@@ -549,13 +588,14 @@ export function FarmerPortalClient({
                   name="currentCrop"
                   className="input-field"
                   placeholder={t("currentCrop")}
-                  defaultValue={farmer.currentCrop || ""}
+                  defaultValue={cropPrefill?.nameEn || farmer.currentCrop || ""}
                   required
                 />
                 <input
                   name="chemicalsPerWeek"
                   className="input-field"
                   placeholder={t("chemicalsPerWeek")}
+                  defaultValue={cropPrefill?.pesticidesUsed || ""}
                 />
                 <input name="chemicalsWhy" className="input-field" placeholder={t("chemicalsWhy")} />
                 <input name="chemicalsDosage" className="input-field" placeholder={t("dosage")} />
@@ -563,21 +603,25 @@ export function FarmerPortalClient({
                   name="fertilizerPerWeek"
                   className="input-field"
                   placeholder={t("fertilizerPerWeek")}
+                  defaultValue={cropPrefill?.fertilizerUsed || ""}
                 />
                 <input
                   name="irrigationMethod"
                   className="input-field"
                   placeholder={t("irrigationMethod")}
+                  defaultValue={cropPrefill?.irrigation || ""}
                 />
                 <input
                   name="diseasesIdentified"
                   className="input-field"
                   placeholder={t("diseasesIdentified")}
+                  defaultValue={cropPrefill?.diseases || ""}
                 />
                 <input
                   name="pestsIdentified"
                   className="input-field"
                   placeholder={t("pestsIdentified")}
+                  defaultValue={cropPrefill?.pests || ""}
                 />
               </div>
             )}
@@ -597,6 +641,13 @@ export function FarmerPortalClient({
                   className="input-field"
                   placeholder={t("totalQuantityHarvested")}
                   required
+                  defaultValue={
+                    cropPrefill?.actualQty != null
+                      ? String(cropPrefill.actualQty)
+                      : cropPrefill?.expectedQty != null
+                        ? String(cropPrefill.expectedQty)
+                        : ""
+                  }
                 />
                 <select name="qualityGeneral" className="input-field" required>
                   <option value="">{t("qualityInGeneral")}</option>
@@ -614,6 +665,13 @@ export function FarmerPortalClient({
                     min={0}
                     className="input-field mt-1 text-lg font-semibold"
                     placeholder={t("availableStockQty")}
+                    defaultValue={
+                      cropPrefill?.actualQty != null
+                        ? String(cropPrefill.actualQty)
+                        : cropPrefill?.expectedQty != null
+                          ? String(cropPrefill.expectedQty)
+                          : ""
+                    }
                   />
                 </label>
               </div>
@@ -636,6 +694,13 @@ export function FarmerPortalClient({
                     className="input-field mt-1 text-lg font-semibold"
                     placeholder={t("availableStockQty")}
                     required
+                    defaultValue={
+                      cropPrefill?.actualQty != null
+                        ? String(cropPrefill.actualQty)
+                        : cropPrefill?.expectedQty != null
+                          ? String(cropPrefill.expectedQty)
+                          : ""
+                    }
                   />
                 </label>
                 <select name="priceUnit" className="input-field" defaultValue="kg">
