@@ -189,10 +189,10 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
 
   if (props.mode === "register") {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
+      <div className="mx-auto max-w-xl px-3 py-4 sm:max-w-3xl sm:px-4 sm:py-10">
         <div className="text-center">
-          <h1 className="section-title">{t("farmerPortal")}</h1>
-          <p className="mt-2 text-sm text-[var(--huza-muted)]">
+          <h1 className="text-lg font-bold text-[var(--huza-ink)] sm:text-2xl">{t("farmerPortal")}</h1>
+          <p className="mt-1 text-xs text-[var(--huza-muted)] sm:mt-2 sm:text-sm">
             {t("farmerRegistrationHint")}
           </p>
         </div>
