@@ -14,6 +14,9 @@ import {
   ClipboardPlus,
   ClipboardCheck,
   LifeBuoy,
+  Leaf,
+  Sprout,
+  Camera,
 } from "lucide-react";
 
 type DayStat = { date: string; label: string; orders: number; revenue: number };
@@ -39,6 +42,10 @@ type LivePayload = {
     refundRequests?: number;
     completedOrders?: number;
     revenueGrowthPct?: number | null;
+    openAgronomy?: number;
+    harvestSoonCrops?: number;
+    readyCrops?: number;
+    needingPhotos?: number;
   };
   recentOrders: {
     id: string;
@@ -217,6 +224,24 @@ export function AdminDashboardClient({
         href: "/admin/approvals",
         module: "approvals" as AdminModule,
       },
+      (c.openAgronomy || 0) > 0 && {
+        tone: "orange",
+        label: `${c.openAgronomy} agronomy request${c.openAgronomy === 1 ? "" : "s"} open`,
+        href: "/admin/agronomy",
+        module: "agronomy" as AdminModule,
+      },
+      (c.harvestSoonCrops || 0) > 0 && {
+        tone: "amber",
+        label: `${c.harvestSoonCrops} crop${c.harvestSoonCrops === 1 ? "" : "s"} harvest soon`,
+        href: "/admin/crops?filter=harvest_soon",
+        module: "crop_monitoring" as AdminModule,
+      },
+      (c.needingPhotos || 0) > 0 && {
+        tone: "blue",
+        label: `${c.needingPhotos} product${c.needingPhotos === 1 ? "" : "s"} need storefront photos`,
+        href: "/admin/photography",
+        module: "photography" as AdminModule,
+      },
       (c.delayedOrders || 0) > 0 && {
         tone: "orange",
         label: `${c.delayedOrders} order${c.delayedOrders === 1 ? "" : "s"} delayed (>2h)`,
@@ -318,6 +343,7 @@ export function AdminDashboardClient({
   const quick = [
     { href: "/admin/orders", label: "View Orders", icon: ShoppingBag, module: "orders" as const },
     { href: "/admin/approvals", label: "Product Approvals", icon: ClipboardCheck, module: "approvals" as const },
+    { href: "/admin/agronomy", label: "Agronomy", icon: Leaf, module: "agronomy" as const },
     { href: "/admin/suppliers", label: "Approve Farmer", icon: UserCheck, module: "farmers" as const },
     { href: "/admin/products", label: "Add Product", icon: PackagePlus, module: "products" as const },
     {
@@ -328,6 +354,37 @@ export function AdminDashboardClient({
     },
     { href: "/admin/support", label: "Support Inbox", icon: LifeBuoy, module: "support" as const },
   ].filter((q) => roleCanAccessModule(role, q.module));
+
+  const farmOpsStrip = [
+    {
+      label: "Agronomy open",
+      value: c.openAgronomy ?? 0,
+      href: "/admin/agronomy",
+      module: "agronomy" as AdminModule,
+      icon: Leaf,
+    },
+    {
+      label: "Harvest soon",
+      value: c.harvestSoonCrops ?? 0,
+      href: "/admin/crops?filter=harvest_soon",
+      module: "crop_monitoring" as AdminModule,
+      icon: Sprout,
+    },
+    {
+      label: "Ready to harvest",
+      value: c.readyCrops ?? 0,
+      href: "/admin/crops?filter=ready",
+      module: "crop_monitoring" as AdminModule,
+      icon: Sprout,
+    },
+    {
+      label: "Need photos",
+      value: c.needingPhotos ?? 0,
+      href: "/admin/photography",
+      module: "photography" as AdminModule,
+      icon: Camera,
+    },
+  ].filter((r) => roleCanAccessModule(role, r.module));
 
   return (
     <div className="space-y-6">
@@ -376,6 +433,29 @@ export function AdminDashboardClient({
           );
         })}
       </div>
+
+      {farmOpsStrip.length > 0 ? (
+        <div className="admin-panel p-4">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--admin-muted)]">
+            Farmer operations
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {farmOpsStrip.map((row) => (
+              <Link
+                key={row.label}
+                href={row.href}
+                className="flex items-center gap-3 rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)] px-3 py-2.5 transition hover:border-[#b7dcc6]"
+              >
+                <row.icon className="size-4 shrink-0 text-[var(--admin-muted)]" />
+                <div>
+                  <p className="text-xs text-[var(--admin-muted)]">{row.label}</p>
+                  <p className="text-lg font-semibold text-[var(--admin-ink)]">{row.value}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <section className="admin-card">

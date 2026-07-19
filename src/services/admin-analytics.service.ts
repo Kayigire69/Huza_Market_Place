@@ -10,6 +10,37 @@ function dayKey(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+/** Unread agronomy requests still needing staff action. */
+async function countOpenAgronomyRequests() {
+  return prisma.agronomyRequest.count({
+    where: { status: { in: ["OPEN", "REPLIED", "SCHEDULED"] } },
+  });
+}
+
+async function farmOpsCounts() {
+  const now = new Date();
+  const in14 = new Date(now);
+  in14.setDate(in14.getDate() + 14);
+  const [openAgronomy, harvestSoonCrops, readyCrops, needingPhotos] = await Promise.all([
+    countOpenAgronomyRequests(),
+    prisma.farmCrop.count({
+      where: {
+        expectedHarvestDate: { gte: now, lte: in14 },
+        growthStage: { not: "harvested" },
+      },
+    }),
+    prisma.farmCrop.count({ where: { growthStage: "ready" } }),
+    prisma.product.count({
+      where: {
+        deletedAt: null,
+        reviewStatus: "APPROVED",
+        images: { none: { kind: "STOREFRONT" } },
+      },
+    }),
+  ]);
+  return { openAgronomy, harvestSoonCrops, readyCrops, needingPhotos };
+}
+
 /** Last 7 calendar days (Mon–Sun style labels relative to today). */
 export async function getOrdersLast7Days() {
   const today = startOfLocalDay();
@@ -129,6 +160,7 @@ export async function getSalesByCategory(take = 8) {
 export async function getAdminLiveLite() {
   const startOfDay = startOfLocalDay();
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
   const [
     todayOrders,
     pendingPayment,
@@ -140,6 +172,7 @@ export async function getAdminLiveLite() {
     lowStockCount,
     pendingFarmers,
     delayedOrders,
+    farmOps,
   ] = await Promise.all([
     prisma.order.count({ where: { createdAt: { gte: startOfDay } } }),
     prisma.order.count({ where: { status: "PENDING" } }),
@@ -166,6 +199,7 @@ export async function getAdminLiveLite() {
         updatedAt: { lt: twoHoursAgo },
       },
     }),
+    farmOpsCounts(),
   ]);
 
   const pendingOrders = pendingPayment + paidReady + preparing;
@@ -185,6 +219,7 @@ export async function getAdminLiveLite() {
       pendingSuppliers: pendingFarmers,
       pendingDeliveries: outForDelivery + preparing,
       delayedOrders,
+      ...farmOps,
     },
   };
 }
@@ -287,6 +322,7 @@ export async function getAdminDashboardAnalytics() {
     pendingApprovals,
     openTickets,
     pendingPaymentsCount,
+    farmOps,
   ] = await Promise.all([
     prisma.order.groupBy({
       by: ["status"],
@@ -319,6 +355,7 @@ export async function getAdminDashboardAnalytics() {
       where: { status: { in: ["OPEN", "IN_PROGRESS"] } },
     }),
     prisma.payment.count({ where: { status: "PENDING" } }),
+    farmOpsCounts(),
   ]);
 
   const statusMap = Object.fromEntries(
@@ -374,6 +411,7 @@ export async function getAdminDashboardAnalytics() {
       newCustomersMonth,
       suppliersApproved: supplierStats.find((s) => s.status === "APPROVED")?._count._all ?? 0,
       suppliersPending: supplierStats.find((s) => s.status === "PENDING")?._count._all ?? 0,
+      ...farmOps,
     },
     recentOrders: recentOrders.map((o) => ({
       id: o.id,

@@ -25,7 +25,7 @@ const VISIT_STATUSES = [
 
 /**
  * Agronomy Support — request advice or a farm visit.
- * Requests are stored as farmer notifications for Youth Huza follow-up.
+ * Requests are stored as AgronomyRequest records for Youth Huza follow-up.
  */
 export function FarmerAgronomyClient() {
   const [mode, setMode] = useState<"advice" | "visit">("advice");

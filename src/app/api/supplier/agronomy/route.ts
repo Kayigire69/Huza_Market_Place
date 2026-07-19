@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { AgronomyRequestKind } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 /**
  * Farmer agronomy advice / farm-visit requests.
- * Stored as in-app notifications for the farmer (+ mirrored to owner for follow-up).
+ * Persists AgronomyRequest + mirrors in-app notifications for farmer & admins.
  */
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const kind = body.kind === "visit" ? "visit" : "advice";
+  const kind = body.kind === "visit" ? AgronomyRequestKind.VISIT : AgronomyRequestKind.ADVICE;
 
   const farmer = await prisma.supplier.findFirst({
     where: { userId: session.user.id },
@@ -38,22 +39,34 @@ export async function POST(req: Request) {
   }
 
   const topicOrReason =
-    kind === "advice"
+    kind === AgronomyRequestKind.ADVICE
       ? String(body.topic || "General advice").trim()
       : String(body.reason || "Farm visit").trim();
-  const preferredDate = body.preferredDate ? String(body.preferredDate) : null;
+  const preferredDate = body.preferredDate ? new Date(String(body.preferredDate)) : null;
+  const preferredOk = preferredDate && !Number.isNaN(preferredDate.getTime()) ? preferredDate : null;
+
+  const request = await prisma.agronomyRequest.create({
+    data: {
+      supplierId: farmer.id,
+      kind,
+      crop,
+      topicOrReason,
+      description,
+      preferredDate: preferredOk,
+    },
+  });
 
   const title =
-    kind === "advice"
+    kind === AgronomyRequestKind.ADVICE
       ? `Agronomy advice: ${topicOrReason}`
       : `Farm visit request: ${topicOrReason}`;
   const detail = [
     `Farm: ${farmer.businessName}`,
     `Crop: ${crop}`,
-    kind === "advice" ? `Topic: ${topicOrReason}` : `Reason: ${topicOrReason}`,
-    preferredDate ? `Preferred date: ${preferredDate}` : null,
+    kind === AgronomyRequestKind.ADVICE ? `Topic: ${topicOrReason}` : `Reason: ${topicOrReason}`,
+    preferredOk ? `Preferred date: ${preferredOk.toISOString().slice(0, 10)}` : null,
     `Details: ${description}`,
-    kind === "visit" ? "Status: Request Submitted" : null,
+    kind === AgronomyRequestKind.VISIT ? "Status: Request Submitted" : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -85,5 +98,45 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, id: request.id });
+}
+
+/** Farmer can list their own agronomy requests + follow-ups. */
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const farmer = await prisma.supplier.findFirst({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+  if (!farmer) {
+    return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
+  }
+
+  const requests = await prisma.agronomyRequest.findMany({
+    where: { supplierId: farmer.id },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      followUps: { orderBy: { recordedAt: "desc" }, take: 10 },
+    },
+  });
+
+  return NextResponse.json({
+    requests: requests.map((r) => ({
+      ...r,
+      preferredDate: r.preferredDate?.toISOString() ?? null,
+      scheduledAt: r.scheduledAt?.toISOString() ?? null,
+      handledAt: r.handledAt?.toISOString() ?? null,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+      followUps: r.followUps.map((f) => ({
+        ...f,
+        recordedAt: f.recordedAt.toISOString(),
+      })),
+    })),
+  });
 }

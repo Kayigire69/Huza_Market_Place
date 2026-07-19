@@ -335,6 +335,7 @@ model Supplier {
   purchaseOrders PurchaseOrder[]
   goodsReceipts  GoodsReceipt[]
   messages       ProcurementMessage[]
+  agronomyRequests AgronomyRequest[]
 }
 
 /// Season crop tracking (grow → predict harvest → then sell to HUZA).
@@ -865,10 +866,11 @@ enum PurchaseOrderStatus {
   CANCELLED
 }
 
-/// How Youth Huza takes the produce: buy outright or sell on commission.
+/// How Youth Huza takes the produce: buy from farmer, sell on commission, or buy at market.
 enum ProcurementDealType {
   OUTRIGHT_BUY
   COMMISSION
+  MARKET_BUY
 }
 
 /// Youth Huza purchase from an approved supplier (procurement).
@@ -894,6 +896,8 @@ model PurchaseOrder {
   commissionAmount Int?
   farmerNetAmount  Int?
   qualityNotes     String?
+  /// QC grade (e.g. A / B / C) — used for farmer and market buys
+  qualityGrade     String?
   rejectionReason  String?
   /// What the farmer should do next after a quality rejection
   recommendation   String?
@@ -917,6 +921,107 @@ model PurchaseOrder {
   @@index([status])
   @@index([poNumber])
   @@index([dealType])
+}
+
+/// Wholesale / open-market purchases (not from registered farmers).
+enum MarketPurchaseStatus {
+  RECORDED
+  INSPECTED
+  STOCKED
+  CANCELLED
+}
+
+model MarketPurchase {
+  id              String               @id @default(cuid())
+  purchaseNumber  String               @unique
+  marketName      String
+  vendorName      String
+  purchaseDate    DateTime
+  productName     String
+  category        String?
+  unit            UnitType             @default(KG)
+  quantity        Float
+  unitPrice       Int
+  totalAmount     Int
+  retailPrice     Int?
+  qualityGrade    String?
+  inspectionNotes String?
+  photoUrls       String[]             @default([])
+  status          MarketPurchaseStatus @default(RECORDED)
+  productId       String?
+  notes           String?
+  createdById     String?
+  inspectedAt     DateTime?
+  stockedAt       DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([status])
+  @@index([purchaseDate])
+  @@index([marketName])
+}
+
+/// Farmer agronomy advice / farm-visit requests (Farmers Portal → Admin inbox).
+enum AgronomyRequestKind {
+  ADVICE
+  VISIT
+}
+
+enum AgronomyRequestStatus {
+  OPEN
+  REPLIED
+  SCHEDULED
+  HANDLED
+  CLOSED
+}
+
+enum AgronomyFollowUpType {
+  VISIT
+  RECOMMENDATION
+  DISEASE
+  PEST
+  SOIL
+  TRAINING
+  NOTE
+}
+
+model AgronomyRequest {
+  id            String                @id @default(cuid())
+  supplierId    String
+  kind          AgronomyRequestKind
+  crop          String
+  topicOrReason String
+  description   String
+  preferredDate DateTime?
+  status        AgronomyRequestStatus @default(OPEN)
+  adminReply    String?
+  scheduledAt   DateTime?
+  handledAt     DateTime?
+  handledById   String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  supplier  Supplier           @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  followUps AgronomyFollowUp[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([kind])
+  @@index([createdAt])
+}
+
+model AgronomyFollowUp {
+  id          String               @id @default(cuid())
+  requestId   String
+  type        AgronomyFollowUpType
+  notes       String
+  recordedAt  DateTime             @default(now())
+  createdById String?
+
+  request AgronomyRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([type])
 }
 
 model WarehouseLocation {
