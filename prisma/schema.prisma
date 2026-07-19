@@ -32,9 +32,11 @@ enum SupplierStatus {
   REMOVED
 }
 
-/// Organic farmers complete the full dossier; standard farmers use a short registration.
+/// Organic / conversion / conventional (STANDARD) farmer paths.
 enum FarmingType {
   ORGANIC
+  /// Transitioning toward organic certification (same dossier depth as ORGANIC).
+  CONVERSION
   STANDARD
 }
 
@@ -159,6 +161,8 @@ enum NotificationType {
   DELIVERY_SCHEDULE
   NEW_SUPPLIER
   FAILED_PAYMENT
+  /// Farmer crop harvest window approaching — procurement prep
+  HARVEST_ALERT
 }
 
 model User {
@@ -237,7 +241,7 @@ model Supplier {
   sector             String?
   phone              String
   email              String?
-  nationalId         String?
+  nationalId         String?            @unique
   companyRegNo       String?
   tin                String?
   farmSize           String?
@@ -324,12 +328,46 @@ model Supplier {
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   products       Product[]
+  farmCrops      FarmCrop[]
   reviews        Review[]
   orders         OrderItem[]
   offers         SupplierOffer[]
   purchaseOrders PurchaseOrder[]
   goodsReceipts  GoodsReceipt[]
   messages       ProcurementMessage[]
+}
+
+/// Season crop tracking (grow → predict harvest → then sell to HUZA).
+model FarmCrop {
+  id                  String    @id @default(cuid())
+  supplierId          String
+  nameEn              String
+  plantingDate        DateTime?
+  expectedHarvestDate DateTime?
+  expectedQty         Int?
+  actualQty           Int?
+  unit                String    @default("KG")
+  /// nursery | vegetative | flowering | fruiting | ready | harvested
+  growthStage         String?
+  /// greenhouse | open_field
+  farmStatus          String?
+  fertilizerUsed      String?
+  pesticidesUsed      String?
+  diseases            String?
+  pests               String?
+  irrigation          String?
+  notes               String?
+  /// Linked shop listing after submit-to-HUZA (optional)
+  productId           String?
+  harvestAlertSentAt  DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  product  Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([supplierId])
+  @@index([expectedHarvestDate])
 }
 
 model Category {
@@ -427,6 +465,7 @@ model Product {
 
   supplier   Supplier         @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   category   Category         @relation(fields: [categoryId], references: [id])
+  farmCrops  FarmCrop[]
   images     ProductImage[]
   orderItems OrderItem[]
   reviews    Review[]

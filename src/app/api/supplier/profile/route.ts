@@ -34,7 +34,10 @@ export async function PATCH(req: Request) {
 
   const cleaned = Object.fromEntries(
     Object.entries(dossier).filter(
-      ([, v]) => v !== undefined && !(typeof v === "number" && Number.isNaN(v))
+      ([k, v]) =>
+        k !== "nationalId" && // National ID is set at registration; change via HUZA Support only
+        v !== undefined &&
+        !(typeof v === "number" && Number.isNaN(v))
     )
   );
 

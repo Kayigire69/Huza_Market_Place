@@ -49,6 +49,11 @@ export default function LoginForm() {
         setError("Authenticator code is incorrect. Try again.");
         return;
       }
+      if (code === "USE_FARMER_LOGIN") {
+        setError("Farmers sign in with phone and National ID — not password.");
+        router.push("/farmer/login");
+        return;
+      }
       // Wrong email/password (2FA is not the cause when it is disabled)
       setError("Email or password is incorrect.");
       return;
@@ -142,6 +147,12 @@ export default function LoginForm() {
         No account?{" "}
         <Link href="/auth/register" className="text-[var(--huza-green)] font-semibold">
           {t("register")}
+        </Link>
+      </p>
+      <p className="mt-3 text-center text-sm text-[var(--huza-muted)]">
+        Farmer?{" "}
+        <Link href="/farmer/login" className="font-semibold text-[var(--huza-green-dark)] underline underline-offset-2">
+          Sign in with phone + National ID
         </Link>
       </p>
       <p className="mt-2 text-center text-xs text-[var(--huza-muted)]">

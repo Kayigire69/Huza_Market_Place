@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { FARMER_NAV_SECTIONS, farmerMobileQuickLinks, isFarmerNavActive } from "@/lib/farmer-nav";
+import { useLocale } from "@/lib/locale-context";
 
 type Props = {
   children: React.ReactNode;
@@ -17,10 +18,6 @@ type Props = {
   pendingReviews?: number;
 };
 
-/**
- * Phase 1 Farmers Portal workspace — Youth Huza branded sidebar IA.
- * Selling workflow is primary; Grow better / Account are secondary.
- */
 export function FarmerWorkspaceShell({
   children,
   businessName,
@@ -31,9 +28,15 @@ export function FarmerWorkspaceShell({
   pendingReviews = 0,
 }: Props) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
+
   const pathLabel =
-    farmingType === "STANDARD" ? "Standard seller" : "Organic dossier";
+    farmingType === "STANDARD"
+      ? t("pathConventional")
+      : farmingType === "CONVERSION"
+        ? t("pathConversion")
+        : t("pathOrganic");
 
   const Nav = (
     <nav className="flex h-full flex-col">
@@ -49,22 +52,22 @@ export function FarmerWorkspaceShell({
           />
         </div>
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
-          Farmers Portal
+          {t("farmerPortal")}
         </p>
         <p className="mt-2 truncate font-[family-name:var(--font-display)] text-lg font-bold text-white">
           {businessName}
         </p>
         <p className="mt-1 text-xs text-white/70">
           {status}
-          {isVerified ? " · Verified" : ""} · {pathLabel}
+          {isVerified ? ` · ${t("verified")}` : ""} · {pathLabel}
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-lg bg-white/10 px-2.5 py-2">
-            <p className="text-[10px] uppercase tracking-wide text-white/55">Main crops</p>
+            <p className="text-[10px] uppercase tracking-wide text-white/55">{t("mainCrops")}</p>
             <p className="text-sm font-bold text-white">{listed}</p>
           </div>
           <div className="rounded-lg bg-white/10 px-2.5 py-2">
-            <p className="text-[10px] uppercase tracking-wide text-white/55">In review</p>
+            <p className="text-[10px] uppercase tracking-wide text-white/55">{t("inReview")}</p>
             <p className="text-sm font-bold text-white">{pendingReviews}</p>
           </div>
         </div>
@@ -82,7 +85,7 @@ export function FarmerWorkspaceShell({
                     : "text-white/45"
               }`}
             >
-              {section.label}
+              {t(section.labelKey)}
             </p>
             <ul className="space-y-1">
               {section.items.map((item) => {
@@ -96,7 +99,7 @@ export function FarmerWorkspaceShell({
                       className={`farmer-nav-link ${active ? "is-active" : ""}`}
                     >
                       <Icon className="h-4 w-4 shrink-0 opacity-90" />
-                      <span>{item.label}</span>
+                      <span>{t(item.labelKey)}</span>
                     </Link>
                   </li>
                 );
@@ -106,30 +109,26 @@ export function FarmerWorkspaceShell({
         ))}
       </div>
 
-      <div className="border-t border-white/10 px-4 py-3 text-[11px] text-white/50">
-        Youth Huza
-      </div>
+      <div className="border-t border-white/10 px-4 py-3 text-[11px] text-white/50">Youth Huza</div>
     </nav>
   );
 
   return (
     <div className="farmer-workspace mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-7xl gap-0 lg:gap-6 lg:px-4 lg:py-6">
-      {/* Desktop sidebar */}
       <aside className="farmer-sidebar hidden w-64 shrink-0 overflow-hidden rounded-2xl lg:block">
         {Nav}
       </aside>
 
-      {/* Mobile top strip */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--huza-line)] bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between gap-2 overflow-x-auto">
           <button
             type="button"
             className="inline-flex items-center gap-2 rounded-xl bg-[var(--huza-green-dark)] px-3 py-2 text-xs font-semibold text-white"
             onClick={() => setOpen(true)}
-            aria-label="Open menu"
+            aria-label={t("menu")}
           >
             <Menu className="h-4 w-4" />
-            Menu
+            {t("menu")}
           </button>
           <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
             {farmerMobileQuickLinks().map((item) => {
@@ -144,7 +143,7 @@ export function FarmerWorkspaceShell({
                       : "bg-[var(--huza-mint)] text-[var(--huza-green-dark)]"
                   }`}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
@@ -157,7 +156,7 @@ export function FarmerWorkspaceShell({
           <button
             type="button"
             className="absolute inset-0 bg-black/45"
-            aria-label="Close menu"
+            aria-label={t("close")}
             onClick={() => setOpen(false)}
           />
           <div className="farmer-sidebar absolute inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col shadow-2xl">
@@ -175,7 +174,7 @@ export function FarmerWorkspaceShell({
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-lg p-2 text-white/80 hover:bg-white/10"
-                aria-label="Close"
+                aria-label={t("close")}
               >
                 <X className="h-5 w-5" />
               </button>
