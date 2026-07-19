@@ -186,11 +186,12 @@ Do **not** use seed passwords on the live site. Change the owner password after 
 
 1. Copy `.env.example` → `.env` and set real secrets.
 2. Set `NEXTAUTH_URL` to `https://www.youthhuza.rw` (must match the live domain).
-3. Run `npx prisma migrate deploy` then seed only on a fresh DB.
-4. Configure **Resend** (`RESEND_API_KEY`) so password-reset emails send.
-5. Configure **Cloudinary** — required in production for product/farm uploads.
-6. Set WhatsApp URL in Admin → Settings (or `WHATSAPP_URL`) when the business number is ready.
-7. Add MTN MoMo / Airtel keys when available — until then checkout stays in demo mode.
-8. Schedule `/api/jobs/process` with `JOBS_SECRET` for background email/payment jobs.
+3. On Neon/App Platform set both `DATABASE_URL` (pooler) and `DIRECT_URL` (non-pooler). Migrations need `DIRECT_URL` or `prisma migrate deploy` times out with P1002.
+4. Run `npx prisma migrate deploy` then seed only on a fresh DB.
+5. Configure **Resend** (`RESEND_API_KEY`) so password-reset emails send.
+6. Configure **Cloudinary** — required in production for product/farm uploads.
+7. Set WhatsApp URL in Admin → Settings (or `WHATSAPP_URL`) when the business number is ready.
+8. Add MTN MoMo / Airtel keys when available — until then checkout stays in demo mode.
+9. Schedule `/api/jobs/process` with `JOBS_SECRET` for background email/payment jobs.
 
 Built for **Youth Huza** · HUZA FRESH
