@@ -7,32 +7,48 @@ import { resolveWhatsAppUrl } from "@/lib/brand-contact";
 export const revalidate = 90;
 
 export default async function Page() {
-  const [
-    {
-      categories,
-      popularNow,
-      readyToEat,
-      promotions,
-      testimonials,
-      customerReviews,
-      isOpen,
-    },
-    whatsappSetting,
-  ] = await Promise.all([
-    catalogService.getHomeCatalog(),
-    getSetting("whatsapp_url", ""),
-  ]);
+  try {
+    const [
+      {
+        categories,
+        popularNow,
+        readyToEat,
+        promotions,
+        testimonials,
+        customerReviews,
+        isOpen,
+      },
+      whatsappSetting,
+    ] = await Promise.all([
+      catalogService.getHomeCatalog(),
+      getSetting("whatsapp_url", ""),
+    ]);
 
-  return (
-    <HomePage
-      categories={categories}
-      popularNow={popularNow}
-      readyToEat={readyToEat}
-      promotions={promotions}
-      testimonials={testimonials}
-      customerReviews={customerReviews}
-      isOpen={isOpen}
-      whatsappUrl={resolveWhatsAppUrl(whatsappSetting)}
-    />
-  );
+    return (
+      <HomePage
+        categories={categories}
+        popularNow={popularNow}
+        readyToEat={readyToEat}
+        promotions={promotions}
+        testimonials={testimonials}
+        customerReviews={customerReviews}
+        isOpen={isOpen}
+        whatsappUrl={resolveWhatsAppUrl(whatsappSetting)}
+      />
+    );
+  } catch {
+    // Pre-migrate / empty DB during App Platform build
+    return (
+      <HomePage
+        categories={[]}
+        popularNow={[]}
+        readyToEat={[]}
+        promotions={[]}
+        testimonials={[]}
+        customerReviews={[]}
+        isOpen={true}
+        whatsappUrl={resolveWhatsAppUrl("")}
+      />
+    );
+  }
 }

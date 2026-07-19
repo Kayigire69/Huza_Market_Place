@@ -14,11 +14,16 @@ export default async function CategoriesPage() {
 
   let categories = await cacheGet<Row[]>(CACHE_KEY);
   if (!categories) {
-    categories = await prisma.category.findMany({
-      orderBy: { sortOrder: "asc" },
-      include: { _count: { select: { products: true } } },
-    });
-    await cacheSet(CACHE_KEY, categories, 120);
+    try {
+      categories = await prisma.category.findMany({
+        orderBy: { sortOrder: "asc" },
+        include: { _count: { select: { products: true } } },
+      });
+      await cacheSet(CACHE_KEY, categories, 120);
+    } catch {
+      // Empty DB / pre-migrate builds must not fail `next build`
+      categories = [];
+    }
   }
 
   return (

@@ -41,22 +41,26 @@ const fallback: FaqItem[] = [
 export default async function FaqPage() {
   let items = await cacheGet<FaqItem[]>(CacheKeys.faqList);
   if (!items) {
-    const rows = await prisma.faqItem.findMany({
-      where: { isPublished: true },
-      orderBy: { sortOrder: "asc" },
-    });
-    items = rows.length
-      ? rows.map((r) => ({
-          id: r.id,
-          questionEn: r.questionEn,
-          questionFr: r.questionFr,
-          questionRw: r.questionRw,
-          answerEn: r.answerEn,
-          answerFr: r.answerFr,
-          answerRw: r.answerRw,
-        }))
-      : fallback;
-    await cacheSet(CacheKeys.faqList, items, 300);
+    try {
+      const rows = await prisma.faqItem.findMany({
+        where: { isPublished: true },
+        orderBy: { sortOrder: "asc" },
+      });
+      items = rows.length
+        ? rows.map((r) => ({
+            id: r.id,
+            questionEn: r.questionEn,
+            questionFr: r.questionFr,
+            questionRw: r.questionRw,
+            answerEn: r.answerEn,
+            answerFr: r.answerFr,
+            answerRw: r.answerRw,
+          }))
+        : fallback;
+      await cacheSet(CacheKeys.faqList, items, 300);
+    } catch {
+      items = fallback;
+    }
   }
 
   return <FaqClient items={items.length ? items : fallback} />;
