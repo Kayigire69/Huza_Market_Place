@@ -328,7 +328,7 @@ const en: Dict = {
   howHuzaSupportsFarmers: "How Youth Huza supports farmers",
   chooseFarmingType: "Choose your farming type",
   chooseFarmingTypeHint:
-    "Pick the path that matches your farm. Next you complete registration — simple steps, large buttons.",
+    "Pick the path that matches your farm, then complete the registration form on one page.",
   farmVisits: "Farm visits by Youth Huza teams",
   agronomySupport: "Agronomy support for healthier crops",
   farmerTraining: "Practical farmer training",
@@ -337,6 +337,9 @@ const en: Dict = {
   reliableBuyers: "A reliable buyer for accepted produce",
   harvestPlanning: "Harvest planning support",
   fairPricing: "Fair, clear pricing discussions",
+  standardFarmerPath: "Conventional Farming",
+  standardFarmerPathHint:
+    "Non-organic crops. Short form: identity, products you offer, and how Huza will buy from you.",
   // Farmers Portal workspace nav & chrome
   navHome: "Home",
   navDashboard: "Dashboard",

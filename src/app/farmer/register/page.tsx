@@ -4,10 +4,7 @@ import { FarmerRegisterForm } from "../FarmerRegisterForm";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Unlisted partner registration — not linked from the customer storefront.
- * Organic / conversion / conventional paths live on the same portal.
- */
+/** One-page farmer registration — farming type + all fields on a single form. */
 export default function FarmerRegisterPage() {
   return (
     <FarmerPortalChrome mode="register">
