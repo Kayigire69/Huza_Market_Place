@@ -71,13 +71,20 @@ export async function GET(req: Request) {
  * - action: "confirm" — ADMIN / SUPER_ADMIN only
  */
 export async function POST(req: Request) {
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
   const { orderId, orderNumber, action, phone } = body as {
     orderId?: string;
     orderNumber?: string;
-    action: "confirm" | "fail";
+    action?: "confirm" | "fail";
     phone?: string;
   };
+
+  if (action !== "confirm" && action !== "fail") {
+    return NextResponse.json({ error: "action must be confirm or fail" }, { status: 400 });
+  }
 
   const order = await paymentService.getStatus({ orderId, orderNumber });
   if (!order?.payment) {

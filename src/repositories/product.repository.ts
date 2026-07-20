@@ -85,7 +85,8 @@ export const productRepository = {
 
   /**
    * Hold demand for a pending payment.
-   * When `allowBackorder` is true, reservedQty may exceed stockQty (6–12h restock path).
+   * When `allowBackorder` is true, reservedQty may exceed stockQty (soft restock path).
+   * Non-backorder path uses an atomic SQL guard so concurrent checkouts cannot oversell.
    */
   async reserveStock(
     tx: Prisma.TransactionClient,
@@ -93,26 +94,42 @@ export const productRepository = {
     quantity: number,
     options?: { allowBackorder?: boolean }
   ) {
-    const updated = await tx.product.updateMany({
-      where: {
-        id: productId,
-        deletedAt: null,
-        isActive: true,
-      },
-      data: { reservedQty: { increment: quantity } },
-    });
-    if (updated.count !== 1) {
-      throw new Error("Unable to reserve stock");
+    const qty = Math.trunc(quantity);
+    if (qty <= 0) {
+      throw new Error("Reserve quantity must be a positive integer");
     }
-    const product = await tx.product.findUniqueOrThrow({ where: { id: productId } });
-    if (!options?.allowBackorder && product.reservedQty > product.stockQty) {
-      await tx.product.update({
-        where: { id: productId },
-        data: { reservedQty: { decrement: quantity } },
+
+    if (options?.allowBackorder) {
+      const updated = await tx.product.updateMany({
+        where: {
+          id: productId,
+          deletedAt: null,
+          isActive: true,
+        },
+        data: { reservedQty: { increment: qty } },
       });
-      throw new Error(`Insufficient stock for ${product.nameEn}`);
+      if (updated.count !== 1) {
+        throw new Error("Unable to reserve stock");
+      }
+    } else {
+      const rows = await tx.$executeRaw`
+        UPDATE "Product"
+        SET "reservedQty" = "reservedQty" + ${qty}
+        WHERE id = ${productId}
+          AND "deletedAt" IS NULL
+          AND "isActive" = true
+          AND ("stockQty" - "reservedQty") >= ${qty}
+      `;
+      if (Number(rows) !== 1) {
+        const product = await tx.product.findUnique({
+          where: { id: productId },
+          select: { nameEn: true },
+        });
+        throw new Error(`Insufficient stock for ${product?.nameEn ?? "product"}`);
+      }
     }
-    return product;
+
+    return tx.product.findUniqueOrThrow({ where: { id: productId } });
   },
 
   /** Payment confirmed — convert reservation into a sale (stock floored at 0) */

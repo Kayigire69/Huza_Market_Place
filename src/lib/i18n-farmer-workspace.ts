@@ -367,6 +367,8 @@ export const wsFr: WsDict = {
   sellGrade3d: "Qualité inférieure · prix plus bas",
   sellGradesNote: "Les notes sont attribuées seulement après inspection HUZA — pas par auto-déclaration.",
   sellCtaProduce: "Aller à Mes produits",
+  phone: "Téléphone",
+  email: "E-mail",
 };
 
 export const wsRw: WsDict = {
@@ -548,6 +550,8 @@ export const wsRw: WsDict = {
   sellGrade3d: "Ubuziranunge buke · igiciro gito",
   sellGradesNote: "Ibihangange bihabwa nyuma yo gusuzuma HUZA gusa — si ukwiyemeza wenyine.",
   sellCtaProduce: "Jya kuri Ibicuruzwa byanjye",
+  phone: "Telefone",
+  email: "Imeri",
 };
 
 export const wsSw: WsDict = {
@@ -729,4 +733,6 @@ export const wsSw: WsDict = {
   sellGrade3d: "Ubora wa chini · bei ya chini",
   sellGradesNote: "Daraja hutolewa tu baada ya ukaguzi wa HUZA — si kwa kujitangaza mwenyewe.",
   sellCtaProduce: "Nenda kwa Mazao yangu",
+  phone: "Simu",
+  email: "Barua pepe",
 };
