@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { FARMER_NAV_SECTIONS, farmerMobileQuickLinks, isFarmerNavActive } from "@/lib/farmer-nav";
 import { useLocale } from "@/lib/locale-context";
 
@@ -30,6 +31,7 @@ export function FarmerWorkspaceShell({
   const pathname = usePathname();
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const pathLabel =
     farmingType === "STANDARD"
@@ -37,6 +39,13 @@ export function FarmerWorkspaceShell({
       : farmingType === "CONVERSION"
         ? t("pathConversion")
         : t("pathOrganic");
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setOpen(false);
+    await signOut({ callbackUrl: "/farmer/login" });
+  };
 
   const Nav = (
     <nav className="flex h-full flex-col">
@@ -109,7 +118,17 @@ export function FarmerWorkspaceShell({
         ))}
       </div>
 
-      <div className="border-t border-white/10 px-4 py-3 text-[11px] text-white/50">Youth Huza</div>
+      <div className="border-t border-white/10 px-4 py-3">
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          disabled={loggingOut}
+          className="w-full rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-60"
+        >
+          {loggingOut ? "…" : t("logout")}
+        </button>
+        <p className="mt-2 text-center text-[11px] text-white/50">Youth Huza</p>
+      </div>
     </nav>
   );
 

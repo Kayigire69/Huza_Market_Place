@@ -227,15 +227,6 @@ export function Header() {
                       >
                         {t("wishlist")}
                       </Link>
-                      {session.user.role === "SUPPLIER" && (
-                        <Link
-                          href="/farmer"
-                          className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
-                          onClick={() => setAccountOpen(false)}
-                        >
-                          {t("farmerPortal")}
-                        </Link>
-                      )}
                       <button
                         type="button"
                         className="block w-full px-3 py-2.5 text-left text-sm hover:bg-[var(--huza-mint)]"
