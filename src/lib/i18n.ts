@@ -1126,7 +1126,7 @@ const rw: Dict = {
   heroHeadline: "Ibicuruzwa bishya bitangwa aho utuye",
   heroSupport:
     "Imbuto, imboga, amata n'ibindi. Byagenzuwe kandi bitangwa mu Rwanda hose.",
-  heroCta: "Tangira gugura",
+  heroCta: "Tangira guhaha",
   heroSecondary: "Gura bishya",
   browseCategories: "Reba ibyiciro",
   heroImageAlt: "Ibicuruzwa bishya byagenzuwe na Youth Huza",
