@@ -1,8 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { listDeliveryZones } from "@/services/settings.service";
 import { formatRwf } from "@/lib/utils";
 
 export const revalidate = 120;
+
+export const metadata: Metadata = {
+  title: "Delivery Info",
+  description:
+    "HUZA FRESH delivery zones, fees, and timing for Kigali, Kamonyi, and Bugesera.",
+};
 
 export default async function DeliveryInfoPage() {
   const zones = await listDeliveryZones();

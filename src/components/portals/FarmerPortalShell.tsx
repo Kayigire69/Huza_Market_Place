@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { User } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 import { locales, localeLabels, type Locale } from "@/lib/i18n";
 
@@ -99,6 +100,15 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
                 </option>
               ))}
             </select>
+
+            <Link
+              href="/auth/login"
+              className="inline-flex size-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white transition hover:bg-white/20"
+              aria-label={t("login")}
+              title={t("login")}
+            >
+              <User className="size-4" aria-hidden />
+            </Link>
 
             {session?.user ? (
               <>

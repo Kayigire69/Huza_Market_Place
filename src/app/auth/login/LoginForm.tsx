@@ -88,10 +88,11 @@ export default function LoginForm() {
         className="mt-8 space-y-4 rounded-2xl border border-[var(--huza-line)] bg-white p-6"
       >
         <div>
-          <label className="label">
+          <label className="label" htmlFor="login-phoneOrEmail">
             {t("email")} / {t("phone")}
           </label>
           <input
+            id="login-phoneOrEmail"
             name="phoneOrEmail"
             required
             className="input-field"
@@ -100,8 +101,11 @@ export default function LoginForm() {
           />
         </div>
         <div>
-          <label className="label">{t("password")}</label>
+          <label className="label" htmlFor="login-password">
+            {t("password")}
+          </label>
           <input
+            id="login-password"
             name="password"
             type="password"
             required
@@ -111,8 +115,11 @@ export default function LoginForm() {
         </div>
         {showTotp ? (
           <div>
-            <label className="label">Authenticator code</label>
+            <label className="label" htmlFor="login-totp">
+              Authenticator code
+            </label>
             <input
+              id="login-totp"
               name="totpCode"
               className="input-field"
               placeholder="6-digit code"
@@ -133,7 +140,11 @@ export default function LoginForm() {
             </button>
           </>
         )}
-        {error && <p className="text-sm text-red-700">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-700" role="alert">
+            {error}
+          </p>
+        )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "..." : t("login")}
         </Button>

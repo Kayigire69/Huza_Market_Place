@@ -2,8 +2,10 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { useToastStore } from "@/components/ui/Toast";
 
 export default function ContactPage() {
+  const showToast = useToastStore((s) => s.show);
   const [ok, setOk] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,7 @@ export default function ContactPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setOk(false);
     const form = new FormData(e.currentTarget);
     const res = await fetch("/api/contact", {
       method: "POST",
@@ -37,21 +40,24 @@ export default function ContactPage() {
     });
     setLoading(false);
     if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || "Failed to send");
+      const data = await res.json().catch(() => ({}));
+      const msg = data.error || "Failed to send message. Please try again.";
+      setError(msg);
+      showToast(msg, "error");
       return;
     }
     setOk(true);
+    showToast("Message sent. We will reply soon.", "success");
     (e.target as HTMLFormElement).reset();
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-12">
+    <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <h1 className="section-title">Contact Us</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
+      <p className="mb-8 mt-2 text-[var(--huza-muted)]">
         Reach Youth Huza — the team behind HUZA FRESH.
       </p>
-      <div className="mb-8 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm space-y-2">
+      <div className="mb-8 space-y-2 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm">
         <p>
           <strong>Email:</strong> info@youthhuza.rw
         </p>
@@ -63,7 +69,7 @@ export default function ContactPage() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[var(--huza-green)] font-semibold"
+                className="font-semibold text-[var(--huza-green)]"
               >
                 {contactLine}
               </a>
@@ -81,14 +87,83 @@ export default function ContactPage() {
           <strong>Hours:</strong> Daily 6:00 AM – 9:00 PM
         </p>
       </div>
-      <form onSubmit={onSubmit} className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 space-y-3">
-        <input name="fullName" className="input-field" placeholder="Full name" required />
-        <input name="email" type="email" className="input-field" placeholder="Email (optional)" />
-        <input name="phone" className="input-field" placeholder="Phone" />
-        <input name="subject" className="input-field" placeholder="Subject" required />
-        <textarea name="message" className="input-field min-h-28" placeholder="Message" required />
-        {error && <p className="text-sm text-red-700">{error}</p>}
-        {ok && <p className="text-sm text-[var(--huza-green-dark)]">Message sent. We will reply soon.</p>}
+      <form
+        onSubmit={onSubmit}
+        className="space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-6"
+        noValidate
+      >
+        <div>
+          <label className="label" htmlFor="contact-fullName">
+            Full name
+          </label>
+          <input
+            id="contact-fullName"
+            name="fullName"
+            className="input-field mt-1"
+            placeholder="Your name"
+            required
+            autoComplete="name"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="contact-email">
+            Email <span className="font-normal text-[var(--huza-muted)]">(optional)</span>
+          </label>
+          <input
+            id="contact-email"
+            name="email"
+            type="email"
+            className="input-field mt-1"
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="contact-phone">
+            Phone
+          </label>
+          <input
+            id="contact-phone"
+            name="phone"
+            className="input-field mt-1"
+            placeholder="078xxxxxxx"
+            autoComplete="tel"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="contact-subject">
+            Subject
+          </label>
+          <input
+            id="contact-subject"
+            name="subject"
+            className="input-field mt-1"
+            placeholder="How can we help?"
+            required
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="contact-message">
+            Message
+          </label>
+          <textarea
+            id="contact-message"
+            name="message"
+            className="input-field mt-1 min-h-28"
+            placeholder="Write your message"
+            required
+          />
+        </div>
+        {error ? (
+          <p className="text-sm text-red-700" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {ok ? (
+          <p className="text-sm text-[var(--huza-green-dark)]" role="status">
+            Message sent. We will reply soon.
+          </p>
+        ) : null}
         <Button type="submit" disabled={loading}>
           {loading ? "Sending…" : "Send message"}
         </Button>

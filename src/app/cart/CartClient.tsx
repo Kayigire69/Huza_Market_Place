@@ -51,7 +51,13 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
                 className="flex gap-4 rounded-2xl border border-[var(--huza-line)] bg-white p-4"
               >
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[var(--huza-mint)]">
-                  <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.name}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{item.name}</p>
@@ -65,25 +71,32 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
                   </p>
                   <div className="mt-2 flex items-center gap-3">
                     <button
+                      type="button"
                       onClick={() => updateQty(item.productId, item.quantity - 1)}
-                      className="rounded border border-[var(--huza-line)] p-1"
+                      className="rounded border border-[var(--huza-line)] p-1 transition hover:bg-[var(--huza-mint)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--huza-green)]"
+                      aria-label="Decrease quantity"
                     >
-                      <Minus className="size-3.5" />
+                      <Minus className="size-3.5" aria-hidden />
                     </button>
-                    <span className="text-sm font-semibold w-6 text-center">{item.quantity}</span>
+                    <span className="w-6 text-center text-sm font-semibold" aria-live="polite">
+                      {item.quantity}
+                    </span>
                     <button
+                      type="button"
                       onClick={() => updateQty(item.productId, item.quantity + 1)}
-                      className="rounded border border-[var(--huza-line)] p-1"
+                      className="rounded border border-[var(--huza-line)] p-1 transition hover:bg-[var(--huza-mint)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--huza-green)] disabled:opacity-40"
                       disabled={!f.inStock}
+                      aria-label="Increase quantity"
                     >
-                      <Plus className="size-3.5" />
+                      <Plus className="size-3.5" aria-hidden />
                     </button>
                     <button
+                      type="button"
                       onClick={() => removeItem(item.productId)}
-                      className="ml-auto text-red-700 p-1"
+                      className="ml-auto p-1 text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                       aria-label={t("remove")}
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className="size-4" aria-hidden />
                     </button>
                   </div>
                 </div>

@@ -200,7 +200,7 @@ export function HomePage({
       {/* 1. Categories */}
       <section
         id="categories"
-        className="mx-auto mt-8 max-w-7xl scroll-mt-28 px-4 sm:mt-12 sm:px-6"
+        className="animate-rise mx-auto mt-8 max-w-7xl scroll-mt-28 px-4 sm:mt-12 sm:px-6"
       >
         <SectionHeader
           title={t("shopByCategory")}
@@ -244,7 +244,7 @@ export function HomePage({
       {popularNow.length > 0 && (
         <section
           id="fresh-today"
-          className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
+          className="animate-rise-delay mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
         >
           <SectionHeader
             title={t("bestSellers")}
