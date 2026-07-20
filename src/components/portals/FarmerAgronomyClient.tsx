@@ -3,16 +3,17 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { FarmerPanel } from "@/components/portals/FarmerUi";
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/lib/locale-context";
 
-const ADVICE_TOPICS = [
-  "Crop Diseases",
-  "Pest Infestation",
-  "Soil Fertility",
-  "Fertilizer Recommendation",
-  "Irrigation",
-  "Organic Farming",
-  "Harvest Timing",
-  "Post-Harvest Handling",
+const ADVICE_TOPIC_KEYS = [
+  "agroTopicDiseases",
+  "agroTopicPests",
+  "agroTopicSoil",
+  "agroTopicFertilizer",
+  "agroTopicIrrigation",
+  "agroTopicOrganic",
+  "agroTopicHarvest",
+  "agroTopicPostHarvest",
 ] as const;
 
 type FollowUp = {
@@ -37,36 +38,6 @@ type AgronomyRow = {
   followUps: FollowUp[];
 };
 
-function statusLabel(status: string) {
-  switch (status) {
-    case "OPEN":
-      return "Submitted — waiting for Huza";
-    case "REPLIED":
-      return "Agronomist replied";
-    case "SCHEDULED":
-      return "Visit scheduled";
-    case "HANDLED":
-      return "Visit / advice completed";
-    case "CLOSED":
-      return "Closed";
-    default:
-      return status;
-  }
-}
-
-function followUpTypeLabel(type: string) {
-  const map: Record<string, string> = {
-    VISIT: "Visit report",
-    RECOMMENDATION: "Recommendation",
-    DISEASE: "Disease note",
-    PEST: "Pest note",
-    SOIL: "Soil note",
-    TRAINING: "Training",
-    NOTE: "Note",
-  };
-  return map[type] || type;
-}
-
 function formatWhen(iso: string | null) {
   if (!iso) return "—";
   return new Intl.DateTimeFormat("en-RW", {
@@ -80,22 +51,57 @@ function formatWhen(iso: string | null) {
  * Agronomy Support — request advice or a farm visit + live request/visit ledger.
  */
 export function FarmerAgronomyClient() {
+  const { t } = useLocale();
   const [mode, setMode] = useState<"advice" | "visit">("advice");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [historyLoading, setHistoryLoading] = useState(true);
   const [requests, setRequests] = useState<AgronomyRow[]>([]);
   const [advice, setAdvice] = useState<{
-    topic: (typeof ADVICE_TOPICS)[number];
+    topic: (typeof ADVICE_TOPIC_KEYS)[number];
     crop: string;
     description: string;
-  }>({ topic: ADVICE_TOPICS[0], crop: "", description: "" });
+  }>({
+    topic: ADVICE_TOPIC_KEYS[0],
+    crop: "",
+    description: "",
+  });
   const [visit, setVisit] = useState({
     reason: "",
     crop: "",
     preferredDate: "",
     description: "",
   });
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "OPEN":
+        return t("agroStatusOpen");
+      case "REPLIED":
+        return t("agroStatusReplied");
+      case "SCHEDULED":
+        return t("agroStatusScheduled");
+      case "HANDLED":
+        return t("agroStatusHandled");
+      case "CLOSED":
+        return t("agroStatusClosed");
+      default:
+        return status;
+    }
+  };
+
+  const followUpTypeLabel = (type: string) => {
+    const map: Record<string, string> = {
+      VISIT: t("agroFuVisit"),
+      RECOMMENDATION: t("agroFuRecommendation"),
+      DISEASE: t("agroFuDisease"),
+      PEST: t("agroFuPest"),
+      SOIL: t("agroFuSoil"),
+      TRAINING: t("agroFuTraining"),
+      NOTE: t("agroFuNote"),
+    };
+    return map[type] || type;
+  };
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -117,25 +123,28 @@ export function FarmerAgronomyClient() {
     setBusy(true);
     setMsg("");
     try {
+      const payload =
+        mode === "advice"
+          ? {
+              kind: "advice",
+              topic: t(advice.topic),
+              crop: advice.crop,
+              description: advice.description,
+            }
+          : { kind: "visit", ...visit };
       const res = await fetch("/api/supplier/agronomy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          mode === "advice" ? { kind: "advice", ...advice } : { kind: "visit", ...visit }
-        ),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not submit request");
-      setMsg(
-        mode === "advice"
-          ? "Advice request submitted. Youth Huza will follow up."
-          : "Farm visit request submitted. Track progress in the ledger below."
-      );
-      setAdvice({ topic: ADVICE_TOPICS[0], crop: "", description: "" });
+      if (!res.ok) throw new Error(data.error || t("agroSendFailed"));
+      setMsg(mode === "advice" ? t("agroAdviceSent") : t("agroVisitSent"));
+      setAdvice({ topic: ADVICE_TOPIC_KEYS[0], crop: "", description: "" });
       setVisit({ reason: "", crop: "", preferredDate: "", description: "" });
       await loadHistory();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Request failed");
+      setMsg(err instanceof Error ? err.message : t("agroSendFailed"));
     } finally {
       setBusy(false);
     }
@@ -153,7 +162,7 @@ export function FarmerAgronomyClient() {
               : "bg-white text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-line)]"
           }`}
         >
-          Request expert advice
+          {t("agroAdviceTab")}
         </button>
         <button
           type="button"
@@ -164,42 +173,40 @@ export function FarmerAgronomyClient() {
               : "bg-white text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-line)]"
           }`}
         >
-          Request farm visit
+          {t("agroVisitTab")}
         </button>
       </div>
 
       <FarmerPanel className="max-w-2xl">
         <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-ink)]">
-          {mode === "advice" ? "Request expert advice" : "Request farm visit"}
+          {mode === "advice" ? t("agroAdviceTab") : t("agroVisitTab")}
         </h2>
-        <p className="mt-1 text-sm text-[var(--huza-muted)]">
-          Youth Huza helps improve farming practices — not only buys produce.
-        </p>
+        <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("agroIntro")}</p>
 
         <form onSubmit={submit} className="mt-4 space-y-3">
           {mode === "advice" ? (
             <>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Topic</span>
+                <span className="mb-1 block font-medium">{t("agroTopicLabel")}</span>
                 <select
                   className="w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
                   value={advice.topic}
                   onChange={(e) =>
                     setAdvice((a) => ({
                       ...a,
-                      topic: e.target.value as (typeof ADVICE_TOPICS)[number],
+                      topic: e.target.value as (typeof ADVICE_TOPIC_KEYS)[number],
                     }))
                   }
                 >
-                  {ADVICE_TOPICS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  {ADVICE_TOPIC_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {t(key)}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Crop concerned</span>
+                <span className="mb-1 block font-medium">{t("agroCropLabel")}</span>
                 <input
                   className="w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
                   required
@@ -208,7 +215,7 @@ export function FarmerAgronomyClient() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Describe the problem</span>
+                <span className="mb-1 block font-medium">{t("agroDescriptionLabel")}</span>
                 <textarea
                   className="min-h-[100px] w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
                   required
@@ -220,7 +227,7 @@ export function FarmerAgronomyClient() {
           ) : (
             <>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Reason for visit</span>
+                <span className="mb-1 block font-medium">{t("agroReasonLabel")}</span>
                 <input
                   className="w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
                   required
@@ -229,7 +236,7 @@ export function FarmerAgronomyClient() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Crop concerned</span>
+                <span className="mb-1 block font-medium">{t("agroCropLabel")}</span>
                 <input
                   className="w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
                   required
@@ -238,7 +245,7 @@ export function FarmerAgronomyClient() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Preferred date</span>
+                <span className="mb-1 block font-medium">{t("agroPreferredDate")}</span>
                 <input
                   type="date"
                   className="w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
@@ -247,7 +254,7 @@ export function FarmerAgronomyClient() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Description</span>
+                <span className="mb-1 block font-medium">{t("description")}</span>
                 <textarea
                   className="min-h-[100px] w-full rounded-xl border border-[var(--huza-line)] px-3 py-2"
                   required
@@ -261,7 +268,7 @@ export function FarmerAgronomyClient() {
           {msg ? <p className="text-sm text-[var(--huza-green-dark)]">{msg}</p> : null}
 
           <Button type="submit" disabled={busy} className="w-full sm:w-auto">
-            {busy ? "Sending…" : "Submit request"}
+            {busy ? t("agroSending") : t("agroSubmitRequest")}
           </Button>
         </form>
       </FarmerPanel>
@@ -269,22 +276,18 @@ export function FarmerAgronomyClient() {
       <FarmerPanel className="max-w-2xl">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h2 className="font-semibold text-[var(--huza-ink)]">My requests & visit reports</h2>
-            <p className="mt-1 text-sm text-[var(--huza-muted)]">
-              Live status and agronomist notes for your farm.
-            </p>
+            <h2 className="font-semibold text-[var(--huza-ink)]">{t("agroHistoryTitle")}</h2>
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("agroHistorySubtitle")}</p>
           </div>
           <Button type="button" size="sm" variant="ghost" onClick={() => void loadHistory()}>
-            Refresh
+            {t("agroRefresh")}
           </Button>
         </div>
 
         {historyLoading ? (
-          <p className="mt-4 text-sm text-[var(--huza-muted)]">Loading history…</p>
+          <p className="mt-4 text-sm text-[var(--huza-muted)]">{t("agroLoading")}</p>
         ) : requests.length === 0 ? (
-          <p className="mt-4 text-sm text-[var(--huza-muted)]">
-            No requests yet. Submit advice or a farm visit above.
-          </p>
+          <p className="mt-4 text-sm text-[var(--huza-muted)]">{t("agroHistoryEmpty")}</p>
         ) : (
           <ul className="mt-4 space-y-3">
             {requests.map((r) => (
@@ -295,11 +298,13 @@ export function FarmerAgronomyClient() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-semibold text-[var(--huza-ink)]">
-                      {r.kind === "VISIT" ? "Farm visit" : "Advice"} · {r.crop}
+                      {r.kind === "VISIT" ? t("agroKindVisit") : t("agroKindAdvice")} · {r.crop}
                     </p>
                     <p className="text-xs text-[var(--huza-muted)]">
                       {r.topicOrReason} · {formatWhen(r.createdAt)}
-                      {r.scheduledAt ? ` · Scheduled ${formatWhen(r.scheduledAt)}` : ""}
+                      {r.scheduledAt
+                        ? ` · ${t("agroScheduledPrefix")} ${formatWhen(r.scheduledAt)}`
+                        : ""}
                     </p>
                   </div>
                   <span className="rounded-lg bg-[var(--huza-mint)] px-2 py-1 text-xs font-bold text-[var(--huza-green-dark)]">
@@ -308,14 +313,14 @@ export function FarmerAgronomyClient() {
                 </div>
                 {r.adminReply ? (
                   <p className="mt-2 rounded-lg bg-[var(--huza-mint)]/40 px-2.5 py-2 text-[var(--huza-ink)]">
-                    <span className="font-semibold">Huza reply: </span>
+                    <span className="font-semibold">{t("agroHuzaReply")}: </span>
                     {r.adminReply}
                   </p>
                 ) : null}
                 {r.followUps?.length ? (
                   <div className="mt-3 space-y-2 border-t border-[var(--huza-line)] pt-2">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--huza-muted)]">
-                      Visit / follow-up ledger
+                      {t("agroFollowUps")}
                     </p>
                     {r.followUps.map((f) => (
                       <div key={f.id} className="rounded-lg bg-[var(--huza-soft,#f7f7f5)] px-2.5 py-2">

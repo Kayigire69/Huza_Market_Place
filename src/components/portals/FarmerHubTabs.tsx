@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 
 export type FarmerHubTab = {
   href: string;
-  label: string;
+  labelKey: string;
   match?: (pathname: string, tab: string | null) => boolean;
 };
 
@@ -14,17 +15,18 @@ export function FarmerHubTabs({ tabs }: { tabs: FarmerHubTab[] }) {
   const pathname = usePathname() || "";
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
+  const { t } = useLocale();
 
   return (
     <div className="mb-5 flex flex-wrap gap-2">
-      {tabs.map((t) => {
-        const active = t.match
-          ? t.match(pathname, tab)
-          : pathname === t.href || pathname.startsWith(`${t.href}/`);
+      {tabs.map((item) => {
+        const active = item.match
+          ? item.match(pathname, tab)
+          : pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
-            key={t.href}
-            href={t.href}
+            key={item.href}
+            href={item.href}
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-bold transition",
               active
@@ -32,7 +34,7 @@ export function FarmerHubTabs({ tabs }: { tabs: FarmerHubTab[] }) {
                 : "bg-white text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-line)]"
             )}
           >
-            {t.label}
+            {t(item.labelKey)}
           </Link>
         );
       })}
@@ -43,17 +45,17 @@ export function FarmerHubTabs({ tabs }: { tabs: FarmerHubTab[] }) {
 export const PRODUCE_TABS: FarmerHubTab[] = [
   {
     href: "/farmer/produce",
-    label: "All produce",
+    labelKey: "tabAllProduce",
     match: (p, tab) => (p.startsWith("/farmer/produce") && !tab) || p === "/farmer/products",
   },
   {
     href: "/farmer/produce?tab=submit",
-    label: "Submit crop",
+    labelKey: "tabSubmitCrop",
     match: (p, tab) => tab === "submit" || p.startsWith("/farmer/products/submit"),
   },
   {
     href: "/farmer/produce?tab=approvals",
-    label: "Approval status",
+    labelKey: "tabApprovalStatus",
     match: (p, tab) => tab === "approvals" || p.startsWith("/farmer/approvals"),
   },
 ];
@@ -61,12 +63,13 @@ export const PRODUCE_TABS: FarmerHubTab[] = [
 export const SALES_TABS: FarmerHubTab[] = [
   {
     href: "/farmer/sales",
-    label: "Purchase orders",
-    match: (p, tab) => (p.startsWith("/farmer/sales") && tab !== "payments") || p.startsWith("/farmer/orders"),
+    labelKey: "tabPurchaseOrders",
+    match: (p, tab) =>
+      (p.startsWith("/farmer/sales") && tab !== "payments") || p.startsWith("/farmer/orders"),
   },
   {
     href: "/farmer/sales?tab=payments",
-    label: "Payments",
+    labelKey: "tabPayments",
     match: (p, tab) => tab === "payments" || p.startsWith("/farmer/payments"),
   },
 ];

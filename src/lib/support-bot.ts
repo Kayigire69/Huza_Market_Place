@@ -49,7 +49,7 @@ const replies: Record<string, Record<Locale, string>> = {
   closingTime: {
     en: "We close at 9:00 PM every evening. Orders placed after closing are accepted online and scheduled for the next day.",
     fr: "Nous fermons à 21h00 chaque soir. Les commandes passées après la fermeture sont acceptées en ligne et planifiées pour le lendemain.",
-    rw: "Dufunga saa 3 z'ijoro buri mugoroba. Ibicuruzwa byatumijwe nyuma yo gufunga byakira online bigateganyirizwa umunsi ukurikira.",
+    rw: "Dufunga saa 3 z'ijoro buri mugoroba. Amatumiza yoherejwe nyuma yo gufunga yakirwa online agateganyirizwa umunsi ukurikira.",
     sw: "Tunafunga saa 3 usiku kila jioni. Maagizo yaliyowekwa baada ya kufunga yanakubaliwa mtandaoni na kupangwa kwa siku inayofuata.",
   },
   openingTime: {
@@ -121,19 +121,19 @@ const replies: Record<string, Record<Locale, string>> = {
   track: {
     en: "To track an order: open Track Order, enter your order number (e.g. HZ-2026-000245) and the phone used at checkout. You also find it in My Account → Orders after login.",
     fr: "Pour suivre une commande : ouvrez Suivi de commande, entrez votre numéro (ex. HZ-2026-000245) et le téléphone du paiement. Aussi dans Mon compte → Commandes.",
-    rw: "Kugira ngo ukurikirane: fungura Track Order, andika numero (urugero HZ-2026-000245) n'telefone wakoresheje. Nanone muri Konti → Ibicuruzwa.",
+    rw: "Kugira ngo ukurikirane: fungura Kurikirana itegeko, andika numero (urugero HZ-2026-000245) n'telefone wakoresheje. Nanone muri Konti → Amatumiza.",
     sw: "Kufuatilia: fungua Track Order, weka nambari (mfano HZ-2026-000245) na simu ya malipo. Pia katika Akaunti → Maagizo.",
   },
   orderNumber: {
     en: "Order numbers look like HZ-2026-000245. You see yours on the payment success screen, in SMS/notifications when available, and under My Account → Orders.",
     fr: "Les numéros de commande ressemblent à HZ-2026-000245. Vous le voyez après paiement, dans les notifications, et dans Mon compte → Commandes.",
-    rw: "Numero z'ibicuruzwa zisa na HZ-2026-000245. Uzibona nyuma yo kwishyura, mu makuru, no muri Konti → Ibicuruzwa.",
+    rw: "Numero z'amatumiza zisa na HZ-2026-000245. Uzibona nyuma yo kwishyura, mu makuru, no muri Konti → Amatumiza.",
     sw: "Nambari za maagizo zinaonekana kama HZ-2026-000245. Unaiona baada ya malipo, katika arifa, na Akaunti → Maagizo.",
   },
   cancelOrder: {
     en: "To cancel or change an order, message us here with your order number, open a Support ticket, or email info@youthhuza.rw as soon as possible — before the rider leaves.",
     fr: "Pour annuler ou modifier, écrivez-nous ici avec votre numéro, créez un ticket Support, ou envoyez un e-mail à info@youthhuza.rw rapidement — avant le départ du livreur.",
-    rw: "Kugira ngo uhagarike cyangwa uhindure, twandikire hano ufite numero, ukore ticket, cyangwa andika info@youthhuza.rw vuba — mbere y'uko umutangaji agenda.",
+    rw: "Kugira ngo uhagarike cyangwa uhindure, twandikire hano ufite numero, fungura icyifuzo cy'ubufasha, cyangwa andika info@youthhuza.rw vuba — mbere y'uko umutangaji agenda.",
     sw: "Kughairi au kubadilisha, tuandikie hapa na nambari ya agizo, fungua tiketi ya Support, au andika info@youthhuza.rw haraka — kabla dereva hajaondoka.",
   },
 
@@ -159,7 +159,7 @@ const replies: Record<string, Record<Locale, string>> = {
   organic: {
     en: "Products marked Organic are flagged by Huza after review. Check the product page badge and description for details.",
     fr: "Les produits marqués Bio sont validés par Huza après contrôle. Voir le badge et la description sur la fiche produit.",
-    rw: "Ibicuruzwa byanditse Organic byemejwe na Huza. Reba ikimenyetso n'ibisobanuro ku rupapuro rw'igicuruzwa.",
+    rw: "Ibicuruzwa byanditse nk'ibinyabuzima byemejwe na Huza. Reba ikimenyetso n'ibisobanuro ku rupapuro rw'igicuruzwa.",
     sw: "Bidhaa zilizoandikwa Organic huthibitishwa na Huza. Angalia beji na maelezo kwenye ukurasa wa bidhaa.",
   },
   stock: {
@@ -173,7 +173,7 @@ const replies: Record<string, Record<Locale, string>> = {
   return: {
     en: "For returns, refunds, or quality issues: open Support (/support) with your order number and photos if possible, chat here, or see our Refund Policy. Contact us within 24 hours of delivery.",
     fr: "Pour retours, remboursements ou qualité : ouvrez Support (/support) avec votre numéro et photos, discutez ici, ou lisez la Politique de remboursement. Contactez-nous sous 24 h.",
-    rw: "Ku gusubiza cyangwa ubwiza: fungura Support (/support) ufite numero n'amafoto, tungane hano, cyangwa usome Refund Policy. Twandikire mu masaha 24.",
+    rw: "Ku gusubiza cyangwa ubwiza: fungura Ubufasha (/support) ufite numero n'amafoto, tungane hano, cyangwa usome Politiki yo gusubizwa. Twandikire mu masaha 24.",
     sw: "Kwa marejesho au ubora: fungua Support (/support) na nambari na picha, zungumza hapa, au soma Sera ya Marejesho. Wasiliana ndani ya saa 24.",
   },
 
@@ -181,13 +181,13 @@ const replies: Record<string, Record<Locale, string>> = {
   account: {
     en: "Register or log in to see Orders, Wishlist, Addresses, Notifications, and Invoices. Guests can still checkout and track with order number + phone.",
     fr: "Inscrivez-vous ou connectez-vous pour Commandes, Favoris, Adresses, Notifications et Factures. Les invités peuvent commander et suivre avec numéro + téléphone.",
-    rw: "Iyandikishe cyangwa winjire urebe Ibicuruzwa, Wishlist, Aderesi, Amakuru n'Invoices. Abashyitsi barashobora gutumiza bakoresheje numero n'telefone.",
+    rw: "Iyandikishe cyangwa winjire urebe Amatumiza, Urutonde rw'ibyifuzwa, Aderesi, Amakuru n'ininvoisi. Abashyitsi barashobora gutumiza bakoresheje numero n'telefone.",
     sw: "Jisajili au ingia kuona Maagizo, Vipendwa, Anwani, Arifa, na Ankara. Wageni wanaweza kuagiza na kufuatilia kwa nambari + simu.",
   },
   password: {
     en: "Forgot your password? Open a Support ticket or email info@youthhuza.rw. After login, change password under My Account.",
     fr: "Mot de passe oublié ? Créez un ticket Support ou écrivez à info@youthhuza.rw. Après connexion, changez-le dans Mon compte.",
-    rw: "Wibagiwe ijambo ry'ibanga? Kora ticket cyangwa andika info@youthhuza.rw. Nyuma yo kwinjira, uhindure muri Konti.",
+    rw: "Wibagiwe ijambo ry'ibanga? Fungura icyifuzo cy'ubufasha cyangwa andika info@youthhuza.rw. Nyuma yo kwinjira, uhindure muri Konti.",
     sw: "Umesahau nenosiri? Fungua tiketi ya Support au andika info@youthhuza.rw. Baada ya kuingia, badilisha katika Akaunti.",
   },
 
@@ -209,7 +209,7 @@ const replies: Record<string, Record<Locale, string>> = {
   about: {
     en: "HUZA FRESH is powered by Youth Huza. We buy from verified farms, quality-check produce, and deliver under one trusted brand. Read more on About, Mission, and Vision pages.",
     fr: "HUZA FRESH est propulsé par Youth Huza. Nous achetons auprès de fermes vérifiées, contrôlons la qualité et livrons sous une marque. Voir À propos, Mission et Vision.",
-    rw: "HUZA FRESH ikoreshwa na Youth Huza. Tugura ku bahinzi bemewe, tugenzura ubwiza, dutanga ku kirango kimwe. Soma About, Mission na Vision.",
+    rw: "HUZA FRESH ikoreshwa na Youth Huza. Tugura ku bahinzi bemewe, tugenzura ubwiza, dutanga ku kirango kimwe. Soma Ibyerekeye, Intego n'Icyerekezo.",
     sw: "HUZA FRESH inaendeshwa na Youth Huza. Tunanunua kutoka mashamba yaliyothibitishwa, hukagua ubora, na kuwasilisha chini ya chapa moja. Soma About, Mission, na Vision.",
   },
   language: {
@@ -239,13 +239,13 @@ const replies: Record<string, Record<Locale, string>> = {
   wishlist: {
     en: "Tap the heart on a product to save it to your Wishlist (login required). Open Wishlist from the header anytime.",
     fr: "Touchez le cœur sur un produit pour l’ajouter aux Favoris (connexion requise). Ouvrez Favoris depuis l’en-tête.",
-    rw: "Kanda ku mutima ku gicuruzwa ugishyire muri Wishlist (bisaba kwinjira). Fungura Wishlist hejuru.",
+    rw: "Kanda ku mutima ku gicuruzwa ugishyire mu rutonde rw'ibyifuzwa (bisaba kwinjira). Fungura Urutonde rw'ibyifuzwa hejuru.",
     sw: "Gusa moyo kwenye bidhaa kuihifadhi Vipendwani (inahitaji kuingia). Fungua Vipendwa kutoka juu.",
   },
   invoice: {
     en: "After ordering, invoices are available from My Account (logged-in customers) or via order tracking links when provided.",
     fr: "Après commande, les factures sont dans Mon compte (clients connectés) ou via le suivi de commande.",
-    rw: "Nyuma yo gutumiza, invoices ziboneka muri Konti cyangwa binyuze kuri Track Order.",
+    rw: "Nyuma yo gutumiza, ininvoisi ziboneka muri Konti cyangwa binyuze kuri Kurikirana itegeko.",
     sw: "Baada ya kuagiza, ankara zinapatikana katika Akaunti au kupitia ufuatiliaji wa agizo.",
   },
 
