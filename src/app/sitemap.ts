@@ -9,6 +9,7 @@ const siteUrl =
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     "",
+    "/shop",
     "/products",
     "/categories",
     "/about",
@@ -26,8 +27,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ].map((path) => ({
     url: `${siteUrl}${path || "/"}`,
     lastModified: new Date(),
-    changeFrequency: path === "" || path === "/products" ? "daily" : "weekly",
-    priority: path === "" ? 1 : path === "/products" ? 0.9 : 0.6,
+    changeFrequency: path === "" || path === "/shop" || path === "/products" ? "daily" : "weekly",
+    priority: path === "" ? 1 : path === "/shop" || path === "/products" ? 0.9 : 0.6,
   }));
 
   let productEntries: MetadataRoute.Sitemap = [];

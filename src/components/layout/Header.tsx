@@ -117,7 +117,7 @@ export function Header() {
       <div className="sticky top-0 z-50 border-b border-[var(--huza-line)] bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
           <Link
-            href="/"
+            href="/shop"
             className="flex shrink-0 items-center"
             aria-label="HUZA FRESH Home"
           >
