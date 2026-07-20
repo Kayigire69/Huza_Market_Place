@@ -27,20 +27,13 @@ function computePerformanceScore(input: {
 }
 
 export default async function FarmerReportsPage() {
-  const { farmer, purchaseOrders, stats } = await requireFarmerWorkspace();
+  const { farmer, purchaseOrders, stats, reportTotals } = await requireFarmerWorkspace();
 
-  const paid = purchaseOrders.filter((po) => po.paidAt);
   const rejectedPos = purchaseOrders.filter((po) => po.status === "REJECTED");
-  const commissionPaid = paid.filter((po) => po.dealType === "COMMISSION");
-  const totalEarnings = paid.reduce((s, po) => s + po.totalAmount, 0);
-  const commissionFees = commissionPaid.reduce(
-    (s, po) => s + (po.commissionAmount ?? 0),
-    0
-  );
-  const qtySold = paid.reduce((s, po) => s + po.quantity, 0);
-  const outstanding = purchaseOrders
-    .filter((po) => !po.paidAt && !["CANCELLED", "REJECTED", "DRAFT"].includes(po.status))
-    .reduce((s, po) => s + po.totalAmount, 0);
+  const totalEarnings = reportTotals.totalEarnings;
+  const commissionFees = reportTotals.commissionFees;
+  const qtySold = reportTotals.qtySold;
+  const outstanding = reportTotals.outstanding;
 
   const approved = stats.approvedProducts;
   const rejected = stats.rejectedProducts;
@@ -52,7 +45,7 @@ export default async function FarmerReportsPage() {
       ? null
       : computePerformanceScore({
           acceptanceRate,
-          rejectedPos: rejectedPos.length,
+          rejectedPos: reportTotals.rejectedPoCount,
           ratingAvg: farmer.ratingAvg,
         });
   const band = score != null ? performanceBand(score) : null;
@@ -108,15 +101,15 @@ export default async function FarmerReportsPage() {
           <ul className="mt-3 space-y-2 text-sm text-[var(--huza-ink)]">
             <li className="flex justify-between gap-3">
               <span>Products / POs paid</span>
-              <strong>{paid.length}</strong>
+              <strong>{reportTotals.paidCount}</strong>
             </li>
             <li className="flex justify-between gap-3">
               <span>Commission sales settled</span>
-              <strong>{commissionPaid.length}</strong>
+              <strong>{reportTotals.commissionSettledCount}</strong>
             </li>
             <li className="flex justify-between gap-3">
               <span>Rejected purchase orders</span>
-              <strong>{rejectedPos.length}</strong>
+              <strong>{reportTotals.rejectedPoCount}</strong>
             </li>
           </ul>
         </FarmerPanel>
@@ -157,7 +150,7 @@ export default async function FarmerReportsPage() {
             </li>
             <li className="flex justify-between gap-3">
               <span>Purchase frequency (POs)</span>
-              <strong>{purchaseOrders.length}</strong>
+              <strong>{reportTotals.poCount}</strong>
             </li>
             <li className="flex justify-between gap-3">
               <span>Quality rating (Huza)</span>

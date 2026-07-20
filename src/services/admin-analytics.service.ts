@@ -6,11 +6,47 @@ function startOfLocalDay(d = new Date()) {
   return x;
 }
 
+/** Local calendar YYYY-MM-DD (not UTC) for chart buckets. */
 function dayKey(d: Date) {
-  return d.toISOString().slice(0, 10);
+  const x = startOfLocalDay(d);
+  const y = x.getFullYear();
+  const m = String(x.getMonth() + 1).padStart(2, "0");
+  const day = String(x.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
-/** Unread agronomy requests still needing staff action. */
+/** Revenue GMV excludes unpaid / cancelled / refunded / returned orders. */
+const REVENUE_STATUS_EXCLUDE = ["CANCELLED", "REFUNDED", "PENDING", "RETURNED"] as const;
+
+/** Count products where available (stock − reserved) is at/below each product threshold. */
+async function countLowStockProducts() {
+  const rows = await prisma.$queryRaw<Array<{ c: number }>>`
+    SELECT COUNT(*)::int AS c
+    FROM "Product"
+    WHERE "isActive" = true
+      AND "deletedAt" IS NULL
+      AND ("stockQty" - "reservedQty") <= COALESCE("lowStockAt", 5)
+  `;
+  return rows[0]?.c ?? 0;
+}
+
+async function loadLowStockPreview(take = 6) {
+  const candidates = await prisma.product.findMany({
+    where: { isActive: true, deletedAt: null },
+    orderBy: { stockQty: "asc" },
+    take: 80,
+    select: { nameEn: true, stockQty: true, reservedQty: true, lowStockAt: true, unit: true },
+  });
+  return candidates
+    .filter((p) => Math.max(0, p.stockQty - p.reservedQty) <= (p.lowStockAt ?? 5))
+    .slice(0, take)
+    .map((p) => ({
+      nameEn: p.nameEn,
+      stockQty: Math.max(0, p.stockQty - p.reservedQty),
+      unit: p.unit,
+    }));
+}
+
 async function countOpenAgronomyRequests() {
   return prisma.agronomyRequest.count({
     where: { status: { in: ["OPEN", "REPLIED", "SCHEDULED"] } },
@@ -52,7 +88,7 @@ export async function getOrdersLast7Days() {
   const orders = await prisma.order.findMany({
     where: {
       createdAt: { gte: from },
-      status: { notIn: ["CANCELLED", "REFUNDED"] },
+      status: { notIn: [...REVENUE_STATUS_EXCLUDE] },
     },
     select: { createdAt: true, total: true },
   });
@@ -65,7 +101,7 @@ export async function getOrdersLast7Days() {
   }
 
   for (const o of orders) {
-    const key = dayKey(startOfLocalDay(o.createdAt));
+    const key = dayKey(o.createdAt);
     const row = byDay.get(key);
     if (row) {
       row.orders += 1;
@@ -75,7 +111,8 @@ export async function getOrdersLast7Days() {
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   return Array.from(byDay.entries()).map(([date, stats]) => {
-    const d = new Date(date + "T12:00:00");
+    const [yy, mm, dd] = date.split("-").map(Number);
+    const d = new Date(yy, mm - 1, dd, 12, 0, 0, 0);
     return {
       date,
       label: dayNames[d.getDay()],
@@ -188,12 +225,10 @@ export async function getAdminLiveLite() {
       _sum: { total: true },
       where: {
         createdAt: { gte: startOfDay },
-        status: { notIn: ["CANCELLED", "REFUNDED"] },
+        status: { notIn: [...REVENUE_STATUS_EXCLUDE] },
       },
     }),
-    prisma.product.count({
-      where: { isActive: true, deletedAt: null, stockQty: { lte: 5 } },
-    }),
+    countLowStockProducts(),
     prisma.supplier.count({ where: { status: "PENDING" } }),
     prisma.order.count({
       where: {
@@ -265,24 +300,17 @@ export async function getAdminDashboardAnalytics() {
       _sum: { total: true },
       where: {
         createdAt: { gte: startOfDay },
-        status: { notIn: ["CANCELLED", "REFUNDED"] },
+        status: { notIn: [...REVENUE_STATUS_EXCLUDE] },
       },
     }),
-    prisma.product.count({
-      where: { isActive: true, deletedAt: null, stockQty: { lte: 5 } },
-    }),
+    countLowStockProducts(),
     prisma.supplier.count({ where: { status: "PENDING" } }),
     prisma.order.findMany({
       include: { payment: true, items: true },
       orderBy: { createdAt: "desc" },
       take: 12,
     }),
-    prisma.product.findMany({
-      where: { isActive: true, deletedAt: null, stockQty: { lte: 5 } },
-      orderBy: { stockQty: "asc" },
-      take: 6,
-      select: { nameEn: true, stockQty: true, unit: true },
-    }),
+    loadLowStockPreview(6),
     getOrdersLast7Days(),
     getTopProductsBySales(5),
     getSalesByCategory(8),
@@ -290,14 +318,14 @@ export async function getAdminDashboardAnalytics() {
       _sum: { total: true },
       where: {
         createdAt: { gte: monthStart },
-        status: { notIn: ["CANCELLED", "REFUNDED"] },
+        status: { notIn: [...REVENUE_STATUS_EXCLUDE] },
       },
     }),
     prisma.order.aggregate({
       _sum: { total: true },
       where: {
         createdAt: { gte: prevMonthStart, lte: prevMonthEnd },
-        status: { notIn: ["CANCELLED", "REFUNDED"] },
+        status: { notIn: [...REVENUE_STATUS_EXCLUDE] },
       },
     }),
     prisma.order.count({ where: { status: "DELIVERED" } }),
