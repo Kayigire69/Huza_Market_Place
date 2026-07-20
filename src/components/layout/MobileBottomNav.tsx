@@ -28,10 +28,10 @@ export function MobileBottomNav() {
 
   const tabs = [
     {
-      href: "/",
+      href: "/shop",
       label: t("home"),
       icon: Home,
-      active: pathname === "/",
+      active: pathname === "/shop",
     },
     {
       href: "/categories",

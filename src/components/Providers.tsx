@@ -41,6 +41,11 @@ function isCheckout(pathname: string | null) {
   return pathname === "/checkout" || pathname.startsWith("/checkout/");
 }
 
+/** Public Entry Page has its own chrome — hide shop header/footer/nav. */
+function isPublicEntry(pathname: string | null) {
+  return pathname === "/";
+}
+
 function hideMobileNav(pathname: string | null) {
   return isCheckout(pathname);
 }
@@ -49,8 +54,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const partner = isPartnerPortal(pathname);
   const checkout = isCheckout(pathname);
+  const entry = isPublicEntry(pathname);
   const noMobileNav = hideMobileNav(pathname);
-  const storefrontChrome = !partner && !checkout;
+  const storefrontChrome = !partner && !checkout && !entry;
   const [whatsappUrl, setWhatsappUrl] = useState("");
   const prefetchRoutes = useMemo(() => {
     if (pathname?.startsWith("/admin")) return ADMIN_PREFETCH;
@@ -82,7 +88,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <main
           id="main-content"
           className={
-            partner || checkout
+            partner || checkout || entry
               ? "min-h-screen"
               : noMobileNav
                 ? "min-h-[70vh]"

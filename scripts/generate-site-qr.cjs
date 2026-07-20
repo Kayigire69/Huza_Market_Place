@@ -4,7 +4,9 @@ const QRCode = require("qrcode");
 const sharp = require("sharp");
 
 const SITE_URL = "https://www.youthhuza.rw";
+const FARMER_URL = "https://www.youthhuza.rw/farmer";
 const SITE_LABEL = "www.youthhuza.rw";
+const FARMER_LABEL = "www.youthhuza.rw/farmer";
 const BRAND_GREEN = "#0B5C34";
 const BRAND_MINT = "#E8F5EC";
 const outDir = path.join(__dirname, "..", "public", "qr");
@@ -19,8 +21,8 @@ const baseOptions = {
   },
 };
 
-async function generateBaseQr(size) {
-  return QRCode.toBuffer(SITE_URL, {
+async function generateBaseQr(url, size) {
+  return QRCode.toBuffer(url, {
     ...baseOptions,
     type: "png",
     width: size,
@@ -28,8 +30,8 @@ async function generateBaseQr(size) {
 }
 
 /** QR with HUZA logo centered on a white badge */
-async function generateBrandedQr(size, logoScale = 0.22) {
-  const qrBuffer = await generateBaseQr(size);
+async function generateBrandedQr(url, size, logoScale = 0.22) {
+  const qrBuffer = await generateBaseQr(url, size);
   const logoSize = Math.round(size * logoScale);
   const badgeSize = Math.round(logoSize * 1.18);
   const badgeRadius = Math.round(badgeSize * 0.18);
@@ -67,15 +69,25 @@ async function generateBrandedQr(size, logoScale = 0.22) {
 }
 
 /** Simple poster layout: logo, headline, branded QR, URL */
-async function generatePoster({ width, height, qrSize, filename }) {
-  const qrBuffer = await generateBrandedQr(qrSize, 0.24);
+async function generatePoster({
+  url,
+  width,
+  height,
+  qrSize,
+  filename,
+  headline,
+  subhead,
+  urlLabel,
+  footer,
+}) {
+  const qrBuffer = await generateBrandedQr(url, qrSize, 0.24);
   const logoWidth = Math.round(width * 0.42);
   const logo = await sharp(logoPath).resize(logoWidth, null, { fit: "inside" }).png().toBuffer();
   const logoMeta = await sharp(logo).metadata();
 
   const headlineSize = Math.round(width * 0.055);
   const subSize = Math.round(width * 0.032);
-  const urlSize = Math.round(width * 0.038);
+  const urlSize = Math.round(width * 0.034);
   const pad = Math.round(width * 0.08);
 
   const headlineY = pad + (logoMeta.height || 0) + Math.round(height * 0.04);
@@ -86,10 +98,10 @@ async function generatePoster({ width, height, qrSize, filename }) {
   const svg = Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
     <rect width="100%" height="100%" fill="${BRAND_MINT}"/>
     <rect x="0" y="0" width="100%" height="${Math.round(height * 0.012)}" fill="${BRAND_GREEN}"/>
-    <text x="50%" y="${headlineY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${headlineSize}" font-weight="700" fill="${BRAND_GREEN}">Scan to shop fresh produce</text>
-    <text x="50%" y="${headlineY + subSize * 1.4}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${subSize}" fill="#2D4A38">Order online from Youth Huza</text>
-    <text x="50%" y="${urlY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${urlSize}" font-weight="700" fill="${BRAND_GREEN}">${SITE_LABEL}</text>
-    <text x="50%" y="${urlY + subSize * 1.35}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${subSize}" fill="#4A6354">HUZA FRESH · Powered by Youth Huza</text>
+    <text x="50%" y="${headlineY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${headlineSize}" font-weight="700" fill="${BRAND_GREEN}">${headline}</text>
+    <text x="50%" y="${headlineY + subSize * 1.4}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${subSize}" fill="#2D4A38">${subhead}</text>
+    <text x="50%" y="${urlY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${urlSize}" font-weight="700" fill="${BRAND_GREEN}">${urlLabel}</text>
+    <text x="50%" y="${urlY + subSize * 1.35}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${subSize}" fill="#4A6354">${footer}</text>
   </svg>`);
 
   const base = await sharp(svg).png().toBuffer();
@@ -111,43 +123,110 @@ async function generatePoster({ width, height, qrSize, filename }) {
     .toFile(path.join(outDir, filename));
 }
 
+async function generateSet({
+  url,
+  label,
+  prefix,
+  headline,
+  subhead,
+  footer,
+  withPrint = true,
+}) {
+  const plainPng = path.join(outDir, `${prefix}.png`);
+  const plainSvg = path.join(outDir, `${prefix}.svg`);
+  const brandedPng = path.join(outDir, `${prefix}-branded.png`);
+
+  await QRCode.toFile(plainPng, url, { ...baseOptions, type: "png", width: 1200 });
+  await QRCode.toFile(plainSvg, url, { ...baseOptions, type: "svg", width: 1200 });
+
+  const branded = await generateBrandedQr(url, 1200, 0.22);
+  await sharp(branded).toFile(brandedPng);
+
+  console.log(`QR set for ${url}`);
+  console.log(`  Plain PNG:   ${plainPng}`);
+  console.log(`  Plain SVG:   ${plainSvg}`);
+  console.log(`  Branded PNG: ${brandedPng}`);
+
+  if (!withPrint) return;
+
+  await generatePoster({
+    url,
+    width: 1748,
+    height: 2480,
+    qrSize: 920,
+    filename: `${prefix}-flyer-a5.png`,
+    headline,
+    subhead,
+    urlLabel: label,
+    footer,
+  });
+
+  await generatePoster({
+    url,
+    width: 2480,
+    height: 3508,
+    qrSize: 1280,
+    filename: `${prefix}-poster-a4.png`,
+    headline,
+    subhead,
+    urlLabel: label,
+    footer,
+  });
+
+  console.log(`  Flyer A5:    ${path.join(outDir, `${prefix}-flyer-a5.png`)}`);
+  console.log(`  Poster A4:   ${path.join(outDir, `${prefix}-poster-a4.png`)}`);
+}
+
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
 
-  const plainPng = path.join(outDir, "youthhuza-site-qr.png");
-  const plainSvg = path.join(outDir, "youthhuza-site-qr.svg");
-  const brandedPng = path.join(outDir, "youthhuza-site-qr-branded.png");
-  const flyerPng = path.join(outDir, "youthhuza-flyer-a5.png");
-  const posterPng = path.join(outDir, "youthhuza-poster-a4.png");
-
-  await QRCode.toFile(plainPng, SITE_URL, { ...baseOptions, type: "png", width: 1200 });
-  await QRCode.toFile(plainSvg, SITE_URL, { ...baseOptions, type: "svg", width: 1200 });
-
-  const branded = await generateBrandedQr(1200, 0.22);
-  await sharp(branded).toFile(brandedPng);
-
-  // A5 flyer @ 300 dpi (1748 x 2480)
+  // Keep existing shop filenames for compatibility
+  await QRCode.toFile(path.join(outDir, "youthhuza-site-qr.png"), SITE_URL, {
+    ...baseOptions,
+    type: "png",
+    width: 1200,
+  });
+  await QRCode.toFile(path.join(outDir, "youthhuza-site-qr.svg"), SITE_URL, {
+    ...baseOptions,
+    type: "svg",
+    width: 1200,
+  });
+  await sharp(await generateBrandedQr(SITE_URL, 1200, 0.22)).toFile(
+    path.join(outDir, "youthhuza-site-qr-branded.png")
+  );
   await generatePoster({
+    url: SITE_URL,
     width: 1748,
     height: 2480,
     qrSize: 920,
     filename: "youthhuza-flyer-a5.png",
+    headline: "Scan to shop fresh produce",
+    subhead: "Order online from Youth Huza",
+    urlLabel: SITE_LABEL,
+    footer: "HUZA FRESH · Powered by Youth Huza",
   });
-
-  // A4 poster @ 300 dpi (2480 x 3508)
   await generatePoster({
+    url: SITE_URL,
     width: 2480,
     height: 3508,
     qrSize: 1280,
     filename: "youthhuza-poster-a4.png",
+    headline: "Scan to shop fresh produce",
+    subhead: "Order online from Youth Huza",
+    urlLabel: SITE_LABEL,
+    footer: "HUZA FRESH · Powered by Youth Huza",
   });
 
-  console.log(`QR assets generated for ${SITE_URL}`);
-  console.log(`Plain PNG:   ${plainPng}`);
-  console.log(`Plain SVG:   ${plainSvg}`);
-  console.log(`Branded PNG: ${brandedPng}`);
-  console.log(`Flyer A5:    ${flyerPng}`);
-  console.log(`Poster A4:   ${posterPng}`);
+  // Farmers portal QR
+  await generateSet({
+    url: FARMER_URL,
+    label: FARMER_LABEL,
+    prefix: "youthhuza-farmer-qr",
+    headline: "Scan to open Farmers Portal",
+    subhead: "Login or register with Youth Huza",
+    footer: "Farmers Portal · Youth Huza",
+    withPrint: true,
+  });
 }
 
 main().catch((error) => {
