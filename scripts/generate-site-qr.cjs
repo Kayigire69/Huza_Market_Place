@@ -3,9 +3,9 @@ const path = require("path");
 const QRCode = require("qrcode");
 const sharp = require("sharp");
 
-const SITE_URL = "https://www.youthhuza.rw";
+const SITE_URL = "https://www.youthhuza.rw/shop";
 const FARMER_URL = "https://www.youthhuza.rw/farmer";
-const SITE_LABEL = "www.youthhuza.rw";
+const SITE_LABEL = "www.youthhuza.rw/shop";
 const FARMER_LABEL = "www.youthhuza.rw/farmer";
 const BRAND_GREEN = "#0B5C34";
 const BRAND_MINT = "#E8F5EC";
@@ -216,6 +216,11 @@ async function main() {
     urlLabel: SITE_LABEL,
     footer: "HUZA FRESH · Powered by Youth Huza",
   });
+
+  console.log(`QR set for ${SITE_URL}`);
+  console.log(`  Plain PNG:   ${path.join(outDir, "youthhuza-site-qr.png")}`);
+  console.log(`  Plain SVG:   ${path.join(outDir, "youthhuza-site-qr.svg")}`);
+  console.log(`  Branded PNG: ${path.join(outDir, "youthhuza-site-qr-branded.png")}`);
 
   // Farmers portal QR
   await generateSet({

@@ -1,6 +1,6 @@
 /**
  * Public Entry Page destinations.
- * Swap QR imageSrc later without changing UI components.
+ * QR imageSrc assets encode the matching href URLs.
  */
 export const ENTRY_LINKS = {
   customerWebsite: "/shop",
@@ -11,15 +11,11 @@ export const ENTRY_LINKS = {
 
 export const ENTRY_QR = {
   customer: {
-    /** Target encoded by the official customer QR (replace later if needed). */
-    href: "https://www.youthhuza.rw",
-    caption: "Customer Website QR",
-    /** Set to e.g. "/qr/youthhuza-site-qr-branded.png" when ready. */
-    imageSrc: null as string | null,
+    href: "https://www.youthhuza.rw/shop",
+    imageSrc: "/qr/youthhuza-site-qr-branded.png",
   },
   farmers: {
-    href: "https://farmers.youthhuza.rw",
-    caption: "Farmers Portal QR",
-    imageSrc: null as string | null,
+    href: "https://www.youthhuza.rw/farmer",
+    imageSrc: "/qr/youthhuza-farmer-qr-branded.png",
   },
 } as const;
