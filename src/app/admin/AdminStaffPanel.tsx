@@ -51,7 +51,7 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not create staff account");
-      setMsg(`Created ${data.fullName} — they must use their own login.`);
+      setMsg(`Created ${data.fullName}. They must use their own login.`);
       e.currentTarget.reset();
       await refresh();
     } catch (err) {
@@ -161,7 +161,7 @@ export function AdminStaffPanel({ initialStaff }: { initialStaff: StaffUser[] })
             required
             minLength={8}
             className="input-field"
-            placeholder="At least 8 characters — they must change it on first login"
+            placeholder="At least 8 characters. They must change it on first login"
           />
         </label>
         <label className="text-sm space-y-1 sm:col-span-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">

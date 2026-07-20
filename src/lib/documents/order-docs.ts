@@ -145,7 +145,7 @@ export async function buildInvoicePdf(order: OrderDoc): Promise<Buffer> {
 }
 
 /**
- * Customer receipt PDF — public fields only:
+ * Customer receipt PDF. Public fields only:
  * receipt number, products, delivery fee, total, payment method, order status.
  */
 export async function buildReceiptPdf(order: OrderDoc): Promise<Buffer> {
@@ -183,7 +183,7 @@ export async function buildReceiptPdf(order: OrderDoc): Promise<Buffer> {
       doc.font("Helvetica").fontSize(9);
       for (const item of order.items) {
         doc.text(
-          `• ${item.product.nameEn} × ${item.quantity} ${formatUnit(item.product.unit)} — ${money(item.lineTotal)}`
+          `• ${item.product.nameEn} × ${item.quantity} ${formatUnit(item.product.unit)}. ${money(item.lineTotal)}`
         );
       }
       doc.moveDown(0.5);
@@ -206,7 +206,7 @@ export async function buildReceiptPdf(order: OrderDoc): Promise<Buffer> {
 }
 
 /**
- * Internal purchase record — HUZA staff only.
+ * Internal purchase record. HUZA staff only.
  * Farmer, purchase price, selling price, margin, warehouse/inventory notes.
  */
 export async function buildPurchaseRecordPdf(order: OrderDoc): Promise<Buffer> {
@@ -215,10 +215,10 @@ export async function buildPurchaseRecordPdf(order: OrderDoc): Promise<Buffer> {
 
   return renderPdf(
     (doc) => {
-      drawBrandHeader(doc, "INTERNAL PURCHASE RECORD — CONFIDENTIAL");
+      drawBrandHeader(doc, "INTERNAL PURCHASE RECORD. CONFIDENTIAL");
 
       doc.fillColor("#8a1c1c").font("Helvetica-Bold").fontSize(9);
-      doc.text("HUZA STAFF ONLY — never share with customers");
+      doc.text("HUZA STAFF ONLY. Never share with customers");
       doc.fillColor(BRAND.ink).font("Helvetica").fontSize(10);
       doc.moveDown(0.4);
       doc.text(`Order: ${order.orderNumber}`);
@@ -360,7 +360,7 @@ export function buildInvoiceHtml(order: OrderDoc): string {
     <div><span>Payment</span><span>${escapeHtml(order.payment?.method || "—")} · ${escapeHtml(order.payment?.status || "—")}</span></div>
   </div>
   <p style="margin-top:32px;font-size:12px;color:#5a7264">
-    Direct delivery by Youth Huza — thank you for shopping HUZA FRESH.
+    Direct delivery by Youth Huza. Thank you for shopping HUZA FRESH.
   </p>
   <div class="actions">
     <button onclick="window.print()">Print</button>

@@ -47,7 +47,7 @@ export default function ChangePasswordPage() {
       <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
         {session?.user?.mustChangePassword
           ? "You must set a new password before continuing. You stay signed in after saving."
-          : "Optional — update your password whenever you want. You stay signed in after saving."}
+          : "Optional. Update your password whenever you want. You stay signed in after saving."}
       </p>
       <form
         onSubmit={onSubmit}

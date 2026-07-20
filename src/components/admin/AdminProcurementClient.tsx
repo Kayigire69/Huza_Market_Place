@@ -130,8 +130,8 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
       setMsg(
         action === "purchase"
           ? buyForm.dealType === "COMMISSION"
-            ? "Commission PO created — receive, QC, sell, then settle & pay"
-            : "PO created — await farmer delivery, then receive & inspect"
+            ? "Commission PO created. Receive, QC, sell, then settle & pay"
+            : "PO created. Await farmer delivery, then receive & inspect"
           : "Updated"
       );
       setBuying(null);
@@ -158,12 +158,12 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Action failed");
       if (poActionName === "inspect_accept") {
-        setMsg("Quality passed — product is now live in the shop");
+        setMsg("Quality passed. Product is now live in the shop");
       } else if (poActionName === "receive") {
-        setMsg("Goods received into warehouse — inspect quality next");
+        setMsg("Goods received into warehouse. Inspect quality next");
       } else if (poActionName === "settle") {
         setMsg(
-          `Settlement ready — farmer receives ${formatRwf(data.farmerNetAmount || 0)}`
+          `Settlement ready. Farmer receives ${formatRwf(data.farmerNetAmount || 0)}`
         );
       } else if (poActionName === "pay") {
         setMsg("Farmer marked as paid");
@@ -458,7 +458,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                               "1"
                             );
                             if (!grade?.trim()) {
-                              setMsg("QC accept cancelled — grade is required");
+                              setMsg("QC accept cancelled. Grade is required");
                               return;
                             }
                             void poAction(po.id, "inspect_accept", {
@@ -481,7 +481,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                             if (!reason) return;
                             const recommendation =
                               window.prompt(
-                                "Recommendation — what should the farmer do next?",
+                                "What should the farmer do next?",
                                 "Improve harvest handling and cleanliness, then offer the next batch."
                               ) || undefined;
                             void poAction(po.id, "inspect_reject", {
@@ -599,7 +599,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                     onChange={() => setBuyForm((f) => ({ ...f, dealType: "OUTRIGHT_BUY" }))}
                   />
                   <span>
-                    <strong>Outright buy</strong> — Huza pays farmer now (or on delivery), owns
+                    <strong>Outright buy</strong>. Huza pays farmer now (or on delivery), owns
                     stock, keeps 100% of retail sales.
                   </span>
                 </label>
@@ -611,7 +611,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                     onChange={() => setBuyForm((f) => ({ ...f, dealType: "COMMISSION" }))}
                   />
                   <span>
-                    <strong>Commission sale</strong> — Huza sells on HUZA FRESH, then settles farmer
+                    <strong>Commission sale</strong>. Huza sells on HUZA FRESH, then settles farmer
                     after sales (commission deducted automatically).
                   </span>
                 </label>
@@ -696,7 +696,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
               </p>
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">
-                  Batch expiry (optional — juices &amp; salads)
+                  Batch expiry (optional. Juices &amp; salads)
                 </span>
                 <input
                   type="date"

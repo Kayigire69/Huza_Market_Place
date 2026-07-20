@@ -89,7 +89,7 @@ export default withAuth(
         return NextResponse.redirect(new URL(firstAllowedAdminPath(role), req.url));
       }
 
-      // Extra belt: Staff / Audit / Settings — Super Admin only
+      // Extra belt: Staff / Audit / Settings. Super Admin only
       if (pathname.startsWith("/admin") && isSuperAdminOnlyPath(pathname) && !isSuperAdmin(role)) {
         return NextResponse.redirect(new URL(firstAllowedAdminPath(role), req.url));
       }

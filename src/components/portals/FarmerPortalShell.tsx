@@ -16,7 +16,7 @@ const CROP_BACKGROUNDS = [
 ];
 
 /**
- * Private Farmers Portal shell — Youth Huza branding only (not HUZA FRESH shop chrome).
+ * Private Farmers Portal shell. Youth Huza branding only (not HUZA FRESH shop chrome).
  */
 export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
   const { t, locale, setLocale } = useLocale();
@@ -36,7 +36,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
         lockViewport ? "flex h-dvh flex-col overflow-hidden" : "min-h-screen overflow-x-hidden"
       }`}
     >
-      {/* Clear crop atmosphere — readable farm imagery behind the workspace */}
+      {/* Clear crop atmosphere. Readable farm imagery behind the workspace */}
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
         <div className="absolute inset-0">
           <Image

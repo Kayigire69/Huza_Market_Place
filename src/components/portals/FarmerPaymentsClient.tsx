@@ -18,7 +18,7 @@ function payoutAmount(po: FarmerPurchaseOrderRow) {
 }
 
 /**
- * Phase 4 Payments — farmer payouts tied to Huza purchase orders.
+ * Phase 4 Payments. Farmer payouts tied to Huza purchase orders.
  * Commission lines are read-only (settlement happens in Admin).
  */
 export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRow[] }) {

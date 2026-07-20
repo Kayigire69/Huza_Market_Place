@@ -12,7 +12,7 @@ type Img = {
 
 /**
  * HUZA storefront image manager.
- * Farmer inspection photos stay separate — only STOREFRONT images appear on the shop.
+ * Farmer inspection photos stay separate. Only STOREFRONT images appear on the shop.
  */
 export function AdminProductImages({
   productId,
@@ -75,7 +75,7 @@ export function AdminProductImages({
     setBusy(false);
     onDone(
       res.ok
-        ? "Copied farmer photos as temporary storefront images — replace with HUZA photos when ready"
+        ? "Copied farmer photos as temporary storefront images. Replace with HUZA photos when ready"
         : data.error || "Could not copy inspection photos"
     );
   };
@@ -131,7 +131,7 @@ export function AdminProductImages({
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
           {storefront.length === 0 ? (
-            <p className="text-xs text-amber-800">No storefront images yet — required before publishing.</p>
+            <p className="text-xs text-amber-800">No storefront images yet. Required before publishing.</p>
           ) : (
             storefront.map((img) => (
               <div key={img.id || img.url} className="relative">

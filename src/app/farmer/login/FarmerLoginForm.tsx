@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 
 /**
- * Compact centered login card — all copy via i18n (EN / FR / RW / SW).
+ * Compact centered login card. All copy via i18n (EN / FR / RW / SW).
  */
 export function FarmerLoginForm() {
   const { t } = useLocale();

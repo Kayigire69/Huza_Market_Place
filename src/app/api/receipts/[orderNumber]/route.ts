@@ -3,7 +3,7 @@ import { buildReceiptPdf, loadOrderDocument } from "@/lib/documents/order-docs";
 import { pdfResponse } from "@/lib/documents/pdf";
 import { canAccessOrder } from "@/lib/security-access";
 
-/** Customer payment receipt PDF — requires access proof. */
+/** Customer payment receipt PDF. Requires access proof. */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ orderNumber: string }> }

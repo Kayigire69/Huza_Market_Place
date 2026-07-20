@@ -1,5 +1,5 @@
 /**
- * Legacy multi-slide gallery — unused on the homepage after Phase 2.
+ * Legacy multi-slide gallery. Unused on the homepage after Phase 2.
  * Kept so older references do not break; home uses HeroSection instead.
  */
 "use client";

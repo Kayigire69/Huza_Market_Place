@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 
 /**
- * Minimal write-review form for PDP — same chrome as existing review cards.
+ * Minimal write-review form for PDP. Same chrome as existing review cards.
  * Guests keep the login prompt; signed-in customers can submit via /api/reviews.
  */
 export function ProductReviewForm({
@@ -37,7 +37,7 @@ export function ProductReviewForm({
   if (done) {
     return (
       <p className="mt-4 text-sm text-[var(--huza-green-dark)]">
-        Thanks — your review was submitted.
+        Thanks. Your review was submitted.
       </p>
     );
   }

@@ -29,7 +29,7 @@ export default function CareersPage() {
       <div className="mt-8 space-y-5 text-[var(--huza-muted)] leading-relaxed">
         <p>
           <strong className="text-[var(--huza-ink)]">Youth Huza</strong> runs{" "}
-          <strong className="text-[var(--huza-ink)]">HUZA FRESH</strong> — we buy from farms and sell
+          <strong className="text-[var(--huza-ink)]">HUZA FRESH</strong>. We buy from farms and sell
           fresh food to customers with one team for shop, payment, and delivery.
         </p>
         <p>

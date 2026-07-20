@@ -26,10 +26,10 @@ async function requireSuperAdmin() {
   return session;
 }
 
-/** List staff — Super Admin only. Normal Admin cannot see Employee Management. */
+/** List staff. Super Admin only. Normal Admin cannot see Employee Management. */
 export async function GET() {
   const session = await requireSuperAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const staff = await prisma.user.findMany({
     where: {
@@ -54,10 +54,10 @@ export async function GET() {
   return NextResponse.json({ staff });
 }
 
-/** Create a personal staff login — Super Admin only. */
+/** Create a personal staff login. Super Admin only. */
 export async function POST(req: Request) {
   const session = await requireSuperAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const body = await req.json();
   const fullName = String(body.fullName || "").trim();
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   }
 
   if (promoteSuperAdmin) {
-    // Deliberate second Super Admin — only an existing Super Admin can do this
+    // Deliberate second Super Admin. Only an existing Super Admin can do this
     role = Role.SUPER_ADMIN;
   } else if (!EMPLOYEE_ROLES.includes(role)) {
     return NextResponse.json(
@@ -134,12 +134,12 @@ export async function POST(req: Request) {
 }
 
 /**
- * Update staff — Super Admin only.
+ * Update staff. Super Admin only.
  * Guards: cannot deactivate/delete/demote primary Super Admin; cannot target self destructively.
  */
 export async function PATCH(req: Request) {
   const session = await requireSuperAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const body = await req.json();
   const id = String(body.id || "");
@@ -240,7 +240,7 @@ export async function PATCH(req: Request) {
       action: "staff.reset_password",
       entity: "User",
       entityId: id,
-      details: `Password reset for ${before.fullName} — must change on next login`,
+      details: `Password reset for ${before.fullName}. Must change on next login`,
       before: { id: before.id, fullName: before.fullName },
       after: { mustChangePassword: true },
     });

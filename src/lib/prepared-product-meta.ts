@@ -1,4 +1,4 @@
-/** Helpers for juices & fruit salads — HUZA “Freshly Prepared” details. */
+/** Helpers for juices & fruit salads. HUZA “Freshly Prepared” details. */
 
 const READY_SLUGS = new Set(["fruit-salads", "fresh-juices"]);
 
@@ -48,7 +48,7 @@ export function getPreparedMeta(product: {
     ? product.unit === "LITER"
       ? "1 L bottle"
       : product.unit === "HALF_KG" || product.unit === "GRAM"
-        ? "250–500 ml cup"
+        ? "250 to 500 ml cup"
         : "Approx. 500 ml bottle"
     : product.unit === "PIECE"
       ? "Single serving cup / tray"
@@ -57,12 +57,12 @@ export function getPreparedMeta(product: {
   const servingSize = isJuice ? "1 glass (about 250 ml)" : "1 cup / portion as packed";
 
   const storage = isJuice
-    ? "Keep refrigerated at 0–4°C. Shake well before drinking."
+    ? "Keep refrigerated at 0 to 4°C. Shake well before drinking."
     : "Keep refrigerated. Best eaten cold the same day.";
 
   const expiry = isJuice
-    ? "Best within 24–48 hours of preparation"
-    : "Best within 12–24 hours of preparation";
+    ? "Best within 24 to 48 hours of preparation"
+    : "Best within 12 to 24 hours of preparation";
 
   return { ingredients, bottleSize, servingSize, storage, expiry };
 }

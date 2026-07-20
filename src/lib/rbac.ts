@@ -1,4 +1,4 @@
-/** Role helpers for HUZA staff portals — Edge / middleware safe (no Node-only imports). */
+/** Role helpers for HUZA staff portals. Edge / middleware safe (no Node-only imports). */
 
 import {
   firstAllowedAdminPath,
@@ -36,7 +36,7 @@ export function isSuperAdmin(role?: string | null): boolean {
   return role === "SUPER_ADMIN";
 }
 
-/** Confirm / fail / refund / sync customer payments — not SUPPORT. */
+/** Confirm / fail / refund / sync customer payments. Not SUPPORT. */
 const PAYMENT_MUTATION_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "FINANCE"] as const;
 
 export function canMutateCustomerPayments(role?: string | null): boolean {
@@ -45,7 +45,7 @@ export function canMutateCustomerPayments(role?: string | null): boolean {
   );
 }
 
-/** Staff / Audit / Settings — Super Admin only */
+/** Staff / Audit / Settings. Super Admin only */
 export function isSuperAdminOnlyPath(pathname: string): boolean {
   return SUPER_ADMIN_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }

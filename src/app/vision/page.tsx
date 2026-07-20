@@ -9,12 +9,12 @@ export default function VisionPage() {
       <h1 className="section-title mt-2">Our Vision</h1>
       <p className="mt-6 text-lg leading-relaxed text-[var(--huza-muted)]">
         A Rwanda where every household can order trusted farm-fresh food, and every verified farmer
-        has a fair path to market — starting in Kigali and growing across East Africa.
+        has a fair path to market, starting in Kigali and growing across East Africa.
       </p>
       <p className="mt-4 leading-relaxed text-[var(--huza-muted)]">
         We are building the systems (warehouses, delivery teams, and digital tools) so HUZA FRESH
         can scale without losing quality or the farmer relationships behind it. Farmers partner
-        with Youth Huza privately — customers always buy from HUZA FRESH.
+        with Youth Huza privately. Customers always buy from HUZA FRESH.
       </p>
       <Link href="/products" className="mt-8 inline-block font-semibold text-[var(--huza-green)]">
         Shop HUZA FRESH →

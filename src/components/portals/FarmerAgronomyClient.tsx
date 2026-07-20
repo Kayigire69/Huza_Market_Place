@@ -48,7 +48,7 @@ function formatWhen(iso: string | null) {
 }
 
 /**
- * Agronomy Support — request advice or a farm visit + live request/visit ledger.
+ * Agronomy Support. Request advice or a farm visit + live request/visit ledger.
  */
 export function FarmerAgronomyClient() {
   const { t } = useLocale();
@@ -181,7 +181,6 @@ export function FarmerAgronomyClient() {
         <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-ink)]">
           {mode === "advice" ? t("agroAdviceTab") : t("agroVisitTab")}
         </h2>
-        <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("agroIntro")}</p>
 
         <form onSubmit={submit} className="mt-4 space-y-3">
           {mode === "advice" ? (
@@ -277,7 +276,6 @@ export function FarmerAgronomyClient() {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="font-semibold text-[var(--huza-ink)]">{t("agroHistoryTitle")}</h2>
-            <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("agroHistorySubtitle")}</p>
           </div>
           <Button type="button" size="sm" variant="ghost" onClick={() => void loadHistory()}>
             {t("agroRefresh")}

@@ -30,10 +30,10 @@ function detectLocale(text: string, preferred?: string): Locale {
   return "en";
 }
 
-/** 25+ FAQ intents — each answered in EN / FR / RW / SW */
+/** 25+ FAQ intents. Each answered in EN / FR / RW / SW */
 const replies: Record<string, Record<Locale, string>> = {
   greeting: {
-    en: "Hello! Welcome to HUZA FRESH by Youth Huza. Ask about hours, delivery, payments, orders, products, farmers, refunds, or your account — in English, French, Kinyarwanda, or Kiswahili.",
+    en: "Hello! Welcome to HUZA FRESH by Youth Huza. Ask about hours, delivery, payments, orders, products, farmers, refunds, or your account. In English, French, Kinyarwanda, or Kiswahili.",
     fr: "Bonjour ! Bienvenue sur HUZA FRESH par Youth Huza. Posez vos questions sur les horaires, livraison, paiements, commandes, produits, agriculteurs, remboursements ou votre compte.",
     rw: "Muraho! Murakaza neza kuri HUZA FRESH ya Youth Huza. Baza ku masaha, gutanga, kwishyura, ibicuruzwa, abahinzi, gusubizwa cyangwa konti yawe.",
     sw: "Habari! Karibu HUZA FRESH ya Youth Huza. Uliza kuhusu saa, uwasilishaji, malipo, maagizo, bidhaa, wakulima, marejesho, au akaunti yako.",
@@ -53,22 +53,22 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Tunafunga saa 3 usiku kila jioni. Maagizo yaliyowekwa baada ya kufunga yanakubaliwa mtandaoni na kupangwa kwa siku inayofuata.",
   },
   openingTime: {
-    en: "We open at 6:00 AM every morning — seven days a week.",
-    fr: "Nous ouvrons à 6h00 chaque matin — sept jours sur sept.",
-    rw: "Dufungura saa 12 za mu gitondo buri munsi — iminsi 7 mu cyumweru.",
-    sw: "Tunafungua saa 12 asubuhi kila asubuhi — siku saba kwa wiki.",
+    en: "We open at 6:00 AM every morning. Seven days a week.",
+    fr: "Nous ouvrons à 6h00 chaque matin. Sept jours sur sept.",
+    rw: "Dufungura saa 12 za mu gitondo buri munsi. Iminsi 7 mu cyumweru.",
+    sw: "Tunafungua saa 12 asubuhi kila asubuhi. Siku saba kwa wiki.",
   },
   workDays: {
-    en: "We work 7 days a week (Monday–Sunday), including weekends and most public holidays, from 6:00 AM to 9:00 PM.",
-    fr: "Nous travaillons 7 jours sur 7 (lundi–dimanche), y compris les week-ends et la plupart des jours fériés, de 6h00 à 21h00.",
-    rw: "Dukora iminsi 7 mu cyumweru (kuwa mbere–ku cyumweru), harimo n'impera n'iminsi mikuru, kuva saa 12 kugeza saa 3 z'ijoro.",
-    sw: "Tunafanya kazi siku 7 kwa wiki (Jumatatu–Jumapili), pamoja na wikendi na sikukuu nyingi, kuanzia saa 12 asubuhi hadi saa 3 usiku.",
+    en: "We work 7 days a week (Monday to Sunday), including weekends and most public holidays, from 6:00 AM to 9:00 PM.",
+    fr: "Nous travaillons 7 jours sur 7 (lundi à dimanche), y compris les week-ends et la plupart des jours fériés, de 6h00 à 21h00.",
+    rw: "Dukora iminsi 7 mu cyumweru (kuwa mbere kugeza ku cyumweru), harimo n'impera n'iminsi mikuru, kuva saa 12 kugeza saa 3 z'ijoro.",
+    sw: "Tunafanya kazi siku 7 kwa wiki (Jumatatu hadi Jumapili), pamoja na wikendi na sikukuu nyingi, kuanzia saa 12 asubuhi hadi saa 3 usiku.",
   },
   weekend: {
-    en: "Yes — we are open on Saturdays and Sundays, same hours: 6:00 AM – 9:00 PM.",
-    fr: "Oui — nous sommes ouverts le samedi et le dimanche, aux mêmes horaires : 6h00 – 21h00.",
-    rw: "Yego — dufungura ku wa gatandatu no ku cyumweru, amasaha amwe: saa 12 – saa 3 z'ijoro.",
-    sw: "Ndiyo — tuko wazi Jumamosi na Jumapili, saa zile zile: saa 12 asubuhi – saa 3 usiku.",
+    en: "Yes. We are open on Saturdays and Sundays, same hours: 6:00 AM to 9:00 PM.",
+    fr: "Oui. Nous sommes ouverts le samedi et le dimanche, aux mêmes horaires : 6h00 à 21h00.",
+    rw: "Yego. Dufungura ku wa gatandatu no ku cyumweru, amasaha amwe: saa 12 kugeza saa 3 z'ijoro.",
+    sw: "Ndiyo. Tuko wazi Jumamosi na Jumapili, saa zile zile: saa 12 asubuhi hadi saa 3 usiku.",
   },
 
   // 3 Delivery
@@ -79,16 +79,16 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Youth Huza inawasilisha Kigali, Kamonyi, na Bugesera. Chagua Leo, Kesho, au Ratiba, kisha shiriki anwani. Ada ni RWF 5,000 kwa maeneo yote matatu.",
   },
   deliveryFee: {
-    en: "Delivery fee is 5,000 RWF for Kigali, Kamonyi, and Bugesera — shown at checkout before you pay.",
-    fr: "Les frais de livraison sont de 5 000 RWF pour Kigali, Kamonyi et Bugesera — affichés au paiement.",
-    rw: "Amafaranga yo gutanga ni RWF 5,000 kuri Kigali, Kamonyi na Bugesera — agaragara igihe wishyura.",
-    sw: "Ada ya uwasilishaji ni RWF 5,000 kwa Kigali, Kamonyi, na Bugesera — inaonekana wakati wa malipo.",
+    en: "Delivery fee is 5,000 RWF for Kigali, Kamonyi, and Bugesera. Shown at checkout before you pay.",
+    fr: "Les frais de livraison sont de 5 000 RWF pour Kigali, Kamonyi et Bugesera. Affichés au paiement.",
+    rw: "Amafaranga yo gutanga ni RWF 5,000 kuri Kigali, Kamonyi na Bugesera. Agaragara igihe wishyura.",
+    sw: "Ada ya uwasilishaji ni RWF 5,000 kwa Kigali, Kamonyi, na Bugesera. Inaonekana wakati wa malipo.",
   },
   deliveryTime: {
-    en: "In stock: 45–90 minutes in Kigali, 2–3 hours for Kamonyi or Bugesera. If we need to prepare fresh stock, delivery is usually within a few hours in Kigali.",
-    fr: "En stock : 45–90 min à Kigali, 2–3 h pour Kamonyi ou Bugesera. Si nous devons préparer le stock, livraison en général en quelques heures à Kigali.",
-    rw: "Birahari: iminota 45–90 i Kigali, amasaha 2–3 Kamonyi cyangwa Bugesera. Niba dukeneye guteza ububiko, dusanzwe dutanga mu masaha make i Kigali.",
-    sw: "Ipo: dakika 45–90 Kigali, saa 2–3 Kamonyi au Bugesera. Ikiwa tunahitaji kuandaa hisa, kwa kawaida uwasilishaji ni ndani ya saa chache Kigali.",
+    en: "In stock: 45 to 90 minutes in Kigali, 2 to 3 hours for Kamonyi or Bugesera. If we need to prepare fresh stock, delivery is usually within a few hours in Kigali.",
+    fr: "En stock : 45 à 90 min à Kigali, 2 à 3 h pour Kamonyi ou Bugesera. Si nous devons préparer le stock, livraison en général en quelques heures à Kigali.",
+    rw: "Birahari: iminota 45 kugeza 90 i Kigali, amasaha 2 kugeza 3 Kamonyi cyangwa Bugesera. Niba dukeneye guteza ububiko, dusanzwe dutanga mu masaha make i Kigali.",
+    sw: "Ipo: dakika 45 hadi 90 Kigali, saa 2 hadi 3 Kamonyi au Bugesera. Ikiwa tunahitaji kuandaa hisa, kwa kawaida uwasilishaji ni ndani ya saa chache Kigali.",
   },
 
   // 4 Payment
@@ -131,10 +131,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Nambari za maagizo zinaonekana kama HZ-2026-000245. Unaiona baada ya malipo, katika arifa, na Akaunti → Maagizo.",
   },
   cancelOrder: {
-    en: "To cancel or change an order, message us here with your order number, open a Support ticket, or email info@youthhuza.rw as soon as possible — before the rider leaves.",
-    fr: "Pour annuler ou modifier, écrivez-nous ici avec votre numéro, créez un ticket Support, ou envoyez un e-mail à info@youthhuza.rw rapidement — avant le départ du livreur.",
-    rw: "Kugira ngo uhagarike cyangwa uhindure, twandikire hano ufite numero, fungura icyifuzo cy'ubufasha, cyangwa andika info@youthhuza.rw vuba — mbere y'uko umutangaji agenda.",
-    sw: "Kughairi au kubadilisha, tuandikie hapa na nambari ya agizo, fungua tiketi ya Support, au andika info@youthhuza.rw haraka — kabla dereva hajaondoka.",
+    en: "To cancel or change an order, message us here with your order number, open a Support ticket, or email info@youthhuza.rw as soon as possible. Before the rider leaves.",
+    fr: "Pour annuler ou modifier, écrivez-nous ici avec votre numéro, créez un ticket Support, ou envoyez un e-mail à info@youthhuza.rw rapidement. Avant le départ du livreur.",
+    rw: "Kugira ngo uhagarike cyangwa uhindure, twandikire hano ufite numero, fungura icyifuzo cy'ubufasha, cyangwa andika info@youthhuza.rw vuba. Mbere y'uko umutangaji agenda.",
+    sw: "Kughairi au kubadilisha, tuandikie hapa na nambari ya agizo, fungua tiketi ya Support, au andika info@youthhuza.rw haraka. Kabla dereva hajaondoka.",
   },
 
   // 6 Products / prices / quality
@@ -151,10 +151,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Bei zote kwenye HUZA FRESH ni kwa Faranga za Rwanda (RWF). Ada ya uwasilishaji inaonekana wakati wa kulipa.",
   },
   quality: {
-    en: "Youth Huza inspects produce before it reaches your cart. You buy from HUZA FRESH — one brand, one quality standard — not from individual farm names on the storefront.",
-    fr: "Youth Huza inspecte les produits avant qu’ils n’arrivent dans votre panier. Vous achetez sur HUZA FRESH — une marque, un standard — pas sous le nom de chaque ferme.",
-    rw: "Youth Huza igenzura ibihingwa mbere yo kugera mu gakapu. Ugura kuri HUZA FRESH — ikirango kimwe — ntabwo ugura ku mazina y'abahinzi ku iduka.",
-    sw: "Youth Huza hukagua mazao kabla hayafike kikapuni. Unanunua kutoka HUZA FRESH — chapa moja, kiwango kimoja — si majina ya mashamba kwenye duka.",
+    en: "Youth Huza inspects produce before it reaches your cart. You buy from HUZA FRESH: one brand, one quality standard, not individual farm names on the storefront.",
+    fr: "Youth Huza inspecte les produits avant qu’ils n’arrivent dans votre panier. Vous achetez sur HUZA FRESH. Une marque, un standard. Pas sous le nom de chaque ferme.",
+    rw: "Youth Huza igenzura ibihingwa mbere yo kugera mu gakapu. Ugura kuri HUZA FRESH. Ikirango kimwe. Ntabwo ugura ku mazina y'abahinzi ku iduka.",
+    sw: "Youth Huza hukagua mazao kabla hayafike kikapuni. Unanunua kutoka HUZA FRESH. Chapa moja, kiwango kimoja. Si majina ya mashamba kwenye duka.",
   },
   organic: {
     en: "Products marked Organic are flagged by Huza after review. Check the product page badge and description for details.",
@@ -163,10 +163,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Bidhaa zilizoandikwa Organic huthibitishwa na Huza. Angalia beji na maelezo kwenye ukurasa wa bidhaa.",
   },
   stock: {
-    en: "In-stock items typically arrive in about 45 minutes in Kigali or about 75 minutes for Kamonyi/Bugesera. If an item needs fresh stock, we still take your order and deliver usually within a few hours in Kigali — we never show products as unavailable.",
-    fr: "Les articles en stock arrivent en ~45 min à Kigali ou ~75 min pour Kamonyi/Bugesera. Si un article doit être approvisionné, nous prenons quand même la commande et livrons en général en quelques heures à Kigali — jamais « indisponible ».",
-    rw: "Ibicuruzwa bihari bisanzwe bigera mu minota ~45 i Kigali cyangwa ~75 Kamonyi/Bugesera. Niba bikeneye gutezwa, tubakira ubutumire kandi dusanzwe dutanga mu masaha make i Kigali — ntitubwira ko ntibihari.",
-    sw: "Bidhaa zilizopo kwa kawaida hufika katika dakika ~45 Kigali au ~75 Kamonyi/Bugesera. Ikiwa bidhaa inahitaji hisa mpya, bado tunaichukua oda na kuwasilisha kwa kawaida ndani ya saa chache Kigali — hatuonyeshi « haipatikani ».",
+    en: "In-stock items typically arrive in about 45 minutes in Kigali or about 75 minutes for Kamonyi/Bugesera. If an item needs fresh stock, we still take your order and deliver usually within a few hours in Kigali. We never show products as unavailable.",
+    fr: "Les articles en stock arrivent en ~45 min à Kigali ou ~75 min pour Kamonyi/Bugesera. Si un article doit être approvisionné, nous prenons quand même la commande et livrons en général en quelques heures à Kigali. Jamais « indisponible ».",
+    rw: "Ibicuruzwa bihari bisanzwe bigera mu minota ~45 i Kigali cyangwa ~75 Kamonyi/Bugesera. Niba bikeneye gutezwa, tubakira ubutumire kandi dusanzwe dutanga mu masaha make i Kigali. Ntitubwira ko ntibihari.",
+    sw: "Bidhaa zilizopo kwa kawaida hufika katika dakika ~45 Kigali au ~75 Kamonyi/Bugesera. Ikiwa bidhaa inahitaji hisa mpya, bado tunaichukua oda na kuwasilisha kwa kawaida ndani ya saa chache Kigali. Hatuonyeshi « haipatikani ».",
   },
 
   // 7 Returns / refunds
@@ -193,10 +193,10 @@ const replies: Record<string, Record<Locale, string>> = {
 
   // 9 Farmers
   farmer: {
-    en: "Verified farmers partner with Youth Huza through a private Farmers Portal (shared by Huza staff — not listed on the customer shop). Field agents help with registration and product photos. Customers only buy from HUZA FRESH — farm names stay internal.",
-    fr: "Les agriculteurs vérifiés travaillent avec Youth Huza via un portail privé (partagé par le personnel Huza — pas sur la boutique client). Les clients achètent uniquement sur HUZA FRESH.",
-    rw: "Abahinzi bemewe bakorana na Youth Huza binyuze ku rubuga rwihariye (ruhabwa n'abakozi ba Huza — ntiruboneka ku iduka ry'abakiriya). Abakiriya bagura gusa kuri HUZA FRESH.",
-    sw: "Wakulima walioidhinishwa hushirikiana na Youth Huza kupitia tovuti ya faragha (inayotolewa na wafanyakazi wa Huza — haionyeshwi kwenye duka la wateja). Wateja hununua tu kutoka HUZA FRESH.",
+    en: "Verified farmers partner with Youth Huza through a private Farmers Portal (shared by Huza staff. Not listed on the customer shop). Field agents help with registration and product photos. Customers only buy from HUZA FRESH. Farm names stay internal.",
+    fr: "Les agriculteurs vérifiés travaillent avec Youth Huza via un portail privé (partagé par le personnel Huza. Pas sur la boutique client). Les clients achètent uniquement sur HUZA FRESH.",
+    rw: "Abahinzi bemewe bakorana na Youth Huza binyuze ku rubuga rwihariye (ruhabwa n'abakozi ba Huza. Ntiruboneka ku iduka ry'abakiriya). Abakiriya bagura gusa kuri HUZA FRESH.",
+    sw: "Wakulima walioidhinishwa hushirikiana na Youth Huza kupitia tovuti ya faragha (inayotolewa na wafanyakazi wa Huza. Haionyeshwi kwenye duka la wateja). Wateja hununua tu kutoka HUZA FRESH.",
   },
 
   // 10 Contact / about / language
@@ -225,10 +225,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Bei na ada zote ni kwa Faranga za Rwanda (RWF).",
   },
   minimumOrder: {
-    en: "There is no special minimum order amount — add what you need to the cart. Delivery fee applies per order and is shown at checkout for covered zones.",
-    fr: "Pas de montant minimum spécial — ajoutez ce dont vous avez besoin. Les frais de livraison s’affichent au paiement dans les zones couvertes.",
-    rw: "Nta giciro gito giteganyijwe — shyira mu gakapu ibyo ukeneye. Amafaranga yo gutanga agaragara igihe wishyura.",
-    sw: "Hakuna kiwango cha chini maalum — weka unachohitaji kikapuni. Ada ya uwasilishaji inaonekana wakati wa malipo.",
+    en: "There is no special minimum order amount. Add what you need to the cart. Delivery fee applies per order and is shown at checkout for covered zones.",
+    fr: "Pas de montant minimum spécial. Ajoutez ce dont vous avez besoin. Les frais de livraison s’affichent au paiement dans les zones couvertes.",
+    rw: "Nta giciro gito giteganyijwe. Shyira mu gakapu ibyo ukeneye. Amafaranga yo gutanga agaragara igihe wishyura.",
+    sw: "Hakuna kiwango cha chini maalum. Weka unachohitaji kikapuni. Ada ya uwasilishaji inaonekana wakati wa malipo.",
   },
   promo: {
     en: "Promotions and flash sales appear on the home page when active. Promo codes can be validated in checkout when offered (e.g. seasonal campaigns).",
@@ -250,16 +250,16 @@ const replies: Record<string, Record<Locale, string>> = {
   },
 
   fallback: {
-    en: "Thanks! I can help with: opening hours & closing time, days we work, delivery zones/fees/ETA, payments (MoMo/Airtel — card soon), tracking (HZ-… numbers), products & prices, refunds, account, farmers portal, contact, and more. Ask in EN, FR, RW, or SW — or email info@youthhuza.rw.",
-    fr: "Merci ! Je peux aider pour : horaires & fermeture, jours d’ouverture, livraison (zones/frais/délais), paiements (MoMo/Airtel — carte bientôt), suivi (HZ-…), produits & prix, remboursements, compte, agriculteurs, contact. EN/FR/RW/SW — ou info@youthhuza.rw.",
-    rw: "Murakoze! Nshobora kugufasha ku: amasaha n'igifungo, iminsi dukora, gutanga, kwishyura (MoMo/Airtel — ikarita vuba), gukurikirana (HZ-…), ibicuruzwa, gusubizwa, konti, abahinzi, twandikire. EN/FR/RW/SW — cyangwa info@youthhuza.rw.",
-    sw: "Asante! Naweza kusaidia kuhusu: saa za kufungua/kufunga, siku za kazi, uwasilishaji, malipo (MoMo/Airtel — kadi hivi karibuni), ufuatiliaji (HZ-…), bidhaa na bei, marejesho, akaunti, wakulima, mawasiliano. EN/FR/RW/SW — au info@youthhuza.rw.",
+    en: "Thanks! I can help with: opening hours & closing time, days we work, delivery zones/fees/ETA, payments (MoMo/Airtel. Card soon), tracking (HZ-… numbers), products & prices, refunds, account, farmers portal, contact, and more. Ask in EN, FR, RW, or SW. Or email info@youthhuza.rw.",
+    fr: "Merci ! Je peux aider pour : horaires & fermeture, jours d’ouverture, livraison (zones/frais/délais), paiements (MoMo/Airtel. Carte bientôt), suivi (HZ-…), produits & prix, remboursements, compte, agriculteurs, contact. EN/FR/RW/SW. Ou info@youthhuza.rw.",
+    rw: "Murakoze! Nshobora kugufasha ku: amasaha n'igifungo, iminsi dukora, gutanga, kwishyura (MoMo/Airtel. Ikarita vuba), gukurikirana (HZ-…), ibicuruzwa, gusubizwa, konti, abahinzi, twandikire. EN/FR/RW/SW. Cyangwa info@youthhuza.rw.",
+    sw: "Asante! Naweza kusaidia kuhusu: saa za kufungua/kufunga, siku za kazi, uwasilishaji, malipo (MoMo/Airtel. Kadi hivi karibuni), ufuatiliaji (HZ-…), bidhaa na bei, marejesho, akaunti, wakulima, mawasiliano. EN/FR/RW/SW. Au info@youthhuza.rw.",
   },
 };
 
 type Intent = keyof typeof replies;
 
-/** Ordered rules — more specific intents first */
+/** Ordered rules. More specific intents first */
 const intentRules: { intent: Intent; pattern: RegExp }[] = [
   {
     intent: "greeting",
@@ -416,7 +416,7 @@ export function supportAutoReply(body: string, preferredLocale?: string) {
   return replies[intent][locale];
 }
 
-/** Exposed for tests / docs — number of distinct FAQ intents (excluding fallback) */
+/** Exposed for tests / docs. Number of distinct FAQ intents (excluding fallback) */
 export function supportBotIntentCount() {
   return Object.keys(replies).filter((k) => k !== "fallback").length;
 }

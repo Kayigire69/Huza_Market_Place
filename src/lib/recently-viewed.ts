@@ -4,7 +4,7 @@ const KEY = "huza-recently-viewed";
 const MAX = 12;
 const EVENT = "huza:recently-viewed";
 
-/** Stored view history — IDs only (live catalog is fetched for display). */
+/** Stored view history. IDs only (live catalog is fetched for display). */
 export type RecentView = {
   id: string;
   viewedAt: number;

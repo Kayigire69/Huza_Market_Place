@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   const available = availableQty(product.stockQty, product.reservedQty);
   if (available > 0) {
     return NextResponse.json(
-      { error: "Product is available — add it to cart instead", available },
+      { error: "Product is available. Add it to cart instead", available },
       { status: 400 }
     );
   }

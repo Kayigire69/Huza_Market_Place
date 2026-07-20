@@ -57,7 +57,6 @@ export function FarmerMyFarmClient({ farmer }: { farmer: FarmView }) {
     <div>
       <FarmerPageHeader
         title={t("myFarmTitle")}
-        subtitle={t("myFarmSubtitle")}
         action={
           <Link href="/farmer/settings">
             <Button variant="ghost">{t("myFarmEditSettings")}</Button>

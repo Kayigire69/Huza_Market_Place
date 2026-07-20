@@ -56,10 +56,9 @@ export default async function DeliveryPortalPage() {
         Staff portal
       </p>
       <h1 className="section-title mt-1">Delivery</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Your assigned runs — update status and capture proof of delivery.
-      </p>
+      <div className="mb-8 mt-8">
       <DeliveryPortalClient deliveries={deliveries} />
+      </div>
       <PortalCopyright suffix="Delivery" />
     </div>
   );

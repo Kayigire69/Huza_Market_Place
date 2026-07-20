@@ -30,7 +30,7 @@ export function FarmerSellClient() {
 
   return (
     <div className="space-y-6">
-      <FarmerPageHeader title={t("sellTitle")} subtitle={t("sellSubtitle")} />
+      <FarmerPageHeader title={t("sellTitle")} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <FarmerPanel className="border-[var(--huza-green)]/40 bg-[var(--huza-mint)]/25">

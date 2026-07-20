@@ -33,7 +33,7 @@ export function getRedis(): Redis | null {
   return client;
 }
 
-/** Single shared connect — avoids reconnect storms on every cacheGet. */
+/** Single shared connect. Avoids reconnect storms on every cacheGet. */
 export async function ensureRedis(): Promise<Redis | null> {
   const redis = getRedis();
   if (!redis) return null;

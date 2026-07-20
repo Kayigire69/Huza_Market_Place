@@ -24,10 +24,7 @@ export default async function FarmerNotificationsPage() {
 
   return (
     <div>
-      <FarmerPageHeader
-        title="Notifications"
-        subtitle="Real-time updates: approvals, payments, visits, and training."
-      />
+      <FarmerPageHeader title="Notifications" />
 
       {notes.length === 0 ? (
         <FarmerPanel className="max-w-2xl">

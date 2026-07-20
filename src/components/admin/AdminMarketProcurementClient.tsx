@@ -125,7 +125,7 @@ export function AdminMarketProcurementClient() {
       window.prompt("Quality grade required (1 / 2 / 3 or A / B / C)", p.qualityGrade || "1") ||
       "";
     if (!grade.trim()) {
-      setMsg("Inspection cancelled — grade is required");
+      setMsg("Inspection cancelled. Grade is required");
       return;
     }
     const notes =
@@ -142,7 +142,7 @@ export function AdminMarketProcurementClient() {
         <div>
           <h1 className="admin-panel-title">Market Procurement</h1>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">
-            Wholesale / open-market buys — tracked separately from farmer purchases ·{" "}
+            Wholesale / open-market buys. Tracked separately from farmer purchases ·{" "}
             {counts.recorded} recorded · {counts.inspected} inspected · {counts.stocked} stocked
           </p>
         </div>

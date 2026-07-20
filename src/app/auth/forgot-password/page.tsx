@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
     <div className="mx-auto max-w-md px-4 py-16">
       <h1 className="section-title text-center">Forgot password</h1>
       <p className="mt-2 text-center text-sm text-[var(--huza-muted)]">
-        Enter the email for your account. A secure reset link will be sent — only the inbox owner can
+        Enter the email for your account. A secure reset link will be sent. Only the inbox owner can
         reset the password.
       </p>
       <form

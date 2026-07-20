@@ -13,7 +13,7 @@ async function requireSuperAdmin() {
 
 export async function GET(req: Request) {
   const session = await requireSuperAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const tab = searchParams.get("tab") || "audit";

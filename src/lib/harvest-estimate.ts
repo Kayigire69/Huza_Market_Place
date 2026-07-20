@@ -1,6 +1,6 @@
 /**
  * Simple harvest window helpers for Farmers Portal crop tracking.
- * Defaults are agronomic approximations for common Rwanda fresh crops — not RAB certificates.
+ * Defaults are agronomic approximations for common Rwanda fresh crops. Not RAB certificates.
  */
 
 const CROP_DAYS: Record<string, number> = {

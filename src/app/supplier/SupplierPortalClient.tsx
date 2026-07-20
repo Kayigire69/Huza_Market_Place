@@ -269,7 +269,7 @@ export function SupplierPortalClient({
           >
             <h2 className="font-semibold">Offer produce for Huza to buy</h2>
             <p className="text-xs text-[var(--huza-muted)]">
-              Ask price = what Youth Huza pays you (wholesale). You sell to Huza only — not to
+              Ask price = what Youth Huza pays you (wholesale). You sell to Huza only. Not to
               customers. Huza sets retail prices and handles customer delivery.
             </p>
             <input
@@ -372,7 +372,7 @@ export function SupplierPortalClient({
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5">
           <h2 className="font-semibold mb-1">Purchase orders from Youth Huza</h2>
           <p className="text-xs text-[var(--huza-muted)] mb-4">
-            These are Huza buying from you — not customer orders.
+            These are Huza buying from you. Not customer orders.
           </p>
           {purchaseOrders.length === 0 ? (
             <p className="text-sm text-[var(--huza-muted)]">No purchase orders yet.</p>

@@ -206,7 +206,6 @@ export function HomePage({
           title={t("shopByCategory")}
           href="/categories"
           viewAllLabel={t("viewAll")}
-          hint={t("shopByCategoryHint")}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-3">
           {categories.map((c) => {
@@ -250,7 +249,6 @@ export function HomePage({
             title={t("bestSellers")}
             href="/products?best=1"
             viewAllLabel={t("viewAll")}
-            hint={t("bestSellersHint")}
           />
           <ProductRail products={popularNow} />
         </section>
@@ -268,7 +266,6 @@ export function HomePage({
                 <h2 className="section-title text-[1.35rem] sm:text-[clamp(1.5rem,2.5vw,2rem)]">
                   {t("freshlyPrepared")}
                 </h2>
-                <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("freshlyPreparedToday")}</p>
               </div>
               <Link
                 href="/products?category=fruit-salads"
@@ -283,7 +280,7 @@ export function HomePage({
         </section>
       )}
 
-      {/* 4. Special Offers — admin CMS promotions only */}
+      {/* 4. Special Offers. Admin CMS promotions only */}
       <section
         id="special-offers"
         className="mx-auto mt-10 max-w-7xl scroll-mt-28 px-4 sm:mt-14 sm:px-6"
@@ -328,7 +325,7 @@ export function HomePage({
         )}
       </section>
 
-      {/* 5. Why Choose HUZA — icons only */}
+      {/* 5. Why Choose HUZA. Icons only */}
       <section className="mx-auto mt-8 max-w-7xl px-4 sm:mt-10 sm:px-6">
         <h2 className="mb-3 text-center text-sm font-semibold text-[var(--huza-green-dark)] sm:text-base">
           {t("whyChooseHuza")}
@@ -348,8 +345,7 @@ export function HomePage({
 
       {/* 6. Seasonal Picks */}
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
-        <h2 className="section-title mb-2 text-[1.35rem] sm:mb-3">{t("seasonalPicks")}</h2>
-        <p className="mb-4 text-sm text-[var(--huza-muted)]">{t("seasonalPicksHint")}</p>
+        <h2 className="section-title mb-4 text-[1.35rem] sm:mb-5">{t("seasonalPicks")}</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {seasonal.map((s) => (
             <Link
@@ -410,7 +406,7 @@ export function HomePage({
         </section>
       )}
 
-      {/* 9. WhatsApp ordering card — shown once WhatsApp Business URL is configured */}
+      {/* 9. WhatsApp ordering card. Shown once WhatsApp Business URL is configured */}
       {waConfigured ? (
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6">
         <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#25D366]/40 bg-[#f3fff7] p-5 sm:flex-row sm:items-center sm:p-6">

@@ -235,7 +235,7 @@ export async function loadAdminWorkspace() {
 
 /**
  * Load only the datasets needed for one admin module so navigation stays fast.
- * Same UI/data shapes — unused arrays are empty.
+ * Same UI/data shapes. Unused arrays are empty.
  */
 export async function loadAdminWorkspaceForTab(tab: AdminWorkspaceTab) {
   const base = { ...empty };

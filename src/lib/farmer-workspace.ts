@@ -79,7 +79,7 @@ export const requireFarmerWorkspace = cache(async () => {
     redirect("/farmer");
   }
 
-  /** Only crop categories farmers can supply — not Huza kitchen (salads/juices). */
+  /** Only crop categories farmers can supply. Not Huza kitchen (salads/juices). */
   const categories = await prisma.category.findMany({
     where: { slug: { in: [...FARMER_SUPPLY_CATEGORY_SLUGS] } },
     orderBy: { sortOrder: "asc" },

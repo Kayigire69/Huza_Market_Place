@@ -5,11 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { canEditSystemSettings } from "@/lib/rbac";
 
-/** System hours / emergency — Super Admin only (Admin cannot see System Settings). */
+/** System hours / emergency. Super Admin only (Admin cannot see System Settings). */
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user || !canEditSystemSettings(session.user.role)) {
-    return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
   }
 
   const body = await req.json();

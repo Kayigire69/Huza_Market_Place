@@ -310,7 +310,7 @@ export function WarehouseClient({
                   <span className="font-medium text-[var(--huza-green-dark)]">{m.type}</span>{" "}
                   {m.quantity} {formatUnit(m.product.unit)} · {m.product.nameEn}
                   {m.reason ? (
-                    <span className="text-[var(--huza-muted)]"> — {m.reason}</span>
+                    <span className="text-[var(--huza-muted)]">. {m.reason}</span>
                   ) : null}
                 </span>
                 <span className="text-[var(--huza-muted)] text-xs">

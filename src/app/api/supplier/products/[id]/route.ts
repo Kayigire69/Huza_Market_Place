@@ -46,7 +46,7 @@ export async function PATCH(
 
   const updated = await prisma.$transaction(async (tx) => {
     if (imageUrls.length > 0) {
-      // Farmers may only replace inspection photos — never customer storefront gallery
+      // Farmers may only replace inspection photos. Never customer storefront gallery
       await tx.productImage.deleteMany({ where: { productId: id, kind: "INSPECTION" } });
       await tx.productImage.createMany({
         data: imageUrls.map((url, i) => ({

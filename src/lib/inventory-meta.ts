@@ -6,7 +6,7 @@
 export type InventorySource = "FARMER" | "MARKET";
 export type PurchaseMethod = "DIRECT" | "COMMISSION" | "MARKET";
 
-/** Phase 3 ops status — mapped from stock + review without replacing shop enums. */
+/** Phase 3 ops status. Mapped from stock + review without replacing shop enums. */
 export type InventoryOpsStatus = "Available" | "Reserved" | "Sold Out" | "Rejected";
 
 /** Normalize free-text / A-B-C grades to Phase 3 Grade 1 | 2 | 3. */

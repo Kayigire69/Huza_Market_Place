@@ -23,10 +23,7 @@ export function FaqClient({ items }: { items: FaqItem[] }) {
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12">
       <h1 className="section-title">FAQ</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Common questions about HUZA FRESH, powered by Youth Huza.
-      </p>
-      <div className="space-y-4">
+      <div className="mt-8 space-y-4">
         {items.map((f) => (
           <details
             key={f.id}

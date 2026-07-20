@@ -13,7 +13,7 @@ type Props = {
 };
 
 /**
- * Phase 5 — Quality Review Result card.
+ * Phase 5. Quality Review Result card.
  * Rejected harvests must teach the farmer what to fix next.
  */
 export function FarmerQualityReviewCard({

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/lib/cart-store";
 
-/** Hydrate Redis-backed cart for logged-in users — deferred so it doesn't block first paint. */
+/** Hydrate Redis-backed cart for logged-in users. Deferred so it doesn't block first paint. */
 export function CartHydrator() {
   const { data: session, status } = useSession();
   const hydrateFromServer = useCart((s) => s.hydrateFromServer);

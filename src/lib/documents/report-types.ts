@@ -6,7 +6,7 @@ export const REPORT_TYPES = [
   "customers",
   "payments",
   "deliveries",
-  /** @deprecated alias — use inventory */
+  /** @deprecated alias. Use inventory */
   "stock",
   "audit",
 ] as const;

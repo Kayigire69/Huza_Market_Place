@@ -3,7 +3,7 @@ import { catalogService } from "@/services/catalog.service";
 import { getSetting } from "@/services/settings.service";
 import { resolveWhatsAppUrl } from "@/lib/brand-contact";
 
-/** Always read live catalog after seed — avoid a permanently empty static homepage. */
+/** Always read live catalog after seed. Avoid a permanently empty static homepage. */
 export const dynamic = "force-dynamic";
 
 function isMissingTableError(err: unknown): boolean {

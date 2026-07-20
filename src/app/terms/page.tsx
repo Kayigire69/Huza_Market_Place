@@ -13,18 +13,18 @@ export default function TermsPage() {
         <p>
           <strong className="text-[var(--huza-ink)]">Orders &amp; payment.</strong> You buy from
           Youth Huza on HUZA FRESH. Pay with <strong className="text-[var(--huza-ink)]">MTN MoMo</strong> or{" "}
-          <strong className="text-[var(--huza-ink)]">Airtel Money</strong> only — approve the prompt on
+          <strong className="text-[var(--huza-ink)]">Airtel Money</strong> only. Approve the prompt on
           your phone. Bank card payments are coming soon. Cash on Delivery is not available. Prices
           are in RWF. Delivery fees apply by zone.
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Delivery.</strong> Youth Huza delivers orders we
-          sell. Availability may depend on district and business hours (default 6:00 AM – 9:00 PM).
+          sell. Availability may depend on district and business hours (default 6:00 AM to 9:00 PM).
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Farmer procurement.</strong> Verified farms may
           offer produce for Youth Huza to purchase through the Farmers Portal. Partners
-          do not sell directly to shoppers on this site — Huza is the seller to customers.
+          do not sell directly to shoppers on this site. Huza is the seller to customers.
         </p>
         <p>
           <strong className="text-[var(--huza-ink)]">Liability.</strong> Fresh produce quality can

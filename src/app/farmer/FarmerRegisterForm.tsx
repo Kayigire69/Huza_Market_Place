@@ -13,7 +13,7 @@ type FarmingTypeChoice = "ORGANIC" | "STANDARD" | "CONVERSION";
 const DRAFT_KEY = "huza_farmer_register_draft_v3";
 
 /**
- * Compact centered registration card — fits a PC screen without page scroll.
+ * Compact centered registration card. Fits a PC screen without page scroll.
  * Extra farm fields open in a dialog (dialog may scroll; the page does not).
  */
 export function FarmerRegisterForm() {
@@ -238,7 +238,7 @@ export function FarmerRegisterForm() {
           </p>
         </div>
 
-        {/* Farm dialog — centered on PC; page behind stays fixed */}
+        {/* Farm dialog. Centered on PC; page behind stays fixed */}
         <div
           className={
             farmOpen

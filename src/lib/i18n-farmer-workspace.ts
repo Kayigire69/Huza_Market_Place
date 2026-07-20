@@ -1,14 +1,13 @@
 /**
  * Farmers Portal workspace UI strings (My Crops, My Farm, Produce, Grow Better, Sell, …).
- * Merged into locale dictionaries — no hardcoded English in UI.
+ * Merged into locale dictionaries. No hardcoded English in UI.
  */
 
 export type WsDict = Record<string, string>;
 
 export const wsEn: WsDict = {
   cropsTitle: "My Crops",
-  cropsSubtitle:
-    "Track each crop through the season. After harvest, send it to My Produce so HUZA can inspect and buy — nothing is listed automatically.",
+  cropsSubtitle: "",
   cropsAdd: "Add crop",
   cropsClose: "Close",
   cropsRegisterTitle: "Register a crop",
@@ -16,7 +15,7 @@ export const wsEn: WsDict = {
   cropsNamePlaceholder: "e.g. Tomatoes",
   cropsPlantingDate: "Planting date",
   cropsExpectedHarvestOpt: "Expected harvest (optional)",
-  cropsExpectedHarvestHint: "Leave blank — we estimate from planting date.",
+  cropsExpectedHarvestHint: "Leave blank. We estimate from planting date.",
   cropsExpectedQty: "Expected quantity",
   cropsGrowthStage: "Growth stage",
   cropsFarmStatus: "Farm status",
@@ -31,7 +30,7 @@ export const wsEn: WsDict = {
   cropsLoading: "Loading crops…",
   cropsEmpty: "No crops yet. Add your first crop to track growth and harvest timing.",
   cropsStage: "Stage",
-  cropsFarmStatusDash: "Farm status —",
+  cropsFarmStatusDash: "Farm status:",
   cropsDaysRemaining: "{n} day(s) remaining",
   cropsPlanted: "Planted",
   cropsExpectedHarvest: "Expected harvest",
@@ -48,12 +47,12 @@ export const wsEn: WsDict = {
   cropsSaveError: "Save failed",
   cropsSavedMsg: "Crop saved. Expected harvest is calculated when you set a planting date.",
   cropsReady: "Ready to harvest",
-  cropsSoon: "Harvest soon — HUZA preparing",
+  cropsSoon: "Harvest soon. HUZA preparing",
   cropsOverdue: "Past expected date",
   cropsGrowing: "Still growing",
   cropsSetPlanting: "Set planting date",
   calTitle: "Harvest calendar",
-  calSubtitle: "Upcoming and recent harvests by readiness — plan when to send produce to HUZA.",
+  calSubtitle: "",
   calOverdue: "Overdue",
   calReady: "Ready now",
   calSoon: "Within 2 weeks",
@@ -69,7 +68,7 @@ export const wsEn: WsDict = {
   fieldOpen: "Open field",
 
   myFarmTitle: "My Farm",
-  myFarmSubtitle: "Farm profile Youth Huza uses for buying and support visits.",
+  myFarmSubtitle: "",
   myFarmEditSettings: "Edit in Settings",
   myFarmInfo: "Farm information",
   myFarmFarmer: "Farmer",
@@ -107,8 +106,7 @@ export const wsEn: WsDict = {
   myFarmPhotoAlt: "Farm",
 
   produceTitle: "My Produce",
-  produceSubtitle:
-    "Register crops you intend to sell to Youth Huza. Fruit salads and juices are prepared by HUZA FRESH.",
+  produceSubtitle: "",
   produceSubmitMain: "Submit my main crop",
   produceSubmitAnother: "Submit another crop",
   tabAllProduce: "All produce",
@@ -118,8 +116,7 @@ export const wsEn: WsDict = {
   tabPayments: "Payments",
 
   growBetterTitle: "Grow Better",
-  growBetterSubtitle:
-    "Youth Huza is your agricultural partner — agronomy, training, and practical advice so your farm improves every season.",
+  growBetterSubtitle: "",
   growCardAgronomyTitle: "Agronomy Support",
   growCardAgronomyBody:
     "Ask an expert or request a farm visit. Youth Huza agronomy teams help you grow healthier crops.",
@@ -128,7 +125,7 @@ export const wsEn: WsDict = {
     "Short guides on soil, organic practice, pests, fertilizer, irrigation, harvest and markets.",
   growCardPracticesTitle: "Best Farming Practices",
   growCardPracticesBody:
-    "Practical steps aligned with good agricultural practice — clear language for every farmer.",
+    "Practical steps aligned with good agricultural practice. Clear language for every farmer.",
   growCardWeatherTitle: "Weather Information",
   growCardWeatherBody:
     "Seasonal tips so you plan planting, spraying and harvest with more confidence.",
@@ -144,12 +141,11 @@ export const wsEn: WsDict = {
   growCardFaqBody: "Simple answers about selling to HUZA, farm visits, quality and payments.",
   growCardImproveTitle: "Farm Improvement Recommendations",
   growCardImproveBody:
-    "After inspection, Huza shares what to improve next season — see Approvals and Messages.",
+    "After inspection, Huza shares what to improve next season. See Approvals and Messages.",
   growOpen: "Open",
 
   sellTitle: "Sell to HUZA",
-  sellSubtitle:
-    "Choose how you want Youth Huza to work with your harvest. These are two different paths — never mixed.",
+  sellSubtitle: "",
   sellOptionA: "Option A",
   sellOptionB: "Option B",
   sellDirectTitle: "Direct Sale to HUZA",
@@ -167,7 +163,7 @@ export const wsEn: WsDict = {
   sellStepSales: "Sales happen",
   sellStepCommission: "Commission deducted · you are paid the rest",
   sellDirectPayNote:
-    "Payment may be farm-gate, upon delivery, bank transfer, or mobile money — as agreed.",
+    "Payment may be farm-gate, upon delivery, bank transfer, or mobile money. As agreed.",
   sellNoCommission: "No commission on this path.",
   sellPartnerTrackNote:
     "Track sold stock, remaining stock, HUZA commission, your earnings, and settlement dates in Payments. Commission % is set by Youth Huza (Super Admin).",
@@ -182,12 +178,12 @@ export const wsEn: WsDict = {
   sellGrade2d: "Standard quality · average selling price",
   sellGrade3: "Grade 3",
   sellGrade3d: "Lower quality · lower selling price",
-  sellGradesNote: "Grades are assigned only after HUZA inspection — not by self-declaration alone.",
+  sellGradesNote: "Grades are assigned only after HUZA inspection. Not by self-declaration alone.",
   phone: "Phone",
   email: "Email",
 
   reportsTitle: "Reports",
-  reportsSubtitle: "Business summary for {name}.",
+  reportsSubtitle: "",
   reportsTotalEarnings: "Total earnings",
   reportsQtySold: "Quantity sold",
   reportsCommissionPaid: "Commission paid to HUZA",
@@ -209,7 +205,7 @@ export const wsEn: WsDict = {
   reportsImproveQuality: "Improve quality",
   reportsAskAgronomist: "Ask an agronomist",
   reportsBandExcellent: "Excellent",
-  reportsBandExcellentHint: "Keep this quality — Huza will prioritize your harvest.",
+  reportsBandExcellentHint: "Keep this quality. Huza will prioritize your harvest.",
   reportsBandGood: "Good",
   reportsBandGoodHint: "Solid partner. Small quality wins lift your score further.",
   reportsBandNeedsWork: "Needs work",
@@ -218,7 +214,7 @@ export const wsEn: WsDict = {
   reportsBandAtRiskHint: "Ask an agronomist and read quality standards before the next harvest.",
 
   trainingTitle: "Training & Advisory",
-  trainingSubtitle: "Digital learning center — short guides to improve quality and earnings.",
+  trainingSubtitle: "",
   trainingFeatured: "Featured guide",
   trainingQualityTitle: "How to Meet HUZA Quality Standards",
   trainingQuality1: "Harvest at the right maturity (not overripe or underripe).",
@@ -263,7 +259,7 @@ export const wsEn: WsDict = {
   agroHuzaReply: "Huza reply",
   agroScheduled: "Scheduled",
   agroFollowUps: "Visit notes",
-  agroStatusOpen: "Submitted — waiting for Huza",
+  agroStatusOpen: "Submitted. Waiting for Huza",
   agroStatusReplied: "Agronomist replied",
   agroStatusScheduled: "Visit scheduled",
   agroStatusHandled: "Visit / advice completed",
@@ -286,8 +282,8 @@ export const wsEn: WsDict = {
   agroAdviceSent: "Advice request sent to Youth Huza.",
   agroVisitSent: "Farm visit request sent to Youth Huza.",
   agroSendFailed: "Could not send request. Try again.",
-  agroIntro: "Youth Huza helps improve farming practices — not only buys produce.",
-  agroHistorySubtitle: "Live status and agronomist notes for your farm.",
+  agroIntro: "",
+  agroHistorySubtitle: "",
   agroRefresh: "Refresh",
   agroKindVisit: "Farm visit",
   agroKindAdvice: "Advice",
@@ -297,8 +293,7 @@ export const wsEn: WsDict = {
 
 export const wsFr: WsDict = {
   cropsTitle: "Mes cultures",
-  cropsSubtitle:
-    "Suivez chaque culture pendant la saison. Après la récolte, envoyez-la vers Mes produits pour que HUZA inspecte et achète — rien n'est listé automatiquement.",
+  cropsSubtitle: "",
   cropsAdd: "Ajouter une culture",
   cropsClose: "Fermer",
   cropsRegisterTitle: "Enregistrer une culture",
@@ -306,7 +301,7 @@ export const wsFr: WsDict = {
   cropsNamePlaceholder: "ex. Tomates",
   cropsPlantingDate: "Date de plantation",
   cropsExpectedHarvestOpt: "Récolte prévue (facultatif)",
-  cropsExpectedHarvestHint: "Laissez vide — nous estimons à partir de la plantation.",
+  cropsExpectedHarvestHint: "Laissez vide. Nous estimons à partir de la plantation.",
   cropsExpectedQty: "Quantité prévue",
   cropsGrowthStage: "Stade de croissance",
   cropsFarmStatus: "Type de champ",
@@ -321,7 +316,7 @@ export const wsFr: WsDict = {
   cropsLoading: "Chargement des cultures…",
   cropsEmpty: "Aucune culture. Ajoutez la première pour suivre la croissance et la récolte.",
   cropsStage: "Stade",
-  cropsFarmStatusDash: "Champ —",
+  cropsFarmStatusDash: "Champ:",
   cropsDaysRemaining: "{n} jour(s) restant(s)",
   cropsPlanted: "Planté",
   cropsExpectedHarvest: "Récolte prévue",
@@ -340,12 +335,12 @@ export const wsFr: WsDict = {
   cropsSaveError: "Échec de l'enregistrement",
   cropsSavedMsg: "Culture enregistrée. La récolte prévue est calculée si vous fixez une date de plantation.",
   cropsReady: "Prêt à récolter",
-  cropsSoon: "Récolte bientôt — HUZA se prépare",
+  cropsSoon: "Récolte bientôt. HUZA se prépare",
   cropsOverdue: "Date prévue dépassée",
   cropsGrowing: "Encore en croissance",
   cropsSetPlanting: "Fixer la date de plantation",
   calTitle: "Calendrier de récolte",
-  calSubtitle: "Récoltes à venir et récentes par maturité — planifiez l’envoi à HUZA.",
+  calSubtitle: "",
   calOverdue: "En retard",
   calReady: "Prêt maintenant",
   calSoon: "Dans 2 semaines",
@@ -361,7 +356,7 @@ export const wsFr: WsDict = {
   fieldOpen: "Plein champ",
 
   myFarmTitle: "Ma ferme",
-  myFarmSubtitle: "Profil de ferme utilisé par Youth Huza pour les achats et les visites.",
+  myFarmSubtitle: "",
   myFarmEditSettings: "Modifier dans Paramètres",
   myFarmInfo: "Informations de la ferme",
   myFarmFarmer: "Agriculteur",
@@ -399,8 +394,7 @@ export const wsFr: WsDict = {
   myFarmPhotoAlt: "Ferme",
 
   produceTitle: "Mes produits",
-  produceSubtitle:
-    "Enregistrez les cultures à vendre à Youth Huza. Salades et jus sont préparés par HUZA FRESH.",
+  produceSubtitle: "",
   produceSubmitMain: "Soumettre ma culture principale",
   produceSubmitAnother: "Soumettre une autre culture",
   tabAllProduce: "Tous les produits",
@@ -410,8 +404,7 @@ export const wsFr: WsDict = {
   tabPayments: "Paiements",
 
   growBetterTitle: "Mieux cultiver",
-  growBetterSubtitle:
-    "Youth Huza est votre partenaire agricole — agronomie, formation et conseils pratiques.",
+  growBetterSubtitle: "",
   growCardAgronomyTitle: "Support agronomique",
   growCardAgronomyBody:
     "Demandez un expert ou une visite. Les équipes Youth Huza aident à des cultures plus saines.",
@@ -435,12 +428,11 @@ export const wsFr: WsDict = {
   growCardFaqBody: "Réponses simples sur la vente à HUZA, les visites, la qualité et les paiements.",
   growCardImproveTitle: "Recommandations d'amélioration",
   growCardImproveBody:
-    "Après inspection, Huza indique quoi améliorer — voir Approbations et Messages.",
+    "Après inspection, Huza indique quoi améliorer. Voir Approbations et Messages.",
   growOpen: "Ouvrir",
 
   sellTitle: "Vendre à HUZA",
-  sellSubtitle:
-    "Choisissez comment Youth Huza travaille avec votre récolte. Deux parcours distincts — jamais mélangés.",
+  sellSubtitle: "",
   sellOptionA: "Option A",
   sellOptionB: "Option B",
   sellDirectTitle: "Vente directe à HUZA",
@@ -458,7 +450,7 @@ export const wsFr: WsDict = {
   sellStepSales: "Ventes réalisées",
   sellStepCommission: "Commission déduite · vous recevez le reste",
   sellDirectPayNote:
-    "Le paiement peut être au champ, à la livraison, virement ou mobile money — selon accord.",
+    "Le paiement peut être au champ, à la livraison, virement ou mobile money. Selon accord.",
   sellNoCommission: "Pas de commission sur ce parcours.",
   sellPartnerTrackNote:
     "Suivez stock vendu, stock restant, commission HUZA, vos gains et dates de règlement dans Paiements. Le % est fixé par Youth Huza (Super Admin).",
@@ -473,13 +465,13 @@ export const wsFr: WsDict = {
   sellGrade2d: "Qualité standard · prix moyen",
   sellGrade3: "Grade 3",
   sellGrade3d: "Qualité inférieure · prix plus bas",
-  sellGradesNote: "Les notes sont attribuées seulement après inspection HUZA — pas par auto-déclaration.",
+  sellGradesNote: "Les notes sont attribuées seulement après inspection HUZA. Pas par auto-déclaration.",
   sellCtaProduce: "Aller à Mes produits",
   phone: "Téléphone",
   email: "E-mail",
 
   reportsTitle: "Rapports",
-  reportsSubtitle: "Résumé d'activité pour {name}.",
+  reportsSubtitle: "",
   reportsTotalEarnings: "Gains totaux",
   reportsQtySold: "Quantité vendue",
   reportsCommissionPaid: "Commission payée à HUZA",
@@ -501,7 +493,7 @@ export const wsFr: WsDict = {
   reportsImproveQuality: "Améliorer la qualité",
   reportsAskAgronomist: "Demander un agronome",
   reportsBandExcellent: "Excellent",
-  reportsBandExcellentHint: "Gardez cette qualité — Huza priorisera votre récolte.",
+  reportsBandExcellentHint: "Gardez cette qualité. Huza priorisera votre récolte.",
   reportsBandGood: "Bon",
   reportsBandGoodHint: "Bon partenaire. De petits gains qualité feront monter le score.",
   reportsBandNeedsWork: "À améliorer",
@@ -510,7 +502,7 @@ export const wsFr: WsDict = {
   reportsBandAtRiskHint: "Demandez un agronome et lisez les normes avant la prochaine récolte.",
 
   trainingTitle: "Formation & conseil",
-  trainingSubtitle: "Centre d'apprentissage — guides courts pour qualité et revenus.",
+  trainingSubtitle: "",
   trainingFeatured: "Guide en vedette",
   trainingQualityTitle: "Comment respecter les normes de qualité HUZA",
   trainingQuality1: "Récoltez à bonne maturité (ni trop mûr ni trop vert).",
@@ -555,7 +547,7 @@ export const wsFr: WsDict = {
   agroHuzaReply: "Réponse Huza",
   agroScheduled: "Planifié",
   agroFollowUps: "Notes de visite",
-  agroStatusOpen: "Envoyé — en attente de Huza",
+  agroStatusOpen: "Envoyé. En attente de Huza",
   agroStatusReplied: "Agronome a répondu",
   agroStatusScheduled: "Visite planifiée",
   agroStatusHandled: "Visite / conseil terminé",
@@ -578,8 +570,8 @@ export const wsFr: WsDict = {
   agroAdviceSent: "Demande de conseil envoyée à Youth Huza.",
   agroVisitSent: "Demande de visite envoyée à Youth Huza.",
   agroSendFailed: "Échec de l'envoi. Réessayez.",
-  agroIntro: "Youth Huza aide à améliorer les pratiques agricoles — pas seulement à acheter.",
-  agroHistorySubtitle: "Statut en direct et notes d'agronome pour votre ferme.",
+  agroIntro: "",
+  agroHistorySubtitle: "",
   agroRefresh: "Actualiser",
   agroKindVisit: "Visite de ferme",
   agroKindAdvice: "Conseil",
@@ -589,8 +581,7 @@ export const wsFr: WsDict = {
 
 export const wsRw: WsDict = {
   cropsTitle: "Ibihingwa byanjye",
-  cropsSubtitle:
-    "Kurikirana igihingwa cyose mu gihe cy'ibihingwa. Nyuma yo gusarura, byohereze kuri Ibicuruzwa byanjye kugira ngo HUZA isuzume igure — nta kintu cyanditswe mu buryo bwikora.",
+  cropsSubtitle: "",
   cropsAdd: "Ongeraho igihingwa",
   cropsClose: "Funga",
   cropsRegisterTitle: "Andika igihingwa",
@@ -598,7 +589,7 @@ export const wsRw: WsDict = {
   cropsNamePlaceholder: "urugero: Inyanya",
   cropsPlantingDate: "Itariki yo gutera",
   cropsExpectedHarvestOpt: "Igihe cyo gusarura (si ngombwa)",
-  cropsExpectedHarvestHint: "Siga ubusa — dukoresha itariki yo gutera.",
+  cropsExpectedHarvestHint: "Siga ubusa. Dukoresha itariki yo gutera.",
   cropsExpectedQty: "Ingano iteganyijwe",
   cropsGrowthStage: "Ikiciro cy'iterambere",
   cropsFarmStatus: "Ubwoko bw'umurima",
@@ -613,7 +604,7 @@ export const wsRw: WsDict = {
   cropsLoading: "Turimo gushaka ibihingwa…",
   cropsEmpty: "Nta bihingwa. Ongeraho icya mbere kugira ngo ukurikirane iterambere n'isarura.",
   cropsStage: "Ikiciro",
-  cropsFarmStatusDash: "Umurima —",
+  cropsFarmStatusDash: "Umurima:",
   cropsDaysRemaining: "Iminsi {n} isigaye",
   cropsPlanted: "Byatewe",
   cropsExpectedHarvest: "Isarura riteganyijwe",
@@ -632,12 +623,12 @@ export const wsRw: WsDict = {
   cropsSaveError: "Kubika byanze",
   cropsSavedMsg: "Igihingwa cyabitswe. Isarura riteganyijwe ribarwa igihe ushyize itariki yo gutera.",
   cropsReady: "Biteguye gusarurwa",
-  cropsSoon: "Isarura riri hafi — HUZA irategura",
+  cropsSoon: "Isarura riri hafi. HUZA irategura",
   cropsOverdue: "Itariki yari iteganyijwe yararenze",
   cropsGrowing: "Biracyakura",
   cropsSetPlanting: "Shyira itariki yo gutera",
   calTitle: "Kalendari y’isarura",
-  calSubtitle: "Isarura riri hafi n’irashize ukurikije ubwiteguye — tegura kohereza kuri HUZA.",
+  calSubtitle: "",
   calOverdue: "Byarenze igihe",
   calReady: "Biteguye ubu",
   calSoon: "Mu byumweru 2",
@@ -653,7 +644,7 @@ export const wsRw: WsDict = {
   fieldOpen: "Umurima usanzwe",
 
   myFarmTitle: "Umurima wanjye",
-  myFarmSubtitle: "Umwirondoro w'umurima Youth Huza ikoresha mu kugura no gusura.",
+  myFarmSubtitle: "",
   myFarmEditSettings: "Hindura muri Igenamiterere",
   myFarmInfo: "Amakuru y'umurima",
   myFarmFarmer: "Umuhinzi",
@@ -691,8 +682,7 @@ export const wsRw: WsDict = {
   myFarmPhotoAlt: "Umurima",
 
   produceTitle: "Ibicuruzwa byanjye",
-  produceSubtitle:
-    "Andika ibihingwa ushaka kugurisha kuri Youth Huza. Insalade n'imvubo bitunganywa na HUZA FRESH.",
+  produceSubtitle: "",
   produceSubmitMain: "Ohereza igihingwa cyanjye nyamukuru",
   produceSubmitAnother: "Ohereza indi gihingwa",
   tabAllProduce: "Ibicuruzwa byose",
@@ -702,8 +692,7 @@ export const wsRw: WsDict = {
   tabPayments: "Kwishyura",
 
   growBetterTitle: "Kuzamura ubuhinzi",
-  growBetterSubtitle:
-    "Youth Huza ni umufatanyabikorwa w'ubuhinzi — ubuhinzi, amahugurwa, n'inama z'inyungu.",
+  growBetterSubtitle: "",
   growCardAgronomyTitle: "Ubufasha bw'ubuhinzi",
   growCardAgronomyBody:
     "Baza umuhanga cyangwa usabe gusurwa. Timu za Youth Huza zifasha ibihingwa byiza.",
@@ -726,12 +715,11 @@ export const wsRw: WsDict = {
   growCardFaqBody: "Ibisubizo byoroshye ku kugurisha kuri HUZA, gusura, ubuziranenge n'ubwishyu.",
   growCardImproveTitle: "Inama zo kuzamura umurima",
   growCardImproveBody:
-    "Nyuma yo gusuzuma, Huza igira inama — reba Iyemeza n'Ubutumwa.",
+    "Nyuma yo gusuzuma, Huza igira inama. Reba Iyemeza n'Ubutumwa.",
   growOpen: "Fungura",
 
   sellTitle: "Gurisha kuri HUZA",
-  sellSubtitle:
-    "Hitamo uburyo Youth Huza ikorana n'isarura ryawe. Inzira ebyiri zitandukanye — ntizivangwa.",
+  sellSubtitle: "",
   sellOptionA: "Uburyo A",
   sellOptionB: "Uburyo B",
   sellDirectTitle: "Kugurisha ku buryo butaziguye kuri HUZA",
@@ -749,7 +737,7 @@ export const wsRw: WsDict = {
   sellStepSales: "Ubucuruzi bubaye",
   sellStepCommission: "Komisiyo yakuye · wishyurwa igisigaye",
   sellDirectPayNote:
-    "Kwishyura bishobora kuba ku murima, igihe byageze, muri banki, cyangwa MoMo — nkuko byemejwe.",
+    "Kwishyura bishobora kuba ku murima, igihe byageze, muri banki, cyangwa MoMo. Nkuko byemejwe.",
   sellNoCommission: "Nta komisiyo kuri iyi nzira.",
   sellPartnerTrackNote:
     "Kurikiranira ibicuruzwa byagurishijwe, ibisigaye, komisiyo ya HUZA, inyungu zawe, n'itariki zo kwishyura muri Kwishyura. % ya komisiyo ishyirwaho na Youth Huza (Super Admin).",
@@ -764,13 +752,13 @@ export const wsRw: WsDict = {
   sellGrade2d: "Ubuziranenge busanzwe · igiciro gisanzwe",
   sellGrade3: "Icyiciro cya 3",
   sellGrade3d: "Ubuziranenge buke · igiciro gito",
-  sellGradesNote: "Ibihangange bihabwa nyuma yo gusuzuma HUZA gusa — si ukwiyemeza wenyine.",
+  sellGradesNote: "Ibihangange bihabwa nyuma yo gusuzuma HUZA gusa. Si ukwiyemeza wenyine.",
   sellCtaProduce: "Jya kuri Ibicuruzwa byanjye",
   phone: "Telefone",
   email: "Imeri",
 
   reportsTitle: "Raporo",
-  reportsSubtitle: "Incamake y'ubucuruzi kuri {name}.",
+  reportsSubtitle: "",
   reportsTotalEarnings: "Amafaranga yose yinjiye",
   reportsQtySold: "Ingano yagurishijwe",
   reportsCommissionPaid: "Komisiyo yishyuwe kuri HUZA",
@@ -792,7 +780,7 @@ export const wsRw: WsDict = {
   reportsImproveQuality: "Kuzamura ubuziranenge",
   reportsAskAgronomist: "Baza umuhanga w'ubuhinzi",
   reportsBandExcellent: "Byiza cyane",
-  reportsBandExcellentHint: "Guma kuri ubu bwiza — Huza izatangiza umusaruro wawe.",
+  reportsBandExcellentHint: "Guma kuri ubu bwiza. Huza izatangiza umusaruro wawe.",
   reportsBandGood: "Byiza",
   reportsBandGoodHint: "Umufatanyabikorwa mwiza. Kunononsora bike bizongera amanota.",
   reportsBandNeedsWork: "Bisaba kunoza",
@@ -801,7 +789,7 @@ export const wsRw: WsDict = {
   reportsBandAtRiskHint: "Baza umuhanga kandi usome ibipimo by'ubuziranenge mbere y'isarura rikurikira.",
 
   trainingTitle: "Amahugurwa n'ubujyanama",
-  trainingSubtitle: "Ikigo cy'amahugurwa — inyigisho ngufi zo kuzamura ubuziranenge n'inyungu.",
+  trainingSubtitle: "",
   trainingFeatured: "Inyigisho yihariye",
   trainingQualityTitle: "Uko wohereza ibihingwa bihuje n'ibipimo bya HUZA",
   trainingQuality1: "Sarura igihe bihageze neza (ntibirenga cyangwa bidatarenga).",
@@ -846,7 +834,7 @@ export const wsRw: WsDict = {
   agroHuzaReply: "Igisubizo cya Huza",
   agroScheduled: "Byateganyijwe",
   agroFollowUps: "Inyandiko zo gusura",
-  agroStatusOpen: "Byoherejwe — bitegereje Huza",
+  agroStatusOpen: "Byoherejwe. Bitegereje Huza",
   agroStatusReplied: "Umuhanga yasubije",
   agroStatusScheduled: "Gusura byateguwe",
   agroStatusHandled: "Gusura / inama byarangiye",
@@ -869,8 +857,8 @@ export const wsRw: WsDict = {
   agroAdviceSent: "Icyifuzo cy'inama cyoherejwe kuri Youth Huza.",
   agroVisitSent: "Icyifuzo cyo gusura cyoherejwe kuri Youth Huza.",
   agroSendFailed: "Ntibyashoboye kohereza. Ongera ugerageze.",
-  agroIntro: "Youth Huza ifasha kuzamura imikorere y'ubuhinzi — ntabwo igura gusa.",
-  agroHistorySubtitle: "Imiterere n'inyandiko z'abahanga ku murima wawe.",
+  agroIntro: "",
+  agroHistorySubtitle: "",
   agroRefresh: "Ongera ushyireho",
   agroKindVisit: "Gusura umurima",
   agroKindAdvice: "Inama",
@@ -880,8 +868,7 @@ export const wsRw: WsDict = {
 
 export const wsSw: WsDict = {
   cropsTitle: "Mazao yangu",
-  cropsSubtitle:
-    "Fuatilia kila zao katika msimu. Baada ya mavuno, tuma kwa Mazao yangu ya kuuza ili HUZA ikague na kununua — hakuna kinachoorodheshwa kiotomatiki.",
+  cropsSubtitle: "",
   cropsAdd: "Ongeza zao",
   cropsClose: "Funga",
   cropsRegisterTitle: "Sajili zao",
@@ -889,7 +876,7 @@ export const wsSw: WsDict = {
   cropsNamePlaceholder: "mf. Nyanya",
   cropsPlantingDate: "Tarehe ya kupanda",
   cropsExpectedHarvestOpt: "Mavuno yanayotarajiwa (si lazima)",
-  cropsExpectedHarvestHint: "Acha tupu — tunakadiria kutoka tarehe ya kupanda.",
+  cropsExpectedHarvestHint: "Acha tupu. Tunakadiria kutoka tarehe ya kupanda.",
   cropsExpectedQty: "Kiasi kinachotarajiwa",
   cropsGrowthStage: "Hatua ya ukuaji",
   cropsFarmStatus: "Aina ya shamba",
@@ -904,7 +891,7 @@ export const wsSw: WsDict = {
   cropsLoading: "Inapakia mazao…",
   cropsEmpty: "Hakuna mazao. Ongeza la kwanza kufuatilia ukuaji na mavuno.",
   cropsStage: "Hatua",
-  cropsFarmStatusDash: "Shamba —",
+  cropsFarmStatusDash: "Shamba:",
   cropsDaysRemaining: "Siku {n} zimesalia",
   cropsPlanted: "Imepandwa",
   cropsExpectedHarvest: "Mavuno yanayotarajiwa",
@@ -923,12 +910,12 @@ export const wsSw: WsDict = {
   cropsSaveError: "Kuhifadhi kumeshindikana",
   cropsSavedMsg: "Zao limehifadhiwa. Mavuno yanayotarajiwa yanahesabiwa unapoweka tarehe ya kupanda.",
   cropsReady: "Tayari kuvunwa",
-  cropsSoon: "Mavuno karibu — HUZA inajiandaa",
+  cropsSoon: "Mavuno karibu. HUZA inajiandaa",
   cropsOverdue: "Tarehe iliyotarajiwa imepita",
   cropsGrowing: "Bado inakua",
   cropsSetPlanting: "Weka tarehe ya kupanda",
   calTitle: "Kalenda ya mavuno",
-  calSubtitle: "Mavuno yanayokuja na yaliyopita kwa utayari — panga kutuma kwa HUZA.",
+  calSubtitle: "",
   calOverdue: "Imechelewa",
   calReady: "Tayari sasa",
   calSoon: "Ndani ya wiki 2",
@@ -944,7 +931,7 @@ export const wsSw: WsDict = {
   fieldOpen: "Shamba wazi",
 
   myFarmTitle: "Shamba langu",
-  myFarmSubtitle: "Wasifu wa shamba Youth Huza hutumia kwa ununuzi na ziara.",
+  myFarmSubtitle: "",
   myFarmEditSettings: "Hariri katika Mipangilio",
   myFarmInfo: "Taarifa za shamba",
   myFarmFarmer: "Mkulima",
@@ -982,8 +969,7 @@ export const wsSw: WsDict = {
   myFarmPhotoAlt: "Shamba",
 
   produceTitle: "Mazao yangu ya kuuza",
-  produceSubtitle:
-    "Sajili mazao unayotaka kuuza kwa Youth Huza. Saladi na juisi hutayarishwa na HUZA FRESH.",
+  produceSubtitle: "",
   produceSubmitMain: "Wasilisha zao langu kuu",
   produceSubmitAnother: "Wasilisha zao lingine",
   tabAllProduce: "Mazao yote",
@@ -993,8 +979,7 @@ export const wsSw: WsDict = {
   tabPayments: "Malipo",
 
   growBetterTitle: "Kulima vizuri",
-  growBetterSubtitle:
-    "Youth Huza ni mshirika wako wa kilimo — agronomia, mafunzo, na ushauri wa vitendo.",
+  growBetterSubtitle: "",
   growCardAgronomyTitle: "Msaada wa agronomia",
   growCardAgronomyBody:
     "Uliza mtaalamu au omba ziara. Timu za Youth Huza husaidia mazao bora.",
@@ -1017,12 +1002,11 @@ export const wsSw: WsDict = {
   growCardFaqBody: "Majibu rahisi kuhusu kuuza kwa HUZA, ziara, ubora na malipo.",
   growCardImproveTitle: "Mapendekezo ya kuboresha shamba",
   growCardImproveBody:
-    "Baada ya ukaguzi, Huza inashauri cha kuboresha — angalia Idhini na Ujumbe.",
+    "Baada ya ukaguzi, Huza inashauri cha kuboresha. Angalia Idhini na Ujumbe.",
   growOpen: "Fungua",
 
   sellTitle: "Uza kwa HUZA",
-  sellSubtitle:
-    "Chagua jinsi Youth Huza itakavyofanya kazi na mavuno yako. Njia mbili tofauti — hazichanganywi.",
+  sellSubtitle: "",
   sellOptionA: "Chaguo A",
   sellOptionB: "Chaguo B",
   sellDirectTitle: "Uuzaji wa moja kwa moja kwa HUZA",
@@ -1040,7 +1024,7 @@ export const wsSw: WsDict = {
   sellStepSales: "Mauzo yanatokea",
   sellStepCommission: "Kamisheni imetolewa · unalipwa kilichobaki",
   sellDirectPayNote:
-    "Malipo yanaweza kuwa shambani, baada ya uwasilishaji, benki, au fedha za rununu — kama ilivyokubaliwa.",
+    "Malipo yanaweza kuwa shambani, baada ya uwasilishaji, benki, au fedha za rununu. Kama ilivyokubaliwa.",
   sellNoCommission: "Hakuna kamisheni kwenye njia hii.",
   sellPartnerTrackNote:
     "Fuatilia hisa iliyouzwa, iliyobaki, kamisheni ya HUZA, mapato yako, na tarehe za malipo katika Malipo. Asilimia inawekwa na Youth Huza (Super Admin).",
@@ -1055,13 +1039,13 @@ export const wsSw: WsDict = {
   sellGrade2d: "Ubora wa kawaida · bei ya wastani",
   sellGrade3: "Daraja 3",
   sellGrade3d: "Ubora wa chini · bei ya chini",
-  sellGradesNote: "Daraja hutolewa tu baada ya ukaguzi wa HUZA — si kwa kujitangaza mwenyewe.",
+  sellGradesNote: "Daraja hutolewa tu baada ya ukaguzi wa HUZA. Si kwa kujitangaza mwenyewe.",
   sellCtaProduce: "Nenda kwa Mazao yangu",
   phone: "Simu",
   email: "Barua pepe",
 
   reportsTitle: "Ripoti",
-  reportsSubtitle: "Muhtasari wa biashara kwa {name}.",
+  reportsSubtitle: "",
   reportsTotalEarnings: "Mapato yote",
   reportsQtySold: "Kiasi kilichouzwa",
   reportsCommissionPaid: "Kamisheni iliyolipwa kwa HUZA",
@@ -1083,7 +1067,7 @@ export const wsSw: WsDict = {
   reportsImproveQuality: "Boresha ubora",
   reportsAskAgronomist: "Uliza mtaalamu wa kilimo",
   reportsBandExcellent: "Bora sana",
-  reportsBandExcellentHint: "Dumisha ubora huu — Huza itatanguliza mavuno yako.",
+  reportsBandExcellentHint: "Dumisha ubora huu. Huza itatanguliza mavuno yako.",
   reportsBandGood: "Nzuri",
   reportsBandGoodHint: "Mshirika mzuri. Maboresho madogo yataongeza alama.",
   reportsBandNeedsWork: "Inahitaji kazi",
@@ -1092,7 +1076,7 @@ export const wsSw: WsDict = {
   reportsBandAtRiskHint: "Uliza mtaalamu na soma viwango vya ubora kabla ya mavuno yajayo.",
 
   trainingTitle: "Mafunzo na ushauri",
-  trainingSubtitle: "Kituo cha kujifunza — miongozo fupi ya ubora na mapato.",
+  trainingSubtitle: "",
   trainingFeatured: "Mwongozo maalum",
   trainingQualityTitle: "Jinsi ya kukidhi viwango vya ubora vya HUZA",
   trainingQuality1: "Vuna wakati sahihi wa ukomavu (si zilizoiva kupita kiasi au zisizoiva).",
@@ -1137,7 +1121,7 @@ export const wsSw: WsDict = {
   agroHuzaReply: "Jibu la Huza",
   agroScheduled: "Imepangwa",
   agroFollowUps: "Maelezo ya ziara",
-  agroStatusOpen: "Imewasilishwa — inasubiri Huza",
+  agroStatusOpen: "Imewasilishwa. Inasubiri Huza",
   agroStatusReplied: "Mtaalamu amejibu",
   agroStatusScheduled: "Ziara imepangwa",
   agroStatusHandled: "Ziara / ushauri umekamilika",
@@ -1160,8 +1144,8 @@ export const wsSw: WsDict = {
   agroAdviceSent: "Ombi la ushauri limetumwa kwa Youth Huza.",
   agroVisitSent: "Ombi la ziara limetumwa kwa Youth Huza.",
   agroSendFailed: "Imeshindwa kutuma. Jaribu tena.",
-  agroIntro: "Youth Huza husaidia kuboresha mazoea ya kilimo — si kununua mazao tu.",
-  agroHistorySubtitle: "Hali ya moja kwa moja na maelezo ya mtaalamu kwa shamba lako.",
+  agroIntro: "",
+  agroHistorySubtitle: "",
   agroRefresh: "Onyesha upya",
   agroKindVisit: "Ziara ya shamba",
   agroKindAdvice: "Ushauri",

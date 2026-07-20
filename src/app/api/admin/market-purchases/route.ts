@@ -22,7 +22,7 @@ async function requireMarketAdmin() {
   });
 }
 
-/** List / create market (wholesale) purchases — separate from farmer POs. */
+/** List / create market (wholesale) purchases. Separate from farmer POs. */
 export async function GET(req: Request) {
   const session = await requireMarketAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
     action: "market_purchase.create",
     entity: "MarketPurchase",
     entityId: purchase.id,
-    details: `${purchase.purchaseNumber}: ${marketName} / ${vendorName} — ${productName}`,
+    details: `${purchase.purchaseNumber}: ${marketName} / ${vendorName}. ${productName}`,
   });
 
   return NextResponse.json(purchase);
@@ -200,7 +200,7 @@ export async function PATCH(req: Request) {
     const grade = normalizeQualityGrade(purchase.qualityGrade);
     if (!grade) {
       return NextResponse.json(
-        { error: "Quality grade is required — re-inspect with grade 1 / 2 / 3" },
+        { error: "Quality grade is required. Re-inspect with grade 1 / 2 / 3" },
         { status: 400 }
       );
     }
@@ -226,7 +226,7 @@ export async function PATCH(req: Request) {
         nameFr: purchase.productName,
         nameRw: purchase.productName,
         descriptionEn: `Market purchase from ${purchase.marketName} (${purchase.vendorName}).`,
-        descriptionFr: `Achat marché — ${purchase.marketName} (${purchase.vendorName}).`,
+        descriptionFr: `Achat marché. ${purchase.marketName} (${purchase.vendorName}).`,
         descriptionRw: `Ibicuruzwa byaguzwe kuri ${purchase.marketName} (${purchase.vendorName}).`,
         price: sellPrice,
         purchasePrice: purchase.unitPrice,

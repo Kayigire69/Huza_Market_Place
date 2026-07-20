@@ -114,7 +114,7 @@ export async function maybeNotifyStockLevel(product: {
   return false;
 }
 
-/** Customer restock interest — always saved; admin notify throttled hourly with demand count. */
+/** Customer restock interest. Always saved; admin notify throttled hourly with demand count. */
 export async function notifyRestockDemand(input: {
   productId: string;
   productName: string;

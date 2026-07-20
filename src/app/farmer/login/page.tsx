@@ -3,7 +3,7 @@ import { FarmerLoginForm } from "./FarmerLoginForm";
 
 export const dynamic = "force-dynamic";
 
-/** Full-viewport login — no page scroll. */
+/** Full-viewport login. No page scroll. */
 export default function FarmerLoginPage() {
   return (
     <div className="h-full">

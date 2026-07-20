@@ -63,7 +63,7 @@ function accountTone(status: string) {
 }
 
 /**
- * Phase 3 Approval Status — clear account + crop review trackers for sellers.
+ * Phase 3 Approval Status. Clear account + crop review trackers for sellers.
  */
 export function FarmerApprovalsClient({
   account,

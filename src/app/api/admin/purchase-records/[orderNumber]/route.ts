@@ -6,7 +6,7 @@ import { buildPurchaseRecordPdf, loadOrderDocument } from "@/lib/documents/order
 import { pdfResponse } from "@/lib/documents/pdf";
 import { auditAdminAction } from "@/lib/audit";
 
-/** Internal purchase record PDF — ADMIN only (never customer-facing). */
+/** Internal purchase record PDF. ADMIN only (never customer-facing). */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ orderNumber: string }> }

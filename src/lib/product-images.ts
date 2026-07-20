@@ -1,5 +1,5 @@
 /** Shared Prisma include/filter for customer-facing product images only.
- * Official HUZA STOREFRONT images only — never farmer INSPECTION photos.
+ * Official HUZA STOREFRONT images only. Never farmer INSPECTION photos.
  */
 export const storefrontImagesInclude = {
   where: { kind: "STOREFRONT" as const },

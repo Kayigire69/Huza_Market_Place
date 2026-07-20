@@ -231,9 +231,8 @@ export const farmerGapSw: FarmerI18nDict = {
   registerOrganicFarmer: "Jisajili kama mkulima asilia",
   startOrganicJourney: "Anza safari ya asilia",
   registerConventionalFarmer: "Jisajili kama mkulima wa kawaida",
-  farmerPortalWelcomeTitle: "Mwenza wako wa kidijitali wa kilimo",
-  farmerPortalWelcomeBody:
-    "Youth Huza ni mshirika wa kilimo: ziara za shamba, ushauri wa agronomia, mafunzo, mipango ya mavuno, na soko kupitia HUZA FRESH.",
+  farmerPortalWelcomeTitle: "Karibu",
+  farmerPortalWelcomeBody: "",
   howHuzaSupportsFarmers: "Jinsi Youth Huza inavyosaidia wakulima",
   chooseFarmingType: "Chagua aina ya kilimo chako",
   chooseFarmingTypeHint: "Chagua njia inayolingana na shamba lako, kisha kamilisha fomu moja.",

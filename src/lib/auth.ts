@@ -18,7 +18,7 @@ const DAY = 24 * 60 * 60;
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    // Upper bound — farmer "remember device" uses up to 90 days
+    // Upper bound. Farmer "remember device" uses up to 90 days
     maxAge: FARMER_SESSION_DAYS_REMEMBER * DAY,
   },
   pages: {
@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
         });
         if (!user) return null;
 
-        // Farmers use /farmer/login (phone + NID) — not password login
+        // Farmers use /farmer/login (phone + NID). Not password login
         if (user.role === "SUPPLIER") {
           throw new Error("USE_FARMER_LOGIN");
         }

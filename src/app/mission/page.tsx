@@ -8,7 +8,7 @@ export default function MissionPage() {
       </p>
       <h1 className="section-title mt-2">Our Mission</h1>
       <p className="mt-6 text-lg leading-relaxed text-[var(--huza-muted)]">
-        Youth Huza connects Rwanda&apos;s farmers to households through HUZA FRESH — buying quality
+        Youth Huza connects Rwanda&apos;s farmers to households through HUZA FRESH: buying quality
         produce fairly, checking it carefully, and delivering it under one trusted brand.
       </p>
       <p className="mt-4 leading-relaxed text-[var(--huza-muted)]">

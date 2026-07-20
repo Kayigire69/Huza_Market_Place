@@ -1,6 +1,6 @@
 /**
  * Server-only RBAC helpers (uses next-auth + authOptions).
- * Do NOT import this from middleware — it pulls Node packages (Prisma, Redis, etc.).
+ * Do NOT import this from middleware. It pulls Node packages (Prisma, Redis, etc.).
  */
 import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/lib/auth";

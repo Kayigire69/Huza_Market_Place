@@ -12,10 +12,10 @@ async function requireSuperAdmin() {
   return session;
 }
 
-/** Start 2FA setup — returns QR for authenticator apps. */
+/** Start 2FA setup. Returns QR for authenticator apps. */
 export async function GET() {
   const session = await requireSuperAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -28,7 +28,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const session = await requireSuperAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const body = await req.json();
   const action = String(body.action || "");

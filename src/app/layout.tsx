@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s | HUZA FRESH",
   },
   description:
-    "Youth Huza buys from farms and sells fresh food on HUZA FRESH — sold and delivered by us across Rwanda.",
+    "Youth Huza buys from farms and sells fresh food on HUZA FRESH. Sold and delivered by us across Rwanda.",
   applicationName: "HUZA FRESH",
   keywords: [
     "HUZA FRESH",

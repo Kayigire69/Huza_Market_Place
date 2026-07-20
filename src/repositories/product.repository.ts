@@ -19,7 +19,7 @@ export function deriveAvailability(
   return "IN_STOCK";
 }
 
-/** Columns needed by ProductCard — avoids loading farmer dossier / long descriptions. */
+/** Columns needed by ProductCard. Avoids loading farmer dossier / long descriptions. */
 export const productCardSelect = {
   id: true,
   nameEn: true,
@@ -68,7 +68,7 @@ export const productRepository = {
     });
   },
 
-  /** Legacy hard decrement — prefer reserve/commit helpers */
+  /** Legacy hard decrement. Prefer reserve/commit helpers */
   async decrementStock(tx: Prisma.TransactionClient, productId: string, quantity: number) {
     return tx.product.update({
       where: { id: productId },
@@ -132,7 +132,7 @@ export const productRepository = {
     return tx.product.findUniqueOrThrow({ where: { id: productId } });
   },
 
-  /** Payment confirmed — convert reservation into a sale (stock floored at 0) */
+  /** Payment confirmed. Convert reservation into a sale (stock floored at 0) */
   async commitReservation(tx: Prisma.TransactionClient, productId: string, quantity: number) {
     const product = await tx.product.findUniqueOrThrow({ where: { id: productId } });
     const nextStock = Math.max(0, product.stockQty - quantity);
@@ -146,7 +146,7 @@ export const productRepository = {
     });
   },
 
-  /** Payment failed / timed out — release reservation */
+  /** Payment failed / timed out. Release reservation */
   async releaseReservation(tx: Prisma.TransactionClient, productId: string, quantity: number) {
     const product = await tx.product.findUniqueOrThrow({ where: { id: productId } });
     const release = Math.min(quantity, product.reservedQty);
@@ -156,7 +156,7 @@ export const productRepository = {
     });
   },
 
-  /** Immediate physical sale helper (legacy / warehouse) — checkout uses reserve → commit */
+  /** Immediate physical sale helper (legacy / warehouse). Checkout uses reserve → commit */
   async sellNow(tx: Prisma.TransactionClient, productId: string, quantity: number) {
     const product = await tx.product.findUniqueOrThrow({ where: { id: productId } });
     if (availableQty(product.stockQty, product.reservedQty) < quantity) {
@@ -182,7 +182,7 @@ export const productRepository = {
       images: { some: { kind: "STOREFRONT" as const } },
     };
 
-    // Sequential queries — same results as Promise.all, but one pool connection at a time
+    // Sequential queries. Same results as Promise.all, but one pool connection at a time
     // (avoids P2024 when Neon connection_limit is small and home + APIs run together).
     const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
     const bestSellers = await prisma.product.findMany({
@@ -205,7 +205,7 @@ export const productRepository = {
       take: 8,
     });
 
-    // One curated "Popular now" rail — prefer bestsellers, fill from featured
+    // One curated "Popular now" rail. Prefer bestsellers, fill from featured
     const seen = new Set<string>();
     const popularNow: typeof bestSellers = [];
     for (const p of [...bestSellers, ...featured]) {

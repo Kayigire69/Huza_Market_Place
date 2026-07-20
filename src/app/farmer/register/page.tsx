@@ -3,7 +3,7 @@ import { FarmerRegisterForm } from "../FarmerRegisterForm";
 
 export const dynamic = "force-dynamic";
 
-/** Full-viewport registration — no outer chrome that forces scroll. */
+/** Full-viewport registration. No outer chrome that forces scroll. */
 export default function FarmerRegisterPage() {
   return (
     <div className="h-full">

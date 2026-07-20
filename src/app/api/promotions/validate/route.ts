@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
-/** Validate a promo code without applying it yet — future-proof for checkout coupons */
+/** Validate a promo code without applying it yet. Future-proof for checkout coupons */
 export async function POST(req: Request) {
   const ip = clientIp(req);
   const rl = await rateLimit({ key: `promo:${ip}`, limit: 30, windowMs: 60_000 });

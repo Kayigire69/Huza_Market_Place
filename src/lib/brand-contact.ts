@@ -7,10 +7,10 @@
 export const SUPPORT_EMAIL =
   process.env.SUPPORT_EMAIL?.trim() || "info@youthhuza.rw";
 
-/** Display phone, e.g. +250 7XX XXX XXX — leave blank until set */
+/** Display phone, e.g. +250 7XX XXX XXX. Leave blank until set */
 export const SUPPORT_PHONE_DISPLAY = process.env.SUPPORT_PHONE_DISPLAY?.trim() || "";
 
-/** Full wa.me URL — leave blank until WhatsApp Business is ready */
+/** Full wa.me URL. Leave blank until WhatsApp Business is ready */
 export const DEFAULT_WHATSAPP_URL = process.env.WHATSAPP_URL?.trim() || "";
 
 const PLACEHOLDER_WHATSAPP_DIGITS = new Set([

@@ -16,7 +16,7 @@ export default function Error({
         Something went wrong
       </h1>
       <p className="mt-4 text-[var(--huza-muted)] leading-relaxed">
-        We couldn&apos;t complete that request. Your data is safe — please try again, or contact Youth
+        We couldn&apos;t complete that request. Your data is safe. Please try again, or contact Youth
         Huza support if it continues.
       </p>
       {error.digest && (

@@ -94,7 +94,7 @@ export function AdminAgronomyClient() {
   const reply = (item: AgronomyItem) => {
     const message = window.prompt(
       "Reply to farmer (shown in Farmers Portal notifications)",
-      "Thank you — our agronomy team will follow up shortly."
+      "Thank you. Our agronomy team will follow up shortly."
     );
     if (!message?.trim()) return;
     void act(item.id, "reply", { message: message.trim() });
@@ -157,7 +157,7 @@ export function AdminAgronomyClient() {
       ) : items.length === 0 ? (
         <div className="admin-panel p-6 text-sm text-[var(--admin-muted)]">
           {filter === "open"
-            ? "No open agronomy requests. Inbox zero."
+            ? "No open agronomy requests."
             : "No agronomy requests yet."}
         </div>
       ) : (

@@ -20,11 +20,9 @@ export default async function SupportPage() {
         Youth Huza
       </p>
       <h1 className="section-title mt-1">Customer Support Center</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Open a ticket, browse the FAQ, or reach us on WhatsApp — we are here for HUZA FRESH
-        customers.
-      </p>
+      <div className="mb-8 mt-8">
       <SupportCenterClient userName={session?.user?.name} userPhone={userPhone} />
+      </div>
     </div>
   );
 }

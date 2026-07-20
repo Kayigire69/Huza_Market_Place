@@ -34,7 +34,7 @@ function resolveUnitCost(product: {
   if (product.purchasePrice != null && product.purchasePrice > 0) return product.purchasePrice;
   if (product.farmGatePrice != null && product.farmGatePrice > 0) return product.farmGatePrice;
   if (product.pricePerUnit != null && product.pricePerUnit > 0) return product.pricePerUnit;
-  // Fallback estimate when cost not yet set — ~65% of retail for internal margin visibility
+  // Fallback estimate when cost not yet set. ~65% of retail for internal margin visibility
   return Math.round(product.price * 0.65);
 }
 
@@ -244,7 +244,7 @@ export const orderService = {
       ? fulfillment.estimatedMinutes
       : zoneEtaMinutes(zoneKey);
 
-    // Step 1 — create pending order and reserve stock (backorders allowed)
+    // Step 1. Create pending order and reserve stock (backorders allowed)
     const order = await prisma.$transaction(async (tx) => {
       if (loyaltyPointsToSpend > 0 && userId) {
         const updated = await tx.user.updateMany({
@@ -316,8 +316,8 @@ export const orderService = {
               payeePhone: normalizeMsisdn(merchant.phone),
               payeeName: merchant.name,
               providerMessage: needsRestock
-                ? `Payment request queued — restock ETA: ${formatBackorderEta()} after payment`
-                : "Payment request queued — stock reserved for 10 minutes",
+                ? `Payment request queued. Restock ETA: ${formatBackorderEta()} after payment`
+                : "Payment request queued. Stock reserved for 10 minutes",
             },
           },
           delivery: {
@@ -331,8 +331,8 @@ export const orderService = {
               {
                 status: OrderStatus.PENDING,
                 note: needsRestock
-                  ? `Pending payment — delivery ETA ${estimatedDelivery} (fresh stock being prepared)`
-                  : "Pending order — stock reserved awaiting MoMo/Airtel payment",
+                  ? `Pending payment. Delivery ETA ${estimatedDelivery} (fresh stock being prepared)`
+                  : "Pending order. Stock reserved awaiting MoMo/Airtel payment",
               },
             ],
           },
@@ -373,7 +373,7 @@ export const orderService = {
       method: data.paymentMethod,
     });
 
-    // Step 2 — initiate MoMo/Airtel promptly so the phone prompt appears, then queue verification
+    // Step 2. Initiate MoMo/Airtel promptly so the phone prompt appears, then queue verification
     let paymentResult;
     try {
       paymentResult = await initiateMobileMoneyPayment({
@@ -426,7 +426,7 @@ export const orderService = {
       },
     });
 
-    // Step 3 — verify in background (customer does not wait here)
+    // Step 3. Verify in background (customer does not wait here)
     if (order.payment?.id) {
       await enqueueJob(
         "PAYMENT_VERIFY",

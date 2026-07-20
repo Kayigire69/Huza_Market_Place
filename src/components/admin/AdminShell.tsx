@@ -253,7 +253,7 @@ export function AdminShell({
                     return (
                       <span
                         key={item.href}
-                        title={`${item.label} — coming soon`}
+                        title={`${item.label}. Coming soon`}
                         className={`admin-nav-link pointer-events-none opacity-45 ${collapsed ? "justify-center px-0" : ""}`}
                       >
                         <Icon className="size-[18px] shrink-0" />

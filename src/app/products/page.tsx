@@ -9,7 +9,7 @@ import { productCardSelect } from "@/repositories/product.repository";
 
 export const metadata: Metadata = {
   title: "Products",
-  description: "Shop fresh produce on HUZA FRESH — quality-checked and delivered by Youth Huza.",
+  description: "Shop fresh produce on HUZA FRESH. Quality-checked and delivered by Youth Huza.",
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -140,7 +140,6 @@ async function ProductsResults({ searchParams }: { searchParams: SearchParams })
           {total} product{total === 1 ? "" : "s"}
           {q && activeCategory ? ` · “${q}”` : ""}
           {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
-          {" · "}Use the search bar above to find items
         </p>
       </div>
 
