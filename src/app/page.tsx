@@ -2,17 +2,16 @@ import type { Metadata } from "next";
 import { PublicEntryPage } from "@/components/entry/PublicEntryPage";
 
 export const metadata: Metadata = {
-  title: "Youth Huza | Connecting Farmers with Customers Across Rwanda",
+  title: "Youth Huza | Fresh produce for customers. Fair market for farmers",
   description:
-    "Youth Huza connects farmers with reliable markets and customers with fresh agricultural products through technology.",
+    "Youth Huza helps farmers with quality crops reach the market at a good price, and connects customers with fresh produce on HUZA FRESH.",
   openGraph: {
     title: "Youth Huza",
     description:
-      "Choose the Customer Website or Farmers Portal. Connecting farmers with customers across Rwanda.",
+      "Shop fresh produce on HUZA FRESH, or join as a farmer for support and a fair market price.",
   },
 };
 
-/** Official Public Entry Page for www.youthhuza.rw */
 export default function EntryPage() {
   return <PublicEntryPage />;
 }

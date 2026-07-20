@@ -1,38 +1,59 @@
 "use client";
 
 import Image from "next/image";
-import { QrCode } from "lucide-react";
+import Link from "next/link";
 
 type Props = {
   caption: string;
   href: string;
-  imageSrc?: string | null;
+  imageSrc: string;
+  openLabel: string;
   className?: string;
 };
 
-/**
- * Placeholder QR block. Replace imageSrc in entry-links.ts with the official asset.
- */
-export function EntryQrPlaceholder({ caption, href, imageSrc, className = "" }: Props) {
+function isExternal(href: string) {
+  return /^https?:\/\//i.test(href);
+}
+
+/** Scannable QR with click-through to the matching destination. */
+export function EntryQrPlaceholder({
+  caption,
+  href,
+  imageSrc,
+  openLabel,
+  className = "",
+}: Props) {
+  const external = isExternal(href);
+  const linkProps = external
+    ? { target: "_blank" as const, rel: "noopener noreferrer" }
+    : {};
+
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
-      <div
-        className="relative flex size-36 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--huza-line)] bg-white shadow-sm sm:size-40"
+      <Link
+        href={href}
+        {...linkProps}
+        className="group relative flex size-40 items-center justify-center overflow-hidden rounded-2xl border border-[var(--huza-line)] bg-white p-2 shadow-sm transition hover:border-[var(--huza-green)] hover:shadow-md sm:size-44"
+        aria-label={`${caption}: ${openLabel}`}
         title={href}
-        aria-label={`${caption}: ${href}`}
       >
-        {imageSrc ? (
-          <Image src={imageSrc} alt={caption} fill className="object-contain p-2" sizes="160px" />
-        ) : (
-          <div className="flex flex-col items-center gap-1.5 px-3 text-center">
-            <QrCode className="size-14 text-[var(--huza-green-dark)]/35" aria-hidden />
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
-              QR placeholder
-            </span>
-          </div>
-        )}
-      </div>
+        <Image
+          src={imageSrc}
+          alt={caption}
+          fill
+          className="object-contain p-2 transition group-hover:scale-[1.02]"
+          sizes="176px"
+          unoptimized
+        />
+      </Link>
       <p className="text-xs font-semibold text-[var(--huza-muted)]">{caption}</p>
+      <Link
+        href={href}
+        {...linkProps}
+        className="text-[11px] font-semibold text-[var(--huza-green-dark)] underline-offset-2 hover:underline"
+      >
+        {openLabel}
+      </Link>
     </div>
   );
 }
