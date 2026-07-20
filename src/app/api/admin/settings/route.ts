@@ -83,7 +83,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   const session = await requireSuperAdmin();
-  if (!session) return NextResponse.json({ error: "Forbidden — Super Admin only" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const rl = await rateLimit({
     key: `admin-settings:${clientIp(req)}`,

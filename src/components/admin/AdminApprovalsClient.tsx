@@ -20,7 +20,7 @@ type PendingProduct = {
 
 /**
  * Farmer-submitted products awaiting Huza inspection & approval
- * (Procurement Phase 6 — before purchase / website publish).
+ * (Procurement Phase 6. Before purchase / website publish).
  */
 export function AdminApprovalsClient() {
   const [products, setProducts] = useState<PendingProduct[]>([]);
@@ -59,29 +59,29 @@ export function AdminApprovalsClient() {
           undefined;
         if (!note?.trim()) {
           setBusy(null);
-          setMsg("Rejection cancelled — reason is required for the farmer");
+          setMsg("Rejection cancelled. Reason is required for the farmer");
           return;
         }
         recommendation =
           window.prompt(
-            "What should the farmer do next? (required — partnership guidance)",
+            "What should the farmer do next? (required. Partnership guidance)",
             "Wait the recommended number of days after spraying before harvesting."
           ) || undefined;
         if (!recommendation?.trim()) {
           setBusy(null);
-          setMsg("Rejection cancelled — recommendation is required so the farmer can improve");
+          setMsg("Rejection cancelled. Recommendation is required so the farmer can improve");
           return;
         }
       } else {
         const product = products.find((p) => p.id === id);
         if (product && product.stockQty <= 0) {
           const qtyRaw = window.prompt(
-            "Verified harvest quantity to stock (required — no invented qty)",
+            "Verified harvest quantity to stock (required. No invented qty)",
             ""
           );
           if (!qtyRaw?.trim()) {
             setBusy(null);
-            setMsg("Approval cancelled — enter verified quantity");
+            setMsg("Approval cancelled. Enter verified quantity");
             return;
           }
           confirmedQty = Number(qtyRaw);
@@ -94,7 +94,7 @@ export function AdminApprovalsClient() {
         const gradeRaw = window.prompt("Quality grade required (1 / 2 / 3 or A / B / C)", "1");
         if (!gradeRaw?.trim()) {
           setBusy(null);
-          setMsg("Approval cancelled — grade is required");
+          setMsg("Approval cancelled. Grade is required");
           return;
         }
         qualityGrade = gradeRaw.trim();
@@ -131,7 +131,7 @@ export function AdminApprovalsClient() {
         <p className="text-sm text-[var(--admin-muted)]">Loading pending products…</p>
       ) : products.length === 0 ? (
         <div className="admin-panel p-6 text-sm text-[var(--admin-muted)]">
-          No products waiting for approval. Nice — inbox zero.
+          No products waiting for approval.
         </div>
       ) : (
         <div className="space-y-4">

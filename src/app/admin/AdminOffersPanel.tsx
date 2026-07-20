@@ -22,7 +22,7 @@ type Promo = {
 };
 
 /**
- * Admin CMS for homepage Special offers — each card is a DB promotion, not hardcoded.
+ * Admin CMS for homepage Special offers. Each card is a DB promotion, not hardcoded.
  */
 export function AdminOffersPanel({
   promotions,
@@ -123,7 +123,7 @@ export function AdminOffersPanel({
       <div className="space-y-3">
         <h2 className="font-semibold text-lg">Homepage offers</h2>
         {promotions.length === 0 ? (
-          <p className="text-sm text-[var(--huza-muted)]">No offers yet — post the first one.</p>
+          <p className="text-sm text-[var(--huza-muted)]">No offers yet. Post the first one.</p>
         ) : (
           promotions.map((p, i) => (
             <div

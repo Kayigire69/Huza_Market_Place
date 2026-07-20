@@ -11,7 +11,7 @@ const PROMO_KEYS = ["heroPromoDelivery", "heroPromoCheckout", "heroPromoQuality"
 
 const ROTATE_MS = 5500;
 
-/** Five matching hero banners — same outdoor-market lighting, angle, and edit. */
+/** Five matching hero banners. Same outdoor-market lighting, angle, and edit. */
 const HERO_BANNERS = [
   {
     src: "/images/hero/banner-market-fruits.jpg",
@@ -46,7 +46,7 @@ const HERO_BANNERS = [
 ] as const;
 
 /**
- * Phase 2 Hero — rotating category banners with bottom dots only.
+ * Phase 2 Hero. Rotating category banners with bottom dots only.
  */
 export function HeroSection() {
   const { t } = useLocale();
@@ -151,7 +151,7 @@ export function HeroSection() {
                 </Link>
               ))}
 
-              {/* Dynamic badge — follows active slide */}
+              {/* Dynamic badge. Follows active slide */}
               <span className="pointer-events-none absolute left-3 top-3 z-[2] inline-flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-semibold text-[var(--huza-green-dark)] shadow-sm sm:left-4 sm:top-4 sm:text-xs">
                 <span aria-hidden>{active.emoji}</span>
                 {t(active.labelKey)}

@@ -83,7 +83,7 @@ export function FarmerGrowBetterClient() {
 
   return (
     <div className="space-y-6">
-      <FarmerPageHeader title={t("growBetterTitle")} subtitle={t("growBetterSubtitle")} />
+      <FarmerPageHeader title={t("growBetterTitle")} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {SECTIONS.map((s) => {

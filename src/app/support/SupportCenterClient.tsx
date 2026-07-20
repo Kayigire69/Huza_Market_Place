@@ -76,10 +76,7 @@ export function SupportCenterClient({
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-6">
         <h2 className="font-semibold text-[var(--huza-green-dark)]">Open a support ticket</h2>
-        <p className="text-sm text-[var(--huza-muted)] mt-1 mb-5">
-          Choose a type — general, complaint, return, refund, or call request.
-        </p>
-        <form onSubmit={onSubmit} className="space-y-3">
+        <form onSubmit={onSubmit} className="mt-5 space-y-3">
           <div>
             <label className="label">Type</label>
             <select name="type" className="input-field" defaultValue="GENERAL" required>

@@ -152,7 +152,7 @@ export function FarmerMyCropsPanel({ products: initial }: { products: FarmerCrop
 
       {msg ? <p className="text-sm font-medium text-[var(--huza-green-dark)]">{msg}</p> : null}
 
-      {/* Main crop — hero */}
+      {/* Main crop. Hero */}
       <FarmerPanel className="border-[var(--huza-green)]/45 shadow-md">
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)]">
           Main crop
@@ -267,7 +267,7 @@ export function FarmerMyCropsPanel({ products: initial }: { products: FarmerCrop
         </div>
       </FarmerPanel>
 
-      {/* Other crops — discouraged */}
+      {/* Other crops. Discouraged */}
       {otherCrops.length > 0 ? (
         <FarmerPanel className="max-w-2xl border-amber-200 bg-amber-50/50">
           <p className="text-sm font-semibold text-amber-950">

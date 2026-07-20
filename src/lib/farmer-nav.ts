@@ -40,7 +40,7 @@ export type FarmerModule =
 export type FarmerNavItem = {
   module: FarmerModule;
   href: string;
-  /** i18n key — translated in FarmerWorkspaceShell via t() */
+  /** i18n key. Translated in FarmerWorkspaceShell via t() */
   labelKey: string;
   exact?: boolean;
   upcoming?: boolean;

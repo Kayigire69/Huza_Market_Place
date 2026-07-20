@@ -5,7 +5,7 @@
  * Future (not implemented): SMS OTP, National Digital ID, biometrics, MoMo verify.
  * Keep verifyFarmerAccess() as the single gate so new factors can plug in here.
  *
- * Client UI must import display helpers from @/lib/farmer-id — not this file —
+ * Client UI must import display helpers from @/lib/farmer-id. Not this file.
  * so Next.js never bundles ioredis/dns into the browser.
  */
 
@@ -29,7 +29,7 @@ export const FARMER_SESSION_DAYS_DEFAULT = 7;
 /** Match security-access BCRYPT_ROUNDS without importing that module (avoids auth→redis chain). */
 const BCRYPT_ROUNDS = 12;
 
-/** Unusable random hash — farmers never sign in with a password. */
+/** Unusable random hash. Farmers never sign in with a password. */
 export async function unusedFarmerPasswordHash(): Promise<string> {
   const random = crypto.randomBytes(32).toString("hex");
   return bcrypt.hash(`farmer-nid-auth:${random}`, BCRYPT_ROUNDS);
@@ -38,7 +38,7 @@ export async function unusedFarmerPasswordHash(): Promise<string> {
 export type FarmerAuthFactor = "nid_last4"; // future: "sms_otp" | "digital_id" | "biometric"
 
 /**
- * Pluggable verification — today only NID last4.
+ * Pluggable verification. Today only NID last4.
  * Later: chain SMS OTP / digital ID without rewriting callers.
  */
 export function verifyFarmerAccess(args: {

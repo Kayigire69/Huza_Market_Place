@@ -158,7 +158,7 @@ export function drawReportPeriod(
     .font("Helvetica")
     .fontSize(11)
     .text(
-      `${start.toLocaleDateString("en-GB")}  —  ${end.toLocaleDateString("en-GB")}`,
+      `${start.toLocaleDateString("en-GB")} .  ${end.toLocaleDateString("en-GB")}`,
       left,
       doc.y
     );
@@ -175,7 +175,7 @@ export function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
 }
 
 /**
- * Prepared by (employee) + Approved by / Signed by Manager — side by side.
+ * Prepared by (employee) + Approved by / Signed by Manager. Side by side.
  */
 export function drawSignatureBlocks(
   doc: PDFKit.PDFDocument,

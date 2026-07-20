@@ -299,12 +299,12 @@ export async function PATCH(req: Request) {
           offer.availableDistricts.length > 0
             ? offer.availableDistricts
             : [offer.supplier.district],
-        // No STOREFRONT yet — official HUZA photos are uploaded at receive/QC
+        // No STOREFRONT yet. Official HUZA photos are uploaded at receive/QC
         reviewStatus: "APPROVED",
         reviewNote:
           deal === ProcurementDealType.COMMISSION
-            ? "Commission listing — awaiting delivery & QC before shop publish"
-            : "From procurement — awaiting delivery & QC before shop publish",
+            ? "Commission listing. Awaiting delivery & QC before shop publish"
+            : "From procurement. Awaiting delivery & QC before shop publish",
       },
     });
 
@@ -345,7 +345,7 @@ export async function PATCH(req: Request) {
         productId: product.id,
         adminNote:
           adminNote ||
-          `PO ${purchaseOrder.poNumber}: ${dealLabel}; retail ${sellPrice} RWF — awaiting delivery`,
+          `PO ${purchaseOrder.poNumber}: ${dealLabel}; retail ${sellPrice} RWF. Awaiting delivery`,
       },
     });
 
@@ -495,7 +495,7 @@ async function handlePoAction(
       data = {
         status: PurchaseOrderStatus.INSPECTED,
         inspectedAt: now,
-        qualityNotes: body.qualityNotes || "Quality accepted — ready for shop",
+        qualityNotes: body.qualityNotes || "Quality accepted. Ready for shop",
         qualityGrade: grade,
       };
       if (po.productId) {
@@ -537,7 +537,7 @@ async function handlePoAction(
             isActive: true,
             isNewArrival: true,
             reviewStatus: "APPROVED",
-            reviewNote: "Passed QC — published to HUZA FRESH shop",
+            reviewNote: "Passed QC. Published to HUZA FRESH shop",
             reviewedAt: now,
             ownershipMode:
               po.dealType === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
@@ -549,7 +549,7 @@ async function handlePoAction(
         const { cacheDel, CacheKeys } = await import("@/lib/redis");
         await cacheDel(CacheKeys.homeCatalog);
       }
-      notifyTitle = "Quality passed — live on HUZA FRESH";
+      notifyTitle = "Quality passed. Live on HUZA FRESH";
       notifyBody =
         po.dealType === ProcurementDealType.COMMISSION
           ? `PO ${po.poNumber}: Your produce passed QC (grade ${grade}) and is selling on HUZA FRESH. Payment after sales (commission ${po.commissionRate ?? 10}%).`
@@ -572,7 +572,7 @@ async function handlePoAction(
           const qty = Math.floor(po.quantity);
           if (qty > 0) {
             const { stockService } = await import("@/services/stock.service");
-            // Reverse only this PO's receive — never wipe unrelated stock.
+            // Reverse only this PO's receive. Never wipe unrelated stock.
             const current = await prisma.product.findUnique({
               where: { id: po.productId },
               select: { stockQty: true },
@@ -582,7 +582,7 @@ async function handlePoAction(
               await stockService.stockOut(
                 po.productId,
                 reverseQty,
-                `PO ${po.poNumber} QC reject — reverse receive`,
+                `PO ${po.poNumber} QC reject. Reverse receive`,
                 session.user.id,
                 "ADJUST"
               );
@@ -597,7 +597,7 @@ async function handlePoAction(
             data: { quantity: 0 },
           });
         }
-        // Do not set stockQty: 0 — other POs/batches for this SKU must remain.
+        // Do not set stockQty: 0. Other POs/batches for this SKU must remain.
         await prisma.product.update({
           where: { id: po.productId },
           data: {

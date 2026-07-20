@@ -17,7 +17,7 @@ function slugify(input: string) {
     .slice(0, 60);
 }
 
-/** GET — categories with product stats for Catalog */
+/** GET. Categories with product stats for Catalog */
 export async function GET() {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -68,7 +68,7 @@ export async function GET() {
   return NextResponse.json({ categories: payload });
 }
 
-/** POST — create category */
+/** POST. Create category */
 export async function POST(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
   return NextResponse.json(category, { status: 201 });
 }
 
-/** PATCH — update / soft-delete */
+/** PATCH. Update / soft-delete */
 export async function PATCH(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -70,11 +70,11 @@ export async function POST(req: Request) {
   }
 
   const imageUrls = parseImageUrls(body);
-  // Photos are optional — for Huza inspection/ID only, never shown on the shop
+  // Photos are optional. For Huza inspection/ID only, never shown on the shop
 
   const cropRaw = pickProductCropFields(body);
   const isStandard = supplier?.farmingType === "STANDARD";
-  // Non-organic farmers only store simple listing fields — never the organic dossier block
+  // Non-organic farmers only store simple listing fields. Never the organic dossier block
   const crop = isStandard
     ? {
         priceUnit: cropRaw.priceUnit,

@@ -7,7 +7,7 @@ import {
 import { pdfResponse } from "@/lib/documents/pdf";
 import { canAccessOrder } from "@/lib/security-access";
 
-/** Customer invoice — HTML (default) or PDF (?format=pdf). Requires access proof. */
+/** Customer invoice. HTML (default) or PDF (?format=pdf). Requires access proof. */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ orderNumber: string }> }

@@ -68,8 +68,8 @@ export function estimateArrivalWindow(zone: DeliveryZoneKey | null, slot: "TODAY
 
   return {
     dayLabel: slot === "TODAY" ? "Today" : "Tomorrow",
-    windowLabel: `${fmt(start)} – ${fmt(end)}`,
-    /** e.g. "Today · 2:00 PM – 3:30 PM" */
-    label: `${slot === "TODAY" ? "Today" : "Tomorrow"} · ${fmt(start)} – ${fmt(end)}`,
+    windowLabel: `${fmt(start)} to ${fmt(end)}`,
+    /** e.g. "Today · 2:00 PM to 3:30 PM" */
+    label: `${slot === "TODAY" ? "Today" : "Tomorrow"} · ${fmt(start)} to ${fmt(end)}`,
   };
 }

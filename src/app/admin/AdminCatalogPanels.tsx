@@ -24,7 +24,7 @@ type ProductRow = {
 
 /**
  * Admin catalog: set retail prices and manage listing flags.
- * Huza staff — not farmers — control customer-facing prices.
+ * Huza staff. Not farmers. Control customer-facing prices.
  */
 export function AdminCatalogPanel({
   products,
@@ -247,7 +247,7 @@ export function AdminInventoryPanel({
       <div className="admin-panel p-5">
         <h2 className="font-semibold text-lg mb-3">Recent stock movements</h2>
         <p className="text-xs text-[var(--huza-muted)] mb-3">
-          Includes automatic SALE / RECEIVE rows from checkout and warehouse — plus admin
+          Includes automatic SALE / RECEIVE rows from checkout and warehouse. Plus admin
           adjustments.
         </p>
         <div className="max-h-[420px] overflow-y-auto space-y-2">

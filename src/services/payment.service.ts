@@ -32,7 +32,7 @@ export const paymentService = {
           data: {
             productId: item.productId,
             change: -item.quantity,
-            reason: `Payment confirmed — ${payment.order.orderNumber}`,
+            reason: `Payment confirmed. ${payment.order.orderNumber}`,
           },
         });
         await tx.stockMovement.create({
@@ -72,8 +72,8 @@ export const paymentService = {
       payment.orderId,
       nextStatus,
       payment.order.scheduledFor
-        ? "Payment confirmed — scheduled for next business day"
-        : "Mobile money approved — payment confirmed to Youth Huza",
+        ? "Payment confirmed. Scheduled for next business day"
+        : "Mobile money approved. Payment confirmed to Youth Huza",
       OrderStatus.READY_FOR_PICKUP
     );
 
@@ -101,7 +101,7 @@ export const paymentService = {
     await notifyAdmins({
       type: "PAYMENT_CONFIRMATION",
       title: "Payment received",
-      body: `${payment.order.orderNumber} · ${payment.amount} RWF · Paid — ready to prepare`,
+      body: `${payment.order.orderNumber} · ${payment.amount} RWF · Paid. Ready to prepare`,
     });
 
     await enqueueSms(
@@ -115,7 +115,7 @@ export const paymentService = {
     if (payment.order.guestPhone || payment.order.userId) {
       await enqueueEmail(
         `${payment.order.guestPhone || "customer"}@notify.huza.local`,
-        `Payment confirmed — ${payment.order.orderNumber}`,
+        `Payment confirmed. ${payment.order.orderNumber}`,
         `Your payment of ${payment.amount} RWF was confirmed. Youth Huza is preparing your order.\n\nDownload receipt: ${receiptLink}\nDownload invoice: ${invoiceLink}`
       );
     }
@@ -143,7 +143,7 @@ export const paymentService = {
           data: {
             productId: item.productId,
             change: 0,
-            reason: `Reservation released — ${payment.order.orderNumber}: ${reason}`,
+            reason: `Reservation released. ${payment.order.orderNumber}: ${reason}`,
           },
         });
         await tx.stockMovement.create({
@@ -197,7 +197,7 @@ export const paymentService = {
     if (opts?.expireIfPending) {
       await this.failPayment(
         payment.id,
-        "Payment request expired after 3 minutes — stock reservation released"
+        "Payment request expired after 3 minutes. Stock reservation released"
       );
       return { status: "FAILED" as const };
     }

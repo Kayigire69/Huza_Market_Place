@@ -185,7 +185,6 @@ export function FarmerCropsClient() {
     <div className="space-y-6">
       <FarmerPageHeader
         title={t("cropsTitle")}
-        subtitle={t("cropsSubtitle")}
         action={
           <Button type="button" size="sm" onClick={() => setShowForm((v) => !v)}>
             {showForm ? t("cropsClose") : t("cropsAdd")}
@@ -294,7 +293,6 @@ export function FarmerCropsClient() {
         <>
           <FarmerPanel id="harvest">
             <h2 className="font-bold text-[var(--huza-ink)]">{t("calTitle")}</h2>
-            <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("calSubtitle")}</p>
             <div className="mt-4 space-y-4">
               {harvestCalendar.map((group) => (
                 <div key={group.key}>

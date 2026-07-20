@@ -218,7 +218,7 @@ export async function POST(req: Request) {
   });
   if (!category) return NextResponse.json({ error: "Category not found" }, { status: 404 });
 
-  // Admin-created catalog lines must belong to Youth Huza retail — never a random farmer.
+  // Admin-created catalog lines must belong to Youth Huza retail. Never a random farmer.
   const supplier = await prisma.supplier.findFirst({
     where: { status: "APPROVED", businessName: { contains: "Huza", mode: "insensitive" } },
   });
@@ -391,7 +391,7 @@ export async function PATCH(req: Request) {
         return NextResponse.json(
           {
             error:
-              "Recommendation is required — tell the farmer what to change before they resubmit",
+              "Recommendation is required. Tell the farmer what to change before they resubmit",
           },
           { status: 400 }
         );
@@ -402,7 +402,7 @@ export async function PATCH(req: Request) {
       existing.purchaseMethod ||
       purchaseMethodFromOwnership(existing.ownershipMode);
 
-    // Stock-in only when approving an empty shelf — never invent qty=1.
+    // Stock-in only when approving an empty shelf. Never invent qty=1.
     let stockInQty: number | null = null;
     if (action === "approve" && existing.stockQty <= 0) {
       stockInQty = resolveConfirmedStockQty({
@@ -518,7 +518,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json(product);
   }
 
-  // --- Set / replace customer-facing HUZA images (official only — never farmer photos) ---
+  // --- Set / replace customer-facing HUZA images (official only. Never farmer photos) ---
   if (action === "set_storefront_images") {
     const imageUrls = Array.isArray(body.imageUrls)
       ? (body.imageUrls as unknown[]).map(String).map((u) => u.trim()).filter(Boolean)

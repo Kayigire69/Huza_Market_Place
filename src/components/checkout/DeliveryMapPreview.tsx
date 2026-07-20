@@ -16,7 +16,7 @@ type PreviewMap = {
   remove: () => void;
 };
 
-/** Small confirmation-only map — no drag, no reposition. */
+/** Small confirmation-only map. No drag, no reposition. */
 export function DeliveryMapPreview({ lat, lng, className }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 

@@ -44,10 +44,7 @@ export function FarmerReportsClient(props: Props) {
 
   return (
     <div>
-      <FarmerPageHeader
-        title={t("reportsTitle")}
-        subtitle={t("reportsSubtitle").replace("{name}", props.businessName)}
-      />
+      <FarmerPageHeader title={t("reportsTitle")} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <FarmerPanel className="!p-4">

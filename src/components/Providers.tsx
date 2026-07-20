@@ -17,7 +17,7 @@ import {
   FARMER_PREFETCH,
 } from "@/components/navigation/RoutePrefetcher";
 
-/** Customer shop chrome — never shown on private partner / staff portals */
+/** Customer shop chrome. Never shown on private partner / staff portals */
 function isPartnerPortal(pathname: string | null) {
   if (!pathname) return false;
   return (

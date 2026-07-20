@@ -181,14 +181,14 @@ function TrackForm() {
           <ul className="text-sm space-y-1">
             {data.items.map((i, idx) => (
               <li key={idx}>
-                {i.product.nameEn} × {i.quantity} — {formatRwf(i.lineTotal)}
+                {i.product.nameEn} × {i.quantity} · {formatRwf(i.lineTotal)}
               </li>
             ))}
           </ul>
           <div className="border-t border-[var(--huza-line)] pt-3 space-y-1">
             {data.statusLog.map((l, idx) => (
               <p key={idx} className="text-xs text-[var(--huza-muted)]">
-                {new Date(l.createdAt).toLocaleString()} — {l.status}
+                {new Date(l.createdAt).toLocaleString()} · {l.status}
                 {l.note ? `: ${l.note}` : ""}
               </p>
             ))}

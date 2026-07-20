@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { isAdminPortalRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
-/** GET /api/admin/search?q= — global admin search across products, orders, farmers, customers */
+/** GET /api/admin/search?q=. Global admin search across products, orders, farmers, customers */
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user || !isAdminPortalRole(session.user.role)) {

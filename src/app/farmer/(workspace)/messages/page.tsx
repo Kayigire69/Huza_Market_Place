@@ -18,10 +18,7 @@ export default async function FarmerMessagesPage() {
 
   return (
     <div>
-      <FarmerPageHeader
-        title="Messages"
-        subtitle="Approvals, payments, visit updates, and training notes from Youth Huza."
-      />
+      <FarmerPageHeader title="Messages" />
 
       {messages.length === 0 ? (
         <FarmerPanel className="max-w-2xl">

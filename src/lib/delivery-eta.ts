@@ -18,7 +18,7 @@ export const ZONE_ETA_MINUTES: Record<DeliveryZoneKey, number> = {
 
 /** Customer-facing ETA ranges for delivery destinations */
 export const ZONE_ETA_LABELS: Record<DeliveryZoneKey, string> = {
-  KIGALI: "45–60 minutes",
+  KIGALI: "45 to 60 minutes",
   KAMONYI_RUYENZI: "About 2 hours",
   BUGESERA_NYAMATA: "About 2 hours",
 };
@@ -57,7 +57,7 @@ export function zoneFee(zone?: string, zones?: DeliveryZoneDto[]): number {
   return FLAT_DELIVERY_FEE_RWF;
 }
 
-/** Same soft promise as restock requests — one customer-facing story. */
+/** Same soft promise as restock requests. One customer-facing story. */
 export function formatBackorderEta(): string {
   return SOFT_RESTOCK_ETA;
 }
@@ -106,7 +106,7 @@ export function productFulfillmentLabel(
 
 export type FulfillmentEta = {
   needsRestock: boolean;
-  /** Full label: "Today · 2:00 PM – 3:30 PM" */
+  /** Full label: "Today · 2:00 PM to 3:30 PM" */
   etaLabel: string;
   dayLabel: string;
   windowLabel: string;
@@ -135,7 +135,7 @@ export function cartFulfillmentEta(
     const fmt = (d: Date) =>
       d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
     const dayLabel = "Today / Tomorrow";
-    const windowLabel = `${fmt(start)} – ${fmt(end)}`;
+    const windowLabel = `${fmt(start)} to ${fmt(end)}`;
     return {
       needsRestock: true,
       dayLabel,
@@ -150,7 +150,7 @@ export function cartFulfillmentEta(
       needsRestock: false,
       dayLabel: "Scheduled",
       windowLabel: "Pick a day at checkout",
-      etaLabel: "Scheduled — pick a date at checkout",
+      etaLabel: "Scheduled. Pick a date at checkout",
       estimatedMinutes: zoneEtaMinutes(zoneKey, zones),
     };
   }

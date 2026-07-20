@@ -39,7 +39,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "cancelled", label: "Cancelled" },
 ];
 
-/** Guided next step — not a free-for-all status dump */
+/** Guided next step. Not a free-for-all status dump */
 const FLOW: Record<string, { next: string; label: string }[]> = {
   PENDING: [{ next: "CONFIRMED", label: "Confirm order" }],
   PAID: [{ next: "CONFIRMED", label: "Confirm order" }],
@@ -143,7 +143,7 @@ export function AdminOrdersClient() {
 
   const assignDriver = async (deliveryId: string | undefined, deliveryPersonId: string) => {
     if (!deliveryId || !deliveryPersonId) {
-      setMsg("No delivery record yet — confirm & prepare the order first.");
+      setMsg("No delivery record yet. Confirm & prepare the order first.");
       return;
     }
     setBusy(true);

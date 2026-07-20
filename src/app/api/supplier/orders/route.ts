@@ -21,7 +21,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Staff must use admin order APIs — do not allow open-ended cancel here.
+  // Staff must use admin order APIs. Do not allow open-ended cancel here.
   if (session.user.role !== "SUPPLIER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -66,7 +66,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  // Every line must belong to this farmer — blocks cross-farm cancel/accept.
+  // Every line must belong to this farmer. Blocks cross-farm cancel/accept.
   if (
     existing.items.length === 0 ||
     existing.items.some((item) => item.supplierId !== supplier.id)

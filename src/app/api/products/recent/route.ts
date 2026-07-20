@@ -4,7 +4,7 @@ import { productCardSelect } from "@/repositories/product.repository";
 import { resolveProductImage } from "@/lib/catalog-images";
 import { cacheGet, cacheSet } from "@/lib/redis";
 
-/** GET /api/products/recent?ids=id1,id2 — live catalog rows in the given order. */
+/** GET /api/products/recent?ids=id1,id2. Live catalog rows in the given order. */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const ids = (searchParams.get("ids") || "")

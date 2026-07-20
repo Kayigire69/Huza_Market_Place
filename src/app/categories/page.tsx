@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Categories",
-  description: "Browse HUZA FRESH by category — fruits, vegetables, salads, juices, and more.",
+  description: "Browse HUZA FRESH by category. Fruits, vegetables, salads, juices, and more.",
 };
 
 const CACHE_KEY = "huza:categories:list";
@@ -41,10 +41,9 @@ export default async function CategoriesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <h1 className="section-title">Categories</h1>
-      <p className="mt-2 text-[var(--huza-muted)] mb-8">
-        Organize your shopping by fresh product groups
-      </p>
+      <div className="mt-8">
       <CategoriesClient categories={categories} />
+      </div>
       <p className="mt-8 text-sm">
         <Link href="/products" className="text-[var(--huza-green)] font-semibold">
           View all products →

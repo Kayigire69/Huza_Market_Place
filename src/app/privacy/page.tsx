@@ -8,7 +8,7 @@ export default function PrivacyPage() {
       <div className="space-y-5 text-sm text-[var(--huza-muted)] leading-relaxed">
         <p>
           Youth Huza (“we”) operates HUZA FRESH. We collect information you provide when you
-          register, place orders, contact support, or apply as a farmer — such as name, phone,
+          register, place orders, contact support, or apply as a farmer, such as name, phone,
           address, and payment phone numbers.
         </p>
         <p>

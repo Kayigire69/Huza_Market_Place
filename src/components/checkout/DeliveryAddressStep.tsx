@@ -89,7 +89,7 @@ export function DeliveryAddressStep({
         setStage("gps-confirm");
         return;
       }
-      // No coords — try autocomplete geocode of the stored address text
+      // No coords. Try autocomplete geocode of the stored address text
       const res = await fetch(
         `/api/geo?action=autocomplete&q=${encodeURIComponent(a.fullAddress)}`
       );
@@ -397,7 +397,7 @@ export function DeliveryAddressStep({
 
           {coverage && !coverage.available ? (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              This pin may be outside Kigali, Kamonyi, or Bugesera. You can still confirm — we will
+              This pin may be outside Kigali, Kamonyi, or Bugesera. You can still confirm. We will
               show availability next.
             </p>
           ) : null}

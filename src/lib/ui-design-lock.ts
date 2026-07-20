@@ -1,5 +1,5 @@
 /**
- * HUZA FRESH — UI design lock
+ * HUZA FRESH. UI design lock
  *
  * LOCKED at commit: fb8090c (and successors that do not touch presentation)
  *

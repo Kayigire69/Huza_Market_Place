@@ -40,7 +40,6 @@ export function FarmerProduceHeader({
     <>
       <FarmerPageHeader
         title={t("produceTitle")}
-        subtitle={t("produceSubtitle")}
         action={
           tab !== "submit" ? (
             <Link href="/farmer/produce?tab=submit">

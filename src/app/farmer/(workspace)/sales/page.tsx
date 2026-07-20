@@ -18,10 +18,7 @@ export default async function FarmerSalesPage({
 
   return (
     <div>
-      <FarmerPageHeader
-        title="Sales"
-        subtitle="Purchases Youth Huza makes from your farm — including commission settlements after HUZA FRESH sales."
-      />
+      <FarmerPageHeader title="Sales" />
       <Suspense fallback={null}>
         <FarmerHubTabs tabs={SALES_TABS} />
       </Suspense>

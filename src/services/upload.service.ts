@@ -41,7 +41,7 @@ function extFor(type: string) {
   return "jpg";
 }
 
-/** Detect type from magic bytes — do not trust browser Content-Type alone. */
+/** Detect type from magic bytes. Do not trust browser Content-Type alone. */
 async function detectMime(buffer: Buffer, claimed: string): Promise<string> {
   if (buffer.length >= 4 && buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46) {
     return "application/pdf";

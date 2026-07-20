@@ -6,7 +6,7 @@ import { timingSafeEqualString } from "@/lib/security-access";
 
 /**
  * MTN MoMo collection callback.
- * Never trust body status alone — re-query MTN when credentials exist.
+ * Never trust body status alone. Re-query MTN when credentials exist.
  * Optional shared secret: MTN_MOMO_CALLBACK_SECRET (header x-callback-secret).
  */
 export async function POST(req: Request) {
@@ -41,14 +41,14 @@ export async function POST(req: Request) {
     if (process.env.MTN_MOMO_SUBSCRIPTION_KEY && payment.externalId) {
       status = await checkMtnPaymentStatus(payment.externalId);
     } else if (process.env.NODE_ENV !== "production") {
-      // Local/dev without live MTN — allow body status only in non-production
+      // Local/dev without live MTN. Allow body status only in non-production
       const claimed = String(
         body.status || (body.financialTransactionId ? "SUCCESSFUL" : "PENDING")
       ).toUpperCase();
       if (claimed === "SUCCESSFUL" || claimed === "SUCCESS") status = "SUCCESSFUL";
       else if (claimed === "FAILED" || claimed === "REJECTED") status = "FAILED";
     } else {
-      // Production without ability to verify — reject confirmation from callback body
+      // Production without ability to verify. Reject confirmation from callback body
       return NextResponse.json({ error: "Provider verification unavailable" }, { status: 503 });
     }
 

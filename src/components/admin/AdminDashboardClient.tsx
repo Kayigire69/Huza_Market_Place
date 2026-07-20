@@ -78,8 +78,7 @@ function SalesTrendChart({ days }: { days: DayStat[] }) {
   const max = Math.max(1, ...days.map((d) => d.revenue || d.orders));
   return (
     <div className="admin-card h-full">
-      <h3 className="admin-card-title">Sales Trend</h3>
-      <p className="mb-4 text-xs text-[var(--admin-muted)]">Revenue · last 7 days</p>
+      <h3 className="admin-card-title mb-4">Sales Trend</h3>
       {days.every((d) => !d.revenue && !d.orders) ? (
         <p className="py-10 text-center text-sm text-[var(--admin-muted)]">No sales in the last 7 days yet.</p>
       ) : (
@@ -126,8 +125,7 @@ function StatusDonut({
 
   return (
     <div className="admin-card h-full">
-      <h3 className="admin-card-title">Orders by Status</h3>
-      <p className="mb-4 text-xs text-[var(--admin-muted)]">Live pipeline snapshot</p>
+      <h3 className="admin-card-title mb-4">Orders by Status</h3>
       {total === 0 ? (
         <p className="py-10 text-center text-sm text-[var(--admin-muted)]">No open orders in the pipeline.</p>
       ) : (
@@ -468,11 +466,10 @@ export function AdminDashboardClient({
         <section className="admin-card">
           <div className="mb-4">
             <h2 className="admin-card-title">Needs Attention</h2>
-            <p className="text-xs text-[var(--admin-muted)]">Do these first — ranked by urgency</p>
           </div>
           {attention.length === 0 ? (
             <p className="rounded-xl bg-[var(--admin-soft)] px-4 py-6 text-sm text-[var(--admin-muted)]">
-              Nothing urgent — nice work.
+              Nothing urgent.
             </p>
           ) : (
             <ul className="space-y-2">
@@ -490,8 +487,7 @@ export function AdminDashboardClient({
         </section>
 
         <section className="admin-card">
-          <h2 className="admin-card-title mb-1">Recent Activity</h2>
-          <p className="mb-4 text-xs text-[var(--admin-muted)]">Latest staff actions & updates</p>
+          <h2 className="admin-card-title mb-4">Recent Activity</h2>
           {activity.length === 0 ? (
             <p className="text-sm text-[var(--admin-muted)]">No recent activity yet.</p>
           ) : (

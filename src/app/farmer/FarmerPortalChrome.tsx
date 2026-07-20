@@ -80,9 +80,6 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
           <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--huza-ink)] sm:text-3xl">
             {t("farmerPortalWelcomeTitle")}
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[var(--huza-muted)] sm:text-base">
-            {t("farmerPortalWelcomeBody")}
-          </p>
           <Link
             href="/farmer/login"
             className="mt-4 inline-block text-sm font-bold text-[var(--huza-green-dark)] underline underline-offset-4"
@@ -112,9 +109,6 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
           <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-ink)]">
             {t("chooseFarmingType")}
           </h2>
-          <p className="mt-1 text-sm text-[var(--huza-muted)]">
-            {t("chooseFarmingTypeHint")}
-          </p>
 
           <div className="mt-5 grid gap-4">
             <div className="rounded-2xl border border-[var(--huza-green)]/35 bg-[var(--huza-mint)]/30 p-4 text-left">

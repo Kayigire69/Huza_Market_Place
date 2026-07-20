@@ -54,7 +54,7 @@ export async function generateMetadata({
   const title = product.nameEn;
   const description =
     product.descriptionEn?.slice(0, 155) ||
-    `${product.nameEn} — fresh from Youth Huza on HUZA FRESH.`;
+    `${product.nameEn}. Fresh from Youth Huza on HUZA FRESH.`;
   const image = product.images[0];
 
   return {

@@ -16,9 +16,9 @@ const fallback: FaqItem[] = [
     questionEn: "Who delivers my order?",
     questionFr: "Qui livre ma commande ?",
     questionRw: "Ninde utanga ibicuruzwa?",
-    answerEn: "Youth Huza delivers directly — there is no middleman for deliveries.",
-    answerFr: "Youth Huza livre directement — pas d'intermédiaire pour les livraisons.",
-    answerRw: "Youth Huza itanga ubwayo — nta muntu wo hagati mu gutanga.",
+    answerEn: "Youth Huza delivers directly. There is no middleman for deliveries.",
+    answerFr: "Youth Huza livre directement. Pas d'intermédiaire pour les livraisons.",
+    answerRw: "Youth Huza itanga ubwayo. Nta muntu wo hagati mu gutanga.",
   },
   {
     id: "2",
@@ -26,11 +26,11 @@ const fallback: FaqItem[] = [
     questionFr: "Quels modes de paiement sont acceptés ?",
     questionRw: "Ni ubuhe buryo bwo kwishyura?",
     answerEn:
-      "Pay Youth Huza with MTN MoMo or Airtel Money — approve the prompt on your phone. Bank cards are coming soon. Cash on Delivery is not available.",
+      "Pay Youth Huza with MTN MoMo or Airtel Money. Approve the prompt on your phone. Bank cards are coming soon. Cash on Delivery is not available.",
     answerFr:
-      "Payez Youth Huza via MTN MoMo ou Airtel Money — approuvez l’invite sur votre téléphone. Les cartes bancaires arrivent bientôt. Le paiement à la livraison n’est pas disponible.",
+      "Payez Youth Huza via MTN MoMo ou Airtel Money. Approuvez l’invite sur votre téléphone. Les cartes bancaires arrivent bientôt. Le paiement à la livraison n’est pas disponible.",
     answerRw:
-      "Ishyura Youth Huza ukoresheje MTN MoMo cyangwa Airtel Money — emera ubutumire kuri telefone. Amakarita ya banki aza vuba. Nta kwishyura amafaranga iyo bagutegereje.",
+      "Ishyura Youth Huza ukoresheje MTN MoMo cyangwa Airtel Money. Emera ubutumire kuri telefone. Amakarita ya banki aza vuba. Nta kwishyura amafaranga iyo bagutegereje.",
   },
   {
     id: "3",

@@ -40,7 +40,7 @@ type Product = {
   harvestDate?: string | Date | null;
   availableDistricts?: string[];
   images: { id: string; url: string; alt: string | null; isCover?: boolean }[];
-  /** Internal only — not displayed on storefront */
+  /** Internal only. Not displayed on storefront */
   supplier?: {
     id: string;
     businessName?: string;
@@ -80,7 +80,7 @@ export function ProductDetailClient({
   }, [product.id]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = encodeURIComponent(`${name} on HUZA FRESH — ${formatRwf(product.price)}`);
+  const shareText = encodeURIComponent(`${name} on HUZA FRESH. ${formatRwf(product.price)}`);
 
   const available = Math.max(0, product.stockQty - (product.reservedQty || 0));
   const fulfillment = productFulfillmentLabel(
@@ -142,7 +142,7 @@ export function ProductDetailClient({
         typeof data.softEtaLabel === "string" && data.softEtaLabel.trim()
           ? data.softEtaLabel
           : t("softRestockEta");
-      showToast(`✅ ${t("requestSent")} — ${eta}`);
+      showToast(`✅ ${t("requestSent")}. ${eta}`);
     } finally {
       setRestockBusy(false);
     }
@@ -246,7 +246,7 @@ export function ProductDetailClient({
         {prepared && (
           <div className="mt-4 rounded-xl border border-[var(--huza-gold)]/50 bg-[#fff9ee] p-4 text-sm space-y-2">
             <p className="font-semibold text-[var(--huza-green-dark)]">
-              🥤 {t("freshTodayBadge")} — {t("preparedDetails")}
+              🥤 {t("freshTodayBadge")}. {t("preparedDetails")}
             </p>
             <p>
               <span className="text-[var(--huza-muted)]">{t("ingredients")}:</span>{" "}

@@ -7,7 +7,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { clearRateLimit, clientIp, rateLimit } from "@/lib/rate-limit";
 import { BCRYPT_ROUNDS } from "@/lib/security-access";
 
-/** Change password — required when mustChangePassword is set; otherwise optional. */
+/** Change password. Required when mustChangePassword is set; otherwise optional. */
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {

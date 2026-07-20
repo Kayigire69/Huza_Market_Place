@@ -20,7 +20,7 @@ export default function ContactPage() {
         if (typeof data.whatsapp_url === "string") setWhatsappUrl(data.whatsapp_url.trim());
       })
       .catch(() => {
-        /* keep empty — same placeholder as before */
+        /* keep empty. Same placeholder as before */
       });
   }, []);
 
@@ -54,10 +54,7 @@ export default function ContactPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <h1 className="section-title">Contact Us</h1>
-      <p className="mb-8 mt-2 text-[var(--huza-muted)]">
-        Reach Youth Huza — the team behind HUZA FRESH.
-      </p>
-      <div className="mb-8 space-y-2 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm">
+      <div className="mb-8 mt-8 space-y-2 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm">
         <p>
           <strong>Email:</strong> info@youthhuza.rw
         </p>
@@ -84,7 +81,7 @@ export default function ContactPage() {
           <strong>Address:</strong> Kigali, Rwanda
         </p>
         <p>
-          <strong>Hours:</strong> Daily 6:00 AM – 9:00 PM
+          <strong>Hours:</strong> Daily 6:00 AM to 9:00 PM
         </p>
       </div>
       <form

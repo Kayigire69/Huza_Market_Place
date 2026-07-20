@@ -2,7 +2,7 @@ import { isPreparedCategory } from "@/lib/prepared-product-meta";
 
 /**
  * Categories farmers can supply to Youth Huza.
- * Salads & juices are prepared by HUZA FRESH — never farmer-submitted.
+ * Salads & juices are prepared by HUZA FRESH. Never farmer-submitted.
  */
 export const FARMER_SUPPLY_CATEGORY_SLUGS = [
   "fresh-fruits",
@@ -16,7 +16,7 @@ export function isFarmerSupplyCategory(slug?: string | null): boolean {
   return Boolean(slug && (FARMER_SUPPLY_CATEGORY_SLUGS as readonly string[]).includes(slug));
 }
 
-/** Prepared shop lines (salads/juices) — made by Youth Huza, not farm partners */
+/** Prepared shop lines (salads/juices). Made by Youth Huza, not farm partners */
 export function isHuzaPreparedCategory(slug?: string | null): boolean {
   return isPreparedCategory(slug);
 }

@@ -51,7 +51,7 @@ export default async function DeliveryInfoPage() {
       </div>
 
       <p className="mt-6 text-sm text-[var(--huza-muted)]">
-        Open daily 6:00 AM – 9:00 PM. Outside hours you can still browse and schedule for the next
+        Open daily 6:00 AM to 9:00 PM. Outside hours you can still browse and schedule for the next
         business day.
       </p>
       <Link href="/track" className="mt-6 inline-block font-semibold text-[var(--huza-green)]">

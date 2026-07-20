@@ -2,7 +2,7 @@
 
 /**
  * Root-level error boundary (required by Next.js App Router).
- * Must define its own <html>/<body> — used when the root layout fails.
+ * Must define its own <html>/<body>. Used when the root layout fails.
  */
 export default function GlobalError({
   error,

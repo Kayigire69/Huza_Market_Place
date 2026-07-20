@@ -85,7 +85,7 @@ export async function initiateMobileMoneyPayment(
     });
   }
 
-  // Demo / sandbox without credentials — mimics the real phone prompt flow
+  // Demo / sandbox without credentials. Mimics the real phone prompt flow
   if (!demoPaymentsAllowed()) {
     throw new Error(
       "Mobile Money is not configured. Set MTN/Airtel credentials or ALLOW_DEMO_PAYMENTS=true for non-production testing."

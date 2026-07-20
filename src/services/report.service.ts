@@ -205,7 +205,7 @@ export async function buildActivityReportPdf(
   return { buffer: pdf, filename };
 }
 
-/** Excel-compatible SpreadsheetML (.xls) — opens natively in Excel without extra deps. */
+/** Excel-compatible SpreadsheetML (.xls). Opens natively in Excel without extra deps. */
 export async function buildActivityReportExcel(
   type: ReportType,
   from?: string | null,
@@ -235,7 +235,7 @@ export async function buildActivityReportExcel(
   }
 
   const summaryLines = [
-    `HUZA FRESH — ${REPORT_LABELS[resolvedType]}`,
+    `HUZA FRESH. ${REPORT_LABELS[resolvedType]}`,
     `Period: ${start.toLocaleDateString("en-GB")} – ${end.toLocaleDateString("en-GB")}`,
     ...data.summary,
     data.totalHighlight || "",
@@ -480,10 +480,10 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
         summary: [
           `Stock movements: ${movements.length}`,
           `Active products at/below low-stock threshold (available ≤ threshold): ${lowStock}`,
-          `Ops status — Available: ${statusCounts.Available} · Reserved: ${statusCounts.Reserved} · Sold Out: ${statusCounts["Sold Out"]} · Rejected: ${statusCounts.Rejected}`,
-          `By source — Farmer: ${bySource.FARMER} · Market: ${bySource.MARKET} · Unset: ${bySource.unset}`,
-          `By method — Direct: ${byMethod.DIRECT} · Commission: ${byMethod.COMMISSION} · Market: ${byMethod.MARKET} · Unset: ${byMethod.unset}`,
-          `By grade — 1: ${byGrade["1"]} · 2: ${byGrade["2"]} · 3: ${byGrade["3"]} · Unset: ${byGrade.unset}`,
+          `Ops status. Available: ${statusCounts.Available} · Reserved: ${statusCounts.Reserved} · Sold Out: ${statusCounts["Sold Out"]} · Rejected: ${statusCounts.Rejected}`,
+          `By source. Farmer: ${bySource.FARMER} · Market: ${bySource.MARKET} · Unset: ${bySource.unset}`,
+          `By method. Direct: ${byMethod.DIRECT} · Commission: ${byMethod.COMMISSION} · Market: ${byMethod.MARKET} · Unset: ${byMethod.unset}`,
+          `By grade. 1: ${byGrade["1"]} · 2: ${byGrade["2"]} · 3: ${byGrade["3"]} · Unset: ${byGrade.unset}`,
         ],
         headers: [
           "Date",

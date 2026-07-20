@@ -22,7 +22,7 @@ type HomeCatalog = Awaited<ReturnType<typeof productRepository.findHomeLists>> &
 export const catalogService = {
   async getHomeCatalog(): Promise<HomeCatalog> {
     const cached = await cacheGet<HomeCatalog>(CacheKeys.homeCatalog);
-    // Never treat an empty catalog as a cache hit — that freezes a pre-seed homepage.
+    // Never treat an empty catalog as a cache hit. That freezes a pre-seed homepage.
     if (
       cached &&
       Array.isArray(cached.categories) &&
@@ -51,7 +51,7 @@ export const catalogService = {
         take: 6,
       }),
       prisma.testimonial.findMany({ where: { isFeatured: true }, take: 3 }),
-      // Real customer reviews — admin-hidden and low ratings stay off the home page
+      // Real customer reviews. Admin-hidden and low ratings stay off the home page
       prisma.review.findMany({
         where: {
           isHidden: false,

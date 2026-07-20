@@ -37,7 +37,7 @@ function matchesFilter(po: FarmerPurchaseOrderRow, filter: Filter) {
 }
 
 /**
- * Phase 4 Purchase Orders — harvest buys from Youth Huza, not a retail order list.
+ * Phase 4 Purchase Orders. Harvest buys from Youth Huza, not a retail order list.
  */
 export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[] }) {
   const [filter, setFilter] = useState<Filter>("all");

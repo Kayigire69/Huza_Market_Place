@@ -20,7 +20,7 @@ import { NAV_CATEGORIES } from "@/lib/nav-categories";
 import { SmartSearch } from "@/components/layout/SmartSearch";
 import { HuzaFreshLogo } from "@/components/brand/HuzaFreshLogo";
 
-/** Orange accent — cart / wishlist badges only (Phase 1). */
+/** Orange accent. Cart / wishlist badges only (Phase 1). */
 const BADGE = "bg-[#F97316] text-white";
 
 function IconButton({
@@ -49,10 +49,10 @@ function IconButton({
 }
 
 /**
- * Phase 1 Navigation (locked design) — scroll-stable sticky.
+ * Phase 1 Navigation (locked design). Scroll-stable sticky.
  *
  * Only the top bar is sticky (fixed height). The second row / mobile
- * category rail are NOT sticky — they leave the viewport naturally.
+ * category rail are NOT sticky. They leave the viewport naturally.
  * No scroll listeners, no height/padding/shadow toggles → no shake.
  */
 export function Header() {
@@ -113,7 +113,7 @@ export function Header() {
 
   return (
     <header className="relative z-50 bg-white">
-      {/* ——— Sticky top bar ONLY — fixed heights, no scroll-driven class changes ——— */}
+      {/* Sticky top bar ONLY. Fixed heights, no scroll-driven class changes */}
       <div className="sticky top-0 z-50 border-b border-[var(--huza-line)] bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
           <Link
@@ -276,13 +276,13 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile search — fixed padding (part of sticky top) */}
+        {/* Mobile search. Fixed padding (part of sticky top) */}
         <div className="h-[60px] border-t border-[var(--huza-line)] px-3 py-2 md:hidden">
           <SmartSearch size="lg" />
         </div>
       </div>
 
-      {/* ——— Not sticky: scrolls away naturally (no JS hide = no shake) ——— */}
+      {/* Not sticky: scrolls away naturally (no JS hide = no shake) */}
       <div className="hidden border-b border-[var(--huza-line)] bg-white md:block">
         <div className="relative mx-auto flex h-11 max-w-7xl items-center gap-6 px-3 sm:px-6">
           <div className="relative" ref={catsRef}>

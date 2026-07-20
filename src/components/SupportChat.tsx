@@ -41,7 +41,7 @@ export function SupportChat() {
   };
 
   useEffect(() => {
-    // Defer restore until the user opens chat — avoids API work on every page.
+    // Defer restore until the user opens chat. Avoids API work on every page.
     if (!open) return;
     const saved = localStorage.getItem("huza-support-thread");
     if (!saved || threadId) return;
@@ -145,7 +145,6 @@ export function SupportChat() {
           <div className="bg-[var(--huza-green-dark)] px-4 py-3 text-white flex items-start justify-between gap-2">
             <div>
               <p className="font-semibold">{t("supportTitle")}</p>
-              <p className="text-xs text-[#C8E8D4]">{t("supportSubtitle")}</p>
             </div>
             {started && (
               <button

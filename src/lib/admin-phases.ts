@@ -24,12 +24,12 @@
  *   settlement, Farmer Payments, Procurement History)
  *
  * NEXT:
- * - (Admin portal phases complete — expand only on request)
+ * - (Admin portal phases complete. Expand only on request)
  */
 export const ADMIN_PHASES = {
   /** Sidebar, header, nav, colors, cards, search, notifications shell */
   LAYOUT: { id: 1, name: "Admin Layout", status: "locked" as const },
-  /** First screen after login — KPIs, charts, attention, quick actions, activity */
+  /** First screen after login. KPIs, charts, attention, quick actions, activity */
   DASHBOARD: { id: 2, name: "Dashboard", status: "locked" as const },
   ORDERS: { id: 3, name: "Orders", status: "locked" as const },
   CATALOG: { id: 4, name: "Catalog", status: "locked" as const },

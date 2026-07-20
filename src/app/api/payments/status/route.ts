@@ -35,7 +35,7 @@ export async function GET(req: Request) {
     token,
   });
 
-  // Public poll (checkout waiting screen): status only — no phones / PII
+  // Public poll (checkout waiting screen): status only. No phones / PII
   if (!allowed) {
     return NextResponse.json({
       orderId: order.id,
@@ -67,8 +67,8 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/payments/status
- * - action: "fail" — cancel pending payment (owner phone or session required)
- * - action: "confirm" — ADMIN / SUPER_ADMIN only
+ * - action: "fail". Cancel pending payment (owner phone or session required)
+ * - action: "confirm". ADMIN / SUPER_ADMIN only
  */
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);

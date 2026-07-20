@@ -24,7 +24,7 @@ async function processSendEmail(payload: Payload) {
       type: "ORDER_CONFIRMATION",
       channel: "EMAIL",
       title: subject || "Email",
-      body: `To: ${to} [${result.mode}] — ${body}`.slice(0, 500),
+      body: `To: ${to} [${result.mode}]. ${body}`.slice(0, 500),
     },
   });
 }
@@ -38,7 +38,7 @@ async function processSendSms(payload: Payload) {
       type: "PAYMENT_CONFIRMATION",
       channel: "SMS",
       title: "SMS",
-      body: `To: ${to} — ${body}`.slice(0, 500),
+      body: `To: ${to}. ${body}`.slice(0, 500),
     },
   });
 }

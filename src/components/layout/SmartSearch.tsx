@@ -13,7 +13,7 @@ export function SmartSearch({
   size = "md",
 }: {
   className?: string;
-  /** lg ≈ 48–52px tall — Phase 1 header */
+  /** lg ≈ 48–52px tall. Phase 1 header */
   size?: "md" | "lg";
 }) {
   const { t } = useLocale();

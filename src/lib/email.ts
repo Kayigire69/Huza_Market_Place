@@ -1,5 +1,5 @@
 /**
- * Thin email adapter — logs in development; uses Resend when RESEND_API_KEY is set.
+ * Thin email adapter. Logs in development; uses Resend when RESEND_API_KEY is set.
  * Forgot-password for Super Admin relies on the owner's email inbox.
  */
 export async function sendEmail(input: {

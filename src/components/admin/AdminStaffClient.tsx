@@ -88,7 +88,7 @@ export function AdminStaffClient() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not create staff account");
-      setMsg(`Created ${data.fullName} — they must change password on first login.`);
+      setMsg(`Created ${data.fullName}. They must change password on first login.`);
       e.currentTarget.reset();
       await load();
     } catch (err) {
@@ -131,7 +131,7 @@ export function AdminStaffClient() {
     await patch(
       u.id,
       { action: "reset_password", password },
-      `Password reset for ${u.fullName} — must change on next login`
+      `Password reset for ${u.fullName}. Must change on next login`
     );
   };
 
@@ -325,7 +325,7 @@ export function AdminStaffClient() {
         <label className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm sm:col-span-2">
           <input name="promoteSuperAdmin" type="checkbox" className="mt-1" value="1" />
           <span>
-            <strong>Promote to Super Admin</strong> — only for a trusted director. Prefer few Super
+            <strong>Promote to Super Admin</strong>. Only for a trusted director. Prefer few Super
             Admins.
           </span>
         </label>

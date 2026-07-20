@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 /**
- * Admin portal shell — Phase 1 Layout (LOCKED).
+ * Admin portal shell. Phase 1 Layout (LOCKED).
  * Do not redesign sidebar/header/nav chrome unless explicitly asked.
  */
 import { getServerSession } from "next-auth";

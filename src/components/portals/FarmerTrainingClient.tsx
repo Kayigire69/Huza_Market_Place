@@ -20,7 +20,7 @@ export function FarmerTrainingClient({ qualityFocus }: { qualityFocus: boolean }
 
   return (
     <div>
-      <FarmerPageHeader title={t("trainingTitle")} subtitle={t("trainingSubtitle")} />
+      <FarmerPageHeader title={t("trainingTitle")} />
 
       {qualityFocus ? (
         <FarmerPanel className="mb-5 max-w-2xl border-[var(--huza-green)]/35">

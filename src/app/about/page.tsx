@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "HUZA FRESH is Youth Huza’s online store — fresh produce sold and delivered across Rwanda.",
+    "HUZA FRESH is Youth Huza’s online store. Fresh produce sold and delivered across Rwanda.",
 };
 
 export default function AboutPage() {
@@ -21,17 +21,17 @@ export default function AboutPage() {
           retail.
         </p>
         <p>
-          Customers shop only with Youth Huza — one brand, one customer service team, one payment
+          Customers shop only with Youth Huza. One brand, one customer service team, one payment
           recipient, and one delivery service. Quality and pricing stay under Huza control.
         </p>
         <p>
           Farms partner with Youth Huza through a <strong className="text-[var(--huza-ink)]">private
-          Farmers Portal</strong> (shared by Huza staff — not listed on this customer site). After
+          Farmers Portal</strong> (shared by Huza staff, not listed on this customer site). After
           verification and purchase, stock is listed on HUZA FRESH under Youth Huza. Customers never
           see farm names on the shop.
         </p>
         <p>
-          Pay Youth Huza with MTN MoMo or Airtel Money (bank cards coming soon — no Cash on
+          Pay Youth Huza with MTN MoMo or Airtel Money (bank cards coming soon; no Cash on
           Delivery). Browse in Kinyarwanda, English, French, or Kiswahili.
           Delivery across Kigali, Kamonyi, and Bugesera (5,000 RWF flat fee).
         </p>

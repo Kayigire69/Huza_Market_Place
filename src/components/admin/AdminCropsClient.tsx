@@ -88,9 +88,6 @@ export function AdminCropsClient() {
     <div className="space-y-4">
       <div>
         <h1 className="admin-panel-title">Crop Monitoring</h1>
-        <p className="mt-1 text-sm text-[var(--admin-muted)]">
-          Crops farmers registered in My Crops — plan visits and harvest intake
-        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

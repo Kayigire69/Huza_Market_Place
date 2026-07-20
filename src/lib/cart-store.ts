@@ -35,7 +35,7 @@ async function pushCart(items: CartItem[]) {
       body: JSON.stringify({ items }),
     });
   } catch {
-    /* offline / guest — ignore */
+    /* offline / guest. Ignore */
   }
 }
 
@@ -45,7 +45,7 @@ export const useCart = create<CartState>()(
       items: [],
       addItem: (item, qty = 1) => {
         const existing = get().items.find((i) => i.productId === item.productId);
-        // Zero available = restock path (soft ETA) — still allow ordering up to a sensible cap
+        // Zero available = restock path (soft ETA). Still allow ordering up to a sensible cap
         const maxQty = item.stockQty > 0 ? item.stockQty : Math.max(99, qty);
         if (existing) {
           set({

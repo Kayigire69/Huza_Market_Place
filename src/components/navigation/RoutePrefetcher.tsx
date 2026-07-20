@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 /**
  * Prefetch key routes during idle time so first clicks open faster.
- * Renders nothing — no UI change.
+ * Renders nothing. No UI change.
  */
 export function RoutePrefetcher({ routes }: { routes: string[] }) {
   const router = useRouter();

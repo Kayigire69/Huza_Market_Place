@@ -254,15 +254,10 @@ export function AdminClient(props: {
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--huza-green)]">
             Admin workspaces
           </p>
-          <p className="mt-1 text-xs text-[var(--huza-muted)]">
-            {props.adminName ? `Signed in as ${props.adminName}` : "Youth Huza staff"} — pick a
-            lane so multiple people can work at once.
-          </p>
         </div>
         {WORKSPACES.map((group) => (
           <div key={group.title}>
-            <p className="text-xs font-semibold text-[var(--huza-ink)]">{group.title}</p>
-            <p className="text-[11px] text-[var(--huza-muted)] mb-2">{group.hint}</p>
+            <p className="text-xs font-semibold text-[var(--huza-ink)] mb-2">{group.title}</p>
             <div className="space-y-1">
               {group.tabs.map((t) => (
                 <button
@@ -306,26 +301,21 @@ export function AdminClient(props: {
       {activeTab === "overview" && (
         <div className="admin-panel space-y-4 p-6">
           <h2 className="admin-panel-title">Team playbook</h2>
-          <ul className="text-sm space-y-2 list-disc pl-5 text-[var(--huza-muted)]">
+          <ul className="text-sm space-y-2 list-disc pl-5 text-[var(--huza-ink)]">
             <li>
-              <strong className="text-[var(--huza-ink)]">Farmer approval / product review</strong> —
-              verify partners and accept listings before they sell on HUZA FRESH.
+              <strong>Farmer approval / product review</strong>
             </li>
             <li>
-              <strong className="text-[var(--huza-ink)]">Prices &amp; listings</strong> — only Huza
-              staff set customer retail prices.
+              <strong>Prices &amp; listings</strong>
             </li>
             <li>
-              <strong className="text-[var(--huza-ink)]">Stock movements</strong> — stock in / out
-              here; sales and warehouse receives also write movements automatically.
+              <strong>Stock movements</strong>
             </li>
             <li>
-              <strong className="text-[var(--huza-ink)]">Special offers</strong> — publish homepage
-              cards from Marketing (not hardcoded).
+              <strong>Special offers</strong>
             </li>
             <li>
-              <strong className="text-[var(--huza-ink)]">Orders / delivery / payments</strong> —
-              day-to-day customer fulfillment.
+              <strong>Orders / delivery / payments</strong>
             </li>
           </ul>
           <div className="grid sm:grid-cols-2 gap-3 pt-2">
@@ -915,7 +905,7 @@ export function AdminClient(props: {
               <ul className="text-sm text-[var(--huza-muted)]">
                 {items.slice(0, 6).map((i) => (
                   <li key={String(i.id)}>
-                    {String((i.product as AnyObj | undefined)?.nameEn || "Item")} × {String(i.quantity)} —{" "}
+                    {String((i.product as AnyObj | undefined)?.nameEn || "Item")} × {String(i.quantity)} ·{" "}
                     {formatRwf(Number(i.lineTotal))}
                   </li>
                 ))}
@@ -1092,10 +1082,10 @@ export function AdminClient(props: {
         <div className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="admin-panel p-5">
-              <h2 className="font-semibold mb-3">Business hours (default 6:00–21:00)</h2>
+              <h2 className="font-semibold mb-3">Business hours (default 6:00 to 21:00)</h2>
               {props.businessHours.map((h) => (
                 <p key={String(h.id)} className="text-sm py-1">
-                  Day {String(h.dayOfWeek)}: {String(h.openHour)}:00 – {String(h.closeHour)}:00
+                  Day {String(h.dayOfWeek)}: {String(h.openHour)}:00 to {String(h.closeHour)}:00
                   {h.isClosed ? " (closed)" : ""}
                 </p>
               ))}

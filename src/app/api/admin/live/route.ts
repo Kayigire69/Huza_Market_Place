@@ -9,7 +9,7 @@ import {
 } from "@/services/admin-analytics.service";
 import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 
-/** Live admin feed — use ?full=1 for dashboard charts; default is lite for chrome. */
+/** Live admin feed. Use ?full=1 for dashboard charts; default is lite for chrome. */
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user || !isAdminPortalRole(session.user.role)) {
