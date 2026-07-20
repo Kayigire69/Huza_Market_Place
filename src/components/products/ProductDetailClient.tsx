@@ -138,7 +138,11 @@ export function ProductDetailClient({
         return;
       }
       setRestockDone(true);
-      showToast(`✅ ${t("requestSent")} — ${t("softRestockEta")}`);
+      const eta =
+        typeof data.softEtaLabel === "string" && data.softEtaLabel.trim()
+          ? data.softEtaLabel
+          : t("softRestockEta");
+      showToast(`✅ ${t("requestSent")} — ${eta}`);
     } finally {
       setRestockBusy(false);
     }
@@ -312,7 +316,7 @@ export function ProductDetailClient({
                     imageUrl: cover,
                     supplierId: product.supplier?.id ?? "",
                     supplierName: "Youth Huza",
-                    stockQty: product.stockQty,
+                    stockQty: available,
                   },
                   qty
                 );

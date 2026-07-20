@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -11,6 +11,27 @@ import { QualityCheckedBadge } from "@/components/products/QualityCheckedBadge";
 import { resolveProductImage } from "@/lib/catalog-images";
 import { isPreparedCategory } from "@/lib/prepared-product-meta";
 import { useToastStore } from "@/components/ui/Toast";
+
+/** One wishlist fetch shared across product cards on the page. */
+let wishlistIdsPromise: Promise<Set<string>> | null = null;
+
+function loadWishlistIds(): Promise<Set<string>> {
+  if (!wishlistIdsPromise) {
+    wishlistIdsPromise = fetch("/api/wishlist")
+      .then(async (res) => {
+        if (!res.ok) return new Set<string>();
+        const data = await res.json();
+        const ids = new Set<string>();
+        for (const i of data.items || []) {
+          const id = i.productId || i.product?.id;
+          if (id) ids.add(id);
+        }
+        return ids;
+      })
+      .catch(() => new Set<string>());
+  }
+  return wishlistIdsPromise;
+}
 
 export type ProductCardData = {
   id: string;
@@ -79,6 +100,16 @@ export function ProductCard({
     variant === "prepared" ||
     (variant === "auto" && isPreparedCategory(product.category?.slug));
 
+  useEffect(() => {
+    let cancelled = false;
+    void loadWishlistIds().then((ids) => {
+      if (!cancelled && ids.has(product.id)) setWish(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id]);
+
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -94,7 +125,10 @@ export function ProductCard({
         window.location.href = "/auth/login";
         return;
       }
-      if (res.ok) setWish(!wish);
+      if (res.ok) {
+        setWish(!wish);
+        wishlistIdsPromise = null;
+      }
     } finally {
       setWishBusy(false);
     }

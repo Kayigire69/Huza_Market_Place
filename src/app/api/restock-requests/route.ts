@@ -11,8 +11,8 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const productId = String((body as { productId?: string }).productId || "").trim();
   const quantityWanted = Number((body as { quantityWanted?: number }).quantityWanted) || null;
-  const customerName = String((body as { customerName?: string }).customerName || "").trim() || null;
-  const customerPhone = String((body as { customerPhone?: string }).customerPhone || "").trim() || null;
+  let customerName = String((body as { customerName?: string }).customerName || "").trim() || null;
+  let customerPhone = String((body as { customerPhone?: string }).customerPhone || "").trim() || null;
   const note = String((body as { note?: string }).note || "").trim() || null;
 
   if (!productId) {
@@ -41,6 +41,17 @@ export async function POST(req: Request) {
   }
 
   const userId = session?.user?.id || null;
+  if (userId && (!customerName || !customerPhone)) {
+    const profile = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { fullName: true, phone: true },
+    });
+    if (profile) {
+      customerName = customerName || profile.fullName || null;
+      customerPhone = customerPhone || profile.phone || null;
+    }
+  }
+
   const label =
     customerName ||
     (session?.user as { name?: string } | undefined)?.name ||
@@ -51,8 +62,10 @@ export async function POST(req: Request) {
     data: {
       productId: product.id,
       userId,
-      quantityWanted: quantityWanted && quantityWanted > 0 ? Math.min(999, Math.trunc(quantityWanted)) : null,
-      customerName: customerName || (session?.user as { name?: string } | undefined)?.name || null,
+      quantityWanted:
+        quantityWanted && quantityWanted > 0 ? Math.min(999, Math.trunc(quantityWanted)) : null,
+      customerName:
+        customerName || (session?.user as { name?: string } | undefined)?.name || null,
       customerPhone,
       note,
       softEtaLabel: SOFT_RESTOCK_ETA,

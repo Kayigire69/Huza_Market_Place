@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { notifyAdmins } from "@/lib/notify-admins";
 import { availableQty } from "@/repositories/product.repository";
+import { SOFT_RESTOCK_ETA } from "@/lib/delivery-eta";
+
+export { SOFT_RESTOCK_ETA };
 
 /** Minimum time between the same kind of stock alert for one product. */
 export const STOCK_ALERT_MIN_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export type StockAlertKind = "LOW" | "EMPTY" | "RESTOCK_DEMAND";
-
-export const SOFT_RESTOCK_ETA = "Usually within a few hours in Kigali";
 
 export function softCapacity(lowStockAt: number, stockQty: number, reservedQty: number): number {
   return Math.max(lowStockAt * 4, stockQty + reservedQty, 10);

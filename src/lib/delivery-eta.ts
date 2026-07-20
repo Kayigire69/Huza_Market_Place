@@ -23,8 +23,14 @@ export const ZONE_ETA_LABELS: Record<DeliveryZoneKey, string> = {
   BUGESERA_NYAMATA: "About 2 hours",
 };
 
-/** When Huza must source / restock before dispatch */
-export const BACKORDER_ETA_HOURS = { min: 6, max: 12 } as const;
+/** Soft restock promise shown to customers (not a hard SLA). */
+export const SOFT_RESTOCK_ETA = "Usually within a few hours in Kigali";
+
+/**
+ * Soft window when Huza must source / restock before dispatch.
+ * Matches restock-request copy (not a hard SLA).
+ */
+export const BACKORDER_ETA_HOURS = { min: 2, max: 6 } as const;
 
 export function isInStock(stockQty: number, reservedQty = 0): boolean {
   return Math.max(0, stockQty - reservedQty) > 0;
@@ -51,8 +57,9 @@ export function zoneFee(zone?: string, zones?: DeliveryZoneDto[]): number {
   return FLAT_DELIVERY_FEE_RWF;
 }
 
+/** Same soft promise as restock requests — one customer-facing story. */
 export function formatBackorderEta(): string {
-  return `${BACKORDER_ETA_HOURS.min}–${BACKORDER_ETA_HOURS.max} hours`;
+  return SOFT_RESTOCK_ETA;
 }
 
 export type StockStatus = "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
@@ -133,7 +140,7 @@ export function cartFulfillmentEta(
       needsRestock: true,
       dayLabel,
       windowLabel,
-      etaLabel: `${dayLabel} · ${windowLabel}`,
+      etaLabel: SOFT_RESTOCK_ETA,
       estimatedMinutes: BACKORDER_ETA_HOURS.max * 60,
     };
   }
