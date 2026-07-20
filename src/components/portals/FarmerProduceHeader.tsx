@@ -18,19 +18,19 @@ export function FarmerProduceHeader({
   const produceTabs = [
     {
       href: "/farmer/produce",
-      label: t("tabAllProduce"),
+      labelKey: "tabAllProduce",
       match: (p: string, tabParam: string | null) =>
         (p.startsWith("/farmer/produce") && !tabParam) || p === "/farmer/products",
     },
     {
       href: "/farmer/produce?tab=submit",
-      label: t("tabSubmitCrop"),
+      labelKey: "tabSubmitCrop",
       match: (p: string, tabParam: string | null) =>
         tabParam === "submit" || p.startsWith("/farmer/products/submit"),
     },
     {
       href: "/farmer/produce?tab=approvals",
-      label: t("tabApprovalStatus"),
+      labelKey: "tabApprovalStatus",
       match: (p: string, tabParam: string | null) =>
         tabParam === "approvals" || p.startsWith("/farmer/approvals"),
     },

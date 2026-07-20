@@ -81,11 +81,11 @@ export const farmerAuthFr: FarmerI18nDict = {
 };
 
 export const farmerAuthRw: FarmerI18nDict = {
-  farmerLoginHint: "Telefoni + inyuguti 4 za nyuma z'irangamuntu. Nta ijambo ry'ibanga.",
-  nationalIdLast4: "Inyuguti 4 za nyuma z'irangamuntu",
+  farmerLoginHint: "Telefoni + imibare 4 ya nyuma y'irangamuntu. Nta ijambo ry'ibanga.",
+  nationalIdLast4: "Imibare 4 ya nyuma y'irangamuntu",
   nationalIdLast4Hint: "Urugero: niba irangamuntu irangira na …4827, andika 4827 gusa.",
   nationalIdFull: "Numero y'irangamuntu",
-  nationalIdFullHint: "Winjira ukoresheje telefoni + inyuguti 4 za nyuma. Nta ijambo ry'ibanga.",
+  nationalIdFullHint: "Winjira ukoresheje telefoni + imibare 4 ya nyuma. Nta ijambo ry'ibanga.",
   rememberDevice: "Ibuke iyi telefoni / mudasobwa",
   rememberDeviceHint: "Guma winjiye kugeza ku minsi 90, cyangwa kugeza uva muri sisitemu.",
   rememberDeviceShort: "Ibuke iyi telefoni (iminsi 90)",
@@ -95,11 +95,11 @@ export const farmerAuthRw: FarmerI18nDict = {
   needHelpAccess: "Ukeneye ubufasha?",
   needHelpAccessTitle: "Ukeneye ubufasha kugera kuri konti yawe?",
   needHelpAccessBody:
-    "Niba wahinduye numero ya telefoni cyangwa utagera kuri konti yawe, hamagara HUZA Support cyangwa usure ibiro bya HUZA kugira ngo basuzume konti yawe.",
+    "Niba wahinduye numero ya telefoni cyangwa utagera kuri konti yawe, hamagara ubufasha bwa HUZA cyangwa usure ibiro bya HUZA kugira ngo basuzume konti yawe.",
   farmerLoginRateLimited: "Wagerageje kenshi cyane. Tegereza iminota mike.",
-  farmerLoginMismatch: "Telefoni cyangwa inyuguti z'irangamuntu ntizihuye. Ongera ugerageze.",
+  farmerLoginMismatch: "Telefoni cyangwa imibare y'irangamuntu ntizihuye. Ongera ugerageze.",
   backToFarmerHome: "← Ahabanza",
-  farmerRegisterHint: "Nyuma winjira ukoresheje telefoni + inyuguti 4 za nyuma z'irangamuntu",
+  farmerRegisterHint: "Nyuma winjira ukoresheje telefoni + imibare 4 ya nyuma y'irangamuntu",
   farmDetailsBtn: "Amakuru y'umurima",
   farmDetailsRequired: "Amakuru y'umurima (ngombwa)",
   farmDetailsOptional: "Amakuru y'umurima (si ngombwa)",
@@ -111,8 +111,8 @@ export const farmerAuthRw: FarmerI18nDict = {
   saveDraft: "Bika",
   farmerRegisterNeedFarm:
     "Fungura Amakuru y'umurima uhuzuwe n'ibihingwa n'amasezerano yo kugura.",
-  pathOrganicShort: "Kamere",
-  pathConversionShort: "Guhinduka",
+  pathOrganicShort: "Ibinyabuzima",
+  pathConversionShort: "Kujya ku binyabuzima",
   pathConventionalShort: "Busanzwe",
   personalInformation: "Amakuru yihariye",
 };
@@ -210,8 +210,9 @@ export const farmerGapRw: FarmerI18nDict = {
   howItWorksStandardBody:
     "Ohereza ibihingwa, Huza isuzuma, hanyuma igura hakurikijwe amasezerano yawe.",
   submitProductHintStandard: "Andika ingano n'igiciro usaba kuri Huza.",
-  standardProductNotOrganicNote: "Uyu nzira si iya organic.",
-  standardProductFormHint: "Igiciro kimwe cy'igihingwa mu bwinshi kuri Huza.",
+  standardProductNotOrganicNote: "Uyu nzira si iy'ibinyabuzima.",
+  simpleProductDetails: "Amakuru y'igicuruzwa",
+  standardProductFormHint: "Igihingwa kimwe cy'ingenzi mu bwinshi kuri Huza.",
 };
 
 export const farmerGapSw: FarmerI18nDict = {
