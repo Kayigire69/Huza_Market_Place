@@ -21,6 +21,7 @@ import { ENTRY_LINKS, ENTRY_QR } from "@/lib/entry-links";
 import { EntryQrPlaceholder } from "@/components/entry/EntryQrPlaceholder";
 import { SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from "@/lib/brand-contact";
 import { entryCopy } from "@/lib/entry-i18n";
+import { EntryHeroMedia } from "@/components/entry/EntryHeroMedia";
 
 const WHY_ICONS = [Leaf, Wheat, Sprout, BadgeCheck, Bike, Cpu] as const;
 
@@ -153,28 +154,11 @@ export function PublicEntryPage() {
               </ul>
             </div>
 
-            <div className="hero-fade-in order-2 md:justify-self-end md:w-[94%]">
-              <div className="relative h-[200px] overflow-hidden rounded-3xl bg-[var(--huza-mint)] shadow-[0_8px_28px_rgba(11,92,52,0.12)] sm:h-[240px] md:h-[320px] lg:h-[360px]">
-                <Image
-                  src="/images/hero/entry-hero-market.png"
-                  alt={t.heroImageAlt}
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 100vw, 45vw"
-                  className="object-cover object-[center_35%]"
-                />
-                <span className="pointer-events-none absolute left-3 top-3 z-[2] inline-flex items-center rounded-xl bg-white/95 px-2 py-1.5 shadow-sm sm:left-4 sm:top-4 sm:px-2.5 sm:py-2">
-                  <Image
-                    src="/images/youth-huza-logo.png"
-                    alt={t.brand}
-                    width={140}
-                    height={52}
-                    className="h-8 w-auto object-contain sm:h-10"
-                    priority
-                  />
-                </span>
-              </div>
-            </div>
+            <EntryHeroMedia
+              marketAlt={t.heroImageAlt}
+              logoAlt={t.brand}
+              ariaLabel={t.brand}
+            />
           </div>
         </section>
 
