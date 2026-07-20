@@ -1,12 +1,29 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 export default function ContactPage() {
   const [ok, setOk] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
+
+  useEffect(() => {
+    void fetch("/api/public/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.phone === "string") setPhone(data.phone.trim());
+        if (typeof data.whatsapp_url === "string") setWhatsappUrl(data.whatsapp_url.trim());
+      })
+      .catch(() => {
+        /* keep empty — same placeholder as before */
+      });
+  }, []);
+
+  const waDigits = whatsappUrl.replace(/.*wa\.me\//, "").replace(/\D/g, "");
+  const contactLine = phone || (waDigits ? `+${waDigits}` : "");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,7 +56,23 @@ export default function ContactPage() {
           <strong>Email:</strong> info@youthhuza.rw
         </p>
         <p>
-          <strong>Phone / WhatsApp:</strong> Add your business number in Admin → Settings when ready
+          <strong>Phone / WhatsApp:</strong>{" "}
+          {contactLine ? (
+            whatsappUrl ? (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[var(--huza-green)] font-semibold"
+              >
+                {contactLine}
+              </a>
+            ) : (
+              contactLine
+            )
+          ) : (
+            "Add your business number in Admin → Settings when ready"
+          )}
         </p>
         <p>
           <strong>Address:</strong> Kigali, Rwanda

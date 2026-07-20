@@ -1,9 +1,11 @@
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 import { ProductDetailClient } from "@/components/products/ProductDetailClient";
 import { ProductCard } from "@/components/products/ProductCard";
+import { ProductReviewForm } from "@/components/products/ProductReviewForm";
 import { RecentlyViewedSection } from "@/components/products/RecentlyViewedSection";
 import {
   getFrequentlyBoughtTogether,
@@ -144,6 +146,8 @@ export default async function ProductDetailPage({
 
   const { storefrontProduct, fbt, recommended, reviews } = payload;
   const whatsappUrl = await getSetting("whatsapp_url", "");
+  const session = await getServerSession(authOptions);
+  const isLoggedIn = Boolean(session?.user?.id);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
@@ -192,12 +196,7 @@ export default async function ProductDetailPage({
             ))}
           </div>
         )}
-        <p className="mt-4 text-sm">
-          <Link href="/auth/login" className="text-[var(--huza-green)] font-semibold">
-            Log in
-          </Link>{" "}
-          to write a review.
-        </p>
+        <ProductReviewForm productId={storefrontProduct.id} isLoggedIn={isLoggedIn} />
       </section>
     </div>
   );
