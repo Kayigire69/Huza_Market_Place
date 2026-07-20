@@ -1,8 +1,14 @@
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 import { FaqClient, type FaqItem } from "./FaqClient";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = {
+  title: "FAQ",
+  description: "Frequently asked questions about HUZA FRESH orders, delivery, and payments.",
+};
 
 const fallback: FaqItem[] = [
   {

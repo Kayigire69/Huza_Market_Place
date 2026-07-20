@@ -80,6 +80,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {!partner && <CartHydrator />}
         {storefrontChrome && <Header />}
         <main
+          id="main-content"
           className={
             partner || checkout
               ? "min-h-screen"
@@ -93,7 +94,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {storefrontChrome && <Footer />}
         {storefrontChrome && !noMobileNav && <MobileBottomNav />}
         {storefrontChrome && whatsappUrl ? <WhatsAppFab href={whatsappUrl} /> : null}
-        {!partner && <ToastHost />}
+        <ToastHost />
       </LocaleProvider>
     </SessionProvider>
   );

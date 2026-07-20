@@ -1,10 +1,16 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Prisma } from "@prisma/client";
 import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 import { productCardSelect } from "@/repositories/product.repository";
+
+export const metadata: Metadata = {
+  title: "Products",
+  description: "Shop fresh produce on HUZA FRESH — quality-checked and delivered by Youth Huza.",
+};
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

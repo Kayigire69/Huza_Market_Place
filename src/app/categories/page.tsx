@@ -1,9 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { CategoriesClient } from "./CategoriesClient";
 import { cacheGet, cacheSet } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Categories",
+  description: "Browse HUZA FRESH by category — fruits, vegetables, salads, juices, and more.",
+};
 
 const CACHE_KEY = "huza:categories:list";
 

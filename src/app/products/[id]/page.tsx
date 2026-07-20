@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
@@ -23,6 +24,55 @@ type ReviewRow = {
   photoUrl: string | null;
   user: { fullName: string };
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: {
+      nameEn: true,
+      descriptionEn: true,
+      isActive: true,
+      deletedAt: true,
+      images: {
+        where: { kind: "STOREFRONT" },
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        take: 1,
+        select: { url: true, alt: true },
+      },
+    },
+  });
+
+  if (!product || !product.isActive || product.deletedAt || product.images.length === 0) {
+    return { title: "Product" };
+  }
+
+  const title = product.nameEn;
+  const description =
+    product.descriptionEn?.slice(0, 155) ||
+    `${product.nameEn} — fresh from Youth Huza on HUZA FRESH.`;
+  const image = product.images[0];
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: image ? [{ url: image.url, alt: image.alt || title }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: image ? [image.url] : undefined,
+    },
+  };
+}
 
 export default async function ProductDetailPage({
   params,
@@ -189,7 +239,13 @@ export default async function ProductDetailPage({
                 {r.comment && <p className="mt-2 text-sm text-[var(--huza-muted)]">{r.comment}</p>}
                 {r.photoUrl && (
                   <div className="relative mt-3 h-24 w-24 overflow-hidden rounded-lg">
-                    <Image src={r.photoUrl} alt="Review" fill className="object-cover" />
+                    <Image
+                      src={r.photoUrl}
+                      alt={`Review photo from ${r.user.fullName}`}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                    />
                   </div>
                 )}
               </div>

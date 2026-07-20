@@ -67,8 +67,11 @@ export function FarmerLoginForm() {
         </div>
 
         <div>
-          <label className="label">{t("phone")}</label>
+          <label className="label" htmlFor="farmer-login-phone">
+            {t("phone")}
+          </label>
           <input
+            id="farmer-login-phone"
             name="phone"
             required
             className="input-field mt-1 h-11 text-base"
@@ -79,8 +82,11 @@ export function FarmerLoginForm() {
           />
         </div>
         <div>
-          <label className="label">{t("nationalIdLast4")}</label>
+          <label className="label" htmlFor="farmer-login-nid">
+            {t("nationalIdLast4")}
+          </label>
           <input
+            id="farmer-login-nid"
             name="nationalIdLast4"
             required
             className="input-field mt-1 h-11 text-center text-xl tracking-[0.35em]"
@@ -97,7 +103,11 @@ export function FarmerLoginForm() {
           <span>{t("rememberDeviceShort")}</span>
         </label>
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
+        {error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+            {error}
+          </p>
+        )}
 
         <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
           {loading ? t("signingIn") : t("loginAction")}

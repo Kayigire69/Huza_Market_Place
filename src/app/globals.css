@@ -161,6 +161,23 @@ h3,
   animation: float-soft 5s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-rise-delay,
+  .animate-float,
+  .hero-fade-in,
+  .hero-fade-in-delay {
+    animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .hero-wash {
   background:
     linear-gradient(120deg, rgba(11, 92, 52, 0.92) 0%, rgba(31, 166, 90, 0.78) 45%, rgba(11, 92, 52, 0.55) 100%),
@@ -196,6 +213,25 @@ h3,
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--huza-ink);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  border-radius: 0.5rem;
+  background: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--huza-green-dark);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
 }
 
 /* Farmers Portal — stronger wash so white content cards stay readable over crops */
