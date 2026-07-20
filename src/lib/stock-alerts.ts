@@ -46,6 +46,17 @@ async function sendThrottledAlert(input: {
     return false;
   }
 
+  try {
+    await notifyAdmins({
+      type: input.notificationType || (input.kind === "RESTOCK_DEMAND" ? "RESTOCK_REQUEST" : "LOW_STOCK"),
+      title: input.title,
+      body: input.body,
+    });
+  } catch (err) {
+    console.error("[stock-alerts] notifyAdmins failed", err);
+    return false;
+  }
+
   await prisma.stockAlertLog.create({
     data: {
       productId: input.productId,
@@ -55,12 +66,6 @@ async function sendThrottledAlert(input: {
       title: input.title,
       body: input.body,
     },
-  });
-
-  await notifyAdmins({
-    type: input.notificationType || (input.kind === "RESTOCK_DEMAND" ? "RESTOCK_REQUEST" : "LOW_STOCK"),
-    title: input.title,
-    body: input.body,
   });
   return true;
 }

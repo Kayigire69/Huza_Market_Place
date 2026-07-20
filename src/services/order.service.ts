@@ -67,7 +67,14 @@ export const createOrderSchema = z.object({
   paymentMethod: z.enum(["MTN_MOMO", "AIRTEL_MONEY"]),
   paymentPhone: z.string().optional(),
   promoCode: z.string().optional(),
-  items: z.array(z.object({ productId: z.string(), quantity: z.number().positive() })).min(1),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        quantity: z.coerce.number().int().positive().max(999),
+      })
+    )
+    .min(1),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
@@ -147,6 +154,9 @@ export const orderService = {
     let needsRestock = false;
     const lineItems = data.items.map((item) => {
       const product = productMap[item.productId];
+      if (!product.price || product.price <= 0) {
+        throw new Error(`Invalid price for ${product.nameEn}`);
+      }
       const available = availableQty(product.stockQty, product.reservedQty);
       if (available < item.quantity) {
         needsRestock = true;
@@ -169,7 +179,7 @@ export const orderService = {
       };
     });
 
-    // Any restock line → customer sees 6–12 hours (never “unavailable”)
+    // Any restock line → customer soft ETA (never “unavailable”)
     if (needsRestock && (slot === "TODAY" || !data.deliverySlot)) {
       estimatedDelivery = formatBackorderEta();
     } else if (!needsRestock && slot === "TODAY" && status.canCheckout) {
@@ -255,7 +265,7 @@ export const orderService = {
             productId: item.productId,
             change: 0,
             reason: item.allowBackorder
-              ? `Backorder reserved ${item.quantity} for ${orderNumber} (ETA 6–12h)`
+              ? `Backorder reserved ${item.quantity} for ${orderNumber} (ETA: ${formatBackorderEta()})`
               : `Reserved ${item.quantity} for pending order ${orderNumber}`,
           },
         });
@@ -306,7 +316,7 @@ export const orderService = {
               payeePhone: normalizeMsisdn(merchant.phone),
               payeeName: merchant.name,
               providerMessage: needsRestock
-                ? "Payment request queued — restock ETA 6–12 hours after payment"
+                ? `Payment request queued — restock ETA: ${formatBackorderEta()} after payment`
                 : "Payment request queued — stock reserved for 10 minutes",
             },
           },

@@ -49,7 +49,7 @@ export const paymentService = {
             type: "LOW_STOCK",
             title: `Low stock: ${updated.nameEn}`,
             body: `Only ${available} units left after order ${payment.order.orderNumber}.`,
-          });
+          }).catch((err) => console.error("[payment] low-stock notify failed", err));
         }
       }
     });

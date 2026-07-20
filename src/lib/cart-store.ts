@@ -45,7 +45,7 @@ export const useCart = create<CartState>()(
       items: [],
       addItem: (item, qty = 1) => {
         const existing = get().items.find((i) => i.productId === item.productId);
-        // Zero stock = restock path (6–12h) — still allow ordering up to a sensible cap
+        // Zero available = restock path (soft ETA) — still allow ordering up to a sensible cap
         const maxQty = item.stockQty > 0 ? item.stockQty : Math.max(99, qty);
         if (existing) {
           set({

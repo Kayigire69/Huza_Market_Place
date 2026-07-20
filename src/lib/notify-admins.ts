@@ -24,8 +24,12 @@ export async function notifyAdmins(input: {
     if ((await getSetting("notify_new_order_enabled", "true")) === "false") return;
   }
 
+  const roles = isStockAlert
+    ? (["ADMIN", "SUPER_ADMIN", "MANAGER", "INVENTORY", "WAREHOUSE"] as const)
+    : (["ADMIN", "SUPER_ADMIN"] as const);
+
   const admins = await prisma.user.findMany({
-    where: { role: { in: ["ADMIN", "SUPER_ADMIN"] }, isActive: true },
+    where: { role: { in: [...roles] }, isActive: true },
     select: { id: true },
   });
   if (admins.length === 0) return;

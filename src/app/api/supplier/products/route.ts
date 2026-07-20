@@ -32,6 +32,7 @@ export async function GET() {
     where: { supplierId },
     include: { category: true, images: { orderBy: { sortOrder: "asc" } } },
     orderBy: { updatedAt: "desc" },
+    take: 200,
   });
   return NextResponse.json(products);
 }

@@ -47,12 +47,15 @@ export default async function FarmerReportsPage() {
   const acceptanceRate =
     approved + rejected > 0 ? Math.round((approved / (approved + rejected)) * 100) : null;
 
-  const score = computePerformanceScore({
-    acceptanceRate,
-    rejectedPos: rejectedPos.length,
-    ratingAvg: farmer.ratingAvg,
-  });
-  const band = performanceBand(score);
+  const score =
+    acceptanceRate == null
+      ? null
+      : computePerformanceScore({
+          acceptanceRate,
+          rejectedPos: rejectedPos.length,
+          ratingAvg: farmer.ratingAvg,
+        });
+  const band = score != null ? performanceBand(score) : null;
   const recentTips = rejectedPos
     .filter((po) => po.rejectionReason || po.recommendation)
     .slice(0, 3);
@@ -122,14 +125,23 @@ export default async function FarmerReportsPage() {
           <h2 className="font-semibold text-[var(--huza-ink)]">Farm performance score</h2>
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <p className="font-[family-name:var(--font-display)] text-4xl font-bold text-[var(--huza-green-dark)]">
-              {score}
+              {score != null ? score : "—"}
               <span className="ml-1 text-base font-semibold text-[var(--huza-muted)]">/ 100</span>
             </p>
-            <span className="rounded-lg bg-[var(--huza-mint)] px-2.5 py-1 text-xs font-bold text-[var(--huza-green-dark)]">
-              {band.label}
-            </span>
+            {band ? (
+              <span className="rounded-lg bg-[var(--huza-mint)] px-2.5 py-1 text-xs font-bold text-[var(--huza-green-dark)]">
+                {band.label}
+              </span>
+            ) : (
+              <span className="rounded-lg bg-[var(--huza-mint)] px-2.5 py-1 text-xs font-bold text-[var(--huza-green-dark)]">
+                Not scored yet
+              </span>
+            )}
           </div>
-          <p className="mt-2 text-sm text-[var(--huza-muted)]">{band.hint}</p>
+          <p className="mt-2 text-sm text-[var(--huza-muted)]">
+            {band?.hint ??
+              "Submit produce for HUZA review to unlock your farm performance score."}
+          </p>
           <ul className="mt-3 space-y-2 text-sm text-[var(--huza-ink)]">
             <li className="flex justify-between gap-3">
               <span>Products approved</span>

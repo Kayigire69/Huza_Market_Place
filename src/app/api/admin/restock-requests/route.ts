@@ -101,11 +101,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "id and valid status required" }, { status: 400 });
   }
 
-  const updated = await prisma.restockRequest.update({
+  const updated = await prisma.restockRequest.updateMany({
     where: { id },
     data: { status },
-    select: { id: true, status: true },
   });
+  if (updated.count !== 1) {
+    return NextResponse.json({ error: "Restock request not found" }, { status: 404 });
+  }
 
-  return NextResponse.json({ ok: true, item: updated });
+  return NextResponse.json({ ok: true, item: { id, status } });
 }

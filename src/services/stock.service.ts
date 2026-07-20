@@ -63,7 +63,11 @@ export const stockService = {
     };
 
     const updated = tx ? await run(tx) : await prisma.$transaction(run);
-    await maybeNotifyStockLevel(updated);
+    try {
+      await maybeNotifyStockLevel(updated);
+    } catch (err) {
+      console.error("[stock] low-stock notify failed after successful adjust", err);
+    }
     return updated;
   },
 

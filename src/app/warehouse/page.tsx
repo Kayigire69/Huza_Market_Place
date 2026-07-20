@@ -24,6 +24,7 @@ export default async function WarehousePage() {
     prisma.product.findMany({
       where: {
         isActive: true,
+        deletedAt: null,
         // Pre-filter closer to low-stock threshold (same UI filter applied below)
         stockQty: { lte: 50 },
       },
@@ -31,6 +32,7 @@ export default async function WarehousePage() {
         id: true,
         nameEn: true,
         stockQty: true,
+        reservedQty: true,
         lowStockAt: true,
         unit: true,
         barcode: true,
@@ -85,7 +87,9 @@ export default async function WarehousePage() {
     }),
   ]);
 
-  const lowStock = candidates.filter((p) => p.stockQty <= p.lowStockAt).slice(0, 40);
+  const lowStock = candidates
+    .filter((p) => Math.max(0, p.stockQty - p.reservedQty) <= p.lowStockAt)
+    .slice(0, 40);
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">

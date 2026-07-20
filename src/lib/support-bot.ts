@@ -85,10 +85,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Ada ya uwasilishaji ni RWF 5,000 kwa Kigali, Kamonyi, na Bugesera — inaonekana wakati wa malipo.",
   },
   deliveryTime: {
-    en: "In stock: 45–90 minutes in Kigali, 2–3 hours for Kamonyi or Bugesera. If we need to prepare fresh stock, delivery is within 6–12 hours.",
-    fr: "En stock : 45–90 min à Kigali, 2–3 h pour Kamonyi ou Bugesera. Si nous devons préparer le stock, livraison sous 6–12 heures.",
-    rw: "Birahari: iminota 45–90 i Kigali, amasaha 2–3 Kamonyi cyangwa Bugesera. Niba dukeneye guteza ububiko, dutanga mu masaha 6–12.",
-    sw: "Ipo: dakika 45–90 Kigali, saa 2–3 Kamonyi au Bugesera. Ikiwa tunahitaji kuandaa hisa, uwasilishaji ni ndani ya saa 6–12.",
+    en: "In stock: 45–90 minutes in Kigali, 2–3 hours for Kamonyi or Bugesera. If we need to prepare fresh stock, delivery is usually within a few hours in Kigali.",
+    fr: "En stock : 45–90 min à Kigali, 2–3 h pour Kamonyi ou Bugesera. Si nous devons préparer le stock, livraison en général en quelques heures à Kigali.",
+    rw: "Birahari: iminota 45–90 i Kigali, amasaha 2–3 Kamonyi cyangwa Bugesera. Niba dukeneye guteza ububiko, dusanzwe dutanga mu masaha make i Kigali.",
+    sw: "Ipo: dakika 45–90 Kigali, saa 2–3 Kamonyi au Bugesera. Ikiwa tunahitaji kuandaa hisa, kwa kawaida uwasilishaji ni ndani ya saa chache Kigali.",
   },
 
   // 4 Payment
@@ -163,10 +163,10 @@ const replies: Record<string, Record<Locale, string>> = {
     sw: "Bidhaa zilizoandikwa Organic huthibitishwa na Huza. Angalia beji na maelezo kwenye ukurasa wa bidhaa.",
   },
   stock: {
-    en: "In-stock items typically arrive in about 45 minutes in Kigali or about 75 minutes for Kamonyi/Bugesera. If an item needs fresh stock, we still take your order and deliver within 6–12 hours — we never show products as unavailable.",
-    fr: "Les articles en stock arrivent en ~45 min à Kigali ou ~75 min pour Kamonyi/Bugesera. Si un article doit être approvisionné, nous prenons quand même la commande et livrons en 6–12 heures — jamais « indisponible ».",
-    rw: "Ibicuruzwa bihari bisanzwe bigera mu minota ~45 i Kigali cyangwa ~75 Kamonyi/Bugesera. Niba bikeneye gutezwa, tubakira ubutumire kandi dutanga mu masaha 6–12 — ntitubwira ko ntibihari.",
-    sw: "Bidhaa zilizopo kwa kawaida hufika katika dakika ~45 Kigali au ~75 Kamonyi/Bugesera. Ikiwa bidhaa inahitaji hisa mpya, bado tunaichukua oda na kuwasilisha ndani ya saa 6–12 — hatuonyeshi « haipatikani ».",
+    en: "In-stock items typically arrive in about 45 minutes in Kigali or about 75 minutes for Kamonyi/Bugesera. If an item needs fresh stock, we still take your order and deliver usually within a few hours in Kigali — we never show products as unavailable.",
+    fr: "Les articles en stock arrivent en ~45 min à Kigali ou ~75 min pour Kamonyi/Bugesera. Si un article doit être approvisionné, nous prenons quand même la commande et livrons en général en quelques heures à Kigali — jamais « indisponible ».",
+    rw: "Ibicuruzwa bihari bisanzwe bigera mu minota ~45 i Kigali cyangwa ~75 Kamonyi/Bugesera. Niba bikeneye gutezwa, tubakira ubutumire kandi dusanzwe dutanga mu masaha make i Kigali — ntitubwira ko ntibihari.",
+    sw: "Bidhaa zilizopo kwa kawaida hufika katika dakika ~45 Kigali au ~75 Kamonyi/Bugesera. Ikiwa bidhaa inahitaji hisa mpya, bado tunaichukua oda na kuwasilisha kwa kawaida ndani ya saa chache Kigali — hatuonyeshi « haipatikani ».",
   },
 
   // 7 Returns / refunds
