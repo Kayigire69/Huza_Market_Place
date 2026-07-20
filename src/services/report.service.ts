@@ -20,12 +20,38 @@ export type { ReportType } from "@/lib/documents/report-types";
 export { REPORT_TYPES, REPORT_LABELS, isReportType } from "@/lib/documents/report-types";
 
 function parseRange(from?: string | null, to?: string | null) {
-  const end = to ? new Date(to) : new Date();
-  const start = from ? new Date(from) : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
+  /** Parse YYYY-MM-DD as local calendar dates (avoid UTC midnight off-by-one). */
+  const parseLocalDay = (value: string, endOfDay: boolean) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+    if (m) {
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      if (endOfDay) d.setHours(23, 59, 59, 999);
+      else d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    const d = new Date(value);
+    if (endOfDay) d.setHours(23, 59, 59, 999);
+    else d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const end = to ? parseLocalDay(to, true) : (() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  })();
+  const start = from
+    ? parseLocalDay(from, false)
+    : (() => {
+        const d = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      })();
   return { start, end };
 }
+
+/** Orders that count toward collected/recognized sales GMV (not unpaid / returned). */
+const REVENUE_ORDER_STATUS_EXCLUDE = ["CANCELLED", "REFUNDED", "PENDING", "RETURNED"] as const;
 
 function money(n: number | null | undefined) {
   return formatRwf(n || 0);
@@ -277,32 +303,40 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
 
   switch (resolved) {
     case "sales": {
-      const orders = await prisma.order.findMany({
-        where: { createdAt },
-        include: { payment: true },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-      });
-      const revenue = orders
-        .filter((o) => !["CANCELLED", "REFUNDED"].includes(o.status))
-        .reduce((s, o) => s + o.total, 0);
-      const byStatus = Object.entries(
-        orders.reduce<Record<string, number>>((acc, o) => {
-          acc[o.status] = (acc[o.status] || 0) + 1;
-          return acc;
-        }, {})
-      )
-        .map(([k, v]) => `${k}: ${v}`)
+      const [orderCount, revenueAgg, statusGroups, orders] = await Promise.all([
+        prisma.order.count({ where: { createdAt } }),
+        prisma.order.aggregate({
+          _sum: { total: true },
+          where: {
+            createdAt,
+            status: { notIn: [...REVENUE_ORDER_STATUS_EXCLUDE] },
+          },
+        }),
+        prisma.order.groupBy({
+          by: ["status"],
+          where: { createdAt },
+          _count: { _all: true },
+        }),
+        prisma.order.findMany({
+          where: { createdAt },
+          include: { payment: true },
+          orderBy: { createdAt: "desc" },
+          take: 200,
+        }),
+      ]);
+      const revenue = revenueAgg._sum.total ?? 0;
+      const byStatus = statusGroups
+        .map((g) => `${g.status}: ${g._count._all}`)
         .join(" · ");
       return {
         summary: [
-          `Orders in period: ${orders.length}`,
-          `Revenue (excl. cancelled/refunded): ${money(revenue)}`,
+          `Orders in period: ${orderCount}${orderCount > orders.length ? ` (showing latest ${orders.length})` : ""}`,
+          `Revenue (excl. pending/cancelled/refunded/returned): ${money(revenue)}`,
           `By status: ${byStatus || "—"}`,
         ],
         headers: ["Order", "Date", "Zone", "Status", "Total", "Payment"],
         widths: [88, 72, 80, 65, 65, 80],
-        totalHighlight: `Revenue (excl. cancelled/refunded): ${money(revenue)}`,
+        totalHighlight: `Revenue (excl. pending/cancelled/refunded/returned): ${money(revenue)}`,
         rows: orders.map((o) => [
           o.orderNumber,
           o.createdAt.toLocaleDateString("en-GB"),
@@ -314,23 +348,28 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
       };
     }
     case "payments": {
-      const payments = await prisma.payment.findMany({
-        where: { createdAt },
-        include: { order: { select: { orderNumber: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-      });
-      const confirmed = payments.filter((p) =>
-        ["CONFIRMED", "VERIFIED"].includes(p.status)
-      );
-      const confirmedSum = confirmed.reduce((s, p) => s + p.amount, 0);
-      const refunded = payments.filter((p) => p.status === "REFUNDED");
-      const failed = payments.filter((p) => p.status === "FAILED");
+      const [paymentCount, confirmedAgg, failedCount, refundedCount, payments] = await Promise.all([
+        prisma.payment.count({ where: { createdAt } }),
+        prisma.payment.aggregate({
+          _sum: { amount: true },
+          _count: { _all: true },
+          where: { createdAt, status: { in: ["CONFIRMED", "VERIFIED"] } },
+        }),
+        prisma.payment.count({ where: { createdAt, status: "FAILED" } }),
+        prisma.payment.count({ where: { createdAt, status: "REFUNDED" } }),
+        prisma.payment.findMany({
+          where: { createdAt },
+          include: { order: { select: { orderNumber: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 200,
+        }),
+      ]);
+      const confirmedSum = confirmedAgg._sum.amount ?? 0;
       return {
         summary: [
-          `Payments: ${payments.length}`,
-          `Confirmed/verified: ${confirmed.length} · ${money(confirmedSum)}`,
-          `Failed: ${failed.length} · Refunded: ${refunded.length}`,
+          `Payments: ${paymentCount}${paymentCount > payments.length ? ` (showing latest ${payments.length})` : ""}`,
+          `Confirmed/verified: ${confirmedAgg._count._all} · ${money(confirmedSum)}`,
+          `Failed: ${failedCount} · Refunded: ${refundedCount}`,
         ],
         headers: ["Order", "Method", "Phone", "Amount", "Status", "Date"],
         widths: [88, 70, 80, 65, 70, 75],
@@ -346,27 +385,30 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
       };
     }
     case "deliveries": {
-      const deliveries = await prisma.delivery.findMany({
-        where: { createdAt },
-        include: {
-          order: { select: { orderNumber: true, deliveryZone: true } },
-          deliveryPerson: { select: { fullName: true } },
-        },
-        orderBy: { updatedAt: "desc" },
-        take: 200,
-      });
-      const delivered = deliveries.filter((d) => d.status === "DELIVERED").length;
-      const failed = deliveries.filter((d) =>
-        ["RETURNED", "CANCELLED"].includes(d.status)
-      ).length;
+      const [deliveryCount, deliveredCount, failedCount, deliveries] = await Promise.all([
+        prisma.delivery.count({ where: { createdAt } }),
+        prisma.delivery.count({ where: { createdAt, status: "DELIVERED" } }),
+        prisma.delivery.count({
+          where: { createdAt, status: { in: ["RETURNED", "CANCELLED"] } },
+        }),
+        prisma.delivery.findMany({
+          where: { createdAt },
+          include: {
+            order: { select: { orderNumber: true, deliveryZone: true } },
+            deliveryPerson: { select: { fullName: true } },
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 200,
+        }),
+      ]);
       return {
         summary: [
-          `Delivery records: ${deliveries.length}`,
-          `Delivered: ${delivered} · Failed/returned: ${failed}`,
+          `Delivery records created in period: ${deliveryCount}${deliveryCount > deliveries.length ? ` (showing latest ${deliveries.length})` : ""}`,
+          `Delivered (among those created): ${deliveredCount} · Failed/returned: ${failedCount}`,
         ],
         headers: ["Order", "Zone", "Status", "Driver", "Delivered"],
         widths: [90, 90, 80, 110, 80],
-        totalHighlight: `Delivered in period: ${delivered}`,
+        totalHighlight: `Delivered (created in period): ${deliveredCount}`,
         rows: deliveries.map((d) => [
           d.order.orderNumber,
           d.order.deliveryZone,
@@ -409,7 +451,9 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
         },
       });
       const active = products.filter((p) => p.isActive);
-      const lowStock = active.filter((p) => p.stockQty <= p.lowStockAt).length;
+      const lowStock = active.filter(
+        (p) => Math.max(0, p.stockQty - (p.reservedQty || 0)) <= (p.lowStockAt ?? 5)
+      ).length;
       const { countInventoryOpsStatuses, deriveInventoryOpsStatus } = await import(
         "@/lib/inventory-meta"
       );
@@ -435,7 +479,7 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
       return {
         summary: [
           `Stock movements: ${movements.length}`,
-          `Active products at/below low-stock threshold: ${lowStock}`,
+          `Active products at/below low-stock threshold (available ≤ threshold): ${lowStock}`,
           `Ops status — Available: ${statusCounts.Available} · Reserved: ${statusCounts.Reserved} · Sold Out: ${statusCounts["Sold Out"]} · Rejected: ${statusCounts.Rejected}`,
           `By source — Farmer: ${bySource.FARMER} · Market: ${bySource.MARKET} · Unset: ${bySource.unset}`,
           `By method — Direct: ${byMethod.DIRECT} · Commission: ${byMethod.COMMISSION} · Market: ${byMethod.MARKET} · Unset: ${byMethod.unset}`,
@@ -498,18 +542,26 @@ async function fetchReportData(type: ReportType, start: Date, end: Date): Promis
       };
     }
     case "procurement": {
-      const pos = await prisma.purchaseOrder.findMany({
-        where: { createdAt },
-        include: { supplier: { select: { businessName: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-      });
-      const spent = pos
-        .filter((p) => p.status === "PAID" || p.status === "RECEIVED")
-        .reduce((s, p) => s + p.totalAmount, 0);
+      const [poCount, spentAgg, pos] = await Promise.all([
+        prisma.purchaseOrder.count({ where: { createdAt } }),
+        prisma.purchaseOrder.aggregate({
+          _sum: { totalAmount: true },
+          where: {
+            createdAt,
+            status: { in: ["PAID", "RECEIVED"] },
+          },
+        }),
+        prisma.purchaseOrder.findMany({
+          where: { createdAt },
+          include: { supplier: { select: { businessName: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 200,
+        }),
+      ]);
+      const spent = spentAgg._sum.totalAmount ?? 0;
       return {
         summary: [
-          `Purchase orders: ${pos.length}`,
+          `Purchase orders: ${poCount}${poCount > pos.length ? ` (showing latest ${pos.length})` : ""}`,
           `Paid/received value: ${money(spent)}`,
         ],
         headers: ["PO", "Farmer", "Product", "Qty", "Amount", "Status"],

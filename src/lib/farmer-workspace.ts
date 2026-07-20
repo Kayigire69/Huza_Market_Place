@@ -62,6 +62,7 @@ export const requireFarmerWorkspace = cache(async () => {
     include: {
       user: { select: { fullName: true } },
       products: {
+        where: { deletedAt: null },
         include: {
           category: true,
           images: { orderBy: { sortOrder: "asc" } },
@@ -119,6 +120,42 @@ export const requireFarmerWorkspace = cache(async () => {
       paymentMethod: true,
     },
   });
+
+  /** Full PO set for report totals (not capped like the recent list). */
+  const allPoRows = await prisma.purchaseOrder.findMany({
+    where: { supplierId: farmer.id },
+    select: {
+      status: true,
+      dealType: true,
+      quantity: true,
+      totalAmount: true,
+      commissionAmount: true,
+      farmerNetAmount: true,
+      paidAt: true,
+    },
+  });
+
+  const payoutOf = (po: {
+    dealType: string;
+    totalAmount: number;
+    farmerNetAmount: number | null;
+  }) =>
+    po.dealType === "COMMISSION" ? (po.farmerNetAmount ?? po.totalAmount) : po.totalAmount;
+
+  const paidAll = allPoRows.filter((po) => po.paidAt);
+  const commissionPaidAll = paidAll.filter((po) => po.dealType === "COMMISSION");
+  const reportTotals = {
+    totalEarnings: paidAll.reduce((s, po) => s + payoutOf(po), 0),
+    commissionFees: commissionPaidAll.reduce((s, po) => s + (po.commissionAmount ?? 0), 0),
+    qtySold: paidAll.reduce((s, po) => s + po.quantity, 0),
+    outstanding: allPoRows
+      .filter((po) => !po.paidAt && !["CANCELLED", "REJECTED", "DRAFT"].includes(po.status))
+      .reduce((s, po) => s + payoutOf(po), 0),
+    paidCount: paidAll.length,
+    commissionSettledCount: commissionPaidAll.length,
+    rejectedPoCount: allPoRows.filter((po) => po.status === "REJECTED").length,
+    poCount: allPoRows.length,
+  };
 
   const purchaseOrders: FarmerPurchaseOrderRow[] = purchaseOrdersRaw.map((po) => {
     const payoutAmount =
@@ -179,6 +216,7 @@ export const requireFarmerWorkspace = cache(async () => {
     farmer: farmerForPortal,
     categories,
     purchaseOrders,
+    reportTotals,
     stats: {
       listed: distinctCropNames.size,
       cropBatches: farmProducts.length,

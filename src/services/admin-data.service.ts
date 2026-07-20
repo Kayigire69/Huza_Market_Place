@@ -93,11 +93,15 @@ async function loadReviews() {
 }
 
 async function loadLowStock() {
-  return prisma.product.findMany({
-    where: { stockQty: { lte: 5 }, isActive: true, deletedAt: null },
+  const candidates = await prisma.product.findMany({
+    where: { isActive: true, deletedAt: null },
     include: { supplier: true },
-    take: 20,
+    orderBy: { stockQty: "asc" },
+    take: 120,
   });
+  return candidates
+    .filter((p) => Math.max(0, p.stockQty - (p.reservedQty || 0)) <= (p.lowStockAt ?? 5))
+    .slice(0, 20);
 }
 
 async function loadTopProducts() {
