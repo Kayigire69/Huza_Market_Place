@@ -107,7 +107,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
                 </span>
                 <button
                   type="button"
-                  onClick={() => signOut({ callbackUrl: "/farmer" })}
+                  onClick={() => void signOut({ callbackUrl: "/farmer/login" })}
                   className="rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
                 >
                   {t("logout")}

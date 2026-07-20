@@ -50,8 +50,8 @@ export default function LoginForm() {
         return;
       }
       if (code === "USE_FARMER_LOGIN") {
-        setError("Farmers sign in with phone and National ID — not password.");
-        router.push("/farmer/login");
+        // Do not reveal or redirect to the Farmers Portal from the customer login.
+        setError("Email or password is incorrect.");
         return;
       }
       // Wrong email/password (2FA is not the cause when it is disabled)
@@ -149,15 +149,9 @@ export default function LoginForm() {
           {t("register")}
         </Link>
       </p>
-      <p className="mt-3 text-center text-sm text-[var(--huza-muted)]">
-        Farmer?{" "}
-        <Link href="/farmer/login" className="font-semibold text-[var(--huza-green-dark)] underline underline-offset-2">
-          Sign in with phone + National ID
-        </Link>
-      </p>
       <p className="mt-2 text-center text-xs text-[var(--huza-muted)]">
         <Link href="/" className="hover:underline">
-          Customer shop
+          ← {t("home")}
         </Link>
       </p>
     </div>
