@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { FarmerPageHeader, FarmerPanel } from "@/components/portals/FarmerUi";
 import { Button } from "@/components/ui/Button";
@@ -34,6 +34,17 @@ function fill(template: string, vars: Record<string, string | number>) {
   );
 }
 
+type CalBucket = "overdue" | "ready" | "soon" | "later" | "harvested";
+
+function calendarBucket(c: Crop): CalBucket {
+  if (c.growthStage === "harvested") return "harvested";
+  const r = harvestReadiness(c.daysRemaining);
+  if (r === "overdue") return "overdue";
+  if (r === "ready") return "ready";
+  if (r === "soon") return "soon";
+  return "later";
+}
+
 export function FarmerCropsClient() {
   const { t } = useLocale();
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -63,6 +74,29 @@ export function FarmerCropsClient() {
     };
     return map[stage] || stage;
   };
+
+  const harvestCalendar = useMemo(() => {
+    const order: CalBucket[] = ["overdue", "ready", "soon", "later", "harvested"];
+    const labels: Record<CalBucket, string> = {
+      overdue: t("calOverdue"),
+      ready: t("calReady"),
+      soon: t("calSoon"),
+      later: t("calLater"),
+      harvested: t("calHarvested"),
+    };
+    const groups = order.map((key) => ({
+      key,
+      label: labels[key],
+      items: crops
+        .filter((c) => calendarBucket(c) === key)
+        .sort((a, b) => {
+          const da = a.expectedHarvestDate ? new Date(a.expectedHarvestDate).getTime() : Infinity;
+          const db = b.expectedHarvestDate ? new Date(b.expectedHarvestDate).getTime() : Infinity;
+          return da - db;
+        }),
+    }));
+    return groups.filter((g) => g.items.length > 0);
+  }, [crops, t]);
 
   const load = async () => {
     setLoading(true);
@@ -257,7 +291,45 @@ export function FarmerCropsClient() {
           <p className="text-sm text-[var(--huza-muted)]">{t("cropsEmpty")}</p>
         </FarmerPanel>
       ) : (
-        <div className="grid gap-3">
+        <>
+          <FarmerPanel id="harvest">
+            <h2 className="font-bold text-[var(--huza-ink)]">{t("calTitle")}</h2>
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">{t("calSubtitle")}</p>
+            <div className="mt-4 space-y-4">
+              {harvestCalendar.map((group) => (
+                <div key={group.key}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--huza-muted)]">
+                    {group.label} ({group.items.length})
+                  </p>
+                  <ul className="mt-2 divide-y divide-[var(--huza-line)] rounded-xl border border-[var(--huza-line)] bg-white">
+                    {group.items.map((c) => (
+                      <li
+                        key={c.id}
+                        className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm"
+                      >
+                        <div>
+                          <p className="font-semibold text-[var(--huza-ink)]">{c.nameEn}</p>
+                          <p className="text-xs text-[var(--huza-muted)]">
+                            {c.expectedHarvestDate
+                              ? new Date(c.expectedHarvestDate).toLocaleDateString()
+                              : t("cropsSetPlanting")}
+                            {c.expectedQty != null ? ` · ${c.expectedQty} ${c.unit}` : ""}
+                          </p>
+                        </div>
+                        <span className="rounded-lg bg-[var(--huza-mint)] px-2 py-1 text-xs font-bold text-[var(--huza-green-dark)]">
+                          {c.growthStage === "harvested"
+                            ? t("stageHarvested")
+                            : readinessLabel(c.daysRemaining)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </FarmerPanel>
+
+          <div className="grid gap-3">
           {crops.map((c) => (
             <FarmerPanel key={c.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -352,7 +424,8 @@ export function FarmerCropsClient() {
               </div>
             </FarmerPanel>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
