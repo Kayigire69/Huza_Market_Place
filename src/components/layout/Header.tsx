@@ -118,17 +118,17 @@ export function Header() {
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
           <Link
             href="/shop"
-            className="flex shrink-0 items-center"
+            className="flex min-w-0 shrink items-center"
             aria-label="HUZA FRESH Home"
           >
-            <HuzaFreshLogo size="sm" />
+            <HuzaFreshLogo size="sm" showTagline={false} className="max-w-full" />
           </Link>
 
           <div className="mx-auto hidden min-w-0 flex-1 md:block md:max-w-2xl">
             <SmartSearch size="lg" />
           </div>
 
-          <div className="ml-auto hidden items-center gap-0.5 md:flex">
+          <div className="ml-auto hidden shrink-0 items-center gap-0.5 md:flex">
             <label className="sr-only" htmlFor="header-lang">
               {t("language")}
             </label>
@@ -253,7 +253,7 @@ export function Header() {
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-0.5 md:hidden">
+          <div className="ml-auto flex shrink-0 items-center gap-0.5 md:hidden">
             <IconButton href="/cart" label={t("cart")}>
               <ShoppingCart className="size-5" />
               {cartCount > 0 && (
@@ -271,7 +271,7 @@ export function Header() {
               href={session?.user ? "/account" : "/auth/login"}
               label={session?.user ? t("account") : t("login")}
             >
-              <User className="size-5" />
+              <User className="size-5" aria-hidden />
             </IconButton>
           </div>
         </div>

@@ -147,7 +147,7 @@ const rw: EntryCopy = {
   heroLine1: "Ibicuruzwa bishya ku bakiriya.",
   heroLine2: "Umusaruro mwiza ku bahinzi n'igiciro cyiza ku isoko.",
   story: "Youth Huza ifasha abahinzi n'aborozi kugeza umusaruro wabo ku isoko kugiciro cyiza",
-  startShopping: "Tangira gugura",
+  startShopping: "Tangira guhaha",
   joinFarmer: "Iyandikishe nk'umuhinzi",
   trustQuality: "Byagenzuwe",
   trustFarmer: "Ubufasha ku bahinzi",
