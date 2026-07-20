@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { FarmerPanel } from "@/components/portals/FarmerUi";
 import { Button } from "@/components/ui/Button";
 
@@ -15,22 +15,76 @@ const ADVICE_TOPICS = [
   "Post-Harvest Handling",
 ] as const;
 
-const VISIT_STATUSES = [
-  "Request Submitted",
-  "Agronomist Assigned",
-  "Visit Scheduled",
-  "Visit Completed",
-  "Recommendations Available",
-] as const;
+type FollowUp = {
+  id: string;
+  type: string;
+  notes: string;
+  recordedAt: string;
+};
+
+type AgronomyRow = {
+  id: string;
+  kind: string;
+  crop: string;
+  topicOrReason: string;
+  description: string;
+  preferredDate: string | null;
+  status: string;
+  adminReply: string | null;
+  scheduledAt: string | null;
+  handledAt: string | null;
+  createdAt: string;
+  followUps: FollowUp[];
+};
+
+function statusLabel(status: string) {
+  switch (status) {
+    case "OPEN":
+      return "Submitted — waiting for Huza";
+    case "REPLIED":
+      return "Agronomist replied";
+    case "SCHEDULED":
+      return "Visit scheduled";
+    case "HANDLED":
+      return "Visit / advice completed";
+    case "CLOSED":
+      return "Closed";
+    default:
+      return status;
+  }
+}
+
+function followUpTypeLabel(type: string) {
+  const map: Record<string, string> = {
+    VISIT: "Visit report",
+    RECOMMENDATION: "Recommendation",
+    DISEASE: "Disease note",
+    PEST: "Pest note",
+    SOIL: "Soil note",
+    TRAINING: "Training",
+    NOTE: "Note",
+  };
+  return map[type] || type;
+}
+
+function formatWhen(iso: string | null) {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("en-RW", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(iso));
+}
 
 /**
- * Agronomy Support — request advice or a farm visit.
- * Requests are stored as AgronomyRequest records for Youth Huza follow-up.
+ * Agronomy Support — request advice or a farm visit + live request/visit ledger.
  */
 export function FarmerAgronomyClient() {
   const [mode, setMode] = useState<"advice" | "visit">("advice");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [requests, setRequests] = useState<AgronomyRow[]>([]);
   const [advice, setAdvice] = useState<{
     topic: (typeof ADVICE_TOPICS)[number];
     crop: string;
@@ -43,6 +97,21 @@ export function FarmerAgronomyClient() {
     description: "",
   });
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/supplier/agronomy");
+      const data = await res.json();
+      if (res.ok) setRequests(data.requests || []);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadHistory();
+  }, [loadHistory]);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -52,9 +121,7 @@ export function FarmerAgronomyClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          mode === "advice"
-            ? { kind: "advice", ...advice }
-            : { kind: "visit", ...visit }
+          mode === "advice" ? { kind: "advice", ...advice } : { kind: "visit", ...visit }
         ),
       });
       const data = await res.json();
@@ -62,10 +129,11 @@ export function FarmerAgronomyClient() {
       setMsg(
         mode === "advice"
           ? "Advice request submitted. Youth Huza will follow up."
-          : "Farm visit request submitted. You will see status updates in Messages."
+          : "Farm visit request submitted. Track progress in the ledger below."
       );
       setAdvice({ topic: ADVICE_TOPICS[0], crop: "", description: "" });
       setVisit({ reason: "", crop: "", preferredDate: "", description: "" });
+      await loadHistory();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -199,22 +267,70 @@ export function FarmerAgronomyClient() {
       </FarmerPanel>
 
       <FarmerPanel className="max-w-2xl">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
-          Visit request progress
-        </p>
-        <ol className="mt-3 space-y-2">
-          {VISIT_STATUSES.map((s, i) => (
-            <li key={s} className="flex items-center gap-2 text-sm text-[var(--huza-ink)]">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--huza-mint)] text-[10px] font-bold text-[var(--huza-green-dark)]">
-                {i + 1}
-              </span>
-              {s}
-            </li>
-          ))}
-        </ol>
-        <p className="mt-3 text-xs text-[var(--huza-muted)]">
-          After you submit, status updates appear under Messages and Notifications.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h2 className="font-semibold text-[var(--huza-ink)]">My requests & visit reports</h2>
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">
+              Live status and agronomist notes for your farm.
+            </p>
+          </div>
+          <Button type="button" size="sm" variant="ghost" onClick={() => void loadHistory()}>
+            Refresh
+          </Button>
+        </div>
+
+        {historyLoading ? (
+          <p className="mt-4 text-sm text-[var(--huza-muted)]">Loading history…</p>
+        ) : requests.length === 0 ? (
+          <p className="mt-4 text-sm text-[var(--huza-muted)]">
+            No requests yet. Submit advice or a farm visit above.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {requests.map((r) => (
+              <li
+                key={r.id}
+                className="rounded-xl border border-[var(--huza-line)] bg-white p-3 text-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-[var(--huza-ink)]">
+                      {r.kind === "VISIT" ? "Farm visit" : "Advice"} · {r.crop}
+                    </p>
+                    <p className="text-xs text-[var(--huza-muted)]">
+                      {r.topicOrReason} · {formatWhen(r.createdAt)}
+                      {r.scheduledAt ? ` · Scheduled ${formatWhen(r.scheduledAt)}` : ""}
+                    </p>
+                  </div>
+                  <span className="rounded-lg bg-[var(--huza-mint)] px-2 py-1 text-xs font-bold text-[var(--huza-green-dark)]">
+                    {statusLabel(r.status)}
+                  </span>
+                </div>
+                {r.adminReply ? (
+                  <p className="mt-2 rounded-lg bg-[var(--huza-mint)]/40 px-2.5 py-2 text-[var(--huza-ink)]">
+                    <span className="font-semibold">Huza reply: </span>
+                    {r.adminReply}
+                  </p>
+                ) : null}
+                {r.followUps?.length ? (
+                  <div className="mt-3 space-y-2 border-t border-[var(--huza-line)] pt-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--huza-muted)]">
+                      Visit / follow-up ledger
+                    </p>
+                    {r.followUps.map((f) => (
+                      <div key={f.id} className="rounded-lg bg-[var(--huza-soft,#f7f7f5)] px-2.5 py-2">
+                        <p className="text-xs font-semibold text-[var(--huza-green-dark)]">
+                          {followUpTypeLabel(f.type)} · {formatWhen(f.recordedAt)}
+                        </p>
+                        <p className="mt-0.5 text-[var(--huza-ink)]">{f.notes}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
       </FarmerPanel>
     </div>
   );

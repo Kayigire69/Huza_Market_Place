@@ -17,7 +17,8 @@
  * - Phase 10 Final IA (My Farm, My Produce, Sales, Reports hubs)
  *
  * NEXT:
- * - Harvest calendar, performance score polish, visit report history ledger
+ * - (Farmer portal NEXT batch shipped: harvest calendar, performance score, visit ledger)
+ * - Optional later: outbound WhatsApp when stock returns; deeper harvest month grid
  */
 export const FARMER_PHASES = {
   LAYOUT: { id: 1, name: "Layout & Navigation", status: "locked" as const },

@@ -26,12 +26,15 @@ export function FarmerPageHeader({
 export function FarmerPanel({
   children,
   className = "",
+  id,
 }: {
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
     <div
+      id={id}
       className={`rounded-2xl border border-[var(--huza-line)] bg-white/95 p-5 shadow-sm backdrop-blur-sm ${className}`}
     >
       {children}
