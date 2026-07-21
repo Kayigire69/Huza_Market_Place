@@ -6,6 +6,8 @@ Interactive canvas (Cursor): `canvases/system-architecture-report.canvas.tsx` in
 
 **Workflow diagrams (training / expo / manuals):** [system-workflows/README.md](./system-workflows/README.md)
 
+**Next build order:** [NEXT_BUILD_ROADMAP.md](./NEXT_BUILD_ROADMAP.md)
+
 ---
 
 ## 1. Portal connections
