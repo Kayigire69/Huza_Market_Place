@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { FarmerReportsClient } from "@/components/portals/FarmerReportsClient";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 
@@ -19,6 +20,9 @@ function computePerformanceScore(input: {
 
 export default async function FarmerReportsPage() {
   const { farmer, purchaseOrders, stats, reportTotals } = await requireFarmerWorkspace();
+  if (farmer.status !== "APPROVED") {
+    redirect("/farmer/dashboard");
+  }
 
   const rejectedPos = purchaseOrders.filter((po) => po.status === "REJECTED");
   const approved = stats.approvedProducts;

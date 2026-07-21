@@ -68,6 +68,8 @@ export type FarmerDossierFields = {
   priceAfterSale?: number | null;
   proofOfPaymentUrl?: string | null;
   farmerComments?: string | null;
+  productsOffered?: string | null;
+  huzaPurchaseAgreement?: string | null;
   paymentMomo?: string | null;
   bankAccount?: string | null;
   bankName?: string | null;
@@ -119,6 +121,8 @@ export function pickFarmerDossier(body: Record<string, unknown>): Record<string,
     proofOfPaymentUrl: str("proofOfPaymentUrl"),
     farmerComments: str("farmerComments"),
     description: str("description") || str("farmerComments"),
+    productsOffered: str("productsOffered"),
+    huzaPurchaseAgreement: str("huzaPurchaseAgreement"),
     email: str("email"),
     paymentMomo:
       body.paymentMomo !== undefined

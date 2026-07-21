@@ -29,7 +29,8 @@ export default async function FarmerNotificationsPage() {
       {notes.length === 0 ? (
         <FarmerPanel className="max-w-2xl">
           <p className="text-sm text-[var(--huza-muted)]">
-            You are all caught up. New updates from Youth Huza will show here.
+            You are all caught up. Messages and updates from Youth Huza (reviews, visits, payments)
+            show here.
           </p>
         </FarmerPanel>
       ) : (

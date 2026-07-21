@@ -78,7 +78,7 @@ export function FarmerMyFarmClient({ farmer }: { farmer: FarmView }) {
             <Field label={t("email")} value={farmer.email} />
             <Field
               label={t("myFarmFarmingType")}
-              value={isOrganic ? t("myFarmOrganicDossier") : t("myFarmStandardSeller")}
+              value={isOrganic ? t("myFarmOrganicDossier") : t("pathConventionalPartner")}
             />
             <Field label={t("myFarmSize")} value={farmer.farmSize} />
             <Field
@@ -114,10 +114,9 @@ export function FarmerMyFarmClient({ farmer }: { farmer: FarmView }) {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Field label={t("myFarmFieldType")} value={farmer.fieldType} />
             <Field label={t("myFarmIrrigation")} value={farmer.irrigationMethod} />
-            <Field
-              label={t("myFarmOrganicStatus")}
-              value={isOrganic ? t("myFarmOrganicPath") : t("myFarmNonOrganic")}
-            />
+            {isOrganic ? (
+              <Field label={t("myFarmOrganicStatus")} value={t("myFarmOrganicPath")} />
+            ) : null}
             <Field label={t("myFarmCapacity")} value={farmer.productionCapacity} />
           </div>
         </FarmerPanel>
@@ -142,10 +141,12 @@ export function FarmerMyFarmClient({ farmer }: { farmer: FarmView }) {
             <p className="mt-2 text-sm text-[var(--huza-muted)]">{t("myFarmNoPhotos")}</p>
           )}
           <div className="mt-4 space-y-1 text-sm">
-            <Field
-              label={t("myFarmOrganicCert")}
-              value={farmer.organicCertUrl ? t("myFarmOnFile") : t("myFarmNotUploaded")}
-            />
+            {isOrganic ? (
+              <Field
+                label={t("myFarmOrganicCert")}
+                value={farmer.organicCertUrl ? t("myFarmOnFile") : t("myFarmNotUploaded")}
+              />
+            ) : null}
             <Field
               label={t("myFarmNationalIdDoc")}
               value={farmer.nationalIdUrl ? t("myFarmOnFile") : t("myFarmNotUploaded")}

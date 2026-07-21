@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { FarmerHubTabs, SALES_TABS } from "@/components/portals/FarmerHubTabs";
 import { FarmerOrdersClient } from "@/components/portals/FarmerOrdersClient";
 import { FarmerPaymentsClient } from "@/components/portals/FarmerPaymentsClient";
@@ -14,7 +15,10 @@ export default async function FarmerSalesPage({
 }) {
   const sp = searchParams ? await searchParams : {};
   const tab = sp.tab === "payments" ? "payments" : "orders";
-  const { purchaseOrders } = await requireFarmerWorkspace();
+  const { farmer, purchaseOrders } = await requireFarmerWorkspace();
+  if (farmer.status !== "APPROVED") {
+    redirect("/farmer/dashboard");
+  }
 
   return (
     <div>

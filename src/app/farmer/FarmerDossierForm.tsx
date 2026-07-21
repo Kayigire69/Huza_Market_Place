@@ -63,6 +63,8 @@ export type FarmerDossierValues = {
   paymentMomo?: string | null;
   bankAccount?: string | null;
   bankName?: string | null;
+  productsOffered?: string | null;
+  huzaPurchaseAgreement?: string | null;
 };
 
 async function uploadOne(file: File, folder: string): Promise<string> {
@@ -467,6 +469,30 @@ export function FarmerDossierForm({
               name="bankName"
               defaultValue={initial.bankName || ""}
               className="input-field"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+        <h2 className="font-semibold text-lg">{t("huzaAgreementTab")}</h2>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2">
+            <label className="label">{t("productsOfferedLabel")}</label>
+            <textarea
+              name="productsOffered"
+              defaultValue={initial.productsOffered || ""}
+              className="input-field min-h-20"
+              placeholder={t("productsOfferedPlaceholder")}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="label">{t("huzaPurchaseAgreementLabel")}</label>
+            <textarea
+              name="huzaPurchaseAgreement"
+              defaultValue={initial.huzaPurchaseAgreement || ""}
+              className="input-field min-h-20"
+              placeholder={t("huzaPurchaseAgreementPlaceholder")}
             />
           </div>
         </div>

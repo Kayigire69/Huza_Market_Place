@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { FarmerApprovalsClient } from "@/components/portals/FarmerApprovalsClient";
 import { FarmerMyCropsPanel } from "@/components/portals/FarmerMyCropsPanel";
 import { FarmerProduceHeader } from "@/components/portals/FarmerProduceHeader";
@@ -16,6 +17,10 @@ export default async function FarmerProducePage({
   const tab = sp.tab || "list";
   const fromCropId = sp.fromCrop?.trim() || "";
   const { farmer, categories, purchaseOrders, stats } = await requireFarmerWorkspace();
+
+  if (farmer.status !== "APPROVED") {
+    redirect("/farmer/dashboard");
+  }
 
   let cropPrefill: {
     id: string;

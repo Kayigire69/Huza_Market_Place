@@ -117,14 +117,17 @@ export function FarmerApprovalsClient({
               {account.businessName}
             </h2>
             <p className="mt-1 text-sm text-[var(--huza-muted)]">
-              {account.farmingType === "STANDARD" ? "Standard seller" : "Organic dossier"} · Account
-              status: <strong className="text-[var(--huza-ink)]">{account.status}</strong>
+              {account.farmingType === "STANDARD"
+                ? "Youth Huza partner"
+                : "Organic dossier"}{" "}
+              · Account status:{" "}
+              <strong className="text-[var(--huza-ink)]">{account.status}</strong>
               {account.isVerified ? " · Verified partner" : ""}
             </p>
           </div>
-          <Link href="/farmer/profile">
+          <Link href="/farmer/settings">
             <Button size="sm" variant="ghost">
-              My Profile
+              Settings
             </Button>
           </Link>
         </div>
@@ -140,8 +143,14 @@ export function FarmerApprovalsClient({
               <p className="mt-1 text-red-700">Reason: {account.rejectionReason}</p>
             ) : null}
             <p className="mt-2 text-[var(--huza-muted)]">
-              Update your profile details, then Youth Huza will review again.
+              Update your farm information in Settings, then Youth Huza will review again.
             </p>
+            <Link
+              href="/farmer/settings"
+              className="mt-3 inline-flex text-sm font-bold text-[var(--huza-green-dark)] underline"
+            >
+              Open Settings
+            </Link>
           </div>
         ) : (
           <p className="mt-3 text-sm text-amber-900">

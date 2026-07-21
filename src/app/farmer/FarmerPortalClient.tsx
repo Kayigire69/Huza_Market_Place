@@ -19,7 +19,6 @@ import {
 } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { FarmerDossierForm, type FarmerDossierValues } from "./FarmerDossierForm";
-import { maskNationalId } from "@/lib/farmer-id";
 import {
   FarmerQualityReviewCard,
   defaultQualityRecommendation,
@@ -98,11 +97,11 @@ type PurchaseOrderRow = {
   createdAt: string;
 };
 
-function panelToTab(panel: FarmerPanelKey | undefined, isOrganic: boolean): Tab {
-  if (!panel) return isOrganic ? "dossier" : "agreement";
+function panelToTab(panel: FarmerPanelKey | undefined, _isOrganic: boolean): Tab {
+  if (!panel) return "dossier";
   switch (panel) {
     case "profile":
-      return isOrganic ? "dossier" : "agreement";
+      return "dossier";
     case "products":
     case "submit":
     case "approvals":
@@ -113,7 +112,7 @@ function panelToTab(panel: FarmerPanelKey | undefined, isOrganic: boolean): Tab 
     case "inventory":
       return "inventory";
     default:
-      return isOrganic ? "dossier" : "agreement";
+      return "dossier";
   }
 }
 
@@ -178,19 +177,12 @@ export function FarmerPortalClient({
   const [products, setProducts] = useState<ProductRow[]>(farmer.products || []);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
 
-  const TABS: { key: Tab; label: string }[] = isOrganicFarmer
-    ? [
-        { key: "dossier", label: t("farmerInformation") },
-        { key: "products", label: t("productsAndPhotos") },
-        { key: "orders", label: "Huza orders & payments" },
-        { key: "inventory", label: t("inventoryTab") },
-      ]
-    : [
-        { key: "agreement", label: t("huzaAgreementTab") },
-        { key: "products", label: t("productsAndPhotos") },
-        { key: "orders", label: "Huza orders & payments" },
-        { key: "inventory", label: t("inventoryTab") },
-      ];
+  const TABS: { key: Tab; label: string }[] = [
+    { key: "dossier", label: t("farmerInformation") },
+    { key: "products", label: t("productsAndPhotos") },
+    { key: "orders", label: "Huza orders & payments" },
+    { key: "inventory", label: t("inventoryTab") },
+  ];
 
   const refresh = () => startTransition(() => router.refresh());
   const approved = farmer.status === "APPROVED";
@@ -320,107 +312,14 @@ export function FarmerPortalClient({
       )}
       {msg && <p className="mb-4 text-sm text-[var(--huza-green-dark)]">{msg}</p>}
 
-      {tab === "dossier" && isOrganicFarmer && (
+      {tab === "dossier" && (
         <div>
-          <p className="mb-4 text-sm text-[var(--huza-muted)]">{t("dossierIntro")}</p>
+          <p className="mb-4 text-sm text-[var(--huza-muted)]">
+            {isOrganicFarmer ? t("dossierIntro") : t("dossierIntroConventional")}
+          </p>
           <FarmerDossierForm initial={dossierInitial} onSaved={refresh} />
         </div>
       )}
-
-      {tab === "agreement" && !isOrganicFarmer && (
-        <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-6 space-y-4 max-w-2xl">
-          <h2 className="font-semibold text-lg">{t("huzaAgreementTab")}</h2>
-          <p className="text-sm text-[var(--huza-muted)]">{t("standardAgreementIntro")}</p>
-          <div className="grid sm:grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("fullNameContact")}</p>
-              <p className="font-medium">{farmer.user?.fullName || farmer.businessName}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("nationalIdOrReg")}</p>
-              <p className="font-medium">{maskNationalId(farmer.nationalId)}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("phone")}</p>
-              <p className="font-medium">{farmer.phone}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("farmBusinessName")}</p>
-              <p className="font-medium">{farmer.businessName}</p>
-            </div>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">{t("productsOfferedLabel")}</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{farmer.productsOffered || "—"}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">
-              {t("huzaPurchaseAgreementLabel")}
-            </p>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{farmer.huzaPurchaseAgreement || "—"}</p>
-          </div>
-          <p className="text-xs text-[var(--huza-green-dark)] font-medium">
-            {farmer.agreedToHuzaTerms ? t("huzaTermsAccepted") : t("huzaTermsPending")}
-          </p>
-          <p className="text-xs text-[var(--huza-muted)]">{t("standardAgreementEditHint")}</p>
-
-          <form
-            className="border-t border-[var(--huza-line)] pt-4 space-y-3"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setBusy(true);
-              setMsg("");
-              const form = new FormData(e.currentTarget);
-              const res = await fetch("/api/supplier/profile", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  paymentMomo: String(form.get("paymentMomo") || "").trim() || null,
-                  bankAccount: String(form.get("bankAccount") || "").trim() || null,
-                  bankName: String(form.get("bankName") || "").trim() || null,
-                }),
-              });
-              const data = await res.json().catch(() => ({}));
-              setBusy(false);
-              setMsg(res.ok ? t("farmerInfoSaved") : data.error || t("saveFailed"));
-              if (res.ok) refresh();
-            }}
-          >
-            <h3 className="font-semibold text-base">{t("paymentOptions")}</h3>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="label">{t("mobileMoneyNumber")}</label>
-                <input
-                  name="paymentMomo"
-                  defaultValue={farmer.paymentMomo || ""}
-                  className="input-field"
-                  placeholder="078xxxxxxx"
-                />
-              </div>
-              <div>
-                <label className="label">{t("bankAccountOptional")}</label>
-                <input
-                  name="bankAccount"
-                  defaultValue={farmer.bankAccount || ""}
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="label">{t("bankNameOptional")}</label>
-                <input
-                  name="bankName"
-                  defaultValue={farmer.bankName || ""}
-                  className="input-field"
-                />
-              </div>
-            </div>
-            <Button type="submit" size="sm" disabled={busy}>
-              {busy ? t("saving") : t("saveFarmerInfo")}
-            </Button>
-          </form>
-        </div>
-      )}
-
       {tab === "products" && (
         <div
           className={

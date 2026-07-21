@@ -110,7 +110,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
             </select>
 
             <Link
-              href="/"
+              href="/farmer"
               className="inline-flex size-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white transition hover:bg-white/20"
               aria-label={t("home")}
               title={t("home")}

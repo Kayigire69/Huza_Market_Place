@@ -146,18 +146,24 @@ export const wsEn: WsDict = {
 
   sellTitle: "Sell to HUZA",
   sellSubtitle: "",
+  sellHowItWorksLabel: "How selling works",
   sellOptionA: "Option A",
   sellOptionB: "Option B",
-  sellDirectTitle: "Direct Sale to HUZA",
+  sellDirectTitle: "Sell your harvest to Youth Huza",
   sellDirectBody:
     "HUZA purchases your produce. After inspection and agreed price, you receive full payment. Ownership moves to HUZA. Your crop enters HUZA inventory and can appear on the HUZA FRESH website with official HUZA photos.",
+  sellUnifiedBody:
+    "Submit your harvest with photos and quantity. Youth Huza inspects quality, agrees the commercial terms with you, then pays according to the purchase order. You track orders and payments in this portal.",
+  sellUnifiedPayNote:
+    "Payment may be farm-gate, upon delivery, bank transfer, or mobile money — as agreed with Youth Huza on each order.",
+  sellCtaSubmitHarvest: "Submit harvest",
   sellPartnerTitle: "HUZA Marketing Partnership",
   sellPartnerBody:
     "You keep ownership. HUZA markets and sells on the shop for you (consignment). After sales, HUZA deducts the agreed commission; you receive the remaining balance and a sales report.",
   sellStepSubmit: "Submit harvest",
   sellStepInspect: "HUZA inspects & grades",
   sellStepPrice: "Price agreed",
-  sellStepPayFull: "Full payment to you",
+  sellStepPayFull: "Payment to you",
   sellStepOwnership: "Ownership transfers to HUZA",
   sellStepListed: "Listed for customers",
   sellStepSales: "Sales happen",
@@ -433,11 +439,17 @@ export const wsFr: WsDict = {
 
   sellTitle: "Vendre à HUZA",
   sellSubtitle: "",
+  sellHowItWorksLabel: "Comment vendre",
   sellOptionA: "Option A",
   sellOptionB: "Option B",
-  sellDirectTitle: "Vente directe à HUZA",
+  sellDirectTitle: "Vendez votre récolte à Youth Huza",
   sellDirectBody:
     "HUZA achète votre production. Après inspection et prix convenu, vous recevez le paiement intégral. La propriété passe à HUZA. Votre culture entre dans le stock HUZA et peut apparaître sur HUZA FRESH avec des photos officielles.",
+  sellUnifiedBody:
+    "Soumettez votre récolte avec photos et quantité. Youth Huza inspecte la qualité, convient des conditions avec vous, puis paie selon le bon de commande.",
+  sellUnifiedPayNote:
+    "Le paiement peut être au champ, à la livraison, par virement ou mobile money — selon l'accord pour chaque commande.",
+  sellCtaSubmitHarvest: "Soumettre la récolte",
   sellPartnerTitle: "Partenariat marketing HUZA",
   sellPartnerBody:
     "Vous gardez la propriété. HUZA commercialise et vend pour vous (consignation). Après les ventes, HUZA déduit la commission convenue ; vous recevez le solde et un rapport de ventes.",
