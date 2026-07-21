@@ -8,6 +8,7 @@ import { enqueueAnalytics, enqueueEmail, enqueueSms } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 import { writeAuditLog } from "@/lib/audit";
 import { notifyAdmins } from "@/lib/notify-admins";
+import { maybeNotifyStockLevel } from "@/lib/stock-alerts";
 import { createOrderDocToken, demoPaymentsAllowed } from "@/lib/security-access";
 
 export const paymentService = {
@@ -25,6 +26,14 @@ export const paymentService = {
     });
 
     // Commit reservations → physical stock sale
+    const stockAfterSale: {
+      id: string;
+      nameEn: string;
+      stockQty: number;
+      reservedQty: number;
+      lowStockAt: number;
+    }[] = [];
+
     await prisma.$transaction(async (tx) => {
       for (const item of payment.order.items) {
         const updated = await productRepository.commitReservation(tx, item.productId, item.quantity);
@@ -43,17 +52,22 @@ export const paymentService = {
             reason: `Order ${payment.order.orderNumber}`,
           },
         });
-        const available = Math.max(0, updated.stockQty - updated.reservedQty);
-        if (available > 0 && available <= updated.lowStockAt) {
-          void notifyAdmins({
-            type: "LOW_STOCK",
-            title: `Low stock: ${updated.nameEn}`,
-            body: `Only ${available} units left after order ${payment.order.orderNumber}.`,
-          }).catch((err) => console.error("[payment] low-stock notify failed", err));
-        }
+        stockAfterSale.push({
+          id: updated.id,
+          nameEn: updated.nameEn,
+          stockQty: updated.stockQty,
+          reservedQty: updated.reservedQty,
+          lowStockAt: updated.lowStockAt,
+        });
       }
     });
 
+    // Single throttled low/empty path (numbers + %; max once/hour per product/kind)
+    for (const product of stockAfterSale) {
+      void maybeNotifyStockLevel(product).catch((err) =>
+        console.error("[payment] low-stock notify failed", err)
+      );
+    }
     // Loyalty: 1 point per 1,000 RWF paid
     if (payment.order.userId && payment.amount > 0) {
       const points = Math.floor(payment.amount / 1000);
