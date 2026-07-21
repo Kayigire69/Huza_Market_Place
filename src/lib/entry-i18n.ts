@@ -70,9 +70,9 @@ const en: EntryCopy = {
   farmersPortal: "Farmers Portal",
   huzaFresh: "HUZA FRESH",
   heroLine1: "Fresh produce for customers.",
-  heroLine2: "Better harvests for farmers with good market price.",
+  heroLine2: "Better harvests. Better prices for farmers.",
   story:
-    "Youth Huza helps farmers with quality crops reach the market at a good price, and connects customers with fresh produce on HUZA FRESH.",
+    "Youth Huza connects farmers to reliable markets, helping them grow quality produce and earn fair prices, while providing customers with fresh, high-quality agricultural products through HUZA FRESH.",
   startShopping: "Start Shopping",
   joinFarmer: "Join as a Farmer",
   trustQuality: "Quality checked",
