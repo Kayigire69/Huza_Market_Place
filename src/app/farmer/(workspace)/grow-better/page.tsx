@@ -1,9 +1,8 @@
-import { FarmerGrowBetterClient } from "@/components/portals/FarmerGrowBetterClient";
-import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function GrowBetterPage() {
-  await requireFarmerWorkspace();
-  return <FarmerGrowBetterClient />;
+/** Grow Better was a link hub — Agronomy is the primary grow entry. */
+export default function GrowBetterPage() {
+  redirect("/farmer/agronomy");
 }

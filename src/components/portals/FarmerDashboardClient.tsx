@@ -80,7 +80,7 @@ export function FarmerDashboardClient({ data }: { data: FarmerDashboardData }) {
         data.status === "REJECTED"
           ? data.rejectionReason || t("attentionRejectedBody")
           : t("attentionPendingBody"),
-      href: "/farmer/profile",
+      href: "/farmer/settings",
       cta: t("viewProfile"),
     });
   }
@@ -151,16 +151,16 @@ export function FarmerDashboardClient({ data }: { data: FarmerDashboardData }) {
     },
     {
       label: t("kpiSellToHuza"),
-      value: "2",
+      value: String(data.openPurchaseOrders),
       hint: t("kpiSellHint"),
       href: "/farmer/sell",
       icon: ClipboardList,
     },
     {
       label: t("kpiGrowBetter"),
-      value: t("navGrowBetter"),
+      value: t("navAgronomy"),
       hint: t("kpiGrowHint"),
-      href: "/farmer/grow-better",
+      href: "/farmer/agronomy",
       icon: ClipboardList,
     },
     {
@@ -184,7 +184,7 @@ export function FarmerDashboardClient({ data }: { data: FarmerDashboardData }) {
       label: t("kpiMessages"),
       value: t("kpiInbox"),
       hint: t("kpiHuzaUpdates"),
-      href: "/farmer/messages",
+      href: "/farmer/notifications",
       icon: ClipboardList,
     },
     {

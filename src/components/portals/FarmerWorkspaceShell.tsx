@@ -3,10 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { FARMER_NAV_SECTIONS, farmerMobileQuickLinks, isFarmerNavActive } from "@/lib/farmer-nav";
+import {
+  farmerMobileQuickLinks,
+  farmerNavForAccount,
+  isFarmerNavActive,
+} from "@/lib/farmer-nav";
 import { useLocale } from "@/lib/locale-context";
 
 type Props = {
@@ -17,6 +21,7 @@ type Props = {
   farmingType?: string | null;
   listed: number;
   pendingReviews?: number;
+  accountApproved?: boolean;
 };
 
 export function FarmerWorkspaceShell({
@@ -27,15 +32,25 @@ export function FarmerWorkspaceShell({
   farmingType,
   listed,
   pendingReviews = 0,
+  accountApproved = true,
 }: Props) {
   const pathname = usePathname();
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
+  const sections = useMemo(
+    () => farmerNavForAccount(accountApproved),
+    [accountApproved]
+  );
+  const mobileLinks = useMemo(
+    () => farmerMobileQuickLinks(accountApproved),
+    [accountApproved]
+  );
+
   const pathLabel =
     farmingType === "STANDARD"
-      ? t("pathConventional")
+      ? t("pathConventionalPartner")
       : farmingType === "CONVERSION"
         ? t("pathConversion")
         : t("pathOrganic");
@@ -70,6 +85,11 @@ export function FarmerWorkspaceShell({
           {status}
           {isVerified ? ` · ${t("verified")}` : ""} · {pathLabel}
         </p>
+        {!accountApproved ? (
+          <p className="mt-2 rounded-lg bg-amber-400/20 px-2.5 py-2 text-[11px] leading-snug text-amber-50">
+            {t("navSellLockedHint")}
+          </p>
+        ) : null}
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-lg bg-white/10 px-2.5 py-2">
             <p className="text-[10px] uppercase tracking-wide text-white/55">{t("mainCrops")}</p>
@@ -83,7 +103,7 @@ export function FarmerWorkspaceShell({
       </div>
 
       <div className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-        {FARMER_NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.id}>
             <p
               className={`mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.16em] ${
@@ -150,7 +170,7 @@ export function FarmerWorkspaceShell({
             {t("menu")}
           </button>
           <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
-            {farmerMobileQuickLinks().map((item) => {
+            {mobileLinks.map((item) => {
               const active = isFarmerNavActive(pathname, item);
               return (
                 <Link

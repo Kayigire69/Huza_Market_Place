@@ -4,10 +4,8 @@ import {
   LandPlot,
   Sprout,
   ShoppingBasket,
-  Leaf,
   Wallet,
   BarChart3,
-  MessageSquare,
   Bell,
   UserRound,
   Package,
@@ -45,6 +43,8 @@ export type FarmerNavItem = {
   exact?: boolean;
   upcoming?: boolean;
   mobile?: boolean;
+  /** Hide from nav until the farm account is APPROVED */
+  requiresApproved?: boolean;
   icon: ComponentType<{ className?: string }>;
 };
 
@@ -95,18 +95,21 @@ export const FARMER_NAV_SECTIONS: FarmerNavSection[] = [
         href: "/farmer/sell",
         labelKey: "navSellToHuza",
         mobile: true,
+        requiresApproved: true,
         icon: ShoppingBasket,
       },
       {
         module: "produce",
         href: "/farmer/produce",
         labelKey: "navMyProduce",
+        requiresApproved: true,
         icon: Package,
       },
       {
         module: "sales",
         href: "/farmer/sales",
         labelKey: "navPaymentsOrders",
+        requiresApproved: true,
         icon: Wallet,
       },
     ],
@@ -117,16 +120,10 @@ export const FARMER_NAV_SECTIONS: FarmerNavSection[] = [
     tone: "support",
     items: [
       {
-        module: "grow",
-        href: "/farmer/grow-better",
-        labelKey: "navGrowBetter",
-        mobile: true,
-        icon: Leaf,
-      },
-      {
         module: "agronomy",
         href: "/farmer/agronomy",
         labelKey: "navAgronomy",
+        mobile: true,
         icon: Sprout,
       },
       {
@@ -146,6 +143,7 @@ export const FARMER_NAV_SECTIONS: FarmerNavSection[] = [
         module: "reports",
         href: "/farmer/reports",
         labelKey: "navReports",
+        requiresApproved: true,
         icon: BarChart3,
       },
     ],
@@ -155,12 +153,6 @@ export const FARMER_NAV_SECTIONS: FarmerNavSection[] = [
     labelKey: "navAccountSection",
     tone: "account",
     items: [
-      {
-        module: "messages",
-        href: "/farmer/messages",
-        labelKey: "navMessages",
-        icon: MessageSquare,
-      },
       {
         module: "notifications",
         href: "/farmer/notifications",
@@ -177,8 +169,18 @@ export const FARMER_NAV_SECTIONS: FarmerNavSection[] = [
   },
 ];
 
-export function farmerMobileQuickLinks(): FarmerNavItem[] {
-  return FARMER_NAV_SECTIONS.flatMap((s) => s.items).filter((i) => i.mobile);
+/** Nav filtered for pending/rejected accounts (sell locked until APPROVED). */
+export function farmerNavForAccount(accountApproved: boolean): FarmerNavSection[] {
+  return FARMER_NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => accountApproved || !item.requiresApproved),
+  })).filter((section) => section.items.length > 0);
+}
+
+export function farmerMobileQuickLinks(accountApproved = true): FarmerNavItem[] {
+  return farmerNavForAccount(accountApproved)
+    .flatMap((s) => s.items)
+    .filter((i) => i.mobile);
 }
 
 export function isFarmerNavActive(pathname: string, item: FarmerNavItem): boolean {
@@ -190,12 +192,11 @@ export function isFarmerNavActive(pathname: string, item: FarmerNavItem): boolea
   if (item.module === "sell") {
     return pathname === "/farmer/sell" || pathname.startsWith("/farmer/sell/");
   }
-  if (item.module === "grow") {
+  if (item.module === "agronomy") {
     return (
-      pathname.startsWith("/farmer/grow-better") ||
       pathname.startsWith("/farmer/agronomy") ||
-      pathname.startsWith("/farmer/training") ||
-      pathname.startsWith("/farmer/support")
+      pathname.startsWith("/farmer/agronomist") ||
+      pathname.startsWith("/farmer/grow-better")
     );
   }
   if (item.module === "produce") {
@@ -212,11 +213,13 @@ export function isFarmerNavActive(pathname: string, item: FarmerNavItem): boolea
       pathname.startsWith("/farmer/payments")
     );
   }
-  if (item.module === "agronomy") {
-    return pathname.startsWith("/farmer/agronomy") || pathname.startsWith("/farmer/agronomist");
-  }
   if (item.module === "training") {
     return pathname.startsWith("/farmer/training") || pathname.startsWith("/farmer/support");
+  }
+  if (item.module === "notifications") {
+    return (
+      pathname.startsWith("/farmer/notifications") || pathname.startsWith("/farmer/messages")
+    );
   }
   if (item.module === "settings") {
     return pathname.startsWith("/farmer/settings") || pathname.startsWith("/farmer/profile");

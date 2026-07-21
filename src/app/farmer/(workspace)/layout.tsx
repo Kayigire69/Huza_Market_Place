@@ -19,6 +19,7 @@ export default async function FarmerWorkspaceLayout({
       farmingType={farmer.farmingType}
       listed={stats.listed}
       pendingReviews={stats.pendingReviews}
+      accountApproved={farmer.status === "APPROVED"}
     >
       {farmer.status !== "APPROVED" && (
         <FarmerPendingBanner

@@ -364,11 +364,13 @@ const en: Dict = {
   navMessages: "Messages",
   navNotifications: "Notifications",
   navAccount: "Account",
+  navSellLockedHint: "Selling unlocks after Youth Huza approves your farm account. Use Settings to update your dossier.",
   mainCrops: "Main crops",
   inReview: "In review",
   pathOrganic: "Organic",
   pathConversion: "Organic conversion",
   pathConventional: "Conventional",
+  pathConventionalPartner: "Youth Huza partner",
   welcomeFarmer: "Welcome,",
   recommendedNextStep: "Recommended next step",
   needsAttention: "Needs attention",
@@ -389,14 +391,14 @@ const en: Dict = {
   kpiMyCrops: "My Crops",
   kpiMyCropsHint: "Planting & harvest timing",
   kpiSellToHuza: "Sell to HUZA",
-  kpiSellHint: "Direct buy or partnership",
+  kpiSellHint: "Open buy orders from Huza",
   kpiGrowBetter: "Grow Better",
   kpiGrowHint: "Agronomy & training",
   kpiAvailableVolume: "Available volume",
   kpiNoCropYet: "No crop yet",
   kpiInReview: "In review",
   kpiQualityChecks: "Quality checks",
-  kpiMessages: "Messages",
+  kpiMessages: "Notifications",
   kpiInbox: "Inbox",
   kpiHuzaUpdates: "Huza updates",
   kpiPaidToYou: "Paid to you",
@@ -422,6 +424,13 @@ const en: Dict = {
   updateCropSupply: "Update crop supply",
   pendingPortalBanner:
     "Your farm account is {status}. You can explore the portal. Product submissions unlock after Youth Huza approval.",
+  pendingPortalBannerRejected:
+    "Your farm account is {status}. Update your farm information, then Youth Huza will review again.",
+  pendingBannerWaitingHint:
+    "While you wait, keep Settings complete and review Training. Submit harvest only after approval.",
+  pendingBannerRejectedHint:
+    "Open Settings to edit your farm dossier, then wait for Youth Huza to review your account.",
+  pendingBannerOpenSettings: "Open Settings",
   reasonLabel: "Reason:",
   workflowSubmitTitle: "Submit your crop",
   workflowSubmitBody: "Send your main harvest for Youth Huza review.",
@@ -478,6 +487,8 @@ const en: Dict = {
     "Your application is pending. Complete the Farmer information tab first. A Huza agent may visit your farm. Product listing unlocks after approval.",
   dossierIntro:
     "Organic farms only. Complete every section: personal information, field information, production, sales, payment options, proof of payment, and comments.",
+  dossierIntroConventional:
+    "Keep your farm information up to date. Youth Huza uses this profile when reviewing your farm and produce. You can edit every section and save changes anytime.",
   farmerPersonalInfo: "Farmer personal information",
   farmBusinessName: "Farm / business name",
   idNumber: "ID number",
@@ -915,11 +926,14 @@ const fr: Dict = {
   navMessages: "Messages",
   navNotifications: "Notifications",
   navAccount: "Compte",
+  navSellLockedHint:
+    "La vente s'ouvre après l'approbation de votre ferme par Youth Huza. Mettez à jour votre dossier dans Compte.",
   mainCrops: "Cultures principales",
   inReview: "En revue",
   pathOrganic: "Biologique",
   pathConversion: "Conversion bio",
   pathConventional: "Conventionnel",
+  pathConventionalPartner: "Partenaire Youth Huza",
   welcomeFarmer: "Bienvenue,",
   recommendedNextStep: "Prochaine étape recommandée",
   needsAttention: "À traiter",
@@ -940,14 +954,14 @@ const fr: Dict = {
   kpiMyCrops: "Mes cultures",
   kpiMyCropsHint: "Plantation et récolte",
   kpiSellToHuza: "Vendre à HUZA",
-  kpiSellHint: "Achat direct ou partenariat",
+  kpiSellHint: "Commandes d'achat ouvertes de Huza",
   kpiGrowBetter: "Mieux cultiver",
   kpiGrowHint: "Agronomie et formation",
   kpiAvailableVolume: "Volume disponible",
   kpiNoCropYet: "Pas encore de culture",
   kpiInReview: "En revue",
   kpiQualityChecks: "Contrôles qualité",
-  kpiMessages: "Messages",
+  kpiMessages: "Notifications",
   kpiInbox: "Boîte de réception",
   kpiHuzaUpdates: "Infos Huza",
   kpiPaidToYou: "Payé à vous",
@@ -960,6 +974,13 @@ const fr: Dict = {
   updateCropSupply: "Mettre à jour l'offre",
   pendingPortalBanner:
     "Votre compte ferme est {status}. Vous pouvez explorer le portail. Les soumissions s'ouvrent après approbation Youth Huza.",
+  pendingPortalBannerRejected:
+    "Votre compte ferme est {status}. Mettez à jour vos informations de ferme, puis Youth Huza examinera à nouveau.",
+  pendingBannerWaitingHint:
+    "En attendant, complétez Paramètres et Formation. Soumettez une récolte seulement après approbation.",
+  pendingBannerRejectedHint:
+    "Ouvrez Paramètres pour modifier le dossier de ferme, puis attendez l'examen Youth Huza.",
+  pendingBannerOpenSettings: "Ouvrir Paramètres",
   reasonLabel: "Raison :",
   workflowSubmitTitle: "Soumettre votre culture",
   workflowSubmitBody: "Envoyez votre récolte principale pour revue Youth Huza.",
@@ -996,6 +1017,8 @@ const fr: Dict = {
   pendingApprovalBanner: "Votre demande est en attente. Complétez d'abord Informations agriculteur. Un agent Huza peut visiter votre ferme. La liste de produits s'ouvre après approbation.",
   dossierIntro:
     "Fermes biologiques uniquement. Complétez chaque section : infos personnelles, champ, production, ventes, options de paiement, preuve de paiement et commentaires.",
+  dossierIntroConventional:
+    "Tenez à jour les informations de votre ferme. Youth Huza les utilise pour examiner votre ferme et vos produits. Vous pouvez modifier chaque section et enregistrer à tout moment.",
   farmerPersonalInfo: "Informations personnelles de l'agriculteur",
   farmBusinessName: "Nom de la ferme / entreprise",
   idNumber: "Numéro d'identité",
@@ -1457,11 +1480,14 @@ const rw: Dict = {
   navMessages: "Ubutumwa",
   navNotifications: "Amatangazo",
   navAccount: "Konti",
+  navSellLockedHint:
+    "Kugurisha bizagufungurira nyuma yo kwemezwa n'ubuyobozi bwa Youth Huza. Koresha Konti kuvugurura dosiye.",
   mainCrops: "Ibihingwa by'ingenzi",
   inReview: "Biragenda gusuzumwa",
   pathOrganic: "Ibinyabuzima",
   pathConversion: "Kujya ku binyabuzima",
   pathConventional: "Busanzwe",
+  pathConventionalPartner: "Umuhinzi mufatanyije na Youth Huza",
   welcomeFarmer: "Murakaza neza,",
   recommendedNextStep: "Intambwe ikurikira isabwa",
   needsAttention: "Bisaba icyitonderwa",
@@ -1482,14 +1508,14 @@ const rw: Dict = {
   kpiMyCrops: "Ibihingwa byanjye",
   kpiMyCropsHint: "Gutera n'umusaruro",
   kpiSellToHuza: "Gurisha kuri HUZA",
-  kpiSellHint: "Kugura ako kanya cyangwa ubufatanye",
+  kpiSellHint: "Ibicuruzwa Huza iri gukura",
   kpiGrowBetter: "Kuzamura ubuhinzi",
   kpiGrowHint: "Ubujyanama n'amahugurwa",
   kpiAvailableVolume: "Ingano ihari",
   kpiNoCropYet: "Nta gihingwa",
   kpiInReview: "Biragenda gusuzumwa",
   kpiQualityChecks: "Igenzura ry'ubuziranenge",
-  kpiMessages: "Ubutumwa",
+  kpiMessages: "Amatangazo",
   kpiInbox: "Agasanduku",
   kpiHuzaUpdates: "Amakuru ya Huza",
   kpiPaidToYou: "Byishyuwe",
@@ -1502,6 +1528,13 @@ const rw: Dict = {
   updateCropSupply: "Vugurura umusaruro",
   pendingPortalBanner:
     "Konti y'umurima ni {status}. Urashobora gukoresha urubuga. Kohereza ibicuruzwa bifunguka nyuma yo kwemererwa na Youth Huza.",
+  pendingPortalBannerRejected:
+    "Konti y'umurima ni {status}. Vugurura amakuru y'umurima, hanyuma Youth Huza isuzume nanone.",
+  pendingBannerWaitingHint:
+    "Mu gihe utegereje, uzuza Igenamiterere n'Amahugurwa. Ohereza umusaruro gusa nyuma yo kwemererwa.",
+  pendingBannerRejectedHint:
+    "Fungura Igenamiterere uhinde dosiye y'umurima, hanyuma tegereza Youth Huza isuzume konti yawe.",
+  pendingBannerOpenSettings: "Fungura Igenamiterere",
   reasonLabel: "Impamvu:",
   workflowSubmitTitle: "Ohereza igihingwa",
   workflowSubmitBody: "Ohereza umusaruro wawe nyamukuru kugira ngo Youth Huza isuzume.",
@@ -1538,6 +1571,8 @@ const rw: Dict = {
   pendingApprovalBanner: "Ubusabe bwawe burategereje. Banza uzuze Amakuru y'umuhinzi. Umukozi wa Huza ashobora gusura umurima. Gushyira ibicuruzwa bifungura nyuma yo kwemererwa.",
   dossierIntro:
     "Abahinzi b'ibinyabuzima gusa. Uzuza ibice byose: amakuru y'umuntu, umurima, umusaruro, igurisha, ubwishyu, ibimenyetso by'ubwishyu n'ibitekerezo.",
+  dossierIntroConventional:
+    "Komeza kuvugurura amakuru y'umurima wawe. Youth Huza ayakoresha mu gusuzuma umurima n'umusaruro. Ushobora guhindura ibice byose no kubika igihe icyo ari cyo cyose.",
   farmerPersonalInfo: "Amakuru yihariye y'umuhinzi",
   farmBusinessName: "Izina ry'umurima / ubucuruzi",
   idNumber: "Numero y'irangamuntu",
@@ -1947,6 +1982,8 @@ const sw: Dict = {
   pendingApprovalBanner: "Ombi lako linasubiri. Kamilisha kwanza Taarifa za mkulima. Wakala wa Huza anaweza kutembelea shamba lako. Kuorodhesha bidhaa kunafunguka baada ya idhini.",
   dossierIntro:
     "Mashamba ya kikaboni pekee. Kamilisha kila sehemu: taarifa binafsi, shamba, uzalishaji, mauzo, chaguo za malipo, uthibitisho wa malipo, na maoni.",
+  dossierIntroConventional:
+    "Sasisha taarifa za shamba lako. Youth Huza huzitumia wakati wa kukagua shamba na mazao yako. Unaweza kuhariri kila sehemu na kuhifadhi wakati wowote.",
   farmerPersonalInfo: "Taarifa binafsi za mkulima",
   farmBusinessName: "Jina la shamba / biashara",
   idNumber: "Nambari ya kitambulisho",
