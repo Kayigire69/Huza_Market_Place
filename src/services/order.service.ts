@@ -8,6 +8,10 @@ import {
 } from "@prisma/client";
 import { getBusinessStatus } from "@/lib/business-hours";
 import { initiateMobileMoneyPayment, normalizeMsisdn } from "@/lib/payments/mobile-money";
+import {
+  LIVE_PAYMENT_TIMEOUT_MS,
+  MANUAL_PAYMENT_TIMEOUT_MS,
+} from "@/lib/payments/huza-payee";
 import { isValidRwandaMomoPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { productRepository, availableQty } from "@/repositories/product.repository";
@@ -357,23 +361,8 @@ export const orderService = {
       body: `${orderNumber} · ${data.fullName} · ${total} RWF · Pending payment`,
     }).catch(() => undefined);
 
-    // Auto-expire unpaid MoMo prompt after 3 minutes (stock released on expire)
-    if (order.payment?.id) {
-      await enqueueJob(
-        "PAYMENT_VERIFY",
-        { paymentId: order.payment.id, orderNumber, expireIfPending: true },
-        { runAfter: new Date(Date.now() + 3 * 60 * 1000), maxAttempts: 3 }
-      );
-    }
-
-    await cacheDel(CacheKeys.homeCatalog);
-    await enqueueAnalytics("order.created", {
-      orderNumber,
-      total,
-      method: data.paymentMethod,
-    });
-
-    // Step 2. Initiate MoMo/Airtel promptly so the phone prompt appears, then queue verification
+    // Auto-expire unpaid reservations after MoMo timeout (scheduled after initiate knows live vs manual)
+    // Initiate MoMo/Airtel (or manual pay-in), then queue verification + expire
     let paymentResult;
     try {
       paymentResult = await initiateMobileMoneyPayment({
@@ -426,8 +415,15 @@ export const orderService = {
       },
     });
 
-    // Step 3. Verify in background (customer does not wait here)
+    const expireMs =
+      paymentResult.mode === "manual" ? MANUAL_PAYMENT_TIMEOUT_MS : LIVE_PAYMENT_TIMEOUT_MS;
+
     if (order.payment?.id) {
+      await enqueueJob(
+        "PAYMENT_VERIFY",
+        { paymentId: order.payment.id, orderNumber, expireIfPending: true },
+        { runAfter: new Date(Date.now() + expireMs), maxAttempts: 3 }
+      );
       await enqueueJob(
         "PAYMENT_VERIFY",
         { paymentId: order.payment.id, orderNumber },
@@ -436,16 +432,30 @@ export const orderService = {
     }
 
     if (userId) {
+      const notifyBody =
+        paymentResult.mode === "manual"
+          ? `Order ${order.orderNumber}: send ${total} RWF via ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} to ${merchant.name} (${merchant.phone}). Use the order number as the payment message. We will confirm when payment arrives.`
+          : `Order ${order.orderNumber}: approve ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} on ${data.paymentPhone}. You are paying Youth Huza (HUZA FRESH). ETA: ${estimatedDelivery}.`;
       await prisma.notification.create({
         data: {
           userId,
           type: "ORDER_CONFIRMATION",
           channel: "IN_APP",
-          title: "Approve payment on your phone",
-          body: `Order ${order.orderNumber}: approve ${data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"} on ${data.paymentPhone}. You are paying Youth Huza (HUZA FRESH). ETA: ${estimatedDelivery}.`,
+          title:
+            paymentResult.mode === "manual"
+              ? "Send MoMo payment to Youth Huza"
+              : "Approve payment on your phone",
+          body: notifyBody,
         },
       });
     }
+
+    await cacheDel(CacheKeys.homeCatalog);
+    await enqueueAnalytics("order.created", {
+      orderNumber,
+      total,
+      method: data.paymentMethod,
+    });
 
     return {
       orderNumber: order.orderNumber,

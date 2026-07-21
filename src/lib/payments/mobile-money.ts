@@ -19,7 +19,8 @@ export type PaymentRequestResult = {
   externalId: string;
   status: "PENDING" | "SUCCESSFUL" | "FAILED";
   message: string;
-  mode: "live" | "demo";
+  /** live = provider API; manual = customer sends MoMo to Huza; demo = local test only */
+  mode: "live" | "manual" | "demo";
   transactionRef: string;
 };
 
@@ -39,7 +40,7 @@ function formatDisplayPhone(msisdn: string): string {
   return msisdn;
 }
 
-function hasMtnCredentials() {
+export function hasMtnCredentials() {
   return Boolean(
     process.env.MTN_MOMO_SUBSCRIPTION_KEY &&
       process.env.MTN_MOMO_API_USER &&
@@ -47,15 +48,21 @@ function hasMtnCredentials() {
   );
 }
 
-function hasAirtelCredentials() {
+export function hasAirtelCredentials() {
   return Boolean(process.env.AIRTEL_CLIENT_ID && process.env.AIRTEL_CLIENT_SECRET);
 }
 
+/** True when this method has no live collection API — customer must send MoMo to Huza. */
+export function usesManualMobileMoneyPayIn(
+  method: Extract<PaymentMethod, "MTN_MOMO" | "AIRTEL_MONEY">
+): boolean {
+  if (method === "MTN_MOMO") return !hasMtnCredentials();
+  return !hasAirtelCredentials();
+}
+
 /**
- * Request-to-pay: customer gets a pending approval prompt on their phone.
- * When approved, funds are collected then disbursed to the seller's number.
- *
- * Without live API keys, runs in demo mode (simulates the phone prompt).
+ * Request-to-pay when live APIs exist; otherwise manual send-to-Huza MoMo.
+ * Demo auto-confirm is only for ALLOW_DEMO_PAYMENTS local testing (DEMO- refs).
  */
 export async function initiateMobileMoneyPayment(
   input: PaymentRequestInput
@@ -85,21 +92,27 @@ export async function initiateMobileMoneyPayment(
     });
   }
 
-  // Demo / sandbox without credentials. Mimics the real phone prompt flow
-  if (!demoPaymentsAllowed()) {
-    throw new Error(
-      "Mobile Money is not configured. Set MTN/Airtel credentials or ALLOW_DEMO_PAYMENTS=true for non-production testing."
-    );
+  // Local/dev only: simulated phone prompt (explicit ALLOW_DEMO_PAYMENTS=true)
+  if (demoPaymentsAllowed() && process.env.ALLOW_DEMO_PAYMENTS === "true") {
+    return {
+      externalId,
+      status: "PENDING",
+      mode: "demo",
+      transactionRef: `DEMO-${input.method}-${Date.now()}`,
+      message: `Payment request sent to ${formatDisplayPhone(payer)}. Open the ${
+        input.method === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"
+      } prompt on that phone, enter your PIN to approve. Money goes to ${input.payeeName} (${formatDisplayPhone(payee)}).`,
+    };
   }
 
+  // Production interim: customer sends MoMo to Huza; admin confirms in Admin → Payments
+  const network = input.method === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money";
   return {
     externalId,
     status: "PENDING",
-    mode: "demo",
-    transactionRef: `DEMO-${input.method}-${Date.now()}`,
-    message: `Payment request sent to ${formatDisplayPhone(payer)}. Open the ${
-      input.method === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money"
-    } prompt on that phone, enter your PIN to approve. Money goes to ${input.payeeName} (${formatDisplayPhone(payee)}).`,
+    mode: "manual",
+    transactionRef: `MANUAL-${input.method}-${Date.now()}`,
+    message: `Send ${input.amount.toLocaleString("en-RW")} RWF via ${network} to ${input.payeeName} (${formatDisplayPhone(payee)}). Use order ${input.orderNumber} as the payment message. Huza will confirm when the payment arrives.`,
   };
 }
 

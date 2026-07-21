@@ -195,9 +195,12 @@ export const paymentService = {
     if (payment.status === "FAILED") return { status: "FAILED" as const };
 
     if (opts?.expireIfPending) {
+      const isManual = Boolean(payment.transactionRef?.startsWith("MANUAL-"));
       await this.failPayment(
         payment.id,
-        "Payment request expired after 3 minutes. Stock reservation released"
+        isManual
+          ? "Payment window expired. Stock reservation released. Place a new order if you still want to pay."
+          : "Payment request expired after 3 minutes. Stock reservation released"
       );
       return { status: "FAILED" as const };
     }

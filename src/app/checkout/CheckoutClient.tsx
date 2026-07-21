@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Smartphone, XCircle } from "lucide-react";
+import { Check, Copy, Loader2, MessageCircle, Smartphone, XCircle } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { formatRwf, type DeliveryZoneDto } from "@/lib/utils";
@@ -37,6 +37,19 @@ import {
 } from "@/components/checkout/CheckoutOrderSummary";
 import { saveConfirmation } from "@/app/checkout/confirmation/ConfirmationClient";
 import { formatMomoDisplay, isValidRwandaMomoPhone } from "@/lib/phone";
+import {
+  formatHuzaPayeeDisplay,
+  LIVE_PAYMENT_TIMEOUT_MS,
+  MANUAL_PAYMENT_TIMEOUT_MS,
+} from "@/lib/payments/huza-payee";
+
+type PaymentConfig = {
+  payeeName: string;
+  payeePhone: string;
+  whatsappUrl: string;
+  mtnLive: boolean;
+  airtelLive: boolean;
+};
 
 type PaymentSuccess = {
   orderNumber: string;
@@ -47,7 +60,7 @@ type PaymentSuccess = {
   payeeName: string;
   payeePhone: string;
   method: string;
-  paymentMode: "live" | "demo";
+  paymentMode: "live" | "manual" | "demo";
   estimatedDelivery?: string;
   deliveryAddress?: string;
   dayLabel?: string;
@@ -67,16 +80,20 @@ type SavedAddress = {
   gpsLng: number | null;
 };
 
-const PAYMENT_TIMEOUT_MS = 3 * 60 * 1000;
+function timeoutMsForMode(mode: PaymentSuccess["paymentMode"]) {
+  return mode === "manual" ? MANUAL_PAYMENT_TIMEOUT_MS : LIVE_PAYMENT_TIMEOUT_MS;
+}
 
 export default function CheckoutClient({
   zones,
   customer,
   savedAddresses = [],
+  paymentConfig,
 }: {
   zones: DeliveryZoneDto[];
   customer?: { fullName: string; phone: string } | null;
   savedAddresses?: SavedAddress[];
+  paymentConfig: PaymentConfig;
 }) {
   const { t } = useLocale();
   const router = useRouter();
@@ -90,6 +107,7 @@ export default function CheckoutClient({
   const paymentSectionRef = useRef<HTMLDivElement>(null);
   const addressSectionRef = useRef<HTMLDivElement>(null);
   const payLockRef = useRef(false);
+  const [copiedPayee, setCopiedPayee] = useState(false);
 
   const [zone, setZone] = useState(
     zones.some((z) => z.code === initialZone) ? initialZone : defaultZone
@@ -103,7 +121,9 @@ export default function CheckoutClient({
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [paymentReady, setPaymentReady] = useState(false);
   const [awaitStartedAt, setAwaitStartedAt] = useState<number | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(Math.floor(PAYMENT_TIMEOUT_MS / 1000));
+  const [secondsLeft, setSecondsLeft] = useState(
+    Math.floor(MANUAL_PAYMENT_TIMEOUT_MS / 1000)
+  );
 
   const [form, setForm] = useState({
     fullName: customer?.fullName || "",
@@ -150,6 +170,10 @@ export default function CheckoutClient({
   );
   const zoneMeta = zones.find((z) => z.code === zone) || zones[0];
   const zoneLabel = zoneMeta?.labelEn || zone;
+  const manualPayIn =
+    form.paymentMethod === "MTN_MOMO"
+      ? !paymentConfig.mtnLive
+      : !paymentConfig.airtelLive;
 
   const onDeliveryConfirm = (data: ConfirmedDelivery) => {
     setDelivery(data);
@@ -218,8 +242,9 @@ export default function CheckoutClient({
   useEffect(() => {
     if (phase !== "awaiting" || !awaitStartedAt || !payment) return;
     const orderNumber = payment.orderNumber;
+    const timeoutMs = timeoutMsForMode(payment.paymentMode);
     const id = setInterval(() => {
-      const left = Math.max(0, PAYMENT_TIMEOUT_MS - (Date.now() - awaitStartedAt));
+      const left = Math.max(0, timeoutMs - (Date.now() - awaitStartedAt));
       setSecondsLeft(Math.ceil(left / 1000));
       if (left <= 0) {
         clearInterval(id);
@@ -303,7 +328,7 @@ export default function CheckoutClient({
       };
       setPayment(success);
       setAwaitStartedAt(Date.now());
-      setSecondsLeft(Math.floor(PAYMENT_TIMEOUT_MS / 1000));
+      setSecondsLeft(Math.floor(timeoutMsForMode(success.paymentMode) / 1000));
 
       if (data.paymentStatus === "CONFIRMED") {
         markPaid(success);
@@ -419,38 +444,125 @@ export default function CheckoutClient({
     const network = payment.method === "MTN_MOMO" ? "MTN Mobile Money" : "Airtel Money";
     const mins = Math.floor(secondsLeft / 60);
     const secs = secondsLeft % 60;
+    const isManual = payment.paymentMode === "manual";
+    const copyPayee = async () => {
+      try {
+        await navigator.clipboard.writeText(payment.payeePhone.replace(/\s/g, ""));
+        setCopiedPayee(true);
+        window.setTimeout(() => setCopiedPayee(false), 2000);
+      } catch {
+        /* ignore */
+      }
+    };
     return paymentLayout(
       <div className="mx-auto max-w-lg text-center lg:mx-0 lg:text-left">
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--huza-mint)] lg:mx-0">
           <Smartphone className="size-10 text-[var(--huza-green-dark)]" />
         </div>
-        <h1 className="section-title">Waiting for Payment...</h1>
-        <p className="mt-4 leading-relaxed text-[var(--huza-muted)]">
-          A payment request has been sent to
-          <br />
-          <strong className="text-[var(--huza-ink)]">{formatMomoDisplay(payment.payerPhone)}</strong>
-        </p>
-        <p className="mt-2 text-sm text-[var(--huza-muted)]">
-          Please approve the <strong>{network}</strong> payment on your phone.
-        </p>
-        <div className="mt-6 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-left text-sm">
-          <p className="flex items-start gap-2">
-            <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-[var(--huza-green)]" />
-            Waiting for approval… {mins}:{secs.toString().padStart(2, "0")} left
-          </p>
-          <div className="rounded-xl bg-[var(--huza-mint)] px-4 py-3">
-            <p className="text-[10px] uppercase tracking-wide text-[var(--huza-muted)]">
-              Order · Pending Payment
+        <h1 className="section-title">
+          {isManual ? "Send MoMo payment" : "Waiting for Payment..."}
+        </h1>
+        {isManual ? (
+          <>
+            <p className="mt-4 leading-relaxed text-[var(--huza-muted)]">
+              Send exactly{" "}
+              <strong className="text-[var(--huza-ink)]">{formatRwf(payment.total)}</strong> via{" "}
+              <strong>{network}</strong> to:
             </p>
-            <p className="font-mono text-lg font-bold text-[var(--huza-green-dark)]">
-              {payment.orderNumber}
+            <div className="mt-4 rounded-2xl border border-[var(--huza-green)]/40 bg-white p-5 text-left">
+              <p className="text-xs uppercase tracking-wide text-[var(--huza-muted)]">
+                Youth Huza payee
+              </p>
+              <p className="mt-1 text-lg font-bold text-[var(--huza-green-dark)]">
+                {payment.payeeName}
+              </p>
+              <p className="font-mono text-xl font-semibold text-[var(--huza-ink)]">
+                {formatHuzaPayeeDisplay(payment.payeePhone)}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" size="sm" onClick={() => void copyPayee()}>
+                  {copiedPayee ? (
+                    <>
+                      <Check className="size-3.5" aria-hidden /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3.5" aria-hidden /> Copy number
+                    </>
+                  )}
+                </Button>
+                {paymentConfig.whatsappUrl ? (
+                  <a
+                    href={paymentConfig.whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--huza-line)] bg-white px-3 text-xs font-semibold text-[var(--huza-green-dark)]"
+                  >
+                    <MessageCircle className="size-3.5" aria-hidden />
+                    WhatsApp / delivery help
+                  </a>
+                ) : null}
+              </div>
+              <ol className="mt-4 list-decimal space-y-1.5 pl-4 text-sm text-[var(--huza-muted)]">
+                <li>Open {network} → Send Money</li>
+                <li>Paste the number above</li>
+                <li>
+                  Send <strong className="text-[var(--huza-ink)]">{formatRwf(payment.total)}</strong>
+                </li>
+                <li>
+                  Put order{" "}
+                  <strong className="font-mono text-[var(--huza-ink)]">{payment.orderNumber}</strong>{" "}
+                  in the message
+                </li>
+              </ol>
+            </div>
+            <div className="mt-6 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-left text-sm">
+              <p className="flex items-start gap-2">
+                <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-[var(--huza-green)]" />
+                Waiting for Huza to confirm… {mins}:{secs.toString().padStart(2, "0")} left
+              </p>
+              <p className="text-xs text-[var(--huza-muted)]">
+                After you pay, keep this page open or track your order. Status updates when admin
+                marks payment received.
+              </p>
+              <Link
+                href={`/track?order=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(form.phone)}`}
+                className="inline-flex text-sm font-semibold text-[var(--huza-green-dark)] underline"
+              >
+                Track order
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mt-4 leading-relaxed text-[var(--huza-muted)]">
+              A payment request has been sent to
+              <br />
+              <strong className="text-[var(--huza-ink)]">{formatMomoDisplay(payment.payerPhone)}</strong>
             </p>
-          </div>
-          <p className="text-xs text-[var(--huza-muted)]">
-            We confirm payment automatically once {network} reports a successful approval. You do not
-            need to tap anything here.
-          </p>
-        </div>
+            <p className="mt-2 text-sm text-[var(--huza-muted)]">
+              Please approve the <strong>{network}</strong> payment on your phone.
+            </p>
+            <div className="mt-6 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-left text-sm">
+              <p className="flex items-start gap-2">
+                <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-[var(--huza-green)]" />
+                Waiting for approval… {mins}:{secs.toString().padStart(2, "0")} left
+              </p>
+              <div className="rounded-xl bg-[var(--huza-mint)] px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wide text-[var(--huza-muted)]">
+                  Order · Pending Payment
+                </p>
+                <p className="font-mono text-lg font-bold text-[var(--huza-green-dark)]">
+                  {payment.orderNumber}
+                </p>
+              </div>
+              <p className="text-xs text-[var(--huza-muted)]">
+                We confirm payment automatically once {network} reports a successful approval. You do
+                not need to tap anything here.
+              </p>
+            </div>
+          </>
+        )}
         <Button type="button" variant="ghost" className="mt-6" onClick={cancelPaymentWait}>
           Cancel
         </Button>
@@ -463,11 +575,13 @@ export default function CheckoutClient({
       <div className="mx-auto max-w-lg text-center lg:mx-0 lg:text-left">
         <XCircle className="mx-auto size-14 text-red-600 lg:mx-0" />
         <h1 className="section-title mt-4">
-          {phase === "expired" ? "Payment request expired" : "Payment Failed"}
+          {phase === "expired" ? "Payment window expired" : "Payment Failed"}
         </h1>
         <p className="mt-4 text-[var(--huza-muted)]">
           {phase === "expired"
-            ? "Payment request expired. You can request a new payment prompt."
+            ? payment.paymentMode === "manual"
+              ? "The payment window closed. Place a new order if you still want to pay by MoMo."
+              : "Payment request expired. You can request a new payment prompt."
             : "The payment could not be completed."}
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center lg:justify-start">
@@ -549,6 +663,11 @@ export default function CheckoutClient({
                         }`
                       : null
                   }
+                  payHint={
+                    manualPayIn
+                      ? `Pay to ${paymentConfig.payeeName} · ${formatHuzaPayeeDisplay(paymentConfig.payeePhone)}`
+                      : null
+                  }
                   appliedPromo={appliedPromo}
                   onSlotChange={setSlot}
                   onChangeAddress={() => {
@@ -602,6 +721,10 @@ export default function CheckoutClient({
                     contactPhone={form.phone}
                     total={total}
                     loading={loading}
+                    manualPayIn={manualPayIn}
+                    payeeName={paymentConfig.payeeName}
+                    payeePhone={paymentConfig.payeePhone}
+                    whatsappUrl={paymentConfig.whatsappUrl}
                     onMethodChange={(method) =>
                       setForm((f) => ({ ...f, paymentMethod: method }))
                     }

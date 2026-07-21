@@ -1,17 +1,24 @@
 /**
  * Public contact defaults for HUZA FRESH / Youth Huza.
  * Override via env or Admin → Settings (whatsapp_url, phone, email).
- * WhatsApp / phone stay empty until you add the real business number.
  */
+
+import {
+  HUZA_PAYEE_PHONE,
+  HUZA_PAYEE_WHATSAPP_URL,
+  formatHuzaPayeeDisplay,
+} from "@/lib/payments/huza-payee";
 
 export const SUPPORT_EMAIL =
   process.env.SUPPORT_EMAIL?.trim() || "info@youthhuza.rw";
 
-/** Display phone, e.g. +250 7XX XXX XXX. Leave blank until set */
-export const SUPPORT_PHONE_DISPLAY = process.env.SUPPORT_PHONE_DISPLAY?.trim() || "";
+/** Display phone — payment + delivery questions (same MoMo / WhatsApp line) */
+export const SUPPORT_PHONE_DISPLAY =
+  process.env.SUPPORT_PHONE_DISPLAY?.trim() || formatHuzaPayeeDisplay(HUZA_PAYEE_PHONE);
 
-/** Full wa.me URL. Leave blank until WhatsApp Business is ready */
-export const DEFAULT_WHATSAPP_URL = process.env.WHATSAPP_URL?.trim() || "";
+/** Full wa.me URL for the same Huza contact number */
+export const DEFAULT_WHATSAPP_URL =
+  process.env.WHATSAPP_URL?.trim() || HUZA_PAYEE_WHATSAPP_URL;
 
 const PLACEHOLDER_WHATSAPP_DIGITS = new Set([
   "250788000000",
