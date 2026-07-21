@@ -285,6 +285,14 @@ export function Header() {
       {/* Not sticky: scrolls away naturally (no JS hide = no shake) */}
       <div className="hidden border-b border-[var(--huza-line)] bg-white md:block">
         <div className="relative mx-auto flex h-11 max-w-7xl items-center gap-6 px-3 sm:px-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--huza-ink)] transition-colors hover:text-[var(--huza-green)]"
+          >
+            <span aria-hidden>🏠</span>
+            {t("youthHuzaHome")}
+          </Link>
+
           <div className="relative" ref={catsRef}>
             <button
               type="button"
@@ -349,6 +357,20 @@ export function Header() {
           role="navigation"
           aria-label={t("categories")}
         >
+          <Link
+            href="/"
+            className="flex w-[4.75rem] shrink-0 flex-col items-center gap-1 rounded-xl px-1 py-1 text-center active:bg-[var(--huza-mint)]"
+          >
+            <span
+              className="flex size-11 items-center justify-center rounded-full bg-[var(--huza-mint)] text-lg"
+              aria-hidden
+            >
+              🏠
+            </span>
+            <span className="w-full truncate text-[10px] font-semibold leading-tight text-[var(--huza-ink)]">
+              {t("youthHuzaHome")}
+            </span>
+          </Link>
           {NAV_CATEGORIES.map((c) => (
             <Link
               key={c.slug}

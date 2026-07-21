@@ -10,6 +10,10 @@ export const ENTRY_LINKS = {
 } as const;
 
 export const ENTRY_QR = {
+  entry: {
+    href: "https://www.youthhuza.rw/",
+    imageSrc: "/qr/youthhuza-entry-qr-branded.png",
+  },
   customer: {
     href: "https://www.youthhuza.rw/shop",
     imageSrc: "/qr/youthhuza-site-qr-branded.png",
