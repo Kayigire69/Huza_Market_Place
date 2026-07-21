@@ -37,6 +37,8 @@ type Props = {
   discount: number;
   total: number;
   paymentMethodLabel: string | null;
+  /** Shown on review when manual MoMo pay-in is active */
+  payHint?: string | null;
   appliedPromo: AppliedPromo | null;
   onSlotChange: (slot: "TODAY" | "TOMORROW") => void;
   onChangeAddress: () => void;
@@ -59,6 +61,7 @@ export function OrderReviewStep({
   discount,
   total,
   paymentMethodLabel,
+  payHint = null,
   appliedPromo,
   onSlotChange,
   onChangeAddress,
@@ -226,6 +229,9 @@ export function OrderReviewStep({
         <p className="mt-1 font-medium">
           {paymentMethodLabel || "Choose your MoMo method on the next step"}
         </p>
+        {payHint ? (
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">{payHint}</p>
+        ) : null}
       </div>
 
       {/* Promo */}

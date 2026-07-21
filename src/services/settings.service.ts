@@ -6,6 +6,11 @@ import {
   type DeliveryZoneKey,
 } from "@/lib/utils";
 import { ZONE_ETA_LABELS, ZONE_ETA_MINUTES } from "@/lib/delivery-eta";
+import {
+  HUZA_PAYEE_NAME,
+  HUZA_PAYEE_PHONE,
+  HUZA_PAYEE_WHATSAPP_URL,
+} from "@/lib/payments/huza-payee";
 
 const FALLBACK_ZONES: DeliveryZoneDto[] = (Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map(
   (code) => ({
@@ -106,13 +111,13 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   brand_name: "HUZA FRESH",
   company_name: "Youth Huza",
   company_tagline: "Fresh produce marketplace",
-  phone: "",
+  phone: HUZA_PAYEE_PHONE,
   email: "info@youthhuza.rw",
   company_address: "Kigali, Rwanda",
-  whatsapp_url: "",
+  whatsapp_url: HUZA_PAYEE_WHATSAPP_URL,
   delivery_fee_rwf: String(FLAT_DELIVERY_FEE_RWF),
-  merchant_phone: "",
-  merchant_name: "Youth Huza",
+  merchant_phone: HUZA_PAYEE_PHONE,
+  merchant_name: HUZA_PAYEE_NAME,
   payment_mtn_enabled: "true",
   payment_airtel_enabled: "true",
   notify_inapp_enabled: "true",
@@ -169,7 +174,7 @@ export async function isPaymentMethodEnabled(
 export async function getHuzaPayee(): Promise<{ name: string; phone: string }> {
   const settings = await getSettings(["merchant_name", "merchant_phone", "company_name", "phone"]);
   return {
-    name: settings.merchant_name || settings.company_name || "Youth Huza",
-    phone: settings.merchant_phone || settings.phone || "0788000000",
+    name: settings.merchant_name || settings.company_name || HUZA_PAYEE_NAME,
+    phone: settings.merchant_phone || settings.phone || HUZA_PAYEE_PHONE,
   };
 }

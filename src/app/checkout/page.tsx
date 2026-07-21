@@ -2,13 +2,19 @@ import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listDeliveryZones, getDeliveryFee } from "@/services/settings.service";
+import { listDeliveryZones, getDeliveryFee, getHuzaPayee } from "@/services/settings.service";
 import { ZONE_ETA_LABELS, ZONE_ETA_MINUTES } from "@/lib/delivery-eta";
+import { hasAirtelCredentials, hasMtnCredentials } from "@/lib/payments/mobile-money";
+import { DEFAULT_WHATSAPP_URL, resolveWhatsAppUrl } from "@/lib/brand-contact";
 import CheckoutPage from "./CheckoutClient";
 
 export default async function Page() {
   const session = await getServerSession(authOptions);
-  const [rows, deliveryFee] = await Promise.all([listDeliveryZones(), getDeliveryFee("KIGALI")]);
+  const [rows, deliveryFee, payee] = await Promise.all([
+    listDeliveryZones(),
+    getDeliveryFee("KIGALI"),
+    getHuzaPayee(),
+  ]);
   const zones = rows.map((z) => {
     const code = z.code as keyof typeof ZONE_ETA_LABELS;
     return {
@@ -57,9 +63,22 @@ export default async function Page() {
     }
   }
 
+  const paymentConfig = {
+    payeeName: payee.name,
+    payeePhone: payee.phone,
+    whatsappUrl: resolveWhatsAppUrl(DEFAULT_WHATSAPP_URL),
+    mtnLive: hasMtnCredentials(),
+    airtelLive: hasAirtelCredentials(),
+  };
+
   return (
     <Suspense fallback={<div className="p-10 text-center">Loading checkout...</div>}>
-      <CheckoutPage zones={zones} customer={customer} savedAddresses={savedAddresses} />
+      <CheckoutPage
+        zones={zones}
+        customer={customer}
+        savedAddresses={savedAddresses}
+        paymentConfig={paymentConfig}
+      />
     </Suspense>
   );
 }
