@@ -1,15 +1,12 @@
-import { Suspense } from "react";
 import { FarmerRegisterForm } from "../FarmerRegisterForm";
 
 export const dynamic = "force-dynamic";
 
-/** Full-viewport registration. No outer chrome that forces scroll. */
+/** Farmer registration — identity, required farm details, consent. */
 export default function FarmerRegisterPage() {
   return (
     <div className="h-full">
-      <Suspense fallback={<p className="p-6 text-center text-sm">Loading…</p>}>
-        <FarmerRegisterForm />
-      </Suspense>
+      <FarmerRegisterForm />
     </div>
   );
 }

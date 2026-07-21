@@ -36,7 +36,7 @@ export const farmerAuthEn: FarmerI18nDict = {
   closeDialog: "Close",
   saveDraft: "Save",
   farmerRegisterNeedFarm:
-    "Open Farm details and fill products + purchase agreement.",
+    "Complete all required farm details (personal, field, production, sales, and payment).",
   pathOrganicShort: "Organic",
   pathConversionShort: "Conversion",
   pathConventionalShort: "Conventional",
@@ -73,7 +73,7 @@ export const farmerAuthFr: FarmerI18nDict = {
   closeDialog: "Fermer",
   saveDraft: "Enregistrer",
   farmerRegisterNeedFarm:
-    "Ouvrez Détails de la ferme et renseignez les produits + l'accord d'achat.",
+    "Complétez tous les détails de ferme obligatoires (personnel, champ, production, ventes et paiement).",
   pathOrganicShort: "Bio",
   pathConversionShort: "Conversion",
   pathConventionalShort: "Conventionnel",
@@ -110,7 +110,7 @@ export const farmerAuthRw: FarmerI18nDict = {
   closeDialog: "Funga",
   saveDraft: "Bika",
   farmerRegisterNeedFarm:
-    "Fungura Amakuru y'umurima uhuzuwe n'ibihingwa n'amasezerano yo kugura.",
+    "Uzuza amakuru yose y'umurima asabwa (umuntu, umurima, umusaruro, kugurisha, n'ubwishyu).",
   pathOrganicShort: "Ibinyabuzima",
   pathConversionShort: "Kujya ku binyabuzima",
   pathConventionalShort: "Busanzwe",
@@ -147,7 +147,7 @@ export const farmerAuthSw: FarmerI18nDict = {
   closeDialog: "Funga",
   saveDraft: "Hifadhi",
   farmerRegisterNeedFarm:
-    "Fungua Maelezo ya shamba ujaze mazao + makubaliano ya ununuzi.",
+    "Kamilisha maelezo yote ya shamba yanayohitajika (binafsi, shamba, uzalishaji, mauzo na malipo).",
   pathOrganicShort: "Asilia",
   pathConversionShort: "Uongofu",
   pathConventionalShort: "Kawaida",

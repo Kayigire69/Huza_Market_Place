@@ -11,6 +11,7 @@ import {
 } from "@/lib/farmer-auth";
 import bcrypt from "bcryptjs";
 import { BCRYPT_ROUNDS } from "@/lib/security-access";
+import { pickFarmerDossier } from "@/lib/farmer-dossier";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -46,6 +47,17 @@ const schema = z.object({
   documentsUrl: z.string().optional(),
   farmPhotoUrls: z.union([z.string(), z.array(z.string())]).optional(),
   productPhotoUrls: z.union([z.string(), z.array(z.string())]).optional(),
+  currentCrop: z.string().optional(),
+  gender: z.string().optional(),
+  province: z.string().optional(),
+  cell: z.string().optional(),
+  village: z.string().optional(),
+  ageRange: z.string().optional(),
+  fieldType: z.string().optional(),
+  qualityGeneral: z.string().optional(),
+  totalQuantityHarvested: z.string().optional(),
+  paymentOption: z.string().optional(),
+  pricePerUnit: z.union([z.number(), z.string()]).optional().nullable(),
 });
 
 function toUrlList(value?: string | string[]) {
@@ -55,6 +67,18 @@ function toUrlList(value?: string | string[]) {
     .split(/[\n,]+/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+function asInt(v: unknown): number | null {
+  if (v === undefined || v === null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+
+function asFloat(v: unknown): number | null {
+  if (v === undefined || v === null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 export async function POST(req: Request) {
@@ -68,7 +92,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
     }
 
-    const data = schema.parse(await req.json());
+    const raw = (await req.json()) as Record<string, unknown>;
+    const data = schema.parse(raw);
     const phone = normalizeRwandaPhone(data.phone);
     if (!isValidRwandaMomoPhone(phone)) {
       return NextResponse.json(
@@ -91,17 +116,53 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-      const farmingType = data.farmingType || "ORGANIC";
-      if (farmingType === "STANDARD") {
-        if (!data.productsOffered || data.productsOffered.trim().length < 3) {
-          return NextResponse.json({ error: "List the products you offer to Huza" }, { status: 400 });
+
+      // Startup phase: all new farmers are Conventional (STANDARD).
+      const farmingType = "STANDARD" as const;
+      const dossier = pickFarmerDossier(raw);
+
+      const productsOffered =
+        (data.productsOffered || "").trim() ||
+        String(dossier.currentCrop || data.currentCrop || "").trim();
+      const huzaPurchaseAgreement = (data.huzaPurchaseAgreement || "").trim();
+
+      if (productsOffered.length < 3) {
+        return NextResponse.json(
+          { error: "Enter your current crop / products you offer to Huza" },
+          { status: 400 }
+        );
+      }
+      if (huzaPurchaseAgreement.length < 10) {
+        return NextResponse.json(
+          { error: "Describe the purchase agreement with Huza" },
+          { status: 400 }
+        );
+      }
+
+      const requiredDossier: Array<[string, string]> = [
+        ["businessName", "Farm / business name"],
+        ["gender", "Gender"],
+        ["ageRange", "Age range"],
+        ["province", "Province"],
+        ["district", "District"],
+        ["sector", "Sector"],
+        ["cell", "Cell"],
+        ["village", "Village"],
+        ["fieldType", "Greenhouse or open field"],
+        ["farmSize", "Farm size"],
+        ["currentCrop", "Current crop"],
+        ["totalQuantityHarvested", "Total quantity harvested"],
+        ["qualityGeneral", "Quality in general"],
+        ["paymentOption", "Preferred payment option"],
+      ];
+      for (const [key, label] of requiredDossier) {
+        const v = dossier[key] ?? (data as Record<string, unknown>)[key];
+        if (!v || String(v).trim() === "") {
+          return NextResponse.json({ error: `${label} is required` }, { status: 400 });
         }
-        if (!data.huzaPurchaseAgreement || data.huzaPurchaseAgreement.trim().length < 10) {
-          return NextResponse.json(
-            { error: "Describe the purchase agreement with Huza" },
-            { status: 400 }
-          );
-        }
+      }
+      if (asInt(dossier.pricePerUnit ?? data.pricePerUnit) == null) {
+        return NextResponse.json({ error: "Price per unit is required" }, { status: 400 });
       }
 
       const phoneTaken = await prisma.user.findFirst({ where: { phone } });
@@ -121,6 +182,14 @@ export async function POST(req: Request) {
         );
       }
 
+      const location =
+        String(dossier.location || data.location || "").trim() ||
+        [dossier.village, dossier.cell, dossier.sector, dossier.district, dossier.province]
+          .map((x) => (x ? String(x).trim() : ""))
+          .filter(Boolean)
+          .join(", ") ||
+        "Rwanda";
+
       const passwordHash = await unusedFarmerPasswordHash();
       const user = await prisma.user.create({
         data: {
@@ -132,27 +201,33 @@ export async function POST(req: Request) {
           mustChangePassword: false,
           supplier: {
             create: {
-              businessName: data.businessName || `${data.fullName}'s Farm`,
-              location: data.location || "Rwanda",
-              district: data.district || "Kigali",
-              sector: data.sector || null,
+              businessName:
+                String(dossier.businessName || data.businessName || "").trim() ||
+                `${data.fullName}'s Farm`,
+              location,
+              district: String(dossier.district || data.district || "Kigali"),
+              sector: (dossier.sector as string) || data.sector || null,
               phone,
               email: null,
-              description: data.description || null,
+              description:
+                (dossier.description as string) ||
+                (dossier.farmerComments as string) ||
+                data.description ||
+                null,
               nationalId: nid,
               companyRegNo: data.companyRegNo || null,
               tin: data.tin || null,
-              farmSize: data.farmSize || null,
+              farmSize: (dossier.farmSize as string) || data.farmSize || null,
               productionCapacity: data.productionCapacity || null,
-              productCategories: data.productCategories || data.productsOffered || null,
-              productsOffered: data.productsOffered || null,
-              huzaPurchaseAgreement: data.huzaPurchaseAgreement || null,
+              productCategories: productsOffered,
+              productsOffered,
+              huzaPurchaseAgreement,
               farmingType,
               agreedToHuzaTerms: true,
               agreedToHuzaTermsAt: new Date(),
-              paymentMomo: data.paymentMomo || null,
-              bankAccount: data.bankAccount || null,
-              bankName: data.bankName || null,
+              paymentMomo: (dossier.paymentMomo as string | null) ?? data.paymentMomo ?? null,
+              bankAccount: (dossier.bankAccount as string | null) ?? data.bankAccount ?? null,
+              bankName: (dossier.bankName as string | null) ?? data.bankName ?? null,
               nationalIdUrl: data.nationalIdUrl || null,
               businessCertUrl: data.businessCertUrl || null,
               tinDocUrl: data.tinDocUrl || null,
@@ -162,6 +237,35 @@ export async function POST(req: Request) {
               documentsUrl: data.documentsUrl || null,
               farmPhotoUrls: toUrlList(data.farmPhotoUrls),
               productPhotoUrls: toUrlList(data.productPhotoUrls),
+              profilePhotoUrl: (dossier.profilePhotoUrl as string) || null,
+              gender: (dossier.gender as string) || null,
+              province: (dossier.province as string) || null,
+              cell: (dossier.cell as string) || null,
+              village: (dossier.village as string) || null,
+              ageRange: (dossier.ageRange as string) || null,
+              fieldType: (dossier.fieldType as string) || null,
+              pastCropsSeason1: (dossier.pastCropsSeason1 as string) || null,
+              pastCropsSeason2: (dossier.pastCropsSeason2 as string) || null,
+              pastCropsSeason3: (dossier.pastCropsSeason3 as string) || null,
+              currentCrop: (dossier.currentCrop as string) || productsOffered,
+              chemicalsPerWeek: (dossier.chemicalsPerWeek as string) || null,
+              chemicalsWhy: (dossier.chemicalsWhy as string) || null,
+              chemicalsDosage: (dossier.chemicalsDosage as string) || null,
+              fertilizerPerWeek: (dossier.fertilizerPerWeek as string) || null,
+              irrigationMethod: (dossier.irrigationMethod as string) || null,
+              diseasesIdentified: (dossier.diseasesIdentified as string) || null,
+              pestsIdentified: (dossier.pestsIdentified as string) || null,
+              totalQuantityHarvested: (dossier.totalQuantityHarvested as string) || null,
+              qualityGeneral: (dossier.qualityGeneral as string) || null,
+              priceUnit: (dossier.priceUnit as string) || "kg",
+              pricePerUnit: asInt(dossier.pricePerUnit),
+              totalKgsBoughtByHuza: asFloat(dossier.totalKgsBoughtByHuza) ?? 0,
+              paymentOption: (dossier.paymentOption as string) || null,
+              farmGatePrice: asInt(dossier.farmGatePrice),
+              priceUponDelivery: asInt(dossier.priceUponDelivery),
+              priceAfterSale: asInt(dossier.priceAfterSale),
+              proofOfPaymentUrl: (dossier.proofOfPaymentUrl as string) || null,
+              farmerComments: (dossier.farmerComments as string) || null,
               status: "PENDING",
             },
           },
