@@ -245,6 +245,18 @@ h3,
     );
 }
 
+/* Landing page: darker / softer wash so cards pop without busy side imagery */
+.farmer-portal-wash-landing {
+  background:
+    linear-gradient(
+      165deg,
+      rgba(7, 44, 27, 0.42) 0%,
+      rgba(243, 250, 245, 0.88) 28%,
+      rgba(255, 255, 255, 0.9) 58%,
+      rgba(232, 245, 236, 0.92) 100%
+    );
+}
+
 .farmer-portal .section-title {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }

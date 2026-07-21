@@ -1,11 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useLocale } from "@/lib/locale-context";
-import { Button } from "@/components/ui/Button";
-import { Leaf, RefreshCw, Sprout, CheckCircle2 } from "lucide-react";
+import { FarmerLandingPage } from "./FarmerLandingPage";
 
 type LandingProps = {
   mode: "landing";
@@ -40,17 +38,6 @@ export type FarmerPortalChromeProps =
   | ApplyProps
   | DashboardProps;
 
-const BENEFITS = [
-  { key: "farmVisits", fallback: "Farm visits by Youth Huza teams" },
-  { key: "agronomySupport", fallback: "Agronomy support for healthier crops" },
-  { key: "farmerTraining", fallback: "Practical farmer training" },
-  { key: "betterPractices", fallback: "Better farming practices guidance" },
-  { key: "marketAccess", fallback: "Better market access through HUZA FRESH" },
-  { key: "reliableBuyers", fallback: "A reliable buyer for accepted produce" },
-  { key: "harvestPlanning", fallback: "Harvest planning support" },
-  { key: "fairPricing", fallback: "Fair, clear pricing discussions" },
-] as const;
-
 function farmingTypeLabel(t: (k: string) => string, farmingType?: string | null) {
   if (farmingType === "STANDARD") return t("standardFarmerPath");
   if (farmingType === "CONVERSION") return t("conversionFarmerPath");
@@ -61,104 +48,7 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
   const { t } = useLocale();
 
   if (props.mode === "landing") {
-    return (
-      <div className="mx-auto max-w-3xl space-y-5 overflow-y-auto px-4 py-4 sm:py-6">
-        <div className="rounded-3xl border border-[var(--huza-line)] bg-white p-5 text-center shadow-md sm:p-7">
-          <div className="mx-auto mb-3 inline-flex rounded-2xl bg-white px-2 py-1">
-            <Image
-              src="/images/youth-huza-logo.png"
-              alt="Youth Huza"
-              width={220}
-              height={110}
-              className="mx-auto h-14 w-auto sm:h-16"
-              priority
-            />
-          </div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--huza-green-dark)]">
-            Youth Huza · {t("farmerPortal")}
-          </p>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--huza-ink)] sm:text-3xl">
-            {t("farmerPortalWelcomeTitle")}
-          </h1>
-          <Link
-            href="/farmer/login"
-            className="mt-4 inline-block text-sm font-bold text-[var(--huza-green-dark)] underline underline-offset-4"
-          >
-            {t("farmerLogin")}
-          </Link>
-        </div>
-
-        <div className="rounded-3xl border border-[var(--huza-line)] bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-ink)]">
-            {t("howHuzaSupportsFarmers")}
-          </h2>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {BENEFITS.map((b) => (
-              <li
-                key={b.key}
-                className="flex gap-2.5 rounded-2xl bg-[var(--huza-mint)]/40 px-3 py-3 text-sm text-[var(--huza-ink)]"
-              >
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[var(--huza-green)]" />
-                <span>{t(b.key)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-3xl border border-[var(--huza-line)] bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--huza-ink)]">
-            {t("chooseFarmingType")}
-          </h2>
-
-          <div className="mt-5 grid gap-4">
-            <div className="rounded-2xl border border-[var(--huza-green)]/35 bg-[var(--huza-mint)]/30 p-4 text-left">
-              <Leaf className="size-7 text-[var(--huza-green-dark)]" />
-              <h3 className="mt-2 text-base font-bold text-[var(--huza-ink)]">
-                {t("organicFarmerPath")}
-              </h3>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--huza-muted)]">
-                {t("organicFarmerPathHint")}
-              </p>
-              <Link href="/farmer/register?type=ORGANIC" className="mt-4 block">
-                <Button className="w-full" size="lg">
-                  {t("registerOrganicFarmer")}
-                </Button>
-              </Link>
-            </div>
-
-            <div className="rounded-2xl border border-[var(--huza-line)] bg-[#f8faf9] p-4 text-left">
-              <RefreshCw className="size-7 text-[var(--huza-green-dark)]" />
-              <h3 className="mt-2 text-base font-bold text-[var(--huza-ink)]">
-                {t("conversionFarmerPath")}
-              </h3>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--huza-muted)]">
-                {t("conversionFarmerPathHint")}
-              </p>
-              <Link href="/farmer/register?type=CONVERSION" className="mt-4 block">
-                <Button className="w-full" size="lg" variant="secondary">
-                  {t("startOrganicJourney")}
-                </Button>
-              </Link>
-            </div>
-
-            <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-4 text-left">
-              <Sprout className="size-7 text-[var(--huza-green-dark)]" />
-              <h3 className="mt-2 text-base font-bold text-[var(--huza-ink)]">
-                {t("standardFarmerPath")}
-              </h3>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--huza-muted)]">
-                {t("standardFarmerPathHint")}
-              </p>
-              <Link href="/farmer/register?type=STANDARD" className="mt-4 block">
-                <Button className="w-full" size="lg" variant="secondary">
-                  {t("registerConventionalFarmer")}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <FarmerLandingPage />;
   }
 
   if (props.mode === "register") {
@@ -203,29 +93,29 @@ export function FarmerPortalChrome(props: FarmerPortalChromeProps) {
   } = props;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/60 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
         <div>
           <p className="inline-block rounded-lg bg-[var(--huza-mint)] px-3 py-1.5 text-sm font-bold uppercase tracking-[0.14em] text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/40">
             {t("farmersPortalSellBadge")}
           </p>
           <h1 className="section-title mt-1">{businessName}</h1>
-          <p className="text-sm text-[var(--huza-muted)] mt-1">
+          <p className="mt-1 text-sm text-[var(--huza-muted)]">
             {t("status")}: {status}
             {isVerified ? ` · ${t("verified")}` : ""} · {farmingTypeLabel(t, farmingType)}
           </p>
           {rejectionReason && (
-            <p className="text-sm text-red-700 mt-1">
+            <p className="mt-1 text-sm text-red-700">
               {t("reason")}: {rejectionReason}
             </p>
           )}
           {adminNotes && (
-            <p className="text-sm text-[var(--huza-muted)] mt-1">
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">
               {t("adminNote")}: {adminNotes}
             </p>
           )}
           {inspectionScheduledAt && (
-            <p className="text-sm text-[var(--huza-muted)] mt-1">
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">
               {t("agentVisitScheduled")}: {new Date(inspectionScheduledAt).toLocaleString()}
             </p>
           )}

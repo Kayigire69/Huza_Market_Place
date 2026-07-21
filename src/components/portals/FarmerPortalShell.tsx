@@ -28,12 +28,13 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/farmer/login/") ||
     pathname === "/farmer/register" ||
     pathname.startsWith("/farmer/register/");
-  const lockViewport = isLanding || isAuthScreen;
+  /** Auth screens stay locked to the viewport; landing scrolls through sections. */
+  const lockViewport = isAuthScreen;
 
   return (
     <div
       className={`farmer-portal relative ${
-        lockViewport ? "flex h-dvh flex-col overflow-hidden" : "min-h-screen overflow-x-hidden"
+        lockViewport ? "flex h-dvh flex-col overflow-hidden" : "flex min-h-dvh flex-col overflow-x-hidden"
       }`}
     >
       {/* Clear crop atmosphere. Readable farm imagery behind the workspace */}
@@ -43,13 +44,15 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
             src={CROP_BACKGROUNDS[0]}
             alt=""
             fill
-            className="object-cover object-center"
+            className={`object-cover object-center ${isLanding ? "scale-105 blur-[2.5px]" : ""}`}
             sizes="100vw"
             priority
           />
         </div>
-        <div className="absolute inset-0 farmer-portal-wash" />
-        {!isAuthScreen && (
+        <div
+          className={`absolute inset-0 ${isLanding ? "farmer-portal-wash-landing" : "farmer-portal-wash"}`}
+        />
+        {!isAuthScreen && !isLanding && (
           <>
             <div className="absolute -right-4 top-20 h-72 w-72 overflow-hidden rounded-full border-4 border-white/40 shadow-lg opacity-55 sm:h-96 sm:w-96">
               <Image src={CROP_BACKGROUNDS[1]} alt="" fill className="object-cover" sizes="384px" />
@@ -135,17 +138,17 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className={`relative z-10 min-h-0 ${lockViewport ? "flex-1 overflow-hidden" : ""}`}>
+      <div className={`relative z-10 min-h-0 flex-1 ${lockViewport ? "overflow-hidden" : ""}`}>
         {children}
       </div>
 
       {!isAuthScreen && (
         <footer
-          className={`relative z-10 shrink-0 border-t border-[var(--huza-line)]/70 bg-white/85 text-center text-xs text-[var(--huza-muted)] backdrop-blur-sm ${
-            isLanding ? "py-3" : "mt-16 py-6"
+          className={`relative z-10 shrink-0 border-t border-[var(--huza-line)]/60 bg-white/90 text-center text-xs text-[var(--huza-muted)] backdrop-blur-md ${
+            isLanding ? "px-4 py-5 sm:py-6" : "mt-16 py-6"
           }`}
         >
-          <p>
+          <p className="leading-relaxed">
             © {new Date().getFullYear()} Youth Huza · {t("farmerPortal")}. {t("allRightsReserved")}
           </p>
         </footer>
