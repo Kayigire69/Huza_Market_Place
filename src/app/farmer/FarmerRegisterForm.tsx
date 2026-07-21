@@ -169,12 +169,12 @@ export function FarmerRegisterForm() {
   const d = (key: string) => defaults[key] || "";
 
   return (
-    <div className="flex min-h-full items-start justify-center overflow-y-auto px-4 py-4">
+    <div className="mx-auto w-full max-w-[640px] px-4 py-6 sm:py-8">
       <form
         key={formKey}
         id="farmer-register-form"
         onSubmit={onSubmit}
-        className="relative w-full max-w-[640px] shrink-0 pb-8"
+        className="relative w-full pb-8"
       >
         <div className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 shadow-lg sm:p-6">
           <h2 className="text-center text-xl font-bold text-[var(--huza-ink)]">

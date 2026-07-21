@@ -2,10 +2,10 @@ import { FarmerRegisterForm } from "../FarmerRegisterForm";
 
 export const dynamic = "force-dynamic";
 
-/** Farmer registration — identity, required farm details, consent. */
+/** Farmer registration — full identity + farm dossier (scrollable page). */
 export default function FarmerRegisterPage() {
   return (
-    <div className="h-full">
+    <div className="w-full">
       <FarmerRegisterForm />
     </div>
   );
