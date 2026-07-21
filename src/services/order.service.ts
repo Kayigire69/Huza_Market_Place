@@ -355,11 +355,7 @@ export const orderService = {
     });
 
     // Do not block the customer response on admin inbox writes.
-    void notifyAdmins({
-      type: "ORDER_CONFIRMATION",
-      title: "New order received",
-      body: `${orderNumber} · ${data.fullName} · ${total} RWF · Pending payment`,
-    }).catch(() => undefined);
+    // Admin notify runs after payment initiation succeeds (see below).
 
     // Auto-expire unpaid reservations after MoMo timeout (scheduled after initiate knows live vs manual)
     // Initiate MoMo/Airtel (or manual pay-in), then queue verification + expire
@@ -414,6 +410,19 @@ export const orderService = {
         providerMessage: paymentResult.message,
       },
     });
+
+    const networkLabel = data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money";
+    void notifyAdmins({
+      type: "ORDER_CONFIRMATION",
+      title:
+        paymentResult.mode === "manual"
+          ? `Pending MoMo: ${orderNumber}`
+          : `New order: ${orderNumber}`,
+      body:
+        paymentResult.mode === "manual"
+          ? `${total.toLocaleString("en-RW")} RWF · ${data.fullName} · payer ${data.paymentPhone} · ${networkLabel}. Confirm in Payments when money arrives.`
+          : `${total.toLocaleString("en-RW")} RWF · ${data.fullName} · ${data.paymentPhone} · awaiting phone approval.`,
+    }).catch(() => undefined);
 
     const expireMs =
       paymentResult.mode === "manual" ? MANUAL_PAYMENT_TIMEOUT_MS : LIVE_PAYMENT_TIMEOUT_MS;
