@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { resolveDatabaseUrl } from "@/lib/db-url";
+import { isStaleConnectionError, reconnectPrisma } from "@/lib/prisma-connection";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -13,9 +14,8 @@ function isProductionBuild(): boolean {
   );
 }
 
-function createPrismaClient() {
+function createBasePrismaClient() {
   const raw = process.env.DATABASE_URL?.trim();
-  // Next.js imports this module while compiling pages. Allow build without a live DB.
   const url = raw
     ? resolveDatabaseUrl(raw)
     : "postgresql://build:build@127.0.0.1:5432/build?schema=public";
@@ -28,12 +28,27 @@ function createPrismaClient() {
   });
 }
 
-/**
- * Single shared client (survives Next.js hot reload).
- * Retries $connect a few times so brief Postgres startup / Neon wake gaps
- * do not surface as intermittent "Can't reach database server" errors.
- */
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function buildPrismaClient(): PrismaClient {
+  const base = createBasePrismaClient();
+
+  const extended = base.$extends({
+    query: {
+      async $allOperations({ args, query }) {
+        const run = () => query(args);
+        try {
+          return await run();
+        } catch (error) {
+          if (!isStaleConnectionError(error)) throw error;
+          await reconnectPrisma(base);
+          return await run();
+        }
+      },
+    },
+  });
+
+  // Keep PrismaClient typing for transactions and existing services.
+  return extended as unknown as PrismaClient;
+}
 
 async function connectWithRetry(client: PrismaClient) {
   let lastError: unknown;
@@ -49,6 +64,12 @@ async function connectWithRetry(client: PrismaClient) {
   throw lastError;
 }
 
+/**
+ * Single shared client (survives Next.js hot reload).
+ * Retries once after Neon pooler idle disconnects ("connection closed").
+ */
+export const prisma = globalForPrisma.prisma ?? buildPrismaClient();
+
 if (
   !globalForPrisma.prismaConnecting &&
   process.env.DATABASE_URL?.trim() &&
@@ -59,5 +80,15 @@ if (
   });
 }
 
-// Reuse one client across hot reloads and warm serverless isolates.
 globalForPrisma.prisma = prisma;
+
+/** Explicit retry helper for raw queries outside the extension path. */
+export async function withPrismaRetry<T>(fn: (client: PrismaClient) => Promise<T>): Promise<T> {
+  try {
+    return await fn(prisma);
+  } catch (error) {
+    if (!isStaleConnectionError(error)) throw error;
+    await reconnectPrisma(prisma);
+    return await fn(prisma);
+  }
+}
