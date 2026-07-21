@@ -4,6 +4,8 @@ Living documentation for maintainers. Last updated: **2026-07-21**.
 
 Interactive canvas (Cursor): `canvases/system-architecture-report.canvas.tsx` in the Cursor project folder.
 
+**Workflow diagrams (training / expo / manuals):** [system-workflows/README.md](./system-workflows/README.md)
+
 ---
 
 ## 1. Portal connections
