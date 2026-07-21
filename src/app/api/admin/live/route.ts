@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { isAdminPortalRole } from "@/lib/rbac";
+import { requirePortalSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import {
   getAdminDashboardAnalytics,
@@ -11,8 +9,8 @@ import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 
 /** Live admin feed. Use ?full=1 for dashboard charts; default is lite for chrome. */
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !isAdminPortalRole(session.user.role)) {
+  const session = await requirePortalSession();
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

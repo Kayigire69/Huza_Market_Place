@@ -1,5 +1,5 @@
-import { FarmerPortalClient } from "../../FarmerPortalClient";
-import { FarmerPageHeader } from "@/components/portals/FarmerUi";
+﻿import { FarmerPortalClient } from "../../FarmerPortalClient";
+import { FarmerI18nHeader } from "@/components/portals/FarmerI18nHeader";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export default async function FarmerSettingsPage() {
 
   return (
     <div>
-      <FarmerPageHeader title="Settings" />
+      <FarmerI18nHeader titleKey="foSettingsTitle" />
       <FarmerPortalClient
         farmer={farmer as never}
         categories={categories}

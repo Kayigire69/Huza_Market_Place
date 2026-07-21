@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdminSession, requirePortalSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import {
@@ -11,17 +10,15 @@ import {
   SETTING_DEFAULTS,
 } from "@/services/settings.service";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { canEditSystemSettings, isAdminPortalRole } from "@/lib/rbac";
+import { canEditSystemSettings } from "@/lib/rbac";
 import { ADMIN_ROLE_MODULES } from "@/lib/admin-nav";
 
 async function requirePortalAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !isAdminPortalRole(session.user.role)) return null;
-  return session;
+  return requirePortalSession();
 }
 
 async function requireSuperAdmin() {
-  const session = await getServerSession(authOptions);
+  const session = await requireAdminSession({ modules: ["settings"] });
   if (!session?.user || !canEditSystemSettings(session.user.role)) return null;
   return session;
 }

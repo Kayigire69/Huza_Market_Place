@@ -45,6 +45,8 @@ async function loadPendingSuppliers() {
   return prisma.supplier.findMany({
     where: { status: "PENDING" },
     include: { user: true },
+    take: 100,
+    orderBy: { createdAt: "desc" },
   });
 }
 
@@ -52,6 +54,7 @@ async function loadAllSuppliers() {
   return prisma.supplier.findMany({
     include: { user: true, _count: { select: { products: true } } },
     orderBy: { createdAt: "desc" },
+    take: 200,
   });
 }
 

@@ -188,6 +188,36 @@ export const wsEn: WsDict = {
   phone: "Phone",
   email: "Email",
 
+  foSalesTitle: "Sales",
+  foNotifTitle: "Notifications",
+  foNotifEmpty:
+    "You are all caught up. Messages and updates from Youth Huza (reviews, visits, payments) show here.",
+  foSettingsTitle: "Account",
+  foOrdersEmptyTitle: "No purchase orders yet",
+  foOrdersEmptyBody:
+    "When Youth Huza buys your harvest, the order appears here with quantity, inspection, and payment follow-up.",
+  foKeepSupplyReady: "Keep crop supply ready",
+  foFilterAll: "All",
+  foFilterActive: "In progress",
+  foFilterAccepted: "Accepted",
+  foFilterRejected: "Rejected",
+  foFilterPaid: "Paid",
+  foPurchaseOrders: "Purchase orders",
+  foInProgress: "In progress",
+  foOpenValue: "Open value",
+  foNoPayouts: "No payouts yet",
+  foNoPayoutsBody:
+    "After Youth Huza accepts a purchase order, payment status and references show here.",
+  foViewPurchaseOrders: "View purchase orders",
+  foPaidToYou: "Paid to you",
+  foAwaitingPayout: "Awaiting payout",
+  foPaidOrders: "paid purchase orders",
+  foPendingOrders: "pending purchase orders",
+  foFilterPending: "Pending",
+  foApprovalAccepted: "Accepted",
+  foApprovalNeedsWork: "Needs improvement",
+  foApprovalInReview: "In review",
+
   reportsTitle: "Reports",
   reportsSubtitle: "",
   reportsTotalEarnings: "Total earnings",
@@ -482,6 +512,36 @@ export const wsFr: WsDict = {
   phone: "Téléphone",
   email: "E-mail",
 
+  foSalesTitle: "Ventes",
+  foNotifTitle: "Notifications",
+  foNotifEmpty:
+    "Tout est à jour. Les messages et mises à jour de Youth Huza (revues, visites, paiements) apparaissent ici.",
+  foSettingsTitle: "Compte",
+  foOrdersEmptyTitle: "Pas encore de bons de commande",
+  foOrdersEmptyBody:
+    "Quand Youth Huza achète votre récolte, la commande apparaît ici avec quantité, inspection et suivi de paiement.",
+  foKeepSupplyReady: "Garder l'offre de cultures prête",
+  foFilterAll: "Tous",
+  foFilterActive: "En cours",
+  foFilterAccepted: "Acceptés",
+  foFilterRejected: "Refusés",
+  foFilterPaid: "Payés",
+  foPurchaseOrders: "Bons de commande",
+  foInProgress: "En cours",
+  foOpenValue: "Valeur ouverte",
+  foNoPayouts: "Pas encore de paiements",
+  foNoPayoutsBody:
+    "Après acceptation d'un bon de commande par Youth Huza, le statut et les références de paiement s'affichent ici.",
+  foViewPurchaseOrders: "Voir les bons de commande",
+  foPaidToYou: "Payé à vous",
+  foAwaitingPayout: "En attente de paiement",
+  foPaidOrders: "bons de commande payés",
+  foPendingOrders: "bons de commande en attente",
+  foFilterPending: "En attente",
+  foApprovalAccepted: "Accepté",
+  foApprovalNeedsWork: "À améliorer",
+  foApprovalInReview: "En revue",
+
   reportsTitle: "Rapports",
   reportsSubtitle: "",
   reportsTotalEarnings: "Gains totaux",
@@ -737,6 +797,12 @@ export const wsRw: WsDict = {
   sellDirectTitle: "Kugurisha ku buryo butaziguye kuri HUZA",
   sellDirectBody:
     "HUZA igura ibicuruzwa byawe. Nyuma yo gusuzuma n'igiciro cyemejwe, wishyurwa byuzuye. Ubunyiri buhita kuri HUZA. Igihingwa cyawe kinjira mu bubiko bwa HUZA kandi gishobora kugaragara kuri HUZA FRESH hamwe n'amafoto ya HUZA.",
+  sellHowItWorksLabel: "Uko kugurisha bikora",
+  sellUnifiedBody:
+    "Ohereza umusaruro hamwe n'amafoto n'umubare. Youth Huza isuzuma ubuziranenge, mumvikana ku bicuruzwa, hanyuma ikwishyura hashingiye ku cyemezo cyo kugura. Kurikiranira amatumu n'ubwishyu muri uru rubuga.",
+  sellUnifiedPayNote:
+    "Ubwishyu bushobora kuba ku murima, igihe byageze, muri banki, cyangwa MoMo — nkuko byemejwe na Youth Huza kuri buri cyemezo.",
+  sellCtaSubmitHarvest: "Ohereza umusaruro",
   sellPartnerTitle: "Ubufatanye bwo kugurisha na HUZA",
   sellPartnerBody:
     "Ugumana ubunyiri. HUZA igurisha ku iduka ku buryo bwawe. Nyuma y'ubucuruzi, HUZA ikura komisiyo yemejwe; wishyurwa igisigaye na raporo y'ubucuruzi.",
@@ -768,6 +834,36 @@ export const wsRw: WsDict = {
   sellCtaProduce: "Jya kuri Ibicuruzwa byanjye",
   phone: "Telefone",
   email: "Imeri",
+
+  foSalesTitle: "Ibicuruzwa",
+  foNotifTitle: "Amatangazo",
+  foNotifEmpty:
+    "Nta kintu gishya. Ubutumwa n'amakuru ya Youth Huza (isuzuma, gusura, ubwishyu) bigaragara hano.",
+  foSettingsTitle: "Konti",
+  foOrdersEmptyTitle: "Nta cyemezo cyo kugura cyari",
+  foOrdersEmptyBody:
+    "Iyo Youth Huza iguze umusaruro wawe, icyemezo kigaragara hano hamwe n'umubare, isuzuma, n'ubukurikiranwa bw'ubwishyu.",
+  foKeepSupplyReady: "Bika umusaruro witeguye",
+  foFilterAll: "Byose",
+  foFilterActive: "Birimo gukorwa",
+  foFilterAccepted: "Byemewe",
+  foFilterRejected: "Byanzwe",
+  foFilterPaid: "Byishyuwe",
+  foPurchaseOrders: "Ibyemezo byo kugura",
+  foInProgress: "Birimo gukorwa",
+  foOpenValue: "Agaciro gafunguye",
+  foNoPayouts: "Nta bwishyu bwari",
+  foNoPayoutsBody:
+    "Nyuma yo kwemera icyemezo cyo kugura, ubwishyu n'inyandiko bigaragara hano.",
+  foViewPurchaseOrders: "Reba ibyemezo byo kugura",
+  foPaidToYou: "Byishyuwe kuri wowe",
+  foAwaitingPayout: "Gutegereza ubwishyu",
+  foPaidOrders: "ibyemezo byishyuwe",
+  foPendingOrders: "ibyemezo bitegereje",
+  foFilterPending: "Bitegereje",
+  foApprovalAccepted: "Byemewe",
+  foApprovalNeedsWork: "Bisaba kunoza",
+  foApprovalInReview: "Biragenda gusuzumwa",
 
   reportsTitle: "Raporo",
   reportsSubtitle: "",
@@ -1024,6 +1120,12 @@ export const wsSw: WsDict = {
   sellDirectTitle: "Uuzaji wa moja kwa moja kwa HUZA",
   sellDirectBody:
     "HUZA hununua mazao yako. Baada ya ukaguzi na bei iliyokubaliwa, unapata malipo kamili. Umiliki unahamia HUZA. Zao lako linaingia kwenye hisa ya HUZA na linaweza kuonekana kwenye HUZA FRESH na picha rasmi za HUZA.",
+  sellHowItWorksLabel: "Jinsi uuzaji unavyofanya kazi",
+  sellUnifiedBody:
+    "Wasilisha mavuno yako na picha na kiasi. Youth Huza hukagua ubora, mnakubaliana masharti ya biashara, kisha hulipa kulingana na agizo la ununuzi. Fuatilia maagizo na malipo kwenye lango hili.",
+  sellUnifiedPayNote:
+    "Malipo yanaweza kuwa shambani, baada ya uwasilishaji, benki, au fedha za rununu — kama ilivyokubaliwa na Youth Huza kwa kila agizo.",
+  sellCtaSubmitHarvest: "Wasilisha mavuno",
   sellPartnerTitle: "Ushirikiano wa uuzaji wa HUZA",
   sellPartnerBody:
     "Unabaki na umiliki. HUZA inauza dukani kwa niaba yako (consignment). Baada ya mauzo, HUZA inatoa kamisheni iliyokubaliwa; unapokea salio na ripoti ya mauzo.",
@@ -1055,6 +1157,36 @@ export const wsSw: WsDict = {
   sellCtaProduce: "Nenda kwa Mazao yangu",
   phone: "Simu",
   email: "Barua pepe",
+
+  foSalesTitle: "Mauzo",
+  foNotifTitle: "Arifa",
+  foNotifEmpty:
+    "Uko tayari. Ujumbe na masasisho kutoka Youth Huza (ukaguzi, ziara, malipo) yanaonekana hapa.",
+  foSettingsTitle: "Akaunti",
+  foOrdersEmptyTitle: "Bado hakuna maagizo ya ununuzi",
+  foOrdersEmptyBody:
+    "Youth Huza inaponunua mavuno yako, agizo linaonekana hapa na kiasi, ukaguzi, na ufuatiliaji wa malipo.",
+  foKeepSupplyReady: "Weka ugavi wa mazao ukiwa tayari",
+  foFilterAll: "Zote",
+  foFilterActive: "Inaendelea",
+  foFilterAccepted: "Zimekubaliwa",
+  foFilterRejected: "Zimekataliwa",
+  foFilterPaid: "Zimelipwa",
+  foPurchaseOrders: "Maagizo ya ununuzi",
+  foInProgress: "Inaendelea",
+  foOpenValue: "Thamani wazi",
+  foNoPayouts: "Bado hakuna malipo",
+  foNoPayoutsBody:
+    "Baada Youth Huza kukubali agizo la ununuzi, hali ya malipo na marejeleo yanaonekana hapa.",
+  foViewPurchaseOrders: "Angalia maagizo ya ununuzi",
+  foPaidToYou: "Uliolipwa",
+  foAwaitingPayout: "Inasubiri malipo",
+  foPaidOrders: "maagizo yaliyolipwa",
+  foPendingOrders: "maagizo yanayosubiri",
+  foFilterPending: "Inasubiri",
+  foApprovalAccepted: "Imekubaliwa",
+  foApprovalNeedsWork: "Inahitaji kuboreshwa",
+  foApprovalInReview: "Inakaguliwa",
 
   reportsTitle: "Ripoti",
   reportsSubtitle: "",

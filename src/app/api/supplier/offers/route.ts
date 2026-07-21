@@ -57,6 +57,7 @@ export async function GET() {
     where: { supplierId: supplier.id },
     include: { category: true },
     orderBy: { createdAt: "desc" },
+    take: 100,
   });
   return NextResponse.json({ offers });
 }

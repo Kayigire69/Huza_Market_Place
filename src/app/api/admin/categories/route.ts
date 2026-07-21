@@ -22,30 +22,44 @@ export async function GET() {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const categories = await prisma.category.findMany({
-    where: { deletedAt: null },
-    orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
-    include: {
-      _count: {
-        select: { products: { where: { deletedAt: null } } },
+  const [categories, productRows] = await Promise.all([
+    prisma.category.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
+      include: {
+        _count: {
+          select: { products: { where: { deletedAt: null } } },
+        },
       },
-      products: {
-        where: { deletedAt: null },
-        select: { id: true, isActive: true, stockQty: true, reservedQty: true, lowStockAt: true },
+    }),
+    prisma.product.findMany({
+      where: { deletedAt: null },
+      select: {
+        categoryId: true,
+        isActive: true,
+        stockQty: true,
+        reservedQty: true,
+        lowStockAt: true,
       },
-    },
-  });
+    }),
+  ]);
+
+  const byCategory = new Map<
+    string,
+    { lowStock: number; outOfStock: number; hidden: number }
+  >();
+  for (const p of productRows) {
+    if (!p.categoryId) continue;
+    const cur = byCategory.get(p.categoryId) || { lowStock: 0, outOfStock: 0, hidden: 0 };
+    if (!p.isActive) cur.hidden += 1;
+    const available = Math.max(0, p.stockQty - p.reservedQty);
+    if (available <= 0) cur.outOfStock += 1;
+    else if (available <= (p.lowStockAt ?? 5)) cur.lowStock += 1;
+    byCategory.set(p.categoryId, cur);
+  }
 
   const payload = categories.map((c) => {
-    let lowStock = 0;
-    let outOfStock = 0;
-    let hidden = 0;
-    for (const p of c.products) {
-      if (!p.isActive) hidden += 1;
-      const available = Math.max(0, p.stockQty - p.reservedQty);
-      if (available <= 0) outOfStock += 1;
-      else if (available <= (p.lowStockAt ?? 5)) lowStock += 1;
-    }
+    const stats = byCategory.get(c.id) || { lowStock: 0, outOfStock: 0, hidden: 0 };
     return {
       id: c.id,
       slug: c.slug,
@@ -58,9 +72,9 @@ export async function GET() {
       isActive: c.isActive,
       stats: {
         products: c._count.products,
-        lowStock,
-        outOfStock,
-        hidden,
+        lowStock: stats.lowStock,
+        outOfStock: stats.outOfStock,
+        hidden: stats.hidden,
       },
     };
   });

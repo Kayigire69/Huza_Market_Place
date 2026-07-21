@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { isAdminPortalRole } from "@/lib/rbac";
+import { requireAdminSession } from "@/lib/rbac-server";
 import { buildPurchaseRecordPdf, loadOrderDocument } from "@/lib/documents/order-docs";
 import { pdfResponse } from "@/lib/documents/pdf";
 import { auditAdminAction } from "@/lib/audit";
 
-/** Internal purchase record PDF. ADMIN only (never customer-facing). */
+/** Internal purchase record PDF. Staff with orders/payments access only. */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ orderNumber: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !isAdminPortalRole(session.user.role)) {
+  const session = await requireAdminSession({ modules: ["orders", "payments"] });
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

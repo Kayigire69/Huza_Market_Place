@@ -1,4 +1,6 @@
-import { FarmerPageHeader, FarmerPanel } from "@/components/portals/FarmerUi";
+import { FarmerI18nHeader } from "@/components/portals/FarmerI18nHeader";
+import { FarmerNotificationsEmpty } from "@/components/portals/FarmerNotificationsEmpty";
+import { FarmerPanel } from "@/components/portals/FarmerUi";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 import { prisma } from "@/lib/prisma";
 
@@ -13,7 +15,6 @@ export default async function FarmerNotificationsPage() {
     take: 50,
   });
 
-  // Mark visible notifications as read
   const unreadIds = notes.filter((n) => !n.isRead).map((n) => n.id);
   if (unreadIds.length) {
     await prisma.notification.updateMany({
@@ -24,27 +25,20 @@ export default async function FarmerNotificationsPage() {
 
   return (
     <div>
-      <FarmerPageHeader title="Notifications" />
+      <FarmerI18nHeader titleKey="foNotifTitle" />
 
       {notes.length === 0 ? (
-        <FarmerPanel className="max-w-2xl">
-          <p className="text-sm text-[var(--huza-muted)]">
-            You are all caught up. Messages and updates from Youth Huza (reviews, visits, payments)
-            show here.
-          </p>
-        </FarmerPanel>
+        <FarmerNotificationsEmpty />
       ) : (
         <ul className="space-y-2">
           {notes.map((n) => (
             <li key={n.id}>
               <FarmerPanel className="!p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="font-semibold text-[var(--huza-ink)]">{n.title}</p>
-                  <time className="text-xs text-[var(--huza-muted)]">
-                    {new Date(n.createdAt).toLocaleString()}
-                  </time>
-                </div>
-                <p className="mt-1 text-sm text-[var(--huza-muted)] line-clamp-3">{n.body}</p>
+                <p className="font-semibold text-[var(--huza-ink)]">{n.title}</p>
+                <p className="mt-1 text-sm text-[var(--huza-muted)]">{n.body}</p>
+                <p className="mt-2 text-[11px] text-[var(--huza-muted)]">
+                  {n.createdAt.toLocaleString()}
+                </p>
               </FarmerPanel>
             </li>
           ))}

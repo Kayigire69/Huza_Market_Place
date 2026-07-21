@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-function canProcure(role?: string) {
-  return role === "PROCUREMENT" || role === "ADMIN";
-}
+import { requireProcurementMessageSession } from "@/lib/rbac-server";
 
 async function supplierForUser(userId: string) {
   return prisma.supplier.findUnique({ where: { userId } });
@@ -20,18 +17,20 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   let supplierId = searchParams.get("supplierId");
 
-  if (canProcure(session.user.role)) {
-    if (!supplierId) {
-      return NextResponse.json({ error: "supplierId required" }, { status: 400 });
-    }
-  } else if (session.user.role === "SUPPLIER") {
+  if (session.user.role === "SUPPLIER") {
     const supplier = await supplierForUser(session.user.id);
     if (!supplier) {
       return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
     }
     supplierId = supplier.id;
   } else {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const staff = await requireProcurementMessageSession();
+    if (!staff) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (!supplierId) {
+      return NextResponse.json({ error: "supplierId required" }, { status: 400 });
+    }
   }
 
   const messages = await prisma.procurementMessage.findMany({
@@ -60,14 +59,7 @@ export async function POST(req: Request) {
   let senderName = session.user.name || "Procurement";
   let notifyUserId: string | null = null;
 
-  if (canProcure(session.user.role)) {
-    if (!supplierId) {
-      return NextResponse.json({ error: "supplierId required" }, { status: 400 });
-    }
-    const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
-    if (!supplier) return NextResponse.json({ error: "Farmer not found" }, { status: 404 });
-    notifyUserId = supplier.userId;
-  } else if (session.user.role === "SUPPLIER") {
+  if (session.user.role === "SUPPLIER") {
     const supplier = await supplierForUser(session.user.id);
     if (!supplier) {
       return NextResponse.json({ error: "Farmer profile not found" }, { status: 404 });
@@ -76,7 +68,7 @@ export async function POST(req: Request) {
     senderRole = "SUPPLIER";
     senderName = supplier.businessName;
     const staff = await prisma.user.findMany({
-      where: { role: { in: ["PROCUREMENT", "ADMIN"] } },
+      where: { role: { in: ["PROCUREMENT", "ADMIN", "SUPER_ADMIN", "MANAGER"] } },
       select: { id: true },
       take: 20,
     });
@@ -92,7 +84,18 @@ export async function POST(req: Request) {
       });
     }
   } else {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const staff = await requireProcurementMessageSession();
+    if (!staff) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (!supplierId) {
+      return NextResponse.json({ error: "supplierId required" }, { status: 400 });
+    }
+    const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
+    if (!supplier) return NextResponse.json({ error: "Farmer not found" }, { status: 404 });
+    notifyUserId = supplier.userId;
+    senderRole = staff.user.role || "PROCUREMENT";
+    senderName = staff.user.name || "Procurement";
   }
 
   const message = await prisma.procurementMessage.create({

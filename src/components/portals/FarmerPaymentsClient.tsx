@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { FarmerPanel } from "@/components/portals/FarmerUi";
 import { Button } from "@/components/ui/Button";
 import type { FarmerPurchaseOrderRow } from "@/lib/farmer-workspace";
+import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit } from "@/lib/utils";
 import { ArrowRight, Wallet } from "lucide-react";
 
@@ -22,6 +23,7 @@ function payoutAmount(po: FarmerPurchaseOrderRow) {
  * Commission lines are read-only (settlement happens in Admin).
  */
 export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRow[] }) {
+  const { t } = useLocale();
   const [filter, setFilter] = useState<Filter>("all");
 
   const payoutOrders = useMemo(
@@ -49,14 +51,14 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
       <FarmerPanel className="max-w-2xl">
         <Wallet className="h-8 w-8 text-[var(--huza-green)]" />
         <h2 className="mt-3 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-ink)]">
-          No payouts yet
+          {t("foNoPayouts")}
         </h2>
         <p className="mt-2 text-sm text-[var(--huza-muted)]">
-          After Youth Huza accepts a purchase order, payment status and references show here.
+          {t("foNoPayoutsBody")}
         </p>
-        <Link href="/farmer/orders" className="mt-4 inline-block">
+        <Link href="/farmer/sales" className="mt-4 inline-block">
           <Button className="gap-2">
-            View purchase orders <ArrowRight className="h-4 w-4" />
+            {t("foViewPurchaseOrders")} <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
       </FarmerPanel>
@@ -68,24 +70,24 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
       <div className="grid gap-3 sm:grid-cols-2">
         <FarmerPanel className="!p-4 border-[var(--huza-green)]/30 bg-[var(--huza-mint)]/35">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
-            Paid to you
+            {t("foPaidToYou")}
           </p>
           <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-[var(--huza-green-dark)]">
             {formatRwf(paidTotal)}
           </p>
           <p className="mt-1 text-xs text-[var(--huza-muted)]">
-            {paid.length} paid purchase order{paid.length === 1 ? "" : "s"}
+            {paid.length} {t("foPaidOrders")}
           </p>
         </FarmerPanel>
         <FarmerPanel className="!p-4 border-amber-200 bg-amber-50/60">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
-            Awaiting payment
+            {t("foAwaitingPayout")}
           </p>
           <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-amber-900">
             {formatRwf(pendingTotal)}
           </p>
           <p className="mt-1 text-xs text-[var(--huza-muted)]">
-            {pending.length} open payout{pending.length === 1 ? "" : "s"}
+            {pending.length} {t("foPendingOrders")}
           </p>
         </FarmerPanel>
       </div>
@@ -93,9 +95,9 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
       <div className="flex flex-wrap gap-2">
         {(
           [
-            { key: "all" as const, label: "All", count: payoutOrders.length },
-            { key: "pending" as const, label: "Awaiting", count: pending.length },
-            { key: "paid" as const, label: "Paid", count: paid.length },
+            { key: "all" as const, label: t("foFilterAll"), count: payoutOrders.length },
+            { key: "pending" as const, label: t("foFilterPending"), count: pending.length },
+            { key: "paid" as const, label: t("foFilterPaid"), count: paid.length },
           ] as const
         ).map((f) => (
           <button
@@ -145,7 +147,7 @@ export function FarmerPaymentsClient({ orders }: { orders: FarmerPurchaseOrderRo
                         : "bg-amber-100 text-amber-900"
                     }`}
                   >
-                    {isPaid ? "Paid" : "Awaiting payment"}
+                    {isPaid ? t("foFilterPaid") : t("foAwaitingPayout")}
                   </span>
                 </div>
               </div>

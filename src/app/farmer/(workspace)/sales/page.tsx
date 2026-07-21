@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { FarmerHubTabs, SALES_TABS } from "@/components/portals/FarmerHubTabs";
+import { FarmerI18nHeader } from "@/components/portals/FarmerI18nHeader";
 import { FarmerOrdersClient } from "@/components/portals/FarmerOrdersClient";
 import { FarmerPaymentsClient } from "@/components/portals/FarmerPaymentsClient";
-import { FarmerPageHeader } from "@/components/portals/FarmerUi";
 import { requireFarmerWorkspace } from "@/lib/farmer-workspace";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function FarmerSalesPage({
 
   return (
     <div>
-      <FarmerPageHeader title="Sales" />
+      <FarmerI18nHeader titleKey="foSalesTitle" />
       <Suspense fallback={null}>
         <FarmerHubTabs tabs={SALES_TABS} />
       </Suspense>
