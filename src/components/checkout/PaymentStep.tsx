@@ -146,9 +146,14 @@ export function PaymentStep({
         </div>
       ) : null}
 
+      <p className="text-xs text-[var(--huza-muted)] leading-relaxed">
+        Enter the <strong className="font-semibold text-[var(--huza-ink)]">payer</strong> details
+        (the client who sends MoMo), so we can match the payment.
+      </p>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
-          <span className="mb-1.5 block font-medium">Full name</span>
+          <span className="mb-1.5 block font-medium">Payer full name</span>
           <input
             required
             value={fullName}
@@ -156,7 +161,11 @@ export function PaymentStep({
             onChange={(e) => onFullNameChange(e.target.value)}
             className="w-full rounded-xl border border-[var(--huza-line)] bg-white px-4 py-3 text-base disabled:opacity-60"
             autoComplete="name"
+            placeholder="Name on the MoMo account"
           />
+          <p className="mt-1.5 text-xs text-[var(--huza-muted)]">
+            Name of the client / payer sending the payment
+          </p>
         </label>
         <label className="block text-sm">
           <span className="mb-1.5 block font-medium">Contact phone</span>
@@ -170,12 +179,15 @@ export function PaymentStep({
             inputMode="tel"
             placeholder="07X XXX XXXX"
           />
+          <p className="mt-1.5 text-xs text-[var(--huza-muted)]">
+            For delivery updates (can match MoMo)
+          </p>
         </label>
       </div>
 
       <label className="block text-sm">
         <span className="mb-1.5 block font-medium">
-          {manualPayIn ? "Your MoMo number (payer)" : "Mobile Number"}
+          {manualPayIn ? "MoMo number that will pay" : "Mobile Number"}
         </span>
         <div className="flex overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white focus-within:border-[var(--huza-green)]">
           <span className="flex items-center border-r border-[var(--huza-line)] bg-[var(--huza-cream,#F7FBF8)] px-3 text-sm font-medium text-[var(--huza-muted)]">
@@ -199,7 +211,7 @@ export function PaymentStep({
         {paymentPhone && phoneOk ? (
           <p className="mt-1.5 text-xs text-[var(--huza-muted)]">
             {manualPayIn
-              ? `We match your payment from ${formatMomoDisplay(paymentPhone)}`
+              ? `We match payment from ${formatMomoDisplay(paymentPhone)}`
               : `Prompt will be sent to ${formatMomoDisplay(paymentPhone)}`}
           </p>
         ) : paymentPhone ? (
@@ -207,7 +219,7 @@ export function PaymentStep({
         ) : (
           <p className="mt-1.5 text-xs text-[var(--huza-muted)]">
             {manualPayIn
-              ? "Your MoMo number used to send the payment."
+              ? "Enter the payer’s MoMo number (the phone that sends money to Youth Huza)."
               : "Prefills from your account when available. Approve the prompt on this phone."}
           </p>
         )}

@@ -383,22 +383,43 @@ export function AdminShell({
                       {notifications.length === 0 ? (
                         <p className="text-sm text-[var(--admin-muted)]">No alerts right now.</p>
                       ) : (
-                        notifications.slice(0, 8).map((n) => (
-                          <div
-                            key={n.id}
-                            className={`rounded-xl p-2.5 text-sm ${
-                              n.isRead ? "bg-[var(--admin-soft)] opacity-70" : "bg-[var(--admin-soft)]"
-                            }`}
-                          >
-                            <p className="font-medium">
-                              {!n.isRead ? (
-                                <span className="mr-1 inline-block size-1.5 rounded-full bg-[var(--huza-orange,#E86B1A)]" />
-                              ) : null}
-                              {n.title}
-                            </p>
-                            <p className="text-[var(--admin-muted)]">{n.body}</p>
-                          </div>
-                        ))
+                        notifications.slice(0, 8).map((n) => {
+                          const href =
+                            n.type === "ORDER_CONFIRMATION" || n.type === "PAYMENT_CONFIRMATION"
+                              ? "/admin/payments"
+                              : n.type === "LOW_STOCK" || n.type === "RESTOCK_REQUEST"
+                                ? "/admin/inventory"
+                                : n.type === "NEW_SUPPLIER"
+                                  ? "/admin/farmers"
+                                  : "/admin";
+                          return (
+                            <Link
+                              key={n.id}
+                              href={href}
+                              onClick={() => {
+                                setBellOpen(false);
+                                if (!n.isRead) void markNotificationsRead([n.id]);
+                              }}
+                              className={`block rounded-xl p-2.5 text-sm transition hover:ring-1 hover:ring-[var(--huza-green)]/40 ${
+                                n.isRead ? "bg-[var(--admin-soft)] opacity-70" : "bg-[var(--admin-soft)]"
+                              }`}
+                            >
+                              <p className="font-medium">
+                                {!n.isRead ? (
+                                  <span className="mr-1 inline-block size-1.5 rounded-full bg-[var(--huza-orange,#E86B1A)]" />
+                                ) : null}
+                                {n.title}
+                              </p>
+                              <p className="text-[var(--admin-muted)]">{n.body}</p>
+                              {(n.type === "ORDER_CONFIRMATION" ||
+                                n.type === "PAYMENT_CONFIRMATION") && (
+                                <p className="mt-1 text-[10px] font-semibold text-[var(--huza-green-dark)]">
+                                  Open Payments →
+                                </p>
+                              )}
+                            </Link>
+                          );
+                        })
                       )}
                     </div>
                   </div>

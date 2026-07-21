@@ -26,7 +26,7 @@ export async function notifyAdmins(input: {
 
   const roles = isStockAlert
     ? (["ADMIN", "SUPER_ADMIN", "MANAGER", "INVENTORY", "WAREHOUSE"] as const)
-    : (["ADMIN", "SUPER_ADMIN"] as const);
+    : (["ADMIN", "SUPER_ADMIN", "MANAGER", "FINANCE"] as const);
 
   const admins = await prisma.user.findMany({
     where: { role: { in: [...roles] }, isActive: true },
