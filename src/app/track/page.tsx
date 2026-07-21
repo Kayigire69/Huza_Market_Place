@@ -13,6 +13,7 @@ type TrackData = {
   total: number;
   deliveryAddress: string;
   deliveryZone: string;
+  fulfillmentMethod?: string;
   createdAt: string;
   scheduledFor?: string | null;
   estimatedDelivery?: string | null;
@@ -121,7 +122,10 @@ function TrackForm() {
             <p className="font-mono text-xl font-bold text-[var(--huza-green-dark)]">{data.orderNumber}</p>
             <p className="text-sm text-[var(--huza-muted)] mt-1">
               {formatRwf(data.total)}
-              {data.estimatedDelivery ? ` · ETA ${data.estimatedDelivery}` : ""}
+              {data.estimatedDelivery ? ` · ${data.estimatedDelivery}` : ""}
+            </p>
+            <p className="mt-1 text-xs font-semibold text-[var(--huza-green-dark)]">
+              {data.fulfillmentMethod === "PICKUP" ? "Pickup Required" : "Delivery Required"}
             </p>
           </div>
 
@@ -170,8 +174,9 @@ function TrackForm() {
           )}
 
           <p className="text-sm text-[var(--huza-muted)]">
-            Deliver to: {data.deliveryAddress}
-            {zoneLabel ? ` (${zoneLabel})` : ""}
+            {data.fulfillmentMethod === "PICKUP" ? "Pickup at: " : "Deliver to: "}
+            {data.deliveryAddress}
+            {data.fulfillmentMethod !== "PICKUP" && zoneLabel ? ` (${zoneLabel})` : ""}
           </p>
           {data.delivery?.deliveryPerson && (
             <p className="text-sm">

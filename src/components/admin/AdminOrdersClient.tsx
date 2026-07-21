@@ -15,6 +15,7 @@ type OrderRow = {
   guestName?: string | null;
   guestPhone?: string | null;
   deliveryAddress?: string;
+  fulfillmentMethod?: string | null;
   user?: { fullName: string; phone: string; email?: string | null } | null;
   payment?: { status: string; method: string; amount: number } | null;
   delivery?: {
@@ -222,7 +223,12 @@ export function AdminOrdersClient() {
               <tbody>
                 {orders.map((o) => (
                   <tr key={o.id}>
-                    <td className="font-mono text-xs font-semibold">{o.orderNumber}</td>
+                    <td className="font-mono text-xs font-semibold">
+                      <p>{o.orderNumber}</p>
+                      <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--huza-green-dark)]">
+                        {o.fulfillmentMethod === "PICKUP" ? "Pickup Required" : "Delivery Required"}
+                      </p>
+                    </td>
                     <td>
                       <p className="font-medium">{customerName(o)}</p>
                       <p className="text-xs text-[var(--admin-muted)]">{customerPhone(o)}</p>
@@ -297,7 +303,9 @@ export function AdminOrdersClient() {
               </div>
               {viewing.deliveryAddress ? (
                 <div>
-                  <p className="text-xs font-semibold uppercase text-[var(--admin-muted)]">Address</p>
+                  <p className="text-xs font-semibold uppercase text-[var(--admin-muted)]">
+                    {viewing.fulfillmentMethod === "PICKUP" ? "Pickup Required" : "Delivery Required"}
+                  </p>
                   <p>{viewing.deliveryAddress}</p>
                 </div>
               ) : null}

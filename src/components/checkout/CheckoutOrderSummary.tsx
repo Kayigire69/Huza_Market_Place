@@ -26,6 +26,8 @@ type Props = {
   footer?: ReactNode;
   className?: string;
   compact?: boolean;
+  /** Override delivery fee row text (e.g. "Confirmed by phone") */
+  deliveryFeeLabel?: string | null;
 };
 
 export function CheckoutOrderSummary({
@@ -34,6 +36,7 @@ export function CheckoutOrderSummary({
   footer,
   className,
   compact,
+  deliveryFeeLabel = null,
 }: Props) {
   return (
     <div
@@ -74,8 +77,11 @@ export function CheckoutOrderSummary({
           <span>{formatRwf(totals.subtotal)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[var(--huza-muted)]">Delivery Fee</span>
-          <span>{totals.deliveryFee === 0 ? "Free" : formatRwf(totals.deliveryFee)}</span>
+          <span className="text-[var(--huza-muted)]">Delivery</span>
+          <span>
+            {deliveryFeeLabel ||
+              (totals.deliveryFee === 0 ? "Free / arranged" : formatRwf(totals.deliveryFee))}
+          </span>
         </div>
         {totals.discount > 0 ? (
           <div className="flex justify-between text-[var(--huza-green-dark)]">

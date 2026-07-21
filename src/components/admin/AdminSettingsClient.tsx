@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { formatRwf } from "@/lib/utils";
 import { AdminDeliveryZonesPanel } from "@/app/admin/AdminDeliveryZonesPanel";
 
 type TabKey =
@@ -18,7 +17,7 @@ type TabKey =
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "company", label: "Company" },
-  { key: "delivery", label: "Delivery fees" },
+  { key: "delivery", label: "Pickup & delivery" },
   { key: "hours", label: "Working hours" },
   { key: "payments", label: "Payments" },
   { key: "notifications", label: "Notifications" },
@@ -219,24 +218,31 @@ export function AdminSettingsClient({ isSuperAdmin }: { isSuperAdmin: boolean })
       {tab === "delivery" ? (
         <div className="space-y-4">
           <div className="admin-panel max-w-lg space-y-3 p-5">
-            <h2 className="font-semibold">Flat delivery fee</h2>
+            <h2 className="font-semibold">Pickup location (checkout)</h2>
             <p className="text-sm text-[var(--admin-muted)]">
-              Same fee for all destinations (Kigali, Kamonyi, Bugesera). Saving updates every zone.
+              Shown when customers choose free pickup. Home delivery fees are agreed by phone — not
+              calculated in the system.
             </p>
-            <label className="block text-sm">
-              <span className="mb-1 block text-[var(--admin-muted)]">Fee (RWF)</span>
-              <input
-                type="number"
-                min={0}
-                className="admin-input"
-                value={settings.delivery_fee_rwf || "5000"}
-                disabled={!canEdit || busy}
-                onChange={(e) => setField("delivery_fee_rwf", e.target.value)}
-              />
-            </label>
-            <p className="text-sm font-semibold">
-              Preview: {formatRwf(Number(settings.delivery_fee_rwf) || 0)}
-            </p>
+            {(
+              [
+                ["pickup_location_name", "Pickup location name"],
+                ["pickup_address", "Physical address"],
+                ["pickup_maps_url", "Google Maps link or embed URL"],
+                ["pickup_hours", "Business / pickup hours"],
+                ["pickup_phone", "Contact phone"],
+                ["pickup_whatsapp_url", "WhatsApp URL (wa.me/…)"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-muted)]">{label}</span>
+                <input
+                  className="admin-input"
+                  value={settings[key] || ""}
+                  disabled={!canEdit || busy}
+                  onChange={(e) => setField(key, e.target.value)}
+                />
+              </label>
+            ))}
             {canEdit ? (
               <Button
                 type="button"
@@ -244,12 +250,19 @@ export function AdminSettingsClient({ isSuperAdmin }: { isSuperAdmin: boolean })
                 disabled={busy}
                 onClick={() =>
                   void saveBulk(
-                    { delivery_fee_rwf: settings.delivery_fee_rwf || "5000" },
-                    "Delivery fee synced to all zones"
+                    {
+                      pickup_location_name: settings.pickup_location_name || "",
+                      pickup_address: settings.pickup_address || "",
+                      pickup_maps_url: settings.pickup_maps_url || "",
+                      pickup_hours: settings.pickup_hours || "",
+                      pickup_phone: settings.pickup_phone || "",
+                      pickup_whatsapp_url: settings.pickup_whatsapp_url || "",
+                    },
+                    "Pickup location saved"
                   )
                 }
               >
-                Save &amp; sync zones
+                Save pickup info
               </Button>
             ) : null}
           </div>

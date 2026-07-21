@@ -8,7 +8,7 @@ import { formatRwf, formatUnit, type DeliveryZoneDto } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { useMemo, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { cartFulfillmentEta, productFulfillmentLabel, zoneFee } from "@/lib/delivery-eta";
+import { cartFulfillmentEta, productFulfillmentLabel } from "@/lib/delivery-eta";
 
 type DeliverySlot = "TODAY" | "TOMORROW" | "SCHEDULED";
 
@@ -18,8 +18,7 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
   const defaultZone = zones[0]?.code || "KIGALI";
   const [zone, setZone] = useState(defaultZone);
   const [slot, setSlot] = useState<DeliverySlot>("TODAY");
-  const fee = zoneFee(zone, zones);
-  const total = subtotal() + (items.length ? fee : 0);
+  const total = subtotal();
 
   const fulfillment = useMemo(
     () => cartFulfillmentEta(items, zone, slot, zones),
@@ -129,7 +128,7 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
                     <span className="font-semibold">{z.labelEn}</span>
                   </span>
                   <span className="mt-1 block text-xs text-[var(--huza-muted)]">
-                    {formatRwf(fee)} delivery
+                    Area for timing estimate
                   </span>
                 </button>
               );
@@ -166,22 +165,17 @@ export function CartClient({ zones }: { zones: DeliveryZoneDto[] }) {
           <p className="mb-4 text-xs text-[var(--huza-muted)]">
             {fulfillment.needsRestock
               ? t("restockEtaHint")
-              : `${t("deliveryFee")}: ${formatRwf(fee)} · same for all areas`}
+              : "Choose pickup (free) or home delivery at checkout. Delivery fees are confirmed by phone."}
           </p>
 
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>{t("subtotal")}</span>
-              <span>{formatRwf(subtotal())}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>{t("deliveryFee")}</span>
-              <span>{formatRwf(fee)}</span>
-            </div>
             <div className="flex justify-between border-t border-[var(--huza-line)] pt-2 font-bold text-base">
-              <span>{t("total")}</span>
+              <span>{t("subtotal")}</span>
               <span>{formatRwf(total)}</span>
             </div>
+            <p className="text-xs font-normal text-[var(--huza-muted)]">
+              Product total only — delivery options at checkout.
+            </p>
           </div>
 
           <Link href={`/checkout?zone=${zone}&slot=${slot}`} className="mt-4 block">

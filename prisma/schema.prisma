@@ -84,6 +84,12 @@ enum DeliverySlot {
   SCHEDULED
 }
 
+/// How the customer receives the order
+enum FulfillmentMethod {
+  PICKUP
+  HOME_DELIVERY
+}
+
 enum ReviewType {
   PRODUCT
   DELIVERY
@@ -551,6 +557,8 @@ model Order {
   gpsLat               Float?
   gpsLng               Float?
   deliveryInstructions String?
+  /// Pickup at Youth Huza vs home delivery (fee arranged offline for home delivery)
+  fulfillmentMethod   FulfillmentMethod @default(HOME_DELIVERY)
   deliverySlot         DeliverySlot  @default(TODAY)
   scheduledFor         DateTime?
   estimatedDelivery    String?

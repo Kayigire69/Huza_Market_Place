@@ -14,7 +14,7 @@ import { Check, Copy, Loader2, MessageCircle, Smartphone, XCircle } from "lucide
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { formatRwf, type DeliveryZoneDto } from "@/lib/utils";
-import { cartFulfillmentEta, zoneFee } from "@/lib/delivery-eta";
+import { cartFulfillmentEta } from "@/lib/delivery-eta";
 import { Button } from "@/components/ui/Button";
 import {
   BackToCart,
@@ -31,6 +31,12 @@ import {
   type AppliedPromo,
 } from "@/components/checkout/OrderReviewStep";
 import { PaymentStep } from "@/components/checkout/PaymentStep";
+import {
+  FulfillmentChoiceStep,
+  type FulfillmentChoice,
+} from "@/components/checkout/FulfillmentChoiceStep";
+import type { PickupInfo } from "@/lib/pickup-info";
+import { HOME_DELIVERY_FEE_NOTICE } from "@/lib/pickup-info";
 import {
   CheckoutOrderSummary,
   type OrderSummaryTotals,
@@ -61,6 +67,7 @@ type PaymentSuccess = {
   payeePhone: string;
   method: string;
   paymentMode: "live" | "manual" | "demo";
+  fulfillmentMethod?: "PICKUP" | "HOME_DELIVERY";
   estimatedDelivery?: string;
   deliveryAddress?: string;
   dayLabel?: string;
@@ -89,11 +96,13 @@ export default function CheckoutClient({
   customer,
   savedAddresses = [],
   paymentConfig,
+  pickupInfo,
 }: {
   zones: DeliveryZoneDto[];
   customer?: { fullName: string; phone: string } | null;
   savedAddresses?: SavedAddress[];
   paymentConfig: PaymentConfig;
+  pickupInfo: PickupInfo;
 }) {
   const { t } = useLocale();
   const router = useRouter();
@@ -120,6 +129,7 @@ export default function CheckoutClient({
   const [delivery, setDelivery] = useState<ConfirmedDelivery | null>(null);
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [paymentReady, setPaymentReady] = useState(false);
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentChoice | null>(null);
   const [awaitStartedAt, setAwaitStartedAt] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(
     Math.floor(MANUAL_PAYMENT_TIMEOUT_MS / 1000)
@@ -146,7 +156,7 @@ export default function CheckoutClient({
     }));
   }, [customer]);
 
-  const baseFee = zoneFee(zone, zones);
+  const baseFee = 0;
   const cartSubtotal = subtotal();
   const discount = useMemo(() => {
     if (!appliedPromo) return 0;
@@ -155,7 +165,7 @@ export default function CheckoutClient({
     if (appliedPromo.discountAmt) d += appliedPromo.discountAmt;
     return Math.min(d, cartSubtotal);
   }, [appliedPromo, cartSubtotal]);
-  const fee = appliedPromo?.freeDelivery ? 0 : baseFee;
+  const fee = 0;
   const total = useMemo(
     () => Math.max(0, cartSubtotal - discount + fee),
     [cartSubtotal, discount, fee]
@@ -215,6 +225,7 @@ export default function CheckoutClient({
       dayLabel: p.dayLabel,
       windowLabel: p.windowLabel,
       docAccessToken: p.docAccessToken,
+      fulfillmentMethod: p.fulfillmentMethod,
     });
     clear();
     router.push(`/checkout/confirmation?order=${encodeURIComponent(p.orderNumber)}`);
@@ -267,11 +278,16 @@ export default function CheckoutClient({
 
   const payNow = async () => {
     if (payLockRef.current || loading) return;
-    if (!delivery?.address.trim() || !form.address.trim()) {
-      return setError("Confirm your delivery location first.");
+    if (!fulfillmentMethod) {
+      return setError("Choose pickup or home delivery first.");
     }
-    if (delivery && !delivery.available) {
-      return setError("Delivery is not available at this location.");
+    if (fulfillmentMethod === "HOME_DELIVERY") {
+      if (!delivery?.address.trim() || !form.address.trim()) {
+        return setError("Confirm your delivery location first.");
+      }
+      if (delivery && !delivery.available) {
+        return setError("Delivery is not available at this location.");
+      }
     }
     if (!form.fullName.trim()) return setError("Enter your full name.");
     if (!form.phone.trim()) return setError("Enter your phone number.");
@@ -291,15 +307,19 @@ export default function CheckoutClient({
         body: JSON.stringify({
           fullName: form.fullName.trim(),
           phone: form.phone.trim(),
-          address: form.address.trim(),
+          address:
+            fulfillmentMethod === "PICKUP"
+              ? undefined
+              : form.address.trim(),
+          fulfillmentMethod,
           instructions: form.instructions.trim() || undefined,
           deliveryZone: zone,
           deliverySlot: slot,
           paymentMethod: form.paymentMethod,
           paymentPhone: form.paymentPhone.trim(),
           promoCode: appliedPromo?.code || undefined,
-          gpsLat: form.gpsLat || undefined,
-          gpsLng: form.gpsLng || undefined,
+          gpsLat: fulfillmentMethod === "HOME_DELIVERY" ? form.gpsLat || undefined : undefined,
+          gpsLng: fulfillmentMethod === "HOME_DELIVERY" ? form.gpsLng || undefined : undefined,
           items: items.map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
@@ -319,10 +339,15 @@ export default function CheckoutClient({
         payeePhone: data.payeePhone,
         method: data.method,
         paymentMode: data.paymentMode,
+        fulfillmentMethod: data.fulfillmentMethod || fulfillmentMethod || undefined,
         estimatedDelivery: data.estimatedDelivery || fulfillment.etaLabel,
-        deliveryAddress: form.address.trim(),
-        dayLabel: fulfillment.dayLabel,
-        windowLabel: fulfillment.windowLabel,
+        deliveryAddress:
+          fulfillmentMethod === "PICKUP"
+            ? `${pickupInfo.locationName} — ${pickupInfo.address}`
+            : form.address.trim(),
+        dayLabel:
+          fulfillmentMethod === "PICKUP" ? "We notify you when ready" : fulfillment.dayLabel,
+        windowLabel: fulfillmentMethod === "PICKUP" ? "Free pickup" : fulfillment.windowLabel,
         totals: frozenTotals,
         docAccessToken: data.docAccessToken,
       };
@@ -377,14 +402,21 @@ export default function CheckoutClient({
   };
 
   const proceedToPayment = () => {
-    if (!delivery?.address.trim()) {
-      setError("Confirm your delivery location first.");
+    if (!fulfillmentMethod) {
+      setError("Choose pickup or home delivery first.");
       addressSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    if (delivery && !delivery.available) {
-      setError("Delivery is not available at this location.");
-      return;
+    if (fulfillmentMethod === "HOME_DELIVERY") {
+      if (!delivery?.address.trim()) {
+        setError("Confirm your delivery location first.");
+        addressSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (delivery && !delivery.available) {
+        setError("Delivery is not available at this location.");
+        return;
+      }
     }
     if (items.length === 0) {
       setError("Your cart is empty.");
@@ -604,6 +636,13 @@ export default function CheckoutClient({
         unit: i.unit,
       }))}
       totals={liveTotals}
+      deliveryFeeLabel={
+        fulfillmentMethod === "PICKUP"
+          ? "Free"
+          : fulfillmentMethod === "HOME_DELIVERY"
+            ? "Confirmed by phone"
+            : "—"
+      }
       footer={
         // Desktop: Proceed lives here; Pay Now lives in PaymentStep (one primary CTA)
         !paymentReady ? (
@@ -630,29 +669,88 @@ export default function CheckoutClient({
         >
           <div className="space-y-4">
             <div ref={addressSectionRef}>
-              <CheckoutStepCard step={1} title="Delivery Address">
-                <DeliveryAddressStep
-                  confirmed={delivery}
-                  slot={slot}
-                  onConfirm={onDeliveryConfirm}
-                  onClear={onDeliveryClear}
-                  canSaveAddress={Boolean(customer)}
-                  savedAddresses={savedAddresses}
+              <CheckoutStepCard step={1} title="Pickup or delivery">
+                <FulfillmentChoiceStep
+                  value={fulfillmentMethod}
+                  pickup={pickupInfo}
+                  onChange={(next) => {
+                    setFulfillmentMethod(next);
+                    setPaymentReady(false);
+                    if (next === "PICKUP") {
+                      onDeliveryClear();
+                      setForm((f) => ({
+                        ...f,
+                        address: `${pickupInfo.locationName} — ${pickupInfo.address}`,
+                        instructions: "",
+                      }));
+                    } else {
+                      onDeliveryClear();
+                    }
+                    setError("");
+                  }}
                 />
               </CheckoutStepCard>
             </div>
 
+            {fulfillmentMethod === "HOME_DELIVERY" ? (
+              <div>
+                <CheckoutStepCard step={2} title="Delivery address">
+                  <DeliveryAddressStep
+                    confirmed={delivery}
+                    slot={slot}
+                    onConfirm={onDeliveryConfirm}
+                    onClear={onDeliveryClear}
+                    canSaveAddress={Boolean(customer)}
+                    savedAddresses={savedAddresses}
+                  />
+                </CheckoutStepCard>
+              </div>
+            ) : null}
+
             <div>
-              <CheckoutStepCard step={2} title="Order Review">
+              <CheckoutStepCard
+                step={fulfillmentMethod === "HOME_DELIVERY" ? 3 : 2}
+                title="Order Review"
+              >
                 <OrderReviewStep
                   items={items}
-                  address={form.address}
+                  address={
+                    fulfillmentMethod === "PICKUP"
+                      ? `${pickupInfo.locationName} — ${pickupInfo.address}`
+                      : form.address
+                  }
                   notes={form.instructions}
                   slot={slot}
-                  etaDayLabel={fulfillment.dayLabel}
-                  etaWindowLabel={fulfillment.windowLabel}
-                  zoneLabel={zoneLabel}
-                  deliveryFee={fee}
+                  etaDayLabel={
+                    fulfillmentMethod === "PICKUP"
+                      ? "We notify you when ready"
+                      : fulfillment.dayLabel
+                  }
+                  etaWindowLabel={
+                    fulfillmentMethod === "PICKUP" ? "Free pickup" : fulfillment.windowLabel
+                  }
+                  zoneLabel={
+                    fulfillmentMethod === "PICKUP" ? "Youth Huza pickup" : zoneLabel
+                  }
+                  deliveryFee={0}
+                  deliveryFeeLabel={
+                    fulfillmentMethod === "PICKUP"
+                      ? "Free"
+                      : fulfillmentMethod === "HOME_DELIVERY"
+                        ? "Confirmed by phone"
+                        : "—"
+                  }
+                  fulfillmentLabel={
+                    fulfillmentMethod === "PICKUP"
+                      ? "Pickup from Youth Huza"
+                      : fulfillmentMethod === "HOME_DELIVERY"
+                        ? "Home delivery"
+                        : null
+                  }
+                  deliveryNotice={
+                    fulfillmentMethod === "HOME_DELIVERY" ? HOME_DELIVERY_FEE_NOTICE : null
+                  }
+                  hideSlot={fulfillmentMethod === "PICKUP"}
                   subtotal={cartSubtotal}
                   discount={discount}
                   total={total}
@@ -671,6 +769,10 @@ export default function CheckoutClient({
                   appliedPromo={appliedPromo}
                   onSlotChange={setSlot}
                   onChangeAddress={() => {
+                    if (fulfillmentMethod === "PICKUP") {
+                      setFulfillmentMethod(null);
+                      return;
+                    }
                     onDeliveryClear();
                     addressSectionRef.current?.scrollIntoView({
                       behavior: "smooth",
@@ -708,7 +810,10 @@ export default function CheckoutClient({
             </div>
 
             <div ref={paymentSectionRef}>
-              <CheckoutStepCard step={3} title="Payment">
+              <CheckoutStepCard
+                step={fulfillmentMethod === "HOME_DELIVERY" ? 4 : 3}
+                title="Payment"
+              >
                 {!paymentReady ? (
                   <p className="text-sm text-[var(--huza-muted)]">
                     Review your order above, then tap <strong>Proceed to Payment</strong>.

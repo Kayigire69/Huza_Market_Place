@@ -16,7 +16,7 @@ import {
   estimateArrivalWindow,
 } from "@/lib/geo/delivery-zone";
 import type { GeocodedPlace, PlaceSuggestion } from "@/lib/geo/delivery-location";
-import { formatRwf, FLAT_DELIVERY_FEE_RWF, type DeliveryZoneKey } from "@/lib/utils";
+import { type DeliveryZoneKey } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 export type ConfirmedDelivery = {
@@ -246,9 +246,7 @@ export function DeliveryAddressStep({
               </div>
               <div>
                 <p className="text-xs text-[var(--huza-muted)]">Delivery fee</p>
-                <p className="font-semibold text-[var(--huza-green-dark)]">
-                  {formatRwf(FLAT_DELIVERY_FEE_RWF)}
-                </p>
+                <p className="font-semibold text-[var(--huza-green-dark)]">Confirmed by phone</p>
               </div>
             </div>
           </div>

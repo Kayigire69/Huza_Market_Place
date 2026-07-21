@@ -16,6 +16,7 @@ export type ConfirmationPayload = {
   dayLabel?: string;
   windowLabel?: string;
   docAccessToken?: string;
+  fulfillmentMethod?: "PICKUP" | "HOME_DELIVERY";
 };
 
 const STORAGE_KEY = "huza_order_confirmation";
@@ -81,14 +82,16 @@ export default function ConfirmationClient({
           </p>
           <h1 className="section-title mt-2">Order confirmed</h1>
           <p className="mt-2 text-sm text-[var(--huza-muted)]">
-            Payment received. Youth Huza is preparing your order.
+            {data.fulfillmentMethod === "PICKUP"
+              ? "Payment received. We will notify you when your order is ready for collection."
+              : "Payment received. Our team will contact you to confirm delivery and the delivery fee."}
           </p>
         </div>
 
         <div className="mt-8 space-y-3 rounded-2xl border-2 border-[var(--huza-green)] bg-white p-5 text-left shadow-sm">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
-              🧾 Order number
+              Order number
             </p>
             <p className="mt-1 break-all font-mono text-xl font-bold text-[var(--huza-green-dark)] sm:text-2xl">
               {data.orderNumber}
@@ -96,12 +99,15 @@ export default function ConfirmationClient({
             <p className="mt-1 text-sm text-[var(--huza-muted)]">
               Total paid · {formatRwf(data.total)}
             </p>
+            <p className="mt-1 text-xs font-semibold text-[var(--huza-green-dark)]">
+              {data.fulfillmentMethod === "PICKUP" ? "Pickup Required" : "Delivery Required"}
+            </p>
           </div>
 
           {(etaDay || etaWindow) && (
             <div className="border-t border-[var(--huza-line)] pt-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
-                🚚 Estimated delivery
+                {data.fulfillmentMethod === "PICKUP" ? "Collection" : "Delivery"}
               </p>
               {etaDay ? (
                 <p className="mt-1 text-base font-semibold text-[var(--huza-ink)]">{etaDay}</p>
@@ -115,7 +121,7 @@ export default function ConfirmationClient({
           {data.deliveryAddress ? (
             <div className="border-t border-[var(--huza-line)] pt-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
-                📍 Delivery address
+                {data.fulfillmentMethod === "PICKUP" ? "Pickup location" : "Delivery address"}
               </p>
               <p className="mt-1 flex gap-2 text-sm text-[var(--huza-ink)]">
                 <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--huza-green)]" aria-hidden />

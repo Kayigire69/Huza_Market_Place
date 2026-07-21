@@ -33,6 +33,11 @@ type Props = {
   etaWindowLabel: string;
   zoneLabel: string;
   deliveryFee: number;
+  /** Shown instead of formatted RWF when set (e.g. "Free", "Confirmed by phone") */
+  deliveryFeeLabel?: string | null;
+  fulfillmentLabel?: string | null;
+  deliveryNotice?: string | null;
+  hideSlot?: boolean;
   subtotal: number;
   discount: number;
   total: number;
@@ -57,6 +62,10 @@ export function OrderReviewStep({
   etaWindowLabel,
   zoneLabel,
   deliveryFee,
+  deliveryFeeLabel = null,
+  fulfillmentLabel = null,
+  deliveryNotice = null,
+  hideSlot = false,
   subtotal,
   discount,
   total,
@@ -156,15 +165,15 @@ export function OrderReviewStep({
         ) : null}
       </div>
 
-      {/* Address */}
+      {/* Address / pickup */}
       <div className="rounded-xl border border-[var(--huza-line)] bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--huza-muted)]">
-              Delivery address
+              {fulfillmentLabel || "Delivery address"}
             </p>
             <p className="mt-1 text-sm font-medium text-[var(--huza-ink)]">
-              {address.trim() || "No address confirmed yet"}
+              {address.trim() || "Choose pickup or delivery above"}
             </p>
             {notes ? (
               <p className="mt-1 text-xs text-[var(--huza-muted)]">Notes: {notes}</p>
@@ -176,14 +185,21 @@ export function OrderReviewStep({
             onClick={onChangeAddress}
             className="shrink-0 text-xs font-semibold text-[var(--huza-green-dark)] underline"
           >
-            Change address
+            Change
           </button>
         </div>
       </div>
 
-      {/* Delivery day + auto fee/ETA */}
+      {deliveryNotice ? (
+        <div className="rounded-xl border border-[var(--huza-line)] bg-[var(--huza-cream,#F7FBF8)] p-4 text-sm leading-relaxed text-[var(--huza-muted)]">
+          {deliveryNotice}
+        </div>
+      ) : null}
+
+      {/* Delivery day + ETA */}
+      {!hideSlot ? (
       <div className="space-y-3 rounded-xl border border-[var(--huza-line)] bg-white p-4">
-        <p className="text-sm font-semibold">When should we deliver?</p>
+        <p className="text-sm font-semibold">Preferred delivery day</p>
         <div className="flex gap-2">
           {(
             [
@@ -215,11 +231,17 @@ export function OrderReviewStep({
           <div>
             <p className="text-xs text-[var(--huza-muted)]">Delivery fee</p>
             <p className="font-semibold text-[var(--huza-green-dark)]">
-              {deliveryFee === 0 ? "Free" : formatRwf(deliveryFee)}
+              {deliveryFeeLabel || (deliveryFee === 0 ? "Free" : formatRwf(deliveryFee))}
             </p>
           </div>
         </div>
       </div>
+      ) : (
+        <div className="rounded-xl border border-[var(--huza-line)] bg-white p-4 text-sm">
+          <p className="font-semibold text-[var(--huza-green-dark)]">{etaDayLabel}</p>
+          <p className="mt-1 text-xs text-[var(--huza-muted)]">{etaWindowLabel}</p>
+        </div>
+      )}
 
       {/* Payment preview */}
       <div className="rounded-xl border border-[var(--huza-line)] bg-white px-4 py-3 text-sm">
@@ -278,7 +300,9 @@ export function OrderReviewStep({
           </div>
           <div className="flex justify-between">
             <span className="text-[var(--huza-muted)]">Delivery fee</span>
-            <span>{deliveryFee === 0 ? "Free" : formatRwf(deliveryFee)}</span>
+            <span>
+              {deliveryFeeLabel || (deliveryFee === 0 ? "Free" : formatRwf(deliveryFee))}
+            </span>
           </div>
           {discount > 0 ? (
             <div className="flex justify-between text-[var(--huza-green-dark)]">

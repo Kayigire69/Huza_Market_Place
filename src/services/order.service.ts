@@ -17,7 +17,8 @@ import { prisma } from "@/lib/prisma";
 import { productRepository, availableQty } from "@/repositories/product.repository";
 import { enqueueAnalytics, enqueueJob } from "@/jobs/queue";
 import { cacheDel, CacheKeys } from "@/lib/redis";
-import { generateOrderNumber, getDeliveryFee, getHuzaPayee, isPaymentMethodEnabled } from "@/services/settings.service";
+import { generateOrderNumber, getHuzaPayee, getPickupInfo, isPaymentMethodEnabled } from "@/services/settings.service";
+import { HOME_DELIVERY_FEE_NOTICE } from "@/lib/pickup-info";
 import { writeAuditLog } from "@/lib/audit";
 import { notifyAdmins } from "@/lib/notify-admins";
 import { createOrderDocToken } from "@/lib/security-access";
@@ -57,12 +58,14 @@ async function nextReceiptNumber(year: number) {
 export const createOrderSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   phone: z.string().min(8, "Enter a valid phone number (e.g. 078xxxxxxx)"),
-  address: z.string().min(5, "Delivery address is required"),
+  /** Required for home delivery; for pickup we store the Youth Huza pickup address */
+  address: z.string().optional(),
+  fulfillmentMethod: z.enum(["PICKUP", "HOME_DELIVERY"]).default("HOME_DELIVERY"),
   deliveryDistrict: z.string().optional(),
   deliverySector: z.string().optional(),
   deliveryCell: z.string().optional(),
   deliveryVillage: z.string().optional(),
-  deliveryZone: z.enum(["KIGALI", "KAMONYI_RUYENZI", "BUGESERA_NYAMATA"]),
+  deliveryZone: z.enum(["KIGALI", "KAMONYI_RUYENZI", "BUGESERA_NYAMATA"]).optional(),
   deliverySlot: z.enum(["TODAY", "TOMORROW", "SCHEDULED"]).optional(),
   scheduledFor: z.string().optional(),
   gpsLat: z.string().optional(),
@@ -99,8 +102,22 @@ export const orderService = {
       throw new Error("Enter a valid MTN (078/079) or Airtel (072/073) phone number");
     }
     if (!isValidRwandaMomoPhone(data.phone)) {
-      throw new Error("Enter a valid Rwandan mobile number for delivery contact");
+      throw new Error("Enter a valid Rwandan mobile number for contact");
     }
+
+    const fulfillmentMethod = data.fulfillmentMethod || "HOME_DELIVERY";
+    const pickupInfo = await getPickupInfo();
+
+    if (fulfillmentMethod === "HOME_DELIVERY") {
+      if (!data.address || data.address.trim().length < 5) {
+        throw new Error("Delivery address is required for home delivery");
+      }
+    }
+
+    const resolvedAddress =
+      fulfillmentMethod === "PICKUP"
+        ? `Pickup: ${pickupInfo.locationName} — ${pickupInfo.address}`
+        : data.address!.trim();
 
     // Merge duplicate product lines before stock lookup
     const mergedQty = new Map<string, number>();
@@ -126,25 +143,30 @@ export const orderService = {
 
     const status = await getBusinessStatus();
     const slot = (data.deliverySlot || "TODAY") as DeliverySlot;
-    const zoneKey = data.deliveryZone as DeliveryZoneKey;
+    const zoneKey = (data.deliveryZone || "KIGALI") as DeliveryZoneKey;
 
     let scheduledFor: Date | null = null;
-    let estimatedDelivery = formatZoneEta(zoneKey);
-    if (slot === "TOMORROW") {
+    let estimatedDelivery =
+      fulfillmentMethod === "PICKUP"
+        ? "Ready for collection — we will notify you"
+        : formatZoneEta(zoneKey);
+    if (fulfillmentMethod === "HOME_DELIVERY" && slot === "TOMORROW") {
       const next = new Date();
       next.setDate(next.getDate() + 1);
       next.setHours(status.openHour ?? 6, 0, 0, 0);
       scheduledFor = next;
-      estimatedDelivery = "Tomorrow";
-    } else if (slot === "SCHEDULED" && data.scheduledFor) {
+      estimatedDelivery = "Tomorrow (delivery time confirmed by phone)";
+    } else if (fulfillmentMethod === "HOME_DELIVERY" && slot === "SCHEDULED" && data.scheduledFor) {
       scheduledFor = new Date(data.scheduledFor);
       estimatedDelivery = scheduledFor.toLocaleString();
-    } else if (!status.canCheckout) {
+    } else if (fulfillmentMethod === "HOME_DELIVERY" && !status.canCheckout) {
       const next = new Date();
       next.setDate(next.getDate() + 1);
       next.setHours(status.openHour ?? 6, 0, 0, 0);
       scheduledFor = next;
-      estimatedDelivery = "Tomorrow (outside business hours)";
+      estimatedDelivery = "Tomorrow (outside business hours — we will call you)";
+    } else if (fulfillmentMethod === "HOME_DELIVERY") {
+      estimatedDelivery = "Our team will confirm delivery time by phone";
     }
 
     const productIds = data.items.map((i) => i.productId);
@@ -184,10 +206,17 @@ export const orderService = {
     });
 
     // Any restock line → customer soft ETA (never “unavailable”)
-    if (needsRestock && (slot === "TODAY" || !data.deliverySlot)) {
+    if (needsRestock && fulfillmentMethod === "PICKUP") {
+      estimatedDelivery = `Ready for collection after stock arrives (${formatBackorderEta()})`;
+    } else if (needsRestock && (slot === "TODAY" || !data.deliverySlot)) {
       estimatedDelivery = formatBackorderEta();
-    } else if (!needsRestock && slot === "TODAY" && status.canCheckout) {
-      estimatedDelivery = formatZoneEta(zoneKey);
+    } else if (
+      fulfillmentMethod === "HOME_DELIVERY" &&
+      !needsRestock &&
+      slot === "TODAY" &&
+      status.canCheckout
+    ) {
+      estimatedDelivery = "Our team will confirm delivery time by phone";
     }
 
     const fulfillment = cartFulfillmentEta(
@@ -199,12 +228,13 @@ export const orderService = {
       zoneKey,
       slot
     );
-    if (fulfillment.needsRestock && slot === "TODAY") {
+    if (fulfillment.needsRestock && slot === "TODAY" && fulfillmentMethod === "HOME_DELIVERY") {
       estimatedDelivery = fulfillment.etaLabel;
     }
 
     const merchant = await getHuzaPayee();
-    let deliveryFee = await getDeliveryFee(data.deliveryZone);
+    // No system-calculated delivery fee: pickup is free; home delivery fee is agreed offline.
+    let deliveryFee = 0;
     let discount = 0;
     let appliedPromo: string | null = null;
     let loyaltyPointsToSpend = 0;
@@ -220,7 +250,6 @@ export const orderService = {
       });
       if (promo && (!promo.endsAt || promo.endsAt >= new Date())) {
         appliedPromo = promo.code;
-        if (promo.freeDelivery) deliveryFee = 0;
         if (promo.discountPct) discount += Math.round((subtotal * promo.discountPct) / 100);
         if (promo.discountAmt) discount += promo.discountAmt;
         if (promo.isLoyalty && promo.loyaltyPoints) {
@@ -292,16 +321,20 @@ export const orderService = {
           userId,
           guestName: data.fullName,
           guestPhone: data.phone,
-          deliveryAddress: data.address,
+          deliveryAddress: resolvedAddress,
           deliveryDistrict: data.deliveryDistrict || null,
           deliverySector: data.deliverySector || null,
           deliveryCell: data.deliveryCell || null,
           deliveryVillage: data.deliveryVillage || null,
-          deliveryZone: data.deliveryZone as DeliveryZone,
+          deliveryZone: zoneKey as DeliveryZone,
           deliveryFee,
+          fulfillmentMethod,
           gpsLat: data.gpsLat ? Number(data.gpsLat) : null,
           gpsLng: data.gpsLng ? Number(data.gpsLng) : null,
-          deliveryInstructions: data.instructions || null,
+          deliveryInstructions:
+            fulfillmentMethod === "HOME_DELIVERY"
+              ? [data.instructions?.trim(), HOME_DELIVERY_FEE_NOTICE].filter(Boolean).join("\n\n")
+              : data.instructions || null,
           deliverySlot: slot,
           estimatedDelivery,
           subtotal,
@@ -321,7 +354,7 @@ export const orderService = {
               payeeName: merchant.name,
               providerMessage: needsRestock
                 ? `Payment request queued. Restock ETA: ${formatBackorderEta()} after payment`
-                : "Payment request queued. Stock reserved for 10 minutes",
+                : "Payment request queued. Stock reserved",
             },
           },
           delivery: {
@@ -334,9 +367,14 @@ export const orderService = {
             create: [
               {
                 status: OrderStatus.PENDING,
-                note: needsRestock
-                  ? `Pending payment. Delivery ETA ${estimatedDelivery} (fresh stock being prepared)`
-                  : "Pending order. Stock reserved awaiting MoMo/Airtel payment",
+                note:
+                  fulfillmentMethod === "PICKUP"
+                    ? needsRestock
+                      ? `Pickup Required. Pending payment. Collection: ${estimatedDelivery}`
+                      : "Pickup Required. Pending payment. Free collection at Youth Huza"
+                    : needsRestock
+                      ? `Delivery Required. Pending payment. Fee confirmed by phone. ${estimatedDelivery}`
+                      : "Delivery Required. Pending payment. Delivery fee confirmed by phone before dispatch",
               },
             ],
           },
@@ -351,7 +389,7 @@ export const orderService = {
       action: "order.create_pending",
       entity: "Order",
       entityId: order.id,
-      details: `${orderNumber} · ${receiptNumber} · ${total} RWF · ${data.paymentMethod}`,
+      details: `${orderNumber} · ${receiptNumber} · ${total} RWF · ${fulfillmentMethod} · ${data.paymentMethod}`,
     });
 
     // Do not block the customer response on admin inbox writes.
@@ -412,6 +450,7 @@ export const orderService = {
     });
 
     const networkLabel = data.paymentMethod === "MTN_MOMO" ? "MTN MoMo" : "Airtel Money";
+    const fulfillLabel = fulfillmentMethod === "PICKUP" ? "Pickup Required" : "Delivery Required";
     void notifyAdmins({
       type: "ORDER_CONFIRMATION",
       title:
@@ -420,8 +459,8 @@ export const orderService = {
           : `New order: ${orderNumber}`,
       body:
         paymentResult.mode === "manual"
-          ? `${total.toLocaleString("en-RW")} RWF · ${data.fullName} · payer ${data.paymentPhone} · ${networkLabel}. Confirm in Payments when money arrives.`
-          : `${total.toLocaleString("en-RW")} RWF · ${data.fullName} · ${data.paymentPhone} · awaiting phone approval.`,
+          ? `${fulfillLabel} · ${total.toLocaleString("en-RW")} RWF · ${data.fullName} · payer ${data.paymentPhone} · ${networkLabel}. Confirm in Payments when money arrives.`
+          : `${fulfillLabel} · ${total.toLocaleString("en-RW")} RWF · ${data.fullName} · ${data.paymentPhone} · awaiting phone approval.`,
     }).catch(() => undefined);
 
     const expireMs =
@@ -481,6 +520,7 @@ export const orderService = {
       payeeName: merchant.name,
       payeePhone: merchant.phone,
       method: data.paymentMethod,
+      fulfillmentMethod,
       docAccessToken: createOrderDocToken(order.orderNumber),
     };
   },
