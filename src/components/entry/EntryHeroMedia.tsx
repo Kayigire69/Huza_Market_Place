@@ -38,9 +38,9 @@ const SLIDES: readonly (SplitSlide | LogoSlide)[] = [
     id: "audience",
     kind: "split",
     customerSrc: "/images/hero/entry-hero-market.png",
-    farmerSrc: "/images/hero/hero-crops.png",
+    farmerSrc: "/images/hero/entry-hero-farmers.png",
     customerObject: "object-[center_35%]",
-    farmerObject: "object-cover object-center",
+    farmerObject: "object-cover object-[center_45%]",
   },
   {
     id: "logo",
