@@ -19,6 +19,13 @@ export type EntryCopy = {
   trustFarmer: string;
   trustDelivery: string;
   heroImageAlt: string;
+  heroSlideWeHelp: string;
+  heroSlideCustomer: string;
+  heroSlideCustomerLine: string;
+  heroSlideFarmer: string;
+  heroSlideFarmerLine: string;
+  heroSlideFarmerAlt: string;
+  heroSlideAria: string;
   chooseTitle: string;
   chooseSub: string;
   customerTitle: string;
@@ -72,6 +79,13 @@ const en: EntryCopy = {
   trustFarmer: "Farmer support",
   trustDelivery: "Fast delivery",
   heroImageAlt: "Fresh produce at HUZA FRESH",
+  heroSlideWeHelp: "We help",
+  heroSlideCustomer: "customers",
+  heroSlideCustomerLine: "get fresh, quality produce every day.",
+  heroSlideFarmer: "farmers",
+  heroSlideFarmerLine: "grow more, earn more and reach bigger markets.",
+  heroSlideFarmerAlt: "Farmer with fresh harvest",
+  heroSlideAria: "Entry hero slides",
   chooseTitle: "How will you use Youth Huza?",
   chooseSub: "Shop fresh food, or join as a farmer.",
   customerTitle: "Customer Website",
@@ -153,6 +167,13 @@ const rw: EntryCopy = {
   trustFarmer: "Ubufasha ku bahinzi",
   trustDelivery: "Gutanga vuba",
   heroImageAlt: "Ibicuruzwa bishya kuri HUZA FRESH",
+  heroSlideWeHelp: "Dufasha",
+  heroSlideCustomer: "abakiriya",
+  heroSlideCustomerLine: "kubona ibicuruzwa bishya kandi byiza buri munsi.",
+  heroSlideFarmer: "abahinzi",
+  heroSlideFarmerLine: "guhinga byinshi, kwinjiza byinshi no kugera ku isoko rinini.",
+  heroSlideFarmerAlt: "Umuhinzi ufite umusaruro mwiza",
+  heroSlideAria: "Amashusho y'ahabanza",
   chooseTitle: "Ushaka gukoresha Youth Huza gute?",
   chooseSub: "Gura ibicuruzwa bishya, cyangwa wiyandikishe nk'umuhinzi.",
   customerTitle: "Iduka ry'abakiriya",
@@ -235,6 +256,13 @@ const fr: EntryCopy = {
   trustFarmer: "Soutien aux agriculteurs",
   trustDelivery: "Livraison rapide",
   heroImageAlt: "Produits frais chez HUZA FRESH",
+  heroSlideWeHelp: "Nous aidons",
+  heroSlideCustomer: "les clients",
+  heroSlideCustomerLine: "à obtenir des produits frais et de qualité chaque jour.",
+  heroSlideFarmer: "les agriculteurs",
+  heroSlideFarmerLine: "à produire plus, gagner plus et atteindre de grands marchés.",
+  heroSlideFarmerAlt: "Agriculteur avec une récolte fraîche",
+  heroSlideAria: "Diapositives d'accueil",
   chooseTitle: "Comment utiliser Youth Huza ?",
   chooseSub: "Achetez des produits frais, ou rejoignez-nous comme agriculteur.",
   customerTitle: "Boutique clients",
@@ -317,6 +345,13 @@ const sw: EntryCopy = {
   trustFarmer: "Msaada kwa wakulima",
   trustDelivery: "Uwasilishaji wa haraka",
   heroImageAlt: "Mazao safi kwenye HUZA FRESH",
+  heroSlideWeHelp: "Tunasaidia",
+  heroSlideCustomer: "wateja",
+  heroSlideCustomerLine: "kupata mazao safi na bora kila siku.",
+  heroSlideFarmer: "wakulima",
+  heroSlideFarmerLine: "kuzalisha zaidi, kupata zaidi na kufikia masoko makubwa.",
+  heroSlideFarmerAlt: "Mkulima na mavuno safi",
+  heroSlideAria: "Picha za ukurasa wa kuingia",
   chooseTitle: "Unataka kutumia Youth Huza vipi?",
   chooseSub: "Nunua chakula safi, au jiunge kama mkulima.",
   customerTitle: "Duka la wateja",
