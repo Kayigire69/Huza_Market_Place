@@ -65,18 +65,21 @@ const PROCUREMENT_MSG_ROLES = new Set([
 
 export async function requireWarehouseSession(): Promise<Session | null> {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !WAREHOUSE_ROLES.has(session.user.role)) return null;
+  const role = session?.user?.role;
+  if (!session?.user || !role || !WAREHOUSE_ROLES.has(role)) return null;
   return rejectTempPassword(session);
 }
 
 export async function requireDeliverySession(): Promise<Session | null> {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !DELIVERY_ROLES.has(session.user.role)) return null;
+  const role = session?.user?.role;
+  if (!session?.user || !role || !DELIVERY_ROLES.has(role)) return null;
   return rejectTempPassword(session);
 }
 
 export async function requireProcurementMessageSession(): Promise<Session | null> {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !PROCUREMENT_MSG_ROLES.has(session.user.role)) return null;
+  const role = session?.user?.role;
+  if (!session?.user || !role || !PROCUREMENT_MSG_ROLES.has(role)) return null;
   return rejectTempPassword(session);
 }
