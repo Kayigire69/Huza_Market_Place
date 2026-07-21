@@ -7,7 +7,7 @@ export const HUZA_PAYEE_NAME = "Ines Umurerwa";
 export const HUZA_PAYEE_WHATSAPP_URL = "https://wa.me/250788241665";
 
 /** How long unpaid manual MoMo orders keep stock reserved */
-export const MANUAL_PAYMENT_TIMEOUT_MS = 45 * 60 * 1000;
+export const MANUAL_PAYMENT_TIMEOUT_MS = 15 * 60 * 1000;
 export const LIVE_PAYMENT_TIMEOUT_MS = 3 * 60 * 1000;
 
 export function formatHuzaPayeeDisplay(phone = HUZA_PAYEE_PHONE): string {
