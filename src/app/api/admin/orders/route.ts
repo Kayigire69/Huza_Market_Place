@@ -3,6 +3,8 @@ import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, Prisma } from "@prisma/client";
 import { auditAdminAction } from "@/lib/audit";
+import { enqueueSms } from "@/jobs/queue";
+import { getPickupInfo } from "@/services/settings.service";
 
 async function requireAdmin() {
   return requireAdminSession({ modules: ["orders"] });
@@ -83,7 +85,14 @@ export async function PATCH(req: Request) {
   const { id, status } = await req.json();
   const before = await prisma.order.findUnique({
     where: { id },
-    select: { id: true, orderNumber: true, status: true },
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      fulfillmentMethod: true,
+      guestPhone: true,
+      userId: true,
+    },
   });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -120,16 +129,40 @@ export async function PATCH(req: Request) {
     after: { status: order.status },
   });
 
-  if (order.userId) {
+  const notifyUserId = order.userId || before.userId;
+  const isPickupReady =
+    status === "READY_FOR_PICKUP" && before.fulfillmentMethod === "PICKUP";
+
+  if (notifyUserId) {
     await prisma.notification.create({
       data: {
-        userId: order.userId,
+        userId: notifyUserId,
         type: "DELIVERY_UPDATE",
         channel: "IN_APP",
-        title: "Order update",
-        body: `Order ${order.orderNumber} is now ${status}.`,
+        title: isPickupReady ? "Order ready for collection" : "Order update",
+        body: isPickupReady
+          ? `Order ${order.orderNumber} is ready for pickup at Youth Huza. Bring your order number.`
+          : `Order ${order.orderNumber} is now ${String(status).replace(/_/g, " ")}.`,
       },
     });
+  }
+
+  if (isPickupReady) {
+    let smsPhone = before.guestPhone || "";
+    if (!smsPhone && notifyUserId) {
+      const user = await prisma.user.findUnique({
+        where: { id: notifyUserId },
+        select: { phone: true },
+      });
+      smsPhone = user?.phone || "";
+    }
+    if (smsPhone) {
+      const pickup = await getPickupInfo();
+      void enqueueSms(
+        smsPhone,
+        `HUZA FRESH: Order ${order.orderNumber} is ready for pickup at ${pickup.locationName}. ${pickup.address}. Bring your order number.`
+      ).catch(() => undefined);
+    }
   }
 
   return NextResponse.json(order);

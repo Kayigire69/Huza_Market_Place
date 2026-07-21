@@ -10,7 +10,9 @@ import {
   HUZA_PAYEE_NAME,
   HUZA_PAYEE_PHONE,
   HUZA_PAYEE_WHATSAPP_URL,
+  formatHuzaPayeeDisplay,
 } from "@/lib/payments/huza-payee";
+import { DEFAULT_PICKUP_INFO, type PickupInfo } from "@/lib/pickup-info";
 
 const FALLBACK_ZONES: DeliveryZoneDto[] = (Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map(
   (code) => ({
@@ -118,6 +120,12 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   delivery_fee_rwf: String(FLAT_DELIVERY_FEE_RWF),
   merchant_phone: HUZA_PAYEE_PHONE,
   merchant_name: HUZA_PAYEE_NAME,
+  pickup_location_name: DEFAULT_PICKUP_INFO.locationName,
+  pickup_address: DEFAULT_PICKUP_INFO.address,
+  pickup_maps_url: "",
+  pickup_hours: DEFAULT_PICKUP_INFO.hours,
+  pickup_phone: HUZA_PAYEE_PHONE,
+  pickup_whatsapp_url: HUZA_PAYEE_WHATSAPP_URL,
   payment_mtn_enabled: "true",
   payment_airtel_enabled: "true",
   notify_inapp_enabled: "true",
@@ -176,5 +184,42 @@ export async function getHuzaPayee(): Promise<{ name: string; phone: string }> {
   return {
     name: settings.merchant_name || settings.company_name || HUZA_PAYEE_NAME,
     phone: settings.merchant_phone || settings.phone || HUZA_PAYEE_PHONE,
+  };
+}
+
+/** Pickup location shown at checkout (editable in Admin → Settings). */
+export async function getPickupInfo(): Promise<PickupInfo> {
+  const s = await getSettings([
+    "pickup_location_name",
+    "pickup_address",
+    "pickup_maps_url",
+    "pickup_hours",
+    "pickup_phone",
+    "pickup_whatsapp_url",
+    "company_name",
+    "company_address",
+    "phone",
+    "whatsapp_url",
+  ]);
+  const phone =
+    s.pickup_phone?.trim() || s.phone?.trim() || DEFAULT_PICKUP_INFO.phone;
+  const whatsapp =
+    s.pickup_whatsapp_url?.trim() ||
+    s.whatsapp_url?.trim() ||
+    DEFAULT_PICKUP_INFO.whatsappUrl;
+  return {
+    locationName:
+      s.pickup_location_name?.trim() ||
+      s.company_name?.trim() ||
+      DEFAULT_PICKUP_INFO.locationName,
+    address:
+      s.pickup_address?.trim() ||
+      s.company_address?.trim() ||
+      DEFAULT_PICKUP_INFO.address,
+    mapsUrl: s.pickup_maps_url?.trim() || "",
+    hours: s.pickup_hours?.trim() || DEFAULT_PICKUP_INFO.hours,
+    phone,
+    phoneDisplay: formatHuzaPayeeDisplay(phone),
+    whatsappUrl: whatsapp,
   };
 }
