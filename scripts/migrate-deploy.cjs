@@ -11,6 +11,14 @@
  * 3. DATABASE_URL as-is (local Postgres)
  */
 const { spawnSync } = require("child_process");
+const path = require("path");
+
+// Load local .env when run from a developer machine (DO App Platform already injects env).
+try {
+  require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+} catch {
+  // dotenv optional at runtime on App Platform if not resolved; env vars still work.
+}
 
 function resolveMigrateUrl() {
   const direct = process.env.DIRECT_URL?.trim();
