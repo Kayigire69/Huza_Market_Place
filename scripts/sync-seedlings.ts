@@ -1,6 +1,6 @@
 /**
  * Replace Seedlings category products with the four catalog seedlings.
- * Safe to run on an existing database (soft-deletes old seedlings first).
+ * Safe to run on an existing database (removes extras, upserts the four).
  */
 import { PrismaClient, UnitType } from "@prisma/client";
 import { CATALOG_PRODUCTS } from "../prisma/catalog-data";
@@ -8,6 +8,13 @@ import { CATALOG_PRODUCTS } from "../prisma/catalog-data";
 const prisma = new PrismaClient();
 
 const DELIVERY_DISTRICTS = ["Gasabo", "Kicukiro", "Nyarugenge", "Kamonyi", "Bugesera"];
+
+const ALLOWED_NAMES = [
+  "Avocado Seedlings",
+  "Mango Seedlings",
+  "Orange Seedlings",
+  "Lemon Seedlings",
+] as const;
 
 async function main() {
   const category = await prisma.category.findFirst({
@@ -36,59 +43,88 @@ async function main() {
   }
 
   const retired = await prisma.product.updateMany({
-    where: { categoryId: category.id, deletedAt: null },
+    where: {
+      categoryId: category.id,
+      deletedAt: null,
+      nameEn: { notIn: [...ALLOWED_NAMES] },
+    },
     data: { deletedAt: new Date(), isActive: false },
   });
-  console.log(`Retired ${retired.count} existing seedling product(s).`);
+  console.log(`Retired ${retired.count} extra seedling product(s).`);
 
   for (const p of seedlings) {
-    const product = await prisma.product.create({
-      data: {
-        supplierId: company.id,
-        categoryId: category.id,
-        nameEn: p.nameEn,
-        nameFr: p.nameFr,
-        nameRw: p.nameRw,
-        descriptionEn: p.descriptionEn,
-        descriptionFr: p.descriptionFr,
-        descriptionRw: p.descriptionRw,
-        price: p.price,
-        purchasePrice: Math.round(p.price * 0.65),
-        unit: UnitType[p.unit],
-        stockQty: p.stockQty,
-        isOrganic: Boolean(p.isOrganic),
-        isFeatured: Boolean(p.isFeatured),
-        isBestSeller: Boolean(p.isBestSeller),
-        isNewArrival: Boolean(p.isNewArrival),
-        originDistrict: p.originDistrict,
-        location: p.originDistrict,
-        keywords: p.keywords,
-        reviewStatus: "APPROVED",
-        reviewedAt: new Date(),
-        isActive: true,
-        availableDistricts: DELIVERY_DISTRICTS,
-        nutritionalInfo:
-          "Per 100g (approx): Energy, vitamins, and minerals vary by produce. Store cool and consume fresh.",
-        images: {
-          create: [
-            {
-              url: p.image,
-              alt: p.nameEn,
-              sortOrder: 0,
-              kind: "STOREFRONT",
-              isCover: true,
+    const existing = await prisma.product.findFirst({
+      where: { categoryId: category.id, nameEn: p.nameEn },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const productData = {
+      supplierId: company.id,
+      categoryId: category.id,
+      nameEn: p.nameEn,
+      nameFr: p.nameFr,
+      nameRw: p.nameRw,
+      descriptionEn: p.descriptionEn,
+      descriptionFr: p.descriptionFr,
+      descriptionRw: p.descriptionRw,
+      price: p.price,
+      purchasePrice: Math.round(p.price * 0.65),
+      unit: UnitType[p.unit],
+      stockQty: p.stockQty,
+      isOrganic: Boolean(p.isOrganic),
+      isFeatured: Boolean(p.isFeatured),
+      isBestSeller: Boolean(p.isBestSeller),
+      isNewArrival: Boolean(p.isNewArrival),
+      originDistrict: p.originDistrict,
+      location: p.originDistrict,
+      keywords: p.keywords,
+      reviewStatus: "APPROVED" as const,
+      reviewedAt: new Date(),
+      isActive: true,
+      deletedAt: null,
+      availableDistricts: DELIVERY_DISTRICTS,
+      nutritionalInfo:
+        "Per 100g (approx): Energy, vitamins, and minerals vary by produce. Store cool and consume fresh.",
+    };
+
+    let productId: string;
+
+    if (existing) {
+      await prisma.product.update({
+        where: { id: existing.id },
+        data: productData,
+      });
+      productId = existing.id;
+      console.log(`Updated ${p.nameEn} (${productId})`);
+    } else {
+      const created = await prisma.product.create({
+        data: {
+          ...productData,
+          stockLogs: {
+            create: {
+              change: p.stockQty,
+              reason: "Seedlings catalog sync",
             },
-          ],
-        },
-        stockLogs: {
-          create: {
-            change: p.stockQty,
-            reason: "Seedlings catalog sync",
           },
         },
+      });
+      productId = created.id;
+      console.log(`Created ${p.nameEn} (${productId})`);
+    }
+
+    await prisma.productImage.deleteMany({
+      where: { productId, kind: "STOREFRONT" },
+    });
+    await prisma.productImage.create({
+      data: {
+        productId,
+        url: p.image,
+        alt: p.nameEn,
+        sortOrder: 0,
+        kind: "STOREFRONT",
+        isCover: true,
       },
     });
-    console.log(`Created ${p.nameEn} (${product.id})`);
   }
 
   await prisma.category.update({
