@@ -155,9 +155,17 @@ export function PublicEntryPage() {
             </div>
 
             <EntryHeroMedia
-              marketAlt={t.heroImageAlt}
-              logoAlt={t.brand}
-              ariaLabel={t.brand}
+              copy={{
+                weHelp: t.heroSlideWeHelp,
+                customerLabel: t.heroSlideCustomer,
+                customerLine: t.heroSlideCustomerLine,
+                farmerLabel: t.heroSlideFarmer,
+                farmerLine: t.heroSlideFarmerLine,
+                customerAlt: t.heroImageAlt,
+                farmerAlt: t.heroSlideFarmerAlt,
+                logoAlt: t.brand,
+                ariaLabel: t.heroSlideAria,
+              }}
             />
           </div>
         </section>
