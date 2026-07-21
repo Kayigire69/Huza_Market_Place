@@ -43,8 +43,8 @@ export function resolveDatabaseUrl(raw: string | undefined): string {
   }
 
   if (!url.searchParams.has("connection_limit")) {
-    // Neon PgBouncer + Next.js: allow a modest pool; home catalog no longer opens 4 at once.
-    url.searchParams.set("connection_limit", looksLikePooler ? "10" : "15");
+    // Neon PgBouncer + Next.js: keep the pool small on App Platform.
+    url.searchParams.set("connection_limit", looksLikePooler ? "5" : "15");
   }
 
   return url.toString();
