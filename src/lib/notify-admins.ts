@@ -10,8 +10,11 @@ export async function notifyAdmins(input: {
 }) {
   const isStockAlert = input.type === "LOW_STOCK" || input.type === "RESTOCK_REQUEST";
 
-  // Stock alerts always reach admins (with % remaining; throttled ≥1h in stock-alerts.ts).
-  if (!isStockAlert && (await getSetting("notify_inapp_enabled", "true")) === "false") return;
+  if (isStockAlert) {
+    if ((await getSetting("notify_low_stock_enabled", "true")) === "false") return;
+  } else if ((await getSetting("notify_inapp_enabled", "true")) === "false") {
+    return;
+  }
 
   if (input.type === "NEW_SUPPLIER") {
     if ((await getSetting("notify_new_farmer_enabled", "true")) === "false") return;
