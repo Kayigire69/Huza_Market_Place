@@ -675,7 +675,7 @@ export const farmerLandingSw: FarmerI18nDict = {
   flContactWhatsAppLabel: "WhatsApp",
   flOfficeLocation: "Mahali pa ofisi",
   flOfficeAddress: "Kigali, Rwanda",
-  flOfficeHours: "Jumatatu–Jumamosi · 8:00–18:00",
+  flOfficeHours: "Jumatatu–Jumapili · 8:00 AM – 9:00 PM",
   flFinalCtaTitle: "Uko tayari kukua na Youth Huza?",
   flFinalCtaBody:
     "Jiunge na wakulima nchini Rwanda wanaoshirikiana na Youth Huza kwa soko, kilimo na ukuaji.",
