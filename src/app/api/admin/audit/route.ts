@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client";
 async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
   if (!session?.user || !isSuperAdmin(session.user.role)) return null;
+  if (session.user.mustChangePassword) return null;
   return session;
 }
 

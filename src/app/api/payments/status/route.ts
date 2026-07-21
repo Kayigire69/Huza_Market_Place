@@ -93,6 +93,9 @@ export async function POST(req: Request) {
 
   if (action === "confirm") {
     const session = await getServerSession(authOptions);
+    if (session?.user?.mustChangePassword) {
+      return NextResponse.json({ error: "Password change required" }, { status: 403 });
+    }
     if (!canMutateCustomerPayments(session?.user?.role)) {
       return NextResponse.json(
         {

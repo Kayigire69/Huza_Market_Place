@@ -8,7 +8,37 @@ import { normalizeMsisdn } from "@/lib/payments/mobile-money";
 export const BCRYPT_ROUNDS = 12;
 
 function docSecret() {
-  return process.env.NEXTAUTH_SECRET || process.env.JOBS_SECRET || "huza-dev-doc-secret";
+  const secret = process.env.NEXTAUTH_SECRET || process.env.JOBS_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXTAUTH_SECRET (or JOBS_SECRET) is required to sign order documents");
+  }
+  return "huza-dev-doc-secret";
+}
+
+export function timingSafeEqualString(a: string, b: string): boolean {
+  try {
+    const ba = Buffer.from(a);
+    const bb = Buffer.from(b);
+    if (ba.length !== bb.length) return false;
+    return timingSafeEqual(ba, bb);
+  } catch {
+    return false;
+  }
+}
+
+/** Guest support chat: proves possession of the thread without a login. */
+export function createSupportThreadToken(threadId: string): string {
+  return createHmac("sha256", docSecret()).update(`support.${threadId}`).digest("base64url");
+}
+
+export function verifySupportThreadToken(
+  threadId: string,
+  token: string | null | undefined
+): boolean {
+  if (!token || !threadId) return false;
+  const expected = createSupportThreadToken(threadId);
+  return timingSafeEqualString(token, expected);
 }
 
 /** Short-lived HMAC so invoice/receipt links work without exposing bare order numbers. */
@@ -76,17 +106,6 @@ export async function canAccessOrder(
   }
 
   return false;
-}
-
-export function timingSafeEqualString(a: string, b: string): boolean {
-  try {
-    const ba = Buffer.from(a);
-    const bb = Buffer.from(b);
-    if (ba.length !== bb.length) return false;
-    return timingSafeEqual(ba, bb);
-  } catch {
-    return false;
-  }
 }
 
 /** Demo MoMo only when explicitly allowed (never silent in production). */

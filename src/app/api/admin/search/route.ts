@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { isAdminPortalRole } from "@/lib/rbac";
+import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 
 /** GET /api/admin/search?q=. Global admin search across products, orders, farmers, customers */
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !isAdminPortalRole(session.user.role)) {
+  const session = await requireAdminSession({
+    modules: ["dashboard", "orders", "customers", "farmers", "products"],
+  });
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

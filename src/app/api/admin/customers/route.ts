@@ -222,40 +222,52 @@ export async function GET(req: Request) {
     }
   }
 
-  const withSpend = await Promise.all(
-    customers.map(async (c) => {
-      const spent = await prisma.order.aggregate({
-        where: {
-          userId: c.id,
-          status: { notIn: ["CANCELLED"] },
-        },
-        _sum: { total: true },
-      });
-      const notes = notesById.get(c.id);
-      return {
-        id: c.id,
-        fullName: c.fullName,
-        phone: c.phone,
-        email: c.email,
-        isActive: c.isActive,
-        loyaltyPoints: c.loyaltyPoints,
-        hasNotes: Boolean(notes?.trim()),
-        ordersCount: c._count.orders,
-        favoritesCount: c._count.favorites,
-        addressesCount: c._count.addresses,
-        lastOrder: c.orders[0]
-          ? {
-              orderNumber: c.orders[0].orderNumber,
-              total: c.orders[0].total,
-              createdAt: c.orders[0].createdAt,
-              status: c.orders[0].status,
-            }
-          : null,
-        totalSpent: spent._sum.total || 0,
-        createdAt: c.createdAt,
-      };
-    })
-  );
+  const spendByUser =
+    customers.length === 0
+      ? new Map<string, number>()
+      : await prisma.order
+          .groupBy({
+            by: ["userId"],
+            where: {
+              userId: { in: customers.map((c) => c.id) },
+              status: { notIn: ["CANCELLED"] },
+            },
+            _sum: { total: true },
+          })
+          .then(
+            (rows) =>
+              new Map(
+                rows
+                  .filter((r) => r.userId)
+                  .map((r) => [r.userId as string, r._sum.total || 0])
+              )
+          );
+
+  const withSpend = customers.map((c) => {
+    const notes = notesById.get(c.id);
+    return {
+      id: c.id,
+      fullName: c.fullName,
+      phone: c.phone,
+      email: c.email,
+      isActive: c.isActive,
+      loyaltyPoints: c.loyaltyPoints,
+      hasNotes: Boolean(notes?.trim()),
+      ordersCount: c._count.orders,
+      favoritesCount: c._count.favorites,
+      addressesCount: c._count.addresses,
+      lastOrder: c.orders[0]
+        ? {
+            orderNumber: c.orders[0].orderNumber,
+            total: c.orders[0].total,
+            createdAt: c.orders[0].createdAt,
+            status: c.orders[0].status,
+          }
+        : null,
+      totalSpent: spendByUser.get(c.id) || 0,
+      createdAt: c.createdAt,
+    };
+  });
 
   return NextResponse.json({ customers: withSpend });
 }

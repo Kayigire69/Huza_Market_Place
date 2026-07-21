@@ -23,6 +23,7 @@ export function SupportChat() {
   const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [name, setName] = useState("");
@@ -31,32 +32,51 @@ export function SupportChat() {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
 
+  const STORAGE_KEY = "huza-support-thread-v2";
+
   const resetChat = () => {
+    localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem("huza-support-thread");
     setThreadId(null);
+    setAccessToken(null);
     setMessages([]);
     setStarted(false);
     setText("");
     setError("");
   };
 
+  const persistSession = (id: string, token: string) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ threadId: id, accessToken: token }));
+  };
+
   useEffect(() => {
-    // Defer restore until the user opens chat. Avoids API work on every page.
     if (!open) return;
-    const saved = localStorage.getItem("huza-support-thread");
-    if (!saved || threadId) return;
-    setThreadId(saved);
-    setStarted(true);
-    fetch(`/api/support?threadId=${encodeURIComponent(saved)}`)
-      .then(async (r) => {
-        const d = await readJson(r);
-        if (!r.ok) {
-          resetChat();
-          return;
-        }
-        if (Array.isArray(d.messages)) setMessages(d.messages as Msg[]);
-      })
-      .catch(() => resetChat());
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw || threadId) return;
+    try {
+      const parsed = JSON.parse(raw) as { threadId?: string; accessToken?: string };
+      if (!parsed.threadId || !parsed.accessToken) {
+        resetChat();
+        return;
+      }
+      setThreadId(parsed.threadId);
+      setAccessToken(parsed.accessToken);
+      setStarted(true);
+      fetch(
+        `/api/support?threadId=${encodeURIComponent(parsed.threadId)}&token=${encodeURIComponent(parsed.accessToken)}`
+      )
+        .then(async (r) => {
+          const d = await readJson(r);
+          if (!r.ok) {
+            resetChat();
+            return;
+          }
+          if (Array.isArray(d.messages)) setMessages(d.messages as Msg[]);
+        })
+        .catch(() => resetChat());
+    } catch {
+      resetChat();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -82,12 +102,14 @@ export function SupportChat() {
         return;
       }
       const id = String(data.threadId || "");
-      if (!id) {
+      const token = String(data.accessToken || "");
+      if (!id || !token) {
         setError(t("couldNotStartChat"));
         return;
       }
       setThreadId(id);
-      localStorage.setItem("huza-support-thread", id);
+      setAccessToken(token);
+      persistSession(id, token);
       setMessages(Array.isArray(data.messages) ? (data.messages as Msg[]) : []);
       setText("");
       setStarted(true);
@@ -100,7 +122,7 @@ export function SupportChat() {
 
   const send = async (e: FormEvent) => {
     e.preventDefault();
-    if (!threadId || !text.trim() || sending) return;
+    if (!threadId || !accessToken || !text.trim() || sending) return;
     setError("");
     setSending(true);
     const outgoing = text.trim();
@@ -108,7 +130,13 @@ export function SupportChat() {
       const res = await fetch("/api/support", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "message", threadId, body: outgoing, locale }),
+        body: JSON.stringify({
+          action: "message",
+          threadId,
+          accessToken,
+          body: outgoing,
+          locale,
+        }),
       });
       const data = await readJson(res);
       if (res.status === 404 || data.code === "THREAD_MISSING") {

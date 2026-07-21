@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { OrderStatus, StockMovementType } from "@prisma/client";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-function canWarehouse(role?: string) {
-  return (
-    role === "WAREHOUSE" ||
-    role === "INVENTORY" ||
-    role === "ADMIN" ||
-    role === "SUPER_ADMIN" ||
-    role === "MANAGER"
-  );
-}
+import { requireWarehouseSession } from "@/lib/rbac-server";
 
 function receiptNumber() {
   return `GR-${Date.now().toString(36).toUpperCase().slice(-8)}`;
@@ -302,16 +291,16 @@ async function handleAction(
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !canWarehouse(session.user.role)) {
+  const session = await requireWarehouseSession();
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   return handleAction(session, await req.json());
 }
 
 export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !canWarehouse(session.user.role)) {
+  const session = await requireWarehouseSession();
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   return handleAction(session, await req.json());

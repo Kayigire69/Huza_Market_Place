@@ -9,6 +9,7 @@ import {
   defaultQualityRecommendation,
 } from "@/components/portals/FarmerQualityReviewCard";
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit } from "@/lib/utils";
 import { ArrowRight, CheckCircle2, Clock3, XCircle } from "lucide-react";
 
@@ -30,11 +31,11 @@ type CropRow = {
 
 type Filter = "all" | "PENDING" | "APPROVED" | "REJECTED";
 
-function statusMeta(status: string) {
+function statusMeta(status: string, t: (key: string) => string) {
   const s = status || "PENDING";
   if (s === "APPROVED") {
     return {
-      label: "Accepted",
+      label: t("foApprovalAccepted"),
       icon: CheckCircle2,
       chip: "bg-[var(--huza-mint)] text-[var(--huza-green-dark)]",
       ring: "border-[var(--huza-green)]/35",
@@ -42,14 +43,14 @@ function statusMeta(status: string) {
   }
   if (s === "REJECTED") {
     return {
-      label: "Needs improvement",
+      label: t("foApprovalNeedsWork"),
       icon: XCircle,
       chip: "bg-red-50 text-red-800",
       ring: "border-red-200",
     };
   }
   return {
-    label: "In review",
+    label: t("foApprovalInReview"),
     icon: Clock3,
     chip: "bg-amber-50 text-amber-900",
     ring: "border-amber-200",
@@ -80,6 +81,7 @@ export function FarmerApprovalsClient({
   };
   crops: CropRow[];
 }) {
+  const { t } = useLocale();
   const [filter, setFilter] = useState<Filter>("all");
 
   const counts = useMemo(() => {
@@ -98,10 +100,10 @@ export function FarmerApprovalsClient({
   }, [crops, filter]);
 
   const filters: { key: Filter; label: string; count: number }[] = [
-    { key: "all", label: "All", count: counts.all },
-    { key: "PENDING", label: "In review", count: counts.pending },
-    { key: "APPROVED", label: "Accepted", count: counts.approved },
-    { key: "REJECTED", label: "Needs work", count: counts.rejected },
+    { key: "all", label: t("foFilterAll"), count: counts.all },
+    { key: "PENDING", label: t("foApprovalInReview"), count: counts.pending },
+    { key: "APPROVED", label: t("foApprovalAccepted"), count: counts.approved },
+    { key: "REJECTED", label: t("foApprovalNeedsWork"), count: counts.rejected },
   ];
 
   return (
@@ -171,9 +173,9 @@ export function FarmerApprovalsClient({
       {/* Crop reviews summary */}
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          { label: "In review", value: counts.pending, tone: "text-amber-800" },
-          { label: "Accepted", value: counts.approved, tone: "text-[var(--huza-green-dark)]" },
-          { label: "Needs work", value: counts.rejected, tone: "text-red-800" },
+          { label: t("foApprovalInReview"), value: counts.pending, tone: "text-amber-800" },
+          { label: t("foApprovalAccepted"), value: counts.approved, tone: "text-[var(--huza-green-dark)]" },
+          { label: t("foApprovalNeedsWork"), value: counts.rejected, tone: "text-red-800" },
         ].map((kpi) => (
           <FarmerPanel key={kpi.label} className="!p-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
@@ -225,7 +227,7 @@ export function FarmerApprovalsClient({
         <div className="space-y-4">
           {visible.map((crop) => {
             const status = crop.reviewStatus || "PENDING";
-            const meta = statusMeta(status);
+            const meta = statusMeta(status, t);
             const Icon = meta.icon;
             return (
               <FarmerPanel key={crop.id} className={`border ${meta.ring}`}>

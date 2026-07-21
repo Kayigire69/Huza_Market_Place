@@ -9,6 +9,7 @@ import {
 } from "@/components/portals/FarmerQualityReviewCard";
 import { Button } from "@/components/ui/Button";
 import type { FarmerPurchaseOrderRow } from "@/lib/farmer-workspace";
+import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit } from "@/lib/utils";
 import { ArrowRight, ClipboardList, PackageCheck } from "lucide-react";
 
@@ -40,6 +41,7 @@ function matchesFilter(po: FarmerPurchaseOrderRow, filter: Filter) {
  * Phase 4 Purchase Orders. Harvest buys from Youth Huza, not a retail order list.
  */
 export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[] }) {
+  const { t } = useLocale();
   const [filter, setFilter] = useState<Filter>("all");
 
   const counts = useMemo(() => {
@@ -62,11 +64,11 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
     .reduce((sum, po) => sum + po.totalAmount, 0);
 
   const filters: { key: Filter; label: string; count: number }[] = [
-    { key: "all", label: "All", count: counts.all },
-    { key: "active", label: "In progress", count: counts.active },
-    { key: "accepted", label: "Accepted", count: counts.accepted },
-    { key: "rejected", label: "Rejected", count: counts.rejected },
-    { key: "paid", label: "Paid", count: counts.paid },
+    { key: "all", label: t("foFilterAll"), count: counts.all },
+    { key: "active", label: t("foFilterActive"), count: counts.active },
+    { key: "accepted", label: t("foFilterAccepted"), count: counts.accepted },
+    { key: "rejected", label: t("foFilterRejected"), count: counts.rejected },
+    { key: "paid", label: t("foFilterPaid"), count: counts.paid },
   ];
 
   if (orders.length === 0) {
@@ -74,14 +76,14 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
       <FarmerPanel className="max-w-2xl">
         <ClipboardList className="h-8 w-8 text-[var(--huza-green)]" />
         <h2 className="mt-3 font-[family-name:var(--font-display)] text-xl font-bold text-[var(--huza-ink)]">
-          No purchase orders yet
+          {t("foOrdersEmptyTitle")}
         </h2>
         <p className="mt-2 text-sm text-[var(--huza-muted)]">
-          When Youth Huza buys your harvest, the order appears here with quantity, inspection, and payment follow-up.
+          {t("foOrdersEmptyBody")}
         </p>
-        <Link href="/farmer/products" className="mt-4 inline-block">
+        <Link href="/farmer/produce" className="mt-4 inline-block">
           <Button className="gap-2">
-            Keep crop supply ready <ArrowRight className="h-4 w-4" />
+            {t("foKeepSupplyReady")} <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
       </FarmerPanel>
@@ -93,7 +95,7 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
       <div className="grid gap-3 sm:grid-cols-3">
         <FarmerPanel className="!p-4">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
-            Purchase orders
+            {t("foPurchaseOrders")}
           </p>
           <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-[var(--huza-green-dark)]">
             {counts.all}
@@ -101,7 +103,7 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
         </FarmerPanel>
         <FarmerPanel className="!p-4">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
-            In progress
+            {t("foInProgress")}
           </p>
           <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-amber-800">
             {counts.active}
@@ -109,7 +111,7 @@ export function FarmerOrdersClient({ orders }: { orders: FarmerPurchaseOrderRow[
         </FarmerPanel>
         <FarmerPanel className="!p-4">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--huza-muted)]">
-            Open value
+            {t("foOpenValue")}
           </p>
           <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-green-dark)]">
             {formatRwf(openValue)}

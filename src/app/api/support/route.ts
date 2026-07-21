@@ -1,15 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supportAutoReply } from "@/lib/support-bot";
+import {
+  createSupportThreadToken,
+  verifySupportThreadToken,
+} from "@/lib/security-access";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   try {
-    const threadId = new URL(req.url).searchParams.get("threadId");
+    const rl = await rateLimit({
+      key: `support-get:${clientIp(req)}`,
+      limit: 60,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json({ error: "Too many requests", messages: [] }, { status: 429 });
+    }
+
+    const url = new URL(req.url);
+    const threadId = url.searchParams.get("threadId");
+    const token = url.searchParams.get("token");
     if (!threadId) {
-      return NextResponse.json({ error: "threadId required" }, { status: 400 });
+      return NextResponse.json({ error: "threadId required", messages: [] }, { status: 400 });
+    }
+    if (!verifySupportThreadToken(threadId, token)) {
+      return NextResponse.json({ error: "Unauthorized", messages: [] }, { status: 403 });
     }
 
     const thread = await prisma.supportThread.findUnique({
@@ -21,6 +40,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({
       threadId: thread.id,
+      accessToken: token,
       messages: thread.messages,
       status: thread.status,
     });
@@ -35,6 +55,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const rl = await rateLimit({
+      key: `support-post:${clientIp(req)}`,
+      limit: 40,
+      windowMs: 60_000,
+    });
+    if (!rl.ok) {
+      return NextResponse.json({ error: "Too many requests", messages: [] }, { status: 429 });
+    }
+
     let body: Record<string, unknown>;
     try {
       body = await req.json();
@@ -65,17 +94,23 @@ export async function POST(req: Request) {
         include: { messages: { orderBy: { createdAt: "asc" } } },
       });
 
+      const accessToken = createSupportThreadToken(thread.id);
       return NextResponse.json({
         threadId: thread.id,
+        accessToken,
         messages: thread.messages,
       });
     }
 
     if (action === "message") {
       const threadId = typeof body.threadId === "string" ? body.threadId : "";
+      const accessToken = typeof body.accessToken === "string" ? body.accessToken : "";
       const text = typeof body.body === "string" ? body.body.trim() : "";
       if (!threadId) {
         return NextResponse.json({ error: "threadId required", messages: [] }, { status: 400 });
+      }
+      if (!verifySupportThreadToken(threadId, accessToken)) {
+        return NextResponse.json({ error: "Unauthorized", messages: [] }, { status: 403 });
       }
       if (!text) {
         return NextResponse.json({ error: "Message is empty", messages: [] }, { status: 400 });
@@ -115,6 +150,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         threadId,
+        accessToken,
         messages: thread?.messages || [],
       });
     }

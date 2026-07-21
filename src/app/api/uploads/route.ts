@@ -21,6 +21,12 @@ export async function POST(req: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (session.user.mustChangePassword) {
+    return NextResponse.json(
+      { error: "Password change required before uploading." },
+      { status: 403 }
+    );
+  }
   const role = session.user.role;
   if (role !== "SUPPLIER" && !isAdminPortalRole(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
