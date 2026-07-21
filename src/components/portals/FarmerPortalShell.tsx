@@ -23,13 +23,16 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const isLanding = pathname === "/farmer" || pathname === "/farmer/";
-  const isAuthScreen =
-    pathname === "/farmer/login" ||
-    pathname.startsWith("/farmer/login/") ||
-    pathname === "/farmer/register" ||
-    pathname.startsWith("/farmer/register/");
-  /** Auth screens stay locked to the viewport; landing scrolls through sections. */
-  const lockViewport = isAuthScreen;
+  const isLogin =
+    pathname === "/farmer/login" || pathname.startsWith("/farmer/login/");
+  const isRegister =
+    pathname === "/farmer/register" || pathname.startsWith("/farmer/register/");
+  const isAuthScreen = isLogin || isRegister;
+  /**
+   * Login stays short and viewport-locked.
+   * Registration is a long dossier form and must scroll (do not lock it).
+   */
+  const lockViewport = isLogin;
 
   return (
     <div
@@ -44,13 +47,15 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
             src={CROP_BACKGROUNDS[0]}
             alt=""
             fill
-            className={`object-cover object-center ${isLanding ? "scale-105 blur-[2.5px]" : ""}`}
+            className={`object-cover object-center ${isLanding || isRegister ? "scale-105 blur-[2.5px]" : ""}`}
             sizes="100vw"
             priority
           />
         </div>
         <div
-          className={`absolute inset-0 ${isLanding ? "farmer-portal-wash-landing" : "farmer-portal-wash"}`}
+          className={`absolute inset-0 ${
+            isLanding || isRegister ? "farmer-portal-wash-landing" : "farmer-portal-wash"
+          }`}
         />
         {!isAuthScreen && !isLanding && (
           <>
@@ -142,10 +147,10 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
 
-      {!isAuthScreen && (
+      {!isLogin && (
         <footer
           className={`relative z-10 shrink-0 border-t border-[var(--huza-line)]/60 bg-white/90 text-center text-xs text-[var(--huza-muted)] backdrop-blur-md ${
-            isLanding ? "px-4 py-5 sm:py-6" : "mt-16 py-6"
+            isLanding || isRegister ? "px-4 py-5 sm:py-6" : "mt-16 py-6"
           }`}
         >
           <p className="leading-relaxed">

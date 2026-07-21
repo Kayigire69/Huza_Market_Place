@@ -430,7 +430,7 @@ export const farmerLandingEn: FarmerI18nDict = {
   flContactWhatsAppLabel: "WhatsApp",
   flOfficeLocation: "Office Location",
   flOfficeAddress: "Kigali, Rwanda",
-  flOfficeHours: "Mon–Sat · 8:00–18:00",
+  flOfficeHours: "Mon–Sun · 8:00 AM – 9:00 PM",
   flFinalCtaTitle: "Ready to Grow with Youth Huza?",
   flFinalCtaBody: "Join farmers across Rwanda who partner with Youth Huza for markets, agronomy and growth.",
 };
@@ -511,7 +511,7 @@ export const farmerLandingFr: FarmerI18nDict = {
   flContactWhatsAppLabel: "WhatsApp",
   flOfficeLocation: "Adresse du bureau",
   flOfficeAddress: "Kigali, Rwanda",
-  flOfficeHours: "Lun–Sam · 8h00–18h00",
+  flOfficeHours: "Lun–Dim · 8h00 – 21h00",
   flFinalCtaTitle: "Prêt à grandir avec Youth Huza ?",
   flFinalCtaBody:
     "Rejoignez les agriculteurs du Rwanda qui collaborent avec Youth Huza pour les marchés, l'agronomie et la croissance.",
@@ -593,7 +593,7 @@ export const farmerLandingRw: FarmerI18nDict = {
   flContactWhatsAppLabel: "WhatsApp",
   flOfficeLocation: "Aho ibiro biherereye",
   flOfficeAddress: "Kigali, Rwanda",
-  flOfficeHours: "Kuwa mbere–Kuwa gatandatu · 8:00–18:00",
+  flOfficeHours: "Kuwa mbere–Ku cyumweru · 8:00 AM – 9:00 PM",
   flFinalCtaTitle: "Witeguye gukura hamwe na Youth Huza?",
   flFinalCtaBody:
     "Injira mu bahinzi bo mu Rwanda bafatanya na Youth Huza ku isoko, ubuhinzi n'iterambere.",
