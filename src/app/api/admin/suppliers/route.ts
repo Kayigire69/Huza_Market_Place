@@ -3,6 +3,7 @@ import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { SupplierStatus } from "@prisma/client";
 import { auditAdminAction } from "@/lib/audit";
+import { pickFarmerDossier } from "@/lib/farmer-dossier";
 
 async function requireAdmin() {
   return requireAdminSession({ modules: ["farmers"] });
@@ -110,6 +111,25 @@ export async function GET(req: Request) {
         farmPhotoUrls: farmer.farmPhotoUrls,
         productsOffered: farmer.productsOffered,
         huzaPurchaseAgreement: farmer.huzaPurchaseAgreement,
+        currentCrop: farmer.currentCrop,
+        cell: farmer.cell,
+        village: farmer.village,
+        gender: farmer.gender,
+        ageRange: farmer.ageRange,
+        fieldType: farmer.fieldType,
+        pastCropsSeason1: farmer.pastCropsSeason1,
+        pastCropsSeason2: farmer.pastCropsSeason2,
+        pastCropsSeason3: farmer.pastCropsSeason3,
+        chemicalsPerWeek: farmer.chemicalsPerWeek,
+        chemicalsWhy: farmer.chemicalsWhy,
+        chemicalsDosage: farmer.chemicalsDosage,
+        fertilizerPerWeek: farmer.fertilizerPerWeek,
+        irrigationMethod: farmer.irrigationMethod,
+        diseasesIdentified: farmer.diseasesIdentified,
+        pestsIdentified: farmer.pestsIdentified,
+        totalQuantityHarvested: farmer.totalQuantityHarvested,
+        qualityGeneral: farmer.qualityGeneral,
+        farmerComments: farmer.farmerComments,
         stats: {
           productsSubmitted: farmer._count.products,
           productsApproved,
@@ -204,20 +224,39 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  const { id, action, reason, adminNotes, inspectionScheduledAt } = await req.json();
+  const body = await req.json();
+  const { id, action, reason, adminNotes, inspectionScheduledAt, farmDetails } = body as {
+    id?: string;
+    action?: string;
+    reason?: string;
+    adminNotes?: string | { title?: string; body?: string };
+    inspectionScheduledAt?: string;
+    farmDetails?: Record<string, unknown>;
+  };
+
+  if (!id || !action) {
+    return NextResponse.json({ error: "id and action required" }, { status: 400 });
+  }
 
   if (action === "notify") {
     const supplier = await prisma.supplier.findUnique({ where: { id } });
     if (!supplier) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    const title = String(adminNotes?.title || "Message from Youth Huza");
-    const body = String(adminNotes?.body || reason || "Please check your Huza farmer account.");
+    const title =
+      typeof adminNotes === "object" && adminNotes
+        ? String(adminNotes.title || "Message from Youth Huza")
+        : "Message from Youth Huza";
+    const message = String(
+      (typeof adminNotes === "object" && adminNotes ? adminNotes.body : undefined) ||
+        reason ||
+        "Please check your Huza farmer account."
+    );
     await prisma.notification.create({
       data: {
         userId: supplier.userId,
         type: "SUPPLIER_STATUS",
         channel: "IN_APP",
         title,
-        body,
+        body: message,
       },
     });
     await auditAdminAction(req, session, {
@@ -230,10 +269,14 @@ export async function PATCH(req: Request) {
   }
 
   if (action === "request_info") {
+    const noteText =
+      typeof adminNotes === "string"
+        ? adminNotes
+        : reason || "Please provide additional documents";
     const supplier = await prisma.supplier.update({
       where: { id },
       data: {
-        adminNotes: adminNotes || reason || "Please provide additional documents",
+        adminNotes: noteText,
       },
     });
     await prisma.notification.create({
@@ -242,25 +285,29 @@ export async function PATCH(req: Request) {
         type: "SUPPLIER_STATUS",
         channel: "IN_APP",
         title: "Additional information requested",
-        body: adminNotes || reason || "Please update your verification documents.",
+        body: noteText,
       },
     });
     await auditAdminAction(req, session, {
       action: "supplier.request_info",
       entity: "Supplier",
       entityId: id,
-      details: adminNotes || reason,
+      details: noteText,
     });
     return NextResponse.json(supplier);
   }
 
   if (action === "schedule_inspection") {
     const when = inspectionScheduledAt ? new Date(inspectionScheduledAt) : new Date();
+    const noteText =
+      typeof adminNotes === "string"
+        ? adminNotes
+        : `Inspection scheduled for ${when.toISOString()}`;
     const supplier = await prisma.supplier.update({
       where: { id },
       data: {
         inspectionScheduledAt: when,
-        adminNotes: adminNotes || `Inspection scheduled for ${when.toISOString()}`,
+        adminNotes: noteText,
       },
     });
     await prisma.notification.create({
@@ -285,6 +332,62 @@ export async function PATCH(req: Request) {
     const supplier = await prisma.supplier.update({
       where: { id },
       data: { adminNotes: adminNotes ? String(adminNotes) : null },
+    });
+    return NextResponse.json(supplier);
+  }
+
+  if (action === "save_farm_details") {
+    const dossier = pickFarmerDossier((farmDetails || {}) as Record<string, unknown>);
+    // Agents fill optional farm details during Pending; payment/sales stay farmer-owned after approve
+    // unless staff explicitly sends those keys — allow farm + location fields only here.
+    const allowed = [
+      "businessName",
+      "province",
+      "district",
+      "sector",
+      "cell",
+      "village",
+      "location",
+      "gender",
+      "ageRange",
+      "fieldType",
+      "farmSize",
+      "pastCropsSeason1",
+      "pastCropsSeason2",
+      "pastCropsSeason3",
+      "currentCrop",
+      "chemicalsPerWeek",
+      "chemicalsWhy",
+      "chemicalsDosage",
+      "fertilizerPerWeek",
+      "irrigationMethod",
+      "diseasesIdentified",
+      "pestsIdentified",
+      "totalQuantityHarvested",
+      "qualityGeneral",
+      "farmerComments",
+      "productsOffered",
+      "description",
+    ] as const;
+    const data: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (dossier[key] !== undefined) data[key] = dossier[key];
+    }
+    if (data.currentCrop && !data.productsOffered) {
+      data.productsOffered = data.currentCrop;
+    }
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: "No farm details to save" }, { status: 400 });
+    }
+    const supplier = await prisma.supplier.update({
+      where: { id },
+      data: data as never,
+    });
+    await auditAdminAction(req, session, {
+      action: "supplier.save_farm_details",
+      entity: "Supplier",
+      entityId: id,
+      details: Object.keys(data).join(", "),
     });
     return NextResponse.json(supplier);
   }

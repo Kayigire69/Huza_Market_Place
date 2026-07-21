@@ -32,6 +32,21 @@ export const RWANDA_PROVINCES = [
   "Western Province",
 ] as const;
 
+export const PAYMENT_AND_SALES_KEYS = [
+  "paymentMomo",
+  "bankAccount",
+  "bankName",
+  "paymentOption",
+  "farmGatePrice",
+  "priceUponDelivery",
+  "priceAfterSale",
+  "proofOfPaymentUrl",
+  "priceUnit",
+  "pricePerUnit",
+  "totalKgsBoughtByHuza",
+  "huzaPurchaseAgreement",
+] as const;
+
 export type FarmerDossierFields = {
   profilePhotoUrl?: string | null;
   businessName?: string | null;

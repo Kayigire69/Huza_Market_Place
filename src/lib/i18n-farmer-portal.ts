@@ -25,7 +25,8 @@ export const farmerAuthEn: FarmerI18nDict = {
   farmerLoginRateLimited: "Too many tries. Wait a few minutes and try again.",
   farmerLoginMismatch: "Phone number or National ID digits do not match. Check and try again.",
   backToFarmerHome: "← Home",
-  farmerRegisterHint: "Login later with phone + last 4 of National ID",
+  farmerRegisterHint:
+    "Short signup: identity, phone, location, main crops, and terms. Login later with phone + last 4 of National ID. Farm details can be completed in Settings (or by a Huza agent) while you wait for approval.",
   farmDetailsBtn: "Farm details",
   farmDetailsRequired: "Farm details (required)",
   farmDetailsOptional: "Farm details (optional)",
@@ -36,7 +37,18 @@ export const farmerAuthEn: FarmerI18nDict = {
   closeDialog: "Close",
   saveDraft: "Save",
   farmerRegisterNeedFarm:
-    "Complete all required farm details (personal, field, production, sales, and payment).",
+    "Enter your name, phone, National ID, location, main crop(s), and accept the terms.",
+  farmBusinessNameOptional: "Optional — we can use your name if empty",
+  mainCropsLabel: "Main crop(s)",
+  mainCropsPlaceholder: "e.g. tomatoes, potatoes, bananas…",
+  dossierPendingHint:
+    "Optional farm details can be completed here or by a Youth Huza agent during review. MoMo, bank, and sales setup unlock after approval.",
+  farmDetailsOptionalHint: "Optional for now — agents can also complete these during a farm visit.",
+  paymentSetupAfterApproval: "Complete payment and sales details so Youth Huza can buy and pay you.",
+  paymentLockedUntilApproved:
+    "MoMo, bank, proof documents, and full sales setup unlock after Youth Huza approves your farm account.",
+  dossierIntroApproved:
+    "Keep your farm profile up to date. Add MoMo or bank details and sales setup so Huza can pay you.",
   pathOrganicShort: "Organic",
   pathConversionShort: "Conversion",
   pathConventionalShort: "Conventional",
@@ -62,7 +74,8 @@ export const farmerAuthFr: FarmerI18nDict = {
   farmerLoginRateLimited: "Trop de tentatives. Attendez quelques minutes.",
   farmerLoginMismatch: "Téléphone ou chiffres d'identité incorrects. Vérifiez et réessayez.",
   backToFarmerHome: "← Accueil",
-  farmerRegisterHint: "Connexion plus tard avec téléphone + 4 derniers chiffres d'identité",
+  farmerRegisterHint:
+    "Inscription courte : identité, téléphone, lieu, cultures principales et conditions. Connexion plus tard avec téléphone + 4 derniers chiffres. Les détails de ferme se complètent dans Paramètres (ou par un agent Huza) en attendant l'approbation.",
   farmDetailsBtn: "Détails de la ferme",
   farmDetailsRequired: "Détails de la ferme (obligatoire)",
   farmDetailsOptional: "Détails de la ferme (facultatif)",
@@ -73,7 +86,18 @@ export const farmerAuthFr: FarmerI18nDict = {
   closeDialog: "Fermer",
   saveDraft: "Enregistrer",
   farmerRegisterNeedFarm:
-    "Complétez tous les détails de ferme obligatoires (personnel, champ, production, ventes et paiement).",
+    "Indiquez nom, téléphone, pièce d'identité, lieu, cultures principales, et acceptez les conditions.",
+  farmBusinessNameOptional: "Facultatif — votre nom sera utilisé si vide",
+  mainCropsLabel: "Culture(s) principale(s)",
+  mainCropsPlaceholder: "Ex. : tomates, pommes de terre, bananes…",
+  dossierPendingHint:
+    "Les détails de ferme optionnels peuvent être complétés ici ou par un agent Youth Huza. MoMo, banque et ventes s'ouvrent après approbation.",
+  farmDetailsOptionalHint: "Facultatif pour l'instant — un agent peut aussi les compléter lors d'une visite.",
+  paymentSetupAfterApproval: "Complétez paiement et ventes pour que Youth Huza puisse acheter et vous payer.",
+  paymentLockedUntilApproved:
+    "MoMo, banque, justificatifs et ventes s'ouvrent après l'approbation de votre compte.",
+  dossierIntroApproved:
+    "Tenez à jour votre profil. Ajoutez MoMo ou banque et les détails de vente pour être payé.",
   pathOrganicShort: "Bio",
   pathConversionShort: "Conversion",
   pathConventionalShort: "Conventionnel",
@@ -99,7 +123,8 @@ export const farmerAuthRw: FarmerI18nDict = {
   farmerLoginRateLimited: "Wagerageje kenshi cyane. Tegereza iminota mike.",
   farmerLoginMismatch: "Telefoni cyangwa imibare y'irangamuntu ntizihuye. Ongera ugerageze.",
   backToFarmerHome: "← Ahabanza",
-  farmerRegisterHint: "Nyuma winjira ukoresheje telefoni + imibare 4 ya nyuma y'irangamuntu",
+  farmerRegisterHint:
+    "Kwiyandikisha guto: amazina, telefoni, aho uherereye, ibihingwa by'ingenzi, n'amasezerano. Nyuma winjira ukoresheje telefoni + imibare 4 ya nyuma. Amakuru y'umurima ashobora kuzuzwa muri Igenamiterere (cyangwa n'umukozi wa Huza) mu gihe utegereje.",
   farmDetailsBtn: "Amakuru y'umurima",
   farmDetailsRequired: "Amakuru y'umurima (ngombwa)",
   farmDetailsOptional: "Amakuru y'umurima (si ngombwa)",
@@ -110,7 +135,18 @@ export const farmerAuthRw: FarmerI18nDict = {
   closeDialog: "Funga",
   saveDraft: "Bika",
   farmerRegisterNeedFarm:
-    "Uzuza amakuru yose y'umurima asabwa (umuntu, umurima, umusaruro, kugurisha, n'ubwishyu).",
+    "Andika amazina, telefoni, irangamuntu, aho uherereye, ibihingwa by'ingenzi, wemere amasezerano.",
+  farmBusinessNameOptional: "Si ngombwa — niba ubuze dukoresha izina ryawe",
+  mainCropsLabel: "Ibihingwa by'ingenzi",
+  mainCropsPlaceholder: "urugero: inyanya, ibirayi, imineke…",
+  dossierPendingHint:
+    "Amakuru y'umurima ashobora kuzuzwa hano cyangwa n'umukozi wa Youth Huza. MoMo, banki n'ubucuruzi bifunguka nyuma yo kwemererwa.",
+  farmDetailsOptionalHint: "Si ngombwa ubu — umukozi ashobora naye kuyuzuza iyo asuye.",
+  paymentSetupAfterApproval: "Uzuza ubwishyu n'ubucuruzi kugira ngo Youth Huza igure ikwishyure.",
+  paymentLockedUntilApproved:
+    "MoMo, banki, inyemezabwishyu n'ubucuruzi bifunguka nyuma yo kwemererwa na Youth Huza.",
+  dossierIntroApproved:
+    "Komeza kuvugurura umwirondoro wawe. Ongeraho MoMo cyangwa banki n'amakuru y'ubucuruzi.",
   pathOrganicShort: "Ibinyabuzima",
   pathConversionShort: "Kujya ku binyabuzima",
   pathConventionalShort: "Busanzwe",
@@ -136,7 +172,8 @@ export const farmerAuthSw: FarmerI18nDict = {
   farmerLoginRateLimited: "Umejaribu mara nyingi. Subiri dakika chache.",
   farmerLoginMismatch: "Simu au tarakimu za kitambulisho hazilingani. Angalia tena.",
   backToFarmerHome: "← Nyumbani",
-  farmerRegisterHint: "Baadaye ingia kwa simu + tarakimu 4 za mwisho za kitambulisho",
+  farmerRegisterHint:
+    "Usajili mfupi: utambulisho, simu, eneo, mazao makuu, na masharti. Baadaye ingia kwa simu + tarakimu 4 za mwisho. Maelezo ya shamba yanaweza kukamilishwa katika Mipangilio (au na wakala wa Huza) unaposubiri idhini.",
   farmDetailsBtn: "Maelezo ya shamba",
   farmDetailsRequired: "Maelezo ya shamba (lazima)",
   farmDetailsOptional: "Maelezo ya shamba (si lazima)",
@@ -147,7 +184,18 @@ export const farmerAuthSw: FarmerI18nDict = {
   closeDialog: "Funga",
   saveDraft: "Hifadhi",
   farmerRegisterNeedFarm:
-    "Kamilisha maelezo yote ya shamba yanayohitajika (binafsi, shamba, uzalishaji, mauzo na malipo).",
+    "Weka jina, simu, kitambulisho, eneo, mazao makuu, na kubali masharti.",
+  farmBusinessNameOptional: "Si lazima — tutatumia jina lako ikiwa tupu",
+  mainCropsLabel: "Mazao makuu",
+  mainCropsPlaceholder: "mfano: nyanya, viazi, ndizi…",
+  dossierPendingHint:
+    "Maelezo ya shamba yanaweza kukamilishwa hapa au na wakala wa Youth Huza. MoMo, benki na mauzo yanafunguliwa baada ya idhini.",
+  farmDetailsOptionalHint: "Si lazima sasa — wakala anaweza pia kukamilisha wakati wa ziara.",
+  paymentSetupAfterApproval: "Kamilisha malipo na mauzo ili Youth Huza inunue na ikulipe.",
+  paymentLockedUntilApproved:
+    "MoMo, benki, hati za uthibitisho na mauzo yanafunguliwa baada ya Youth Huza kuidhinisha akaunti yako.",
+  dossierIntroApproved:
+    "Sasisha wasifu wako. Ongeza MoMo au benki na maelezo ya mauzo ili ulipwe.",
   pathOrganicShort: "Asilia",
   pathConversionShort: "Uongofu",
   pathConventionalShort: "Kawaida",
@@ -170,7 +218,8 @@ export const farmerGapFr: FarmerI18nDict = {
   huzaPurchaseAgreementPlaceholder:
     "Décrivez l'accord : volumes, qualité, prix, livraison ou enlèvement…",
   huzaPurchaseAgreementHint: "Huza achète selon cet accord après validation.",
-  agreeHuzaBuyTerms: "J'accepte la façon dont Huza achètera mes produits",
+  agreeHuzaBuyTerms:
+    "J'accepte que Youth Huza examine ma demande et, si elle est approuvée, achète mes produits selon les conditions Huza.",
   optional: "facultatif",
   huzaAgreementTab: "Accord Huza",
   standardAgreementIntro: "Votre accord d'achat avec Youth Huza.",
@@ -200,7 +249,8 @@ export const farmerGapRw: FarmerI18nDict = {
   huzaPurchaseAgreementPlaceholder:
     "Sobanura amasezerano: ingano, ubuziranenge, igiciro, gutanga cyangwa gufata…",
   huzaPurchaseAgreementHint: "Huza igura hashize isuzuma hakurikijwe aya masezerano.",
-  agreeHuzaBuyTerms: "Nemeye uburyo Huza izagura ibicuruzwa byanjye",
+  agreeHuzaBuyTerms:
+    "Nemeye ko Youth Huza isuzuma ubusabe bwanjye, kandi niba yemeye, igura ibihingwa byanjye hakurikijwe amasezerano ya Huza.",
   optional: "si ngombwa",
   huzaAgreementTab: "Amasezerano ya Huza",
   standardAgreementIntro: "Amasezerano yawe yo kugura na Youth Huza.",
@@ -256,7 +306,8 @@ export const farmerGapSw: FarmerI18nDict = {
   huzaPurchaseAgreementPlaceholder:
     "Eleza makubaliano: kiasi, ubora, bei, uwasilishaji au uchukuaji…",
   huzaPurchaseAgreementHint: "Huza hununua baada ya ukaguzi kulingana na makubaliano haya.",
-  agreeHuzaBuyTerms: "Ninakubali jinsi Huza itakavyonunua bidhaa zangu",
+  agreeHuzaBuyTerms:
+    "Ninakubali Youth Huza ikague maombi yangu na, ikiwa yataidhinishwa, inunue mazao yangu chini ya masharti ya Huza.",
   optional: "si lazima",
   huzaAgreementTab: "Makubaliano ya Huza",
   standardAgreementIntro: "Makubaliano yako ya ununuzi na Youth Huza.",
@@ -348,7 +399,7 @@ export const farmerGapSw: FarmerI18nDict = {
   pendingPortalBannerRejected:
     "Akaunti yako ya shamba ni {status}. Sasisha taarifa za shamba, kisha Youth Huza itakagua tena.",
   pendingBannerWaitingHint:
-    "Ukati unasubiri, kamilisha Settings na Training. Wasilisha mavuno baada ya idhini tu.",
+    "Ukati unasubiri, fungua Settings uongeze maelezo ya shamba (wakala wa Huza anaweza pia kukamilisha). MoMo na mauzo yanafunguliwa baada ya idhini.",
   pendingBannerRejectedHint:
     "Fungua Settings uhariri faili ya shamba, kisha subiri Youth Huza ikague akaunti yako.",
   pendingBannerOpenSettings: "Fungua Settings",
