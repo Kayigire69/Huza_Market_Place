@@ -427,7 +427,7 @@ const en: Dict = {
   pendingPortalBannerRejected:
     "Your farm account is {status}. Update your farm information, then Youth Huza will review again.",
   pendingBannerWaitingHint:
-    "While you wait, keep Settings complete and review Training. Submit harvest only after approval.",
+    "While you wait, open Settings to add optional farm details (or a Huza agent can complete them on a visit). MoMo and sales setup unlock after approval.",
   pendingBannerRejectedHint:
     "Open Settings to edit your farm dossier, then wait for Youth Huza to review your account.",
   pendingBannerOpenSettings: "Open Settings",
@@ -451,7 +451,7 @@ const en: Dict = {
   huzaPurchaseAgreementHint:
     "Describe the buying arrangement you accept with Youth Huza (price, pickup, and payment timing).",
   agreeHuzaBuyTerms:
-    "I agree that Youth Huza buys from me under the arrangement described above.",
+    "I agree that Youth Huza may review my application and, if approved, buy produce from me under Huza’s purchasing terms.",
   optional: "optional",
   huzaAgreementTab: "Huza agreement",
   standardAgreementIntro:
@@ -488,7 +488,7 @@ const en: Dict = {
   dossierIntro:
     "Organic farms only. Complete every section: personal information, field information, production, sales, payment options, proof of payment, and comments.",
   dossierIntroConventional:
-    "Keep your farm information up to date. Youth Huza uses this profile when reviewing your farm and produce. You can edit every section and save changes anytime.",
+    "Optional farm details while your account is under review. A Youth Huza agent can also complete these during a visit. MoMo, bank, and sales setup appear here after approval.",
   farmerPersonalInfo: "Farmer personal information",
   farmBusinessName: "Farm / business name",
   idNumber: "ID number",
@@ -977,7 +977,7 @@ const fr: Dict = {
   pendingPortalBannerRejected:
     "Votre compte ferme est {status}. Mettez à jour vos informations de ferme, puis Youth Huza examinera à nouveau.",
   pendingBannerWaitingHint:
-    "En attendant, complétez Paramètres et Formation. Soumettez une récolte seulement après approbation.",
+    "En attendant, ouvrez Paramètres pour les détails de ferme optionnels (un agent Huza peut aussi les compléter). MoMo et ventes s'ouvrent après approbation.",
   pendingBannerRejectedHint:
     "Ouvrez Paramètres pour modifier le dossier de ferme, puis attendez l'examen Youth Huza.",
   pendingBannerOpenSettings: "Ouvrir Paramètres",
@@ -1531,7 +1531,7 @@ const rw: Dict = {
   pendingPortalBannerRejected:
     "Konti y'umurima ni {status}. Vugurura amakuru y'umurima, hanyuma Youth Huza isuzume nanone.",
   pendingBannerWaitingHint:
-    "Mu gihe utegereje, uzuza Igenamiterere n'Amahugurwa. Ohereza umusaruro gusa nyuma yo kwemererwa.",
+    "Mu gihe utegereje, fungura Igenamiterere wongeremo amakuru y'umurima (umukozi wa Huza naye ashobora kuyuzuza). MoMo n'ubucuruzi bifunguka nyuma yo kwemererwa.",
   pendingBannerRejectedHint:
     "Fungura Igenamiterere uhinde dosiye y'umurima, hanyuma tegereza Youth Huza isuzume konti yawe.",
   pendingBannerOpenSettings: "Fungura Igenamiterere",

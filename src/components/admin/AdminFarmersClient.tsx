@@ -45,6 +45,25 @@ type FarmerProfile = FarmerRow & {
   farmPhotoUrls?: string[];
   productsOffered?: string | null;
   huzaPurchaseAgreement?: string | null;
+  currentCrop?: string | null;
+  cell?: string | null;
+  village?: string | null;
+  gender?: string | null;
+  ageRange?: string | null;
+  fieldType?: string | null;
+  pastCropsSeason1?: string | null;
+  pastCropsSeason2?: string | null;
+  pastCropsSeason3?: string | null;
+  chemicalsPerWeek?: string | null;
+  chemicalsWhy?: string | null;
+  chemicalsDosage?: string | null;
+  fertilizerPerWeek?: string | null;
+  irrigationMethod?: string | null;
+  diseasesIdentified?: string | null;
+  pestsIdentified?: string | null;
+  totalQuantityHarvested?: string | null;
+  qualityGeneral?: string | null;
+  farmerComments?: string | null;
   stats?: {
     productsSubmitted: number;
     productsApproved: number;
@@ -115,6 +134,7 @@ export function AdminFarmersClient() {
   const [profile, setProfile] = useState<FarmerProfile | null>(null);
   const [profileTab, setProfileTab] = useState<ProfileTab>("profile");
   const [notes, setNotes] = useState("");
+  const [farmDetails, setFarmDetails] = useState<Record<string, string>>({});
   const [loadingProfile, setLoadingProfile] = useState(false);
 
   useEffect(() => {
@@ -155,6 +175,30 @@ export function AdminFarmersClient() {
         purchaseOrdersList: f.purchaseOrders || [],
       });
       setNotes(f.adminNotes || "");
+      setFarmDetails({
+        businessName: f.businessName || "",
+        province: f.province || "",
+        district: f.district || "",
+        sector: f.sector || "",
+        cell: f.cell || "",
+        village: f.village || "",
+        farmSize: f.farmSize || "",
+        fieldType: f.fieldType || "",
+        currentCrop: f.currentCrop || f.productsOffered || "",
+        pastCropsSeason1: f.pastCropsSeason1 || "",
+        pastCropsSeason2: f.pastCropsSeason2 || "",
+        pastCropsSeason3: f.pastCropsSeason3 || "",
+        chemicalsPerWeek: f.chemicalsPerWeek || "",
+        fertilizerPerWeek: f.fertilizerPerWeek || "",
+        irrigationMethod: f.irrigationMethod || "",
+        diseasesIdentified: f.diseasesIdentified || "",
+        pestsIdentified: f.pestsIdentified || "",
+        totalQuantityHarvested: f.totalQuantityHarvested || "",
+        qualityGeneral: f.qualityGeneral || "",
+        farmerComments: f.farmerComments || "",
+        gender: f.gender || "",
+        ageRange: f.ageRange || "",
+      });
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
@@ -199,6 +243,28 @@ export function AdminFarmersClient() {
     });
     setBusy(null);
     setMsg(res.ok ? "Notes saved" : "Could not save notes");
+  };
+
+  const saveFarmDetails = async () => {
+    if (!profile) return;
+    setBusy(profile.id);
+    const res = await fetch("/api/admin/suppliers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: profile.id,
+        action: "save_farm_details",
+        farmDetails,
+      }),
+    });
+    setBusy(null);
+    if (res.ok) {
+      setMsg("Farm details saved");
+      await openProfile(profile.id);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setMsg(data.error || "Could not save farm details");
+    }
   };
 
   const notify = async () => {
@@ -494,6 +560,74 @@ export function AdminFarmersClient() {
                       Bank: {profile.bankName || "—"} {profile.bankAccount || ""}
                     </p>
                     <p>Preference: {profile.paymentOption || "—"}</p>
+                    {profile.status !== "APPROVED" ? (
+                      <p className="mt-1 text-xs text-amber-800">
+                        Farmers add MoMo/bank in Settings after approval.
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-lg border border-[var(--admin-line)] p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase text-[var(--admin-muted)]">
+                      Farm details (agent visit)
+                    </p>
+                    <p className="mb-3 text-xs text-[var(--admin-muted)]">
+                      Optional fields agents can complete while the farmer is pending.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(
+                        [
+                          ["fieldType", "Field type"],
+                          ["farmSize", "Farm size"],
+                          ["currentCrop", "Current crop(s)"],
+                          ["totalQuantityHarvested", "Qty harvested"],
+                          ["qualityGeneral", "Quality"],
+                          ["irrigationMethod", "Irrigation"],
+                          ["chemicalsPerWeek", "Chemicals / week"],
+                          ["fertilizerPerWeek", "Fertilizer / week"],
+                          ["diseasesIdentified", "Diseases"],
+                          ["pestsIdentified", "Pests"],
+                          ["province", "Province"],
+                          ["district", "District"],
+                          ["sector", "Sector"],
+                          ["cell", "Cell"],
+                          ["village", "Village"],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <label key={key} className="block text-xs">
+                          <span className="text-[var(--admin-muted)]">{label}</span>
+                          <input
+                            className="admin-input mt-0.5"
+                            value={farmDetails[key] || ""}
+                            onChange={(e) =>
+                              setFarmDetails((prev) => ({ ...prev, [key]: e.target.value }))
+                            }
+                          />
+                        </label>
+                      ))}
+                      <label className="col-span-2 block text-xs">
+                        <span className="text-[var(--admin-muted)]">Comments</span>
+                        <textarea
+                          className="admin-input mt-0.5 min-h-[60px]"
+                          value={farmDetails.farmerComments || ""}
+                          onChange={(e) =>
+                            setFarmDetails((prev) => ({
+                              ...prev,
+                              farmerComments: e.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-3"
+                      disabled={busy === profile.id}
+                      onClick={() => void saveFarmDetails()}
+                    >
+                      Save farm details
+                    </Button>
                   </div>
 
                   {profile.inspectionScheduledAt ? (

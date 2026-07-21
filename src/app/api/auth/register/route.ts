@@ -118,51 +118,35 @@ export async function POST(req: Request) {
       }
 
       // Startup phase: all new farmers are Conventional (STANDARD).
+      // Slim signup: identity + contact + location + main crop(s) + terms.
+      // Optional farm dossier → Settings while PENDING; MoMo/sales → after APPROVED.
       const farmingType = "STANDARD" as const;
       const dossier = pickFarmerDossier(raw);
 
       const productsOffered =
         (data.productsOffered || "").trim() ||
         String(dossier.currentCrop || data.currentCrop || "").trim();
-      const huzaPurchaseAgreement = (data.huzaPurchaseAgreement || "").trim();
+      const huzaPurchaseAgreement = (data.huzaPurchaseAgreement || "").trim() || "";
 
       if (productsOffered.length < 3) {
         return NextResponse.json(
-          { error: "Enter your current crop / products you offer to Huza" },
-          { status: 400 }
-        );
-      }
-      if (huzaPurchaseAgreement.length < 10) {
-        return NextResponse.json(
-          { error: "Describe the purchase agreement with Huza" },
+          { error: "Enter your main crop(s) or products" },
           { status: 400 }
         );
       }
 
-      const requiredDossier: Array<[string, string]> = [
-        ["businessName", "Farm / business name"],
-        ["gender", "Gender"],
-        ["ageRange", "Age range"],
+      const requiredLocation: Array<[string, string]> = [
         ["province", "Province"],
         ["district", "District"],
         ["sector", "Sector"],
         ["cell", "Cell"],
         ["village", "Village"],
-        ["fieldType", "Greenhouse or open field"],
-        ["farmSize", "Farm size"],
-        ["currentCrop", "Current crop"],
-        ["totalQuantityHarvested", "Total quantity harvested"],
-        ["qualityGeneral", "Quality in general"],
-        ["paymentOption", "Preferred payment option"],
       ];
-      for (const [key, label] of requiredDossier) {
+      for (const [key, label] of requiredLocation) {
         const v = dossier[key] ?? (data as Record<string, unknown>)[key];
         if (!v || String(v).trim() === "") {
           return NextResponse.json({ error: `${label} is required` }, { status: 400 });
         }
-      }
-      if (asInt(dossier.pricePerUnit ?? data.pricePerUnit) == null) {
-        return NextResponse.json({ error: "Price per unit is required" }, { status: 400 });
       }
 
       const phoneTaken = await prisma.user.findFirst({ where: { phone } });

@@ -80,11 +80,15 @@ async function uploadOne(file: File, folder: string): Promise<string> {
 export function FarmerDossierForm({
   initial,
   onSaved,
+  accountStatus = "PENDING",
 }: {
   initial: FarmerDossierValues;
   onSaved?: () => void;
+  /** APPROVED unlocks MoMo / bank / sales setup sections */
+  accountStatus?: string;
 }) {
   const { t } = useLocale();
+  const approved = accountStatus === "APPROVED";
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(initial.profilePhotoUrl || "");
@@ -104,7 +108,7 @@ export function FarmerDossierForm({
         profilePhotoUrl = await uploadOne(photo, "profiles");
         setPhotoUrl(profilePhotoUrl);
       }
-      if (proof instanceof File && proof.size > 0) {
+      if (approved && proof instanceof File && proof.size > 0) {
         proofOfPaymentUrl = await uploadOne(proof, "documents");
         setProofUrl(proofOfPaymentUrl);
       }
@@ -113,23 +117,28 @@ export function FarmerDossierForm({
       delete payload.profilePhoto;
       delete payload.proofOfPayment;
 
+      const body: Record<string, unknown> = {
+        ...payload,
+        profilePhotoUrl,
+      };
+
+      if (approved) {
+        body.proofOfPaymentUrl = proofOfPaymentUrl;
+        body.pricePerUnit = payload.pricePerUnit ? Number(payload.pricePerUnit) : null;
+        body.totalKgsBoughtByHuza = payload.totalKgsBoughtByHuza
+          ? Number(payload.totalKgsBoughtByHuza)
+          : 0;
+        body.farmGatePrice = payload.farmGatePrice ? Number(payload.farmGatePrice) : null;
+        body.priceUponDelivery = payload.priceUponDelivery
+          ? Number(payload.priceUponDelivery)
+          : null;
+        body.priceAfterSale = payload.priceAfterSale ? Number(payload.priceAfterSale) : null;
+      }
+
       const res = await fetch("/api/supplier/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...payload,
-          profilePhotoUrl,
-          proofOfPaymentUrl,
-          pricePerUnit: payload.pricePerUnit ? Number(payload.pricePerUnit) : null,
-          totalKgsBoughtByHuza: payload.totalKgsBoughtByHuza
-            ? Number(payload.totalKgsBoughtByHuza)
-            : 0,
-          farmGatePrice: payload.farmGatePrice ? Number(payload.farmGatePrice) : null,
-          priceUponDelivery: payload.priceUponDelivery
-            ? Number(payload.priceUponDelivery)
-            : null,
-          priceAfterSale: payload.priceAfterSale ? Number(payload.priceAfterSale) : null,
-        }),
+        body: JSON.stringify(body),
       });
       setMsg(res.ok ? t("farmerInfoSaved") : t("saveFailed"));
       if (res.ok) onSaved?.();
@@ -143,6 +152,12 @@ export function FarmerDossierForm({
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       {msg && <p className="text-sm text-[var(--huza-green-dark)]">{msg}</p>}
+
+      {!approved ? (
+        <p className="rounded-xl border border-[var(--huza-gold)] bg-[#FFF8E6] px-4 py-3 text-sm text-[var(--huza-ink)]">
+          {t("dossierPendingHint")}
+        </p>
+      ) : null}
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("farmerPersonalInfo")}</h2>
@@ -187,7 +202,7 @@ export function FarmerDossierForm({
           </div>
           <div>
             <label className="label">{t("gender")}</label>
-            <select name="gender" defaultValue={initial.gender || ""} className="input-field" required>
+            <select name="gender" defaultValue={initial.gender || ""} className="input-field">
               <option value="">{t("select")}</option>
               {GENDERS.map((g) => (
                 <option key={g} value={g}>
@@ -202,7 +217,7 @@ export function FarmerDossierForm({
           </div>
           <div>
             <label className="label">{t("ageRange")}</label>
-            <select name="ageRange" defaultValue={initial.ageRange || ""} className="input-field" required>
+            <select name="ageRange" defaultValue={initial.ageRange || ""} className="input-field">
               <option value="">{t("select")}</option>
               {AGE_RANGES.map((a) => (
                 <option key={a} value={a}>
@@ -243,10 +258,11 @@ export function FarmerDossierForm({
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("fieldInformation")}</h2>
+        <p className="text-xs text-[var(--huza-muted)]">{t("farmDetailsOptionalHint")}</p>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <label className="label">{t("greenhouseOrOpen")}</label>
-            <select name="fieldType" defaultValue={initial.fieldType || ""} className="input-field" required>
+            <select name="fieldType" defaultValue={initial.fieldType || ""} className="input-field">
               <option value="">{t("select")}</option>
               {FIELD_TYPES.map((f) => (
                 <option key={f} value={f}>
@@ -262,7 +278,6 @@ export function FarmerDossierForm({
               defaultValue={initial.farmSize || ""}
               className="input-field"
               placeholder={t("sizePlaceholder")}
-              required
             />
           </div>
           <div>
@@ -322,7 +337,6 @@ export function FarmerDossierForm({
               defaultValue={initial.totalQuantityHarvested || ""}
               className="input-field"
               placeholder={t("harvestPlaceholder")}
-              required
             />
           </div>
           <div>
@@ -331,7 +345,6 @@ export function FarmerDossierForm({
               name="qualityGeneral"
               defaultValue={initial.qualityGeneral || ""}
               className="input-field"
-              required
             >
               <option value="">{t("select")}</option>
               {QUALITY_LEVELS.map((q) => (
@@ -344,159 +357,168 @@ export function FarmerDossierForm({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">{t("sales")}</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div>
-            <label className="label">{t("priceUnit")}</label>
-            <select name="priceUnit" defaultValue={initial.priceUnit || "kg"} className="input-field">
-              {PRICE_UNITS.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">{t("pricePerUnit")}</label>
-            <input
-              name="pricePerUnit"
-              type="number"
-              defaultValue={initial.pricePerUnit ?? ""}
-              className="input-field"
-              required
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="label">{t("totalKgsBoughtByHuza")}</label>
-            <input
-              name="totalKgsBoughtByHuza"
-              type="number"
-              step="0.1"
-              defaultValue={initial.totalKgsBoughtByHuza ?? 0}
-              className="input-field"
-            />
-          </div>
-        </div>
-      </section>
+      {approved ? (
+        <>
+          <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+            <h2 className="font-semibold text-lg">{t("sales")}</h2>
+            <p className="text-xs text-[var(--huza-muted)]">{t("paymentSetupAfterApproval")}</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="label">{t("priceUnit")}</label>
+                <select name="priceUnit" defaultValue={initial.priceUnit || "kg"} className="input-field">
+                  {PRICE_UNITS.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">{t("pricePerUnit")}</label>
+                <input
+                  name="pricePerUnit"
+                  type="number"
+                  defaultValue={initial.pricePerUnit ?? ""}
+                  className="input-field"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label">{t("totalKgsBoughtByHuza")}</label>
+                <input
+                  name="totalKgsBoughtByHuza"
+                  type="number"
+                  step="0.1"
+                  defaultValue={initial.totalKgsBoughtByHuza ?? 0}
+                  className="input-field"
+                />
+              </div>
+            </div>
+          </section>
 
-      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">{t("paymentOptions")}</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2">
-            <label className="label">{t("preferredPayment")}</label>
-            <select
-              name="paymentOption"
-              defaultValue={initial.paymentOption || ""}
-              className="input-field"
-              required
-            >
-              <option value="">{t("select")}</option>
-              {PAYMENT_OPTIONS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {t(paymentLabelKey[p.value])}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">{t("farmGatePrice")}</label>
-            <input
-              name="farmGatePrice"
-              type="number"
-              defaultValue={initial.farmGatePrice ?? ""}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label">{t("priceUponDelivery")}</label>
-            <input
-              name="priceUponDelivery"
-              type="number"
-              defaultValue={initial.priceUponDelivery ?? ""}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label">{t("priceAfterSale")}</label>
-            <input
-              name="priceAfterSale"
-              type="number"
-              defaultValue={initial.priceAfterSale ?? ""}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label">{t("proofOfPayment")}</label>
-            <input
-              name="proofOfPayment"
-              type="file"
-              accept="image/*,application/pdf"
-              className="input-field"
-            />
-            {proofUrl && (
-              <a
-                href={proofUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 inline-block text-xs text-[var(--huza-green)] underline"
-              >
-                {t("viewAttachedProof")}
-              </a>
-            )}
-            <input type="hidden" name="proofOfPaymentUrl" value={proofUrl} />
-          </div>
-          <div>
-            <label className="label">{t("mobileMoneyNumber")}</label>
-            <input
-              name="paymentMomo"
-              defaultValue={initial.paymentMomo || ""}
-              className="input-field"
-              placeholder="078xxxxxxx"
-            />
-          </div>
-          <div>
-            <label className="label">{t("bankAccountOptional")}</label>
-            <input
-              name="bankAccount"
-              defaultValue={initial.bankAccount || ""}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label">{t("bankNameOptional")}</label>
-            <input
-              name="bankName"
-              defaultValue={initial.bankName || ""}
-              className="input-field"
-            />
-          </div>
-        </div>
-      </section>
+          <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+            <h2 className="font-semibold text-lg">{t("paymentOptions")}</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <label className="label">{t("preferredPayment")}</label>
+                <select
+                  name="paymentOption"
+                  defaultValue={initial.paymentOption || ""}
+                  className="input-field"
+                  required
+                >
+                  <option value="">{t("select")}</option>
+                  {PAYMENT_OPTIONS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {t(paymentLabelKey[p.value])}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">{t("farmGatePrice")}</label>
+                <input
+                  name="farmGatePrice"
+                  type="number"
+                  defaultValue={initial.farmGatePrice ?? ""}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label">{t("priceUponDelivery")}</label>
+                <input
+                  name="priceUponDelivery"
+                  type="number"
+                  defaultValue={initial.priceUponDelivery ?? ""}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label">{t("priceAfterSale")}</label>
+                <input
+                  name="priceAfterSale"
+                  type="number"
+                  defaultValue={initial.priceAfterSale ?? ""}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label">{t("proofOfPayment")}</label>
+                <input
+                  name="proofOfPayment"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="input-field"
+                />
+                {proofUrl && (
+                  <a
+                    href={proofUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-xs text-[var(--huza-green)] underline"
+                  >
+                    {t("viewAttachedProof")}
+                  </a>
+                )}
+                <input type="hidden" name="proofOfPaymentUrl" value={proofUrl} />
+              </div>
+              <div>
+                <label className="label">{t("mobileMoneyNumber")}</label>
+                <input
+                  name="paymentMomo"
+                  defaultValue={initial.paymentMomo || ""}
+                  className="input-field"
+                  placeholder="078xxxxxxx"
+                />
+              </div>
+              <div>
+                <label className="label">{t("bankAccountOptional")}</label>
+                <input
+                  name="bankAccount"
+                  defaultValue={initial.bankAccount || ""}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label">{t("bankNameOptional")}</label>
+                <input
+                  name="bankName"
+                  defaultValue={initial.bankName || ""}
+                  className="input-field"
+                />
+              </div>
+            </div>
+          </section>
 
-      <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
-        <h2 className="font-semibold text-lg">{t("huzaAgreementTab")}</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2">
-            <label className="label">{t("productsOfferedLabel")}</label>
-            <textarea
-              name="productsOffered"
-              defaultValue={initial.productsOffered || ""}
-              className="input-field min-h-20"
-              placeholder={t("productsOfferedPlaceholder")}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="label">{t("huzaPurchaseAgreementLabel")}</label>
-            <textarea
-              name="huzaPurchaseAgreement"
-              defaultValue={initial.huzaPurchaseAgreement || ""}
-              className="input-field min-h-20"
-              placeholder={t("huzaPurchaseAgreementPlaceholder")}
-            />
-          </div>
-        </div>
-      </section>
+          <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
+            <h2 className="font-semibold text-lg">{t("huzaAgreementTab")}</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <label className="label">{t("productsOfferedLabel")}</label>
+                <textarea
+                  name="productsOffered"
+                  defaultValue={initial.productsOffered || ""}
+                  className="input-field min-h-20"
+                  placeholder={t("productsOfferedPlaceholder")}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label">{t("huzaPurchaseAgreementLabel")}</label>
+                <textarea
+                  name="huzaPurchaseAgreement"
+                  defaultValue={initial.huzaPurchaseAgreement || ""}
+                  className="input-field min-h-20"
+                  placeholder={t("huzaPurchaseAgreementPlaceholder")}
+                />
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className="rounded-2xl border border-dashed border-[var(--huza-line)] bg-white/80 p-5">
+          <h2 className="font-semibold text-lg text-[var(--huza-ink)]">{t("paymentOptions")}</h2>
+          <p className="mt-2 text-sm text-[var(--huza-muted)]">{t("paymentLockedUntilApproved")}</p>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 space-y-3">
         <h2 className="font-semibold text-lg">{t("comments")}</h2>

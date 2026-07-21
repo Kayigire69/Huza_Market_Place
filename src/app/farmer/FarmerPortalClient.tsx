@@ -315,9 +315,17 @@ export function FarmerPortalClient({
       {tab === "dossier" && (
         <div>
           <p className="mb-4 text-sm text-[var(--huza-muted)]">
-            {isOrganicFarmer ? t("dossierIntro") : t("dossierIntroConventional")}
+            {farmer.status === "APPROVED"
+              ? t("dossierIntroApproved")
+              : isOrganicFarmer
+                ? t("dossierIntro")
+                : t("dossierIntroConventional")}
           </p>
-          <FarmerDossierForm initial={dossierInitial} onSaved={refresh} />
+          <FarmerDossierForm
+            initial={dossierInitial}
+            onSaved={refresh}
+            accountStatus={farmer.status}
+          />
         </div>
       )}
       {tab === "products" && (

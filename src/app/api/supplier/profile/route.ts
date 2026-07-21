@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AvailabilityStatus } from "@prisma/client";
-import { pickFarmerDossier } from "@/lib/farmer-dossier";
+import { PAYMENT_AND_SALES_KEYS, pickFarmerDossier } from "@/lib/farmer-dossier";
 import { findSupplierForUser } from "@/lib/supplier-context";
 import { isValidRwandaMomoPhone } from "@/lib/phone";
 
@@ -20,8 +20,17 @@ export async function PATCH(req: Request) {
 
   const body = await req.json();
   const dossier = pickFarmerDossier(body);
+  const approved = supplier.status === "APPROVED";
+
+  // MoMo / bank / sales setup only after account approval.
+  if (!approved) {
+    for (const key of PAYMENT_AND_SALES_KEYS) {
+      delete dossier[key];
+    }
+  }
 
   if (
+    approved &&
     typeof dossier.paymentMomo === "string" &&
     dossier.paymentMomo.trim() &&
     !isValidRwandaMomoPhone(dossier.paymentMomo)
