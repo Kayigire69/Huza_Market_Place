@@ -192,13 +192,44 @@ export async function PATCH(req: Request) {
     );
   }
 
-  if (body.delete) {
+  if (body.delete || body.action === "hard_delete") {
     if (before.role === "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Super Admin accounts cannot be deleted. Deactivate instead if needed." },
         { status: 400 }
       );
     }
+
+    const permanent = body.action === "hard_delete" || body.permanent === true;
+    if (permanent) {
+      if (id === session.user.id) {
+        return NextResponse.json(
+          { error: "You cannot permanently delete your own account." },
+          { status: 400 }
+        );
+      }
+      try {
+        const { hardDeleteStaffUser } = await import("@/services/cleanup.service");
+        const result = await hardDeleteStaffUser({
+          targetId: id,
+          actorId: session.user.id,
+        });
+        await auditAdminAction(req, session, {
+          action: "staff.hard_delete",
+          entity: "User",
+          entityId: id,
+          details: `Permanently deleted staff ${result.fullName}`,
+          before,
+        });
+        return NextResponse.json({ ok: true, permanent: true, id });
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Delete failed" },
+          { status: 400 }
+        );
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: { isActive: false, deletedAt: new Date() },

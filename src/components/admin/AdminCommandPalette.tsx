@@ -42,6 +42,7 @@ const NAV_COMMANDS: Command[] = [
   { id: "nav-inventory", label: "Go to Inventory", href: "/admin/inventory", group: "Navigate" },
   { id: "nav-procurement", label: "Go to Purchase Orders", href: "/admin/procurement/orders", group: "Navigate" },
   { id: "nav-settings", label: "Go to Settings", href: "/admin/settings", group: "Navigate" },
+  { id: "nav-cleanup", label: "Go to System Cleanup", href: "/admin/cleanup", group: "Navigate" },
   { id: "act-product", label: "Create product", href: "/admin/products", group: "Actions" },
   { id: "act-farmer", label: "Approve farmer", href: "/admin/suppliers", group: "Actions" },
   { id: "act-promo", label: "Create promotion", href: "/admin/offers", group: "Actions" },
