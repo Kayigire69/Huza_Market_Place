@@ -13,7 +13,7 @@ import { portalPathForRole } from "@/lib/auth-redirect";
  * Staff & partner portals are never advertised on the customer storefront.
  * Middleware enforces role checks so guessing a URL is not enough.
  *
- * Super Admin exclusive: /admin/staff, /admin/audit, /admin/settings, /admin/security
+ * Super Admin exclusive: /admin/staff, /admin/cleanup, /admin/audit, /admin/settings, /admin/security
  */
 const STAFF_PREFIXES = [
   "/admin",

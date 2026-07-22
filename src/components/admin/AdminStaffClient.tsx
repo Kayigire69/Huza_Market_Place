@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ADMIN_ROLE_MODULES, adminRoleLabel } from "@/lib/admin-nav";
-import { KeyRound, Search, Shield } from "lucide-react";
+import { KeyRound, Search, Shield, Trash2 } from "lucide-react";
 
 type StaffUser = {
   id: string;
@@ -135,6 +135,26 @@ export function AdminStaffClient() {
     );
   };
 
+  const permanentDelete = async (u: StaffUser) => {
+    if (u.isPrimarySuperAdmin || u.role === "SUPER_ADMIN") {
+      setError("Super Admin accounts cannot be permanently deleted.");
+      return;
+    }
+    const typed = window.prompt(
+      `Permanently delete ${u.fullName}?\n\nThis cannot be undone. Type DELETE to confirm.`,
+      ""
+    );
+    if (typed !== "DELETE") {
+      if (typed != null) setError("Deletion cancelled — type DELETE exactly to confirm.");
+      return;
+    }
+    await patch(
+      u.id,
+      { action: "hard_delete", permanent: true },
+      `Permanently deleted ${u.fullName}`
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -142,6 +162,11 @@ export function AdminStaffClient() {
           <h1 className="admin-panel-title">Staff accounts</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/admin/cleanup">
+            <Button size="sm" variant="ghost">
+              System cleanup
+            </Button>
+          </Link>
           <Link href="/admin/audit">
             <Button size="sm" variant="ghost">
               Audit trail
@@ -275,6 +300,19 @@ export function AdminStaffClient() {
                             }
                           >
                             {u.isActive ? "Deactivate" : "Activate"}
+                          </Button>
+                        ) : null}
+                        {!u.isPrimarySuperAdmin && u.role !== "SUPER_ADMIN" ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy}
+                            className="text-red-700 hover:text-red-800"
+                            onClick={() => void permanentDelete(u)}
+                          >
+                            <Trash2 className="mr-1 size-3.5" />
+                            Delete
                           </Button>
                         ) : null}
                       </div>

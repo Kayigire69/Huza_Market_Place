@@ -29,6 +29,7 @@ import {
   Store,
   Inbox,
   PanelsTopLeft,
+  Eraser,
 } from "lucide-react";
 
 /** Stable module keys for role-aware admin sidebar + route guards */
@@ -211,6 +212,13 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       },
       {
         module: "settings",
+        href: "/admin/cleanup",
+        label: "System cleanup",
+        icon: Eraser,
+        superOnly: true,
+      },
+      {
+        module: "settings",
         href: "/admin/audit",
         label: "Audit log",
         icon: ScrollText,
@@ -348,6 +356,7 @@ export function moduleForAdminPath(pathname: string): AdminModule | null {
   if (
     pathname.startsWith("/admin/settings") ||
     pathname.startsWith("/admin/staff") ||
+    pathname.startsWith("/admin/cleanup") ||
     pathname.startsWith("/admin/audit") ||
     pathname.startsWith("/admin/security") ||
     pathname.startsWith("/admin/hours")

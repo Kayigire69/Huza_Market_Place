@@ -20,6 +20,7 @@ export const ADMIN_PORTAL_ROLES = [
 
 export const SUPER_ADMIN_ONLY_PATHS = [
   "/admin/staff",
+  "/admin/cleanup",
   "/admin/audit",
   "/admin/settings",
   "/admin/security",
