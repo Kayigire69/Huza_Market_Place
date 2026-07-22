@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FarmerPageHeader, FarmerPanel } from "@/components/portals/FarmerUi";
 import { useLocale } from "@/lib/locale-context";
+import { FarmerWhatsAppHelp } from "@/components/portals/FarmerWhatsAppHelp";
 
 const CATEGORIES = [
   { slug: "soil", titleKey: "trainingCatSoil", bodyKey: "trainingCatSoilBody" },
@@ -66,6 +67,9 @@ export function FarmerTrainingClient({ qualityFocus }: { qualityFocus: boolean }
           </Link>
           .
         </p>
+        <div className="mt-4">
+          <FarmerWhatsAppHelp />
+        </div>
       </FarmerPanel>
     </div>
   );

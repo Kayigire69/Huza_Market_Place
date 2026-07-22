@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { HuzaFreshLogo } from "@/components/brand/HuzaFreshLogo";
-import { isWhatsAppConfigured, SUPPORT_EMAIL } from "@/lib/brand-contact";
+import { isWhatsAppConfigured, SUPPORT_EMAIL, whatsappPresetUrl } from "@/lib/brand-contact";
 
 export function Footer() {
   const { t } = useLocale();
@@ -48,7 +48,7 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/careers" className="hover:text-white">
+              <Link href="/contact" className="hover:text-white">
                 {t("careers")}
               </Link>
             </li>
@@ -127,7 +127,12 @@ export function Footer() {
             </li>
             {isWhatsAppConfigured(whatsappUrl) ? (
               <li>
-                <a href={whatsappUrl} target="_blank" rel="noreferrer" className="hover:text-white">
+                <a
+                  href={whatsappPresetUrl("customer", whatsappUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-white"
+                >
                   WhatsApp
                 </a>
               </li>

@@ -4,6 +4,7 @@ import { MapPin, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PickupInfo } from "@/lib/pickup-info";
 import { HOME_DELIVERY_FEE_NOTICE } from "@/lib/pickup-info";
+import { whatsappPresetUrl } from "@/lib/brand-contact";
 
 export type FulfillmentChoice = "PICKUP" | "HOME_DELIVERY";
 
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function FulfillmentChoiceStep({ value, onChange, pickup }: Props) {
+  const pickupWa = whatsappPresetUrl("orderSupport", pickup.whatsappUrl);
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--huza-muted)]">
@@ -73,9 +75,9 @@ export function FulfillmentChoiceStep({ value, onChange, pickup }: Props) {
                 Open map
               </a>
             ) : null}
-            {pickup.whatsappUrl ? (
+            {pickupWa ? (
               <a
-                href={pickup.whatsappUrl}
+                href={pickupWa}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-9 items-center rounded-lg border border-[var(--huza-line)] px-3 text-xs font-semibold text-[var(--huza-green-dark)]"

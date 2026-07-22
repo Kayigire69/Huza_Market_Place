@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
+import { FarmerWhatsAppHelp } from "@/components/portals/FarmerWhatsAppHelp";
 
 /**
  * Compact centered login card. All copy via i18n (EN / FR / RW / SW).
@@ -133,6 +134,9 @@ export function FarmerLoginForm() {
           <div className="rounded-lg bg-[var(--huza-mint)]/50 px-3 py-2 text-xs text-[var(--huza-ink)]">
             <p className="font-bold">{t("needHelpAccessTitle")}</p>
             <p className="mt-1">{t("needHelpAccessBody")}</p>
+            <div className="mt-3">
+              <FarmerWhatsAppHelp />
+            </div>
           </div>
         )}
       </form>

@@ -13,6 +13,7 @@ import {
   formatHuzaPayeeDisplay,
 } from "@/lib/payments/huza-payee";
 import { DEFAULT_PICKUP_INFO, type PickupInfo } from "@/lib/pickup-info";
+import { resolveWhatsAppUrl } from "@/lib/brand-contact";
 
 const FALLBACK_ZONES: DeliveryZoneDto[] = (Object.keys(DELIVERY_FEES) as DeliveryZoneKey[]).map(
   (code) => ({
@@ -220,6 +221,6 @@ export async function getPickupInfo(): Promise<PickupInfo> {
     hours: s.pickup_hours?.trim() || DEFAULT_PICKUP_INFO.hours,
     phone,
     phoneDisplay: formatHuzaPayeeDisplay(phone),
-    whatsappUrl: whatsapp,
+    whatsappUrl: resolveWhatsAppUrl(whatsapp) || DEFAULT_PICKUP_INFO.whatsappUrl,
   };
 }

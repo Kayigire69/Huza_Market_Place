@@ -2,19 +2,26 @@ import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listDeliveryZones, getDeliveryFee, getHuzaPayee, getPickupInfo } from "@/services/settings.service";
+import {
+  listDeliveryZones,
+  getDeliveryFee,
+  getHuzaPayee,
+  getPickupInfo,
+  getSetting,
+} from "@/services/settings.service";
 import { ZONE_ETA_LABELS, ZONE_ETA_MINUTES } from "@/lib/delivery-eta";
 import { hasAirtelCredentials, hasMtnCredentials } from "@/lib/payments/mobile-money";
-import { DEFAULT_WHATSAPP_URL, resolveWhatsAppUrl } from "@/lib/brand-contact";
+import { whatsappPresetUrl } from "@/lib/brand-contact";
 import CheckoutPage from "./CheckoutClient";
 
 export default async function Page() {
   const session = await getServerSession(authOptions);
-  const [rows, deliveryFee, payee, pickup] = await Promise.all([
+  const [rows, deliveryFee, payee, pickup, whatsappSetting] = await Promise.all([
     listDeliveryZones(),
     getDeliveryFee("KIGALI"),
     getHuzaPayee(),
     getPickupInfo(),
+    getSetting("whatsapp_url", ""),
   ]);
   const zones = rows.map((z) => {
     const code = z.code as keyof typeof ZONE_ETA_LABELS;
@@ -67,7 +74,7 @@ export default async function Page() {
   const paymentConfig = {
     payeeName: payee.name,
     payeePhone: payee.phone,
-    whatsappUrl: resolveWhatsAppUrl(DEFAULT_WHATSAPP_URL),
+    whatsappUrl: whatsappPresetUrl("orderSupport", whatsappSetting || pickup.whatsappUrl),
     mtnLive: hasMtnCredentials(),
     airtelLive: hasAirtelCredentials(),
   };

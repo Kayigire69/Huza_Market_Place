@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { FarmerPanel } from "@/components/portals/FarmerUi";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
+import { FarmerWhatsAppHelp } from "@/components/portals/FarmerWhatsAppHelp";
 
 const ADVICE_TOPIC_KEYS = [
   "agroTopicDiseases",
@@ -152,6 +153,7 @@ export function FarmerAgronomyClient() {
 
   return (
     <div className="space-y-5">
+      <FarmerWhatsAppHelp />
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
