@@ -71,7 +71,9 @@ function statusTone(status: string) {
 }
 
 function dealLabel(dealType?: string) {
-  return dealType === "COMMISSION" ? "Commission sale" : "Outright buy";
+  if (dealType === "COMMISSION") return "Commission Sale";
+  if (dealType === "MARKET_BUY") return "Local Market Purchase";
+  return "Direct Purchase";
 }
 
 export function AdminProcurementClient({ view }: { view: ProcurementView }) {
@@ -334,7 +336,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
       ) : orders.length === 0 ? (
         <div className="admin-panel p-6 text-sm text-[var(--admin-muted)]">
           {view === "commission"
-            ? "No commission sales yet. Create a PO with “Commission sale” from Purchase Requests."
+            ? "No commission sales yet. Create a PO with “Commission Sale” from Purchase Requests."
             : view === "payments"
               ? "No farmer payments pending or recorded yet."
               : view === "history"
@@ -361,7 +363,8 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                       {po.productName || po.offer?.title || "Purchase order"}
                     </p>
                     <p className="text-sm text-[var(--admin-muted)]">
-                      {po.supplier?.businessName} · Qty {po.quantity} · {dealLabel(po.dealType)}
+                      Farm · {po.supplier?.businessName} · Qty {po.quantity} ·{" "}
+                      {dealLabel(po.dealType)}
                       {!isCommission
                         ? ` · ${formatRwf(po.negotiatedPrice)}/unit wholesale`
                         : ` · commission ${rate}%`}
@@ -599,7 +602,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                     onChange={() => setBuyForm((f) => ({ ...f, dealType: "OUTRIGHT_BUY" }))}
                   />
                   <span>
-                    <strong>Outright buy</strong>. Huza pays farmer now (or on delivery), owns
+                    <strong>Direct Purchase</strong>. Huza pays farmer now (or on delivery), owns
                     stock, keeps 100% of retail sales.
                   </span>
                 </label>
@@ -611,7 +614,7 @@ export function AdminProcurementClient({ view }: { view: ProcurementView }) {
                     onChange={() => setBuyForm((f) => ({ ...f, dealType: "COMMISSION" }))}
                   />
                   <span>
-                    <strong>Commission sale</strong>. Huza sells on HUZA FRESH, then settles farmer
+                    <strong>Commission Sale</strong>. Huza sells on HUZA FRESH, then settles farmer
                     after sales (commission deducted automatically).
                   </span>
                 </label>

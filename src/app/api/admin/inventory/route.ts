@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { deriveInventoryOpsStatus } from "@/lib/inventory-meta";
+import {
+  deriveInventoryOpsStatus,
+  resolveInventorySource,
+  resolvePurchaseMethod,
+} from "@/lib/inventory-meta";
 
 async function requireAdmin() {
   return requireAdminSession({ modules: ["inventory"] });
@@ -23,7 +27,14 @@ const productStockSelect = {
   purchaseMethod: true,
   qualityGrade: true,
   reviewStatus: true,
-  category: { select: { nameEn: true } },
+  categoryId: true,
+  procurementMarketName: true,
+  procurementFarmName: true,
+  procurementFarmerName: true,
+  procurementPurchaseDate: true,
+  purchasedById: true,
+  purchasedBy: { select: { id: true, fullName: true } },
+  category: { select: { id: true, nameEn: true, slug: true } },
   supplier: {
     select: {
       id: true,
@@ -49,7 +60,14 @@ function mapInventoryRow<
     purchaseMethod?: string | null;
     qualityGrade?: string | null;
     reviewStatus?: string | null;
-    category?: { nameEn: string } | null;
+    categoryId?: string | null;
+    procurementMarketName?: string | null;
+    procurementFarmName?: string | null;
+    procurementFarmerName?: string | null;
+    procurementPurchaseDate?: Date | string | null;
+    purchasedById?: string | null;
+    purchasedBy?: { id: string; fullName: string } | null;
+    category?: { id?: string; nameEn: string; slug?: string } | null;
     supplier?: {
       id: string;
       businessName: string;
@@ -58,6 +76,12 @@ function mapInventoryRow<
   },
 >(p: T) {
   const inventoryStatus = deriveInventoryOpsStatus(p);
+  const inventorySource = resolveInventorySource(p.inventorySource);
+  const purchaseMethod = resolvePurchaseMethod(
+    p.purchaseMethod,
+    p.ownershipMode,
+    p.inventorySource
+  );
 
   return {
     id: p.id,
@@ -70,12 +94,23 @@ function mapInventoryRow<
     price: p.price ?? null,
     purchasePrice: p.purchasePrice ?? null,
     ownershipMode: p.ownershipMode ?? null,
-    inventorySource: p.inventorySource ?? null,
-    purchaseMethod: p.purchaseMethod ?? null,
+    inventorySource,
+    purchaseMethod,
     qualityGrade: p.qualityGrade ?? null,
     reviewStatus: p.reviewStatus ?? null,
     inventoryStatus,
-    category: p.category ? { nameEn: p.category.nameEn } : null,
+    categoryId: p.categoryId || p.category?.id || null,
+    procurementMarketName: p.procurementMarketName ?? null,
+    procurementFarmName: p.procurementFarmName ?? null,
+    procurementFarmerName: p.procurementFarmerName ?? null,
+    procurementPurchaseDate: p.procurementPurchaseDate
+      ? new Date(p.procurementPurchaseDate).toISOString()
+      : null,
+    purchasedById: p.purchasedById ?? null,
+    purchasedByName: p.purchasedBy?.fullName ?? null,
+    category: p.category
+      ? { id: p.category.id, nameEn: p.category.nameEn, slug: p.category.slug }
+      : null,
     supplier: p.supplier
       ? {
           id: p.supplier.id,
@@ -84,6 +119,40 @@ function mapInventoryRow<
         }
       : null,
   };
+}
+
+/** Persist missing source/method so inventory rows never stay blank. */
+async function backfillMissingInventoryMeta() {
+  await prisma.product.updateMany({
+    where: {
+      deletedAt: null,
+      OR: [{ inventorySource: null }, { inventorySource: "" }],
+    },
+    data: { inventorySource: "FARMER" },
+  });
+  await prisma.product.updateMany({
+    where: {
+      deletedAt: null,
+      inventorySource: "MARKET",
+      OR: [{ purchaseMethod: null }, { purchaseMethod: "" }],
+    },
+    data: { purchaseMethod: "MARKET" },
+  });
+  await prisma.product.updateMany({
+    where: {
+      deletedAt: null,
+      ownershipMode: "COMMISSION",
+      OR: [{ purchaseMethod: null }, { purchaseMethod: "" }],
+    },
+    data: { purchaseMethod: "COMMISSION" },
+  });
+  await prisma.product.updateMany({
+    where: {
+      deletedAt: null,
+      OR: [{ purchaseMethod: null }, { purchaseMethod: "" }],
+    },
+    data: { purchaseMethod: "DIRECT" },
+  });
 }
 
 export async function GET(req: Request) {
@@ -95,12 +164,18 @@ export async function GET(req: Request) {
   const filter = searchParams.get("filter") || "all";
   const q = searchParams.get("q")?.trim() || "";
   const productId = searchParams.get("productId") || undefined;
+  const categoryId = searchParams.get("categoryId")?.trim() || "";
   const source = searchParams.get("source")?.trim().toUpperCase() || "";
   const method = searchParams.get("method")?.trim().toUpperCase() || "";
   const grade = searchParams.get("grade")?.trim() || "";
   const statusFilter = searchParams.get("status")?.trim() || "";
 
+  if (mode === "stock") {
+    await backfillMissingInventoryMeta();
+  }
+
   const metaWhere: Prisma.ProductWhereInput = {
+    ...(categoryId ? { categoryId } : {}),
     ...(source === "FARMER" || source === "MARKET" ? { inventorySource: source } : {}),
     ...(method === "DIRECT" || method === "COMMISSION" || method === "MARKET"
       ? { purchaseMethod: method }
@@ -134,6 +209,7 @@ export async function GET(req: Request) {
       where: {
         quantity: { gt: 0 },
         expiryDate: { not: null, lte: in7 },
+        ...(categoryId ? { product: { categoryId } } : {}),
       },
       select: {
         id: true,
@@ -145,7 +221,7 @@ export async function GET(req: Request) {
             id: true,
             nameEn: true,
             unit: true,
-            category: { select: { nameEn: true, slug: true } },
+            category: { select: { id: true, nameEn: true, slug: true } },
           },
         },
       },
@@ -170,6 +246,10 @@ export async function GET(req: Request) {
         OR p."nameFr" ILIKE ${"%" + q + "%"}
         OR p."nameRw" ILIKE ${"%" + q + "%"}
       )`
+    : Prisma.empty;
+
+  const categorySql = categoryId
+    ? Prisma.sql`AND p."categoryId" = ${categoryId}`
     : Prisma.empty;
 
   const sourceSql =
@@ -203,7 +283,15 @@ export async function GET(req: Request) {
         purchaseMethod: string | null;
         qualityGrade: string | null;
         reviewStatus: string | null;
+        categoryId: string | null;
         categoryNameEn: string | null;
+        categorySlug: string | null;
+        procurementMarketName: string | null;
+        procurementFarmName: string | null;
+        procurementFarmerName: string | null;
+        procurementPurchaseDate: Date | null;
+        purchasedById: string | null;
+        purchasedByName: string | null;
         supplierId: string | null;
         supplierName: string | null;
         farmerName: string | null;
@@ -211,14 +299,19 @@ export async function GET(req: Request) {
     >`
       SELECT p.id, p."nameEn", p.unit, p."stockQty", p."reservedQty", p."lowStockAt", p."isActive",
              p.price, p."purchasePrice", p."ownershipMode", p."inventorySource", p."purchaseMethod",
-             p."qualityGrade", p."reviewStatus",
-             c."nameEn" AS "categoryNameEn",
+             p."qualityGrade", p."reviewStatus", p."categoryId",
+             p."procurementMarketName", p."procurementFarmName", p."procurementFarmerName",
+             p."procurementPurchaseDate", p."purchasedById",
+             c."nameEn" AS "categoryNameEn", c.slug AS "categorySlug",
+             buyer."fullName" AS "purchasedByName",
              s.id AS "supplierId", s."businessName" AS "supplierName", u."fullName" AS "farmerName"
       FROM "Product" p
       LEFT JOIN "Category" c ON c.id = p."categoryId"
       LEFT JOIN "Supplier" s ON s.id = p."supplierId"
       LEFT JOIN "User" u ON u.id = s."userId"
+      LEFT JOIN "User" buyer ON buyer.id = p."purchasedById"
       WHERE p."deletedAt" IS NULL
+        ${categorySql}
         ${searchSql}
         ${sourceSql}
         ${methodSql}
@@ -253,7 +346,22 @@ export async function GET(req: Request) {
             purchaseMethod: p.purchaseMethod,
             qualityGrade: p.qualityGrade,
             reviewStatus: p.reviewStatus,
-            category: p.categoryNameEn ? { nameEn: p.categoryNameEn } : null,
+            categoryId: p.categoryId,
+            procurementMarketName: p.procurementMarketName,
+            procurementFarmName: p.procurementFarmName,
+            procurementFarmerName: p.procurementFarmerName,
+            procurementPurchaseDate: p.procurementPurchaseDate,
+            purchasedById: p.purchasedById,
+            purchasedBy: p.purchasedByName
+              ? { id: p.purchasedById || "", fullName: p.purchasedByName }
+              : null,
+            category: p.categoryNameEn
+              ? {
+                  id: p.categoryId || undefined,
+                  nameEn: p.categoryNameEn,
+                  slug: p.categorySlug || undefined,
+                }
+              : null,
             supplier: p.supplierId
               ? {
                   id: p.supplierId,

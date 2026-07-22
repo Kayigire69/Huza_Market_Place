@@ -9,6 +9,53 @@ export type PurchaseMethod = "DIRECT" | "COMMISSION" | "MARKET";
 /** Phase 3 ops status. Mapped from stock + review without replacing shop enums. */
 export type InventoryOpsStatus = "Available" | "Reserved" | "Sold Out" | "Rejected";
 
+export const INVENTORY_SOURCE_LABELS: Record<InventorySource, string> = {
+  FARMER: "Farm",
+  MARKET: "Market",
+};
+
+export const PURCHASE_METHOD_LABELS: Record<PurchaseMethod, string> = {
+  DIRECT: "Direct Purchase",
+  COMMISSION: "Commission Sale",
+  MARKET: "Local Market Purchase",
+};
+
+export function inventorySourceLabel(raw?: string | null): string {
+  return INVENTORY_SOURCE_LABELS[resolveInventorySource(raw)];
+}
+
+export function purchaseMethodLabel(
+  raw?: string | null,
+  ownershipMode?: string | null,
+  inventorySource?: string | null
+): string {
+  return PURCHASE_METHOD_LABELS[resolvePurchaseMethod(raw, ownershipMode, inventorySource)];
+}
+
+/** Never leave blank — Farm is the default for Huza stock. */
+export function resolveInventorySource(raw?: string | null): InventorySource {
+  const s = String(raw || "")
+    .trim()
+    .toUpperCase();
+  if (s === "MARKET") return "MARKET";
+  return "FARMER";
+}
+
+/** Never leave blank — Direct Purchase is the default. */
+export function resolvePurchaseMethod(
+  raw?: string | null,
+  ownershipMode?: string | null,
+  inventorySource?: string | null
+): PurchaseMethod {
+  const s = String(raw || "")
+    .trim()
+    .toUpperCase();
+  if (s === "DIRECT" || s === "COMMISSION" || s === "MARKET") return s;
+  if (ownershipMode === "COMMISSION") return "COMMISSION";
+  if (resolveInventorySource(inventorySource) === "MARKET") return "MARKET";
+  return "DIRECT";
+}
+
 /** Normalize free-text / A-B-C grades to Phase 3 Grade 1 | 2 | 3. */
 export function normalizeQualityGrade(raw: unknown): string | null {
   const s = String(raw ?? "")
@@ -34,6 +81,56 @@ export function purchaseMethodFromDealType(
   if (dealType === "COMMISSION") return "COMMISSION";
   if (dealType === "MARKET_BUY") return "MARKET";
   return "DIRECT";
+}
+
+/** Human labels for procurement deal / method (Admin + inventory). */
+export function dealTypeLabel(dealType?: string | null): string {
+  if (dealType === "COMMISSION") return "Commission Sale";
+  if (dealType === "MARKET_BUY") return "Local Market Purchase";
+  return "Direct Purchase";
+}
+
+export type ProcurementProvenanceInput = {
+  inventorySource: InventorySource;
+  purchaseMethod: PurchaseMethod;
+  ownershipMode?: "OWNED" | "COMMISSION";
+  farmName?: string | null;
+  farmerName?: string | null;
+  marketName?: string | null;
+  purchaseDate?: Date | string | null;
+  purchasedById?: string | null;
+};
+
+/** Fields written onto Product so inventory inherits procurement history. */
+export function productProcurementData(input: ProcurementProvenanceInput) {
+  const source = resolveInventorySource(input.inventorySource);
+  const method = resolvePurchaseMethod(
+    input.purchaseMethod,
+    input.ownershipMode,
+    source
+  );
+  const purchaseDate = input.purchaseDate
+    ? input.purchaseDate instanceof Date
+      ? input.purchaseDate
+      : new Date(input.purchaseDate)
+    : null;
+
+  return {
+    inventorySource: source,
+    purchaseMethod: method,
+    ownershipMode:
+      input.ownershipMode ||
+      (method === "COMMISSION" ? ("COMMISSION" as const) : ("OWNED" as const)),
+    procurementFarmName:
+      source === "FARMER" ? String(input.farmName || "").trim() || null : null,
+    procurementFarmerName:
+      source === "FARMER" ? String(input.farmerName || "").trim() || null : null,
+    procurementMarketName:
+      source === "MARKET" ? String(input.marketName || "").trim() || null : null,
+    procurementPurchaseDate:
+      purchaseDate && !Number.isNaN(purchaseDate.getTime()) ? purchaseDate : null,
+    purchasedById: input.purchasedById || null,
+  };
 }
 
 /** Parse farmer harvest qty strings like "120", "120 kg", "120KG". */

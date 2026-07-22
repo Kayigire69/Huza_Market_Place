@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { ensureMarketDeskSupplier, marketPurchaseNumber } from "@/lib/market-desk";
-import { normalizeQualityGrade } from "@/lib/inventory-meta";
+import { normalizeQualityGrade, productProcurementData } from "@/lib/inventory-meta";
 
 const UNIT_TYPES: UnitType[] = ["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"];
 
@@ -46,10 +46,24 @@ export async function GET(req: Request) {
           qualityGrade: true,
           inventorySource: true,
           purchaseMethod: true,
+          procurementMarketName: true,
+          procurementPurchaseDate: true,
+          purchasedById: true,
         },
       },
     },
   });
+
+  const creatorIds = [
+    ...new Set(purchases.map((p) => p.createdById).filter(Boolean) as string[]),
+  ];
+  const creators = creatorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: creatorIds } },
+        select: { id: true, fullName: true },
+      })
+    : [];
+  const creatorMap = new Map(creators.map((u) => [u.id, u.fullName]));
 
   const [recorded, inspected, stocked] = await Promise.all([
     prisma.marketPurchase.count({ where: { status: MarketPurchaseStatus.RECORDED } }),
@@ -65,6 +79,9 @@ export async function GET(req: Request) {
       stockedAt: p.stockedAt?.toISOString() ?? null,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
+      source: "MARKET" as const,
+      procurementMethod: "MARKET" as const,
+      purchasedByName: p.createdById ? creatorMap.get(p.createdById) || null : null,
     })),
     counts: { recorded, inspected, stocked },
   });
@@ -217,6 +234,14 @@ export async function PATCH(req: Request) {
     const sellPrice =
       purchase.retailPrice ?? Math.round(purchase.unitPrice * 1.25);
     const qty = Math.max(1, Math.floor(purchase.quantity));
+    const provenance = productProcurementData({
+      inventorySource: "MARKET",
+      purchaseMethod: "MARKET",
+      ownershipMode: "OWNED",
+      marketName: purchase.marketName,
+      purchaseDate: purchase.purchaseDate,
+      purchasedById: purchase.createdById || session.user.id,
+    });
 
     const product = await prisma.product.create({
       data: {
@@ -230,9 +255,7 @@ export async function PATCH(req: Request) {
         descriptionRw: `Ibicuruzwa byaguzwe kuri ${purchase.marketName} (${purchase.vendorName}).`,
         price: sellPrice,
         purchasePrice: purchase.unitPrice,
-        ownershipMode: "OWNED",
-        inventorySource: "MARKET",
-        purchaseMethod: "MARKET",
+        ...provenance,
         qualityGrade: grade,
         unit: purchase.unit,
         stockQty: 0,
