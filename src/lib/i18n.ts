@@ -238,7 +238,7 @@ const en: Dict = {
   support: "Support",
   about: "About",
   wishlist: "Wishlist",
-  poweredBy: "Powered by Youth Huza",
+  poweredBy: "Empowered by Youth Huza",
   explore: "Explore",
   aboutYouthHuza: "About Youth Huza",
   faq: "FAQ",

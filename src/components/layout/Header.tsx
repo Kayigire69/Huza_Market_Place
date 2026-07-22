@@ -121,7 +121,7 @@ export function Header() {
             className="flex min-w-0 shrink items-center"
             aria-label="HUZA FRESH Home"
           >
-            <HuzaFreshLogo size="sm" showTagline={false} className="max-w-full" />
+            <HuzaFreshLogo size="sm" showTagline className="max-w-full" />
           </Link>
 
           <div className="mx-auto hidden min-w-0 flex-1 md:block md:max-w-2xl">

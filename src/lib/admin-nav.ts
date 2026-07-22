@@ -28,6 +28,7 @@ import {
   Camera,
   Store,
   Inbox,
+  PanelsTopLeft,
 } from "lucide-react";
 
 /** Stable module keys for role-aware admin sidebar + route guards */
@@ -40,6 +41,7 @@ export type AdminModule =
   | "categories"
   | "products"
   | "promotions"
+  | "website_content"
   | "inventory"
   | "deliveries"
   | "farmers"
@@ -97,6 +99,12 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       { module: "categories", href: "/admin/categories", label: "Categories", icon: Tags },
       { module: "products", href: "/admin/products", label: "Products", icon: Package },
       { module: "promotions", href: "/admin/offers", label: "Promotions", icon: Percent },
+      {
+        module: "website_content",
+        href: "/admin/website-content",
+        label: "Website Content",
+        icon: PanelsTopLeft,
+      },
     ],
   },
   {
@@ -228,6 +236,7 @@ function withCatalog(modules: AdminModule[]): AdminModule[] {
   if (set.has("products")) {
     set.add("categories");
     set.add("promotions");
+    set.add("website_content");
   }
   return [...set];
 }
@@ -316,6 +325,7 @@ export function moduleForAdminPath(pathname: string): AdminModule | null {
   if (pathname.startsWith("/admin/payments")) return "payments";
   if (pathname.startsWith("/admin/support")) return "support";
   if (pathname.startsWith("/admin/categories")) return "categories";
+  if (pathname.startsWith("/admin/website-content")) return "website_content";
   if (pathname.startsWith("/admin/products")) return "products";
   if (pathname.startsWith("/admin/offers")) return "promotions";
   if (pathname.startsWith("/admin/approvals")) return "approvals";

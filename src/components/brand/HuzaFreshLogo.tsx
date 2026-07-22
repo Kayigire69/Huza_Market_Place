@@ -94,7 +94,7 @@ export function HuzaFreshLogo({
               onDark ? "text-[#C8E8D4]" : "text-[#3a4a40]"
             )}
           >
-            Powered by Youth Huza
+            Empowered by Youth Huza
           </span>
         ) : null}
       </span>

@@ -181,6 +181,9 @@ export function AdminCategoriesClient() {
                   <h2 className="mt-2 truncate text-base font-semibold text-[var(--admin-ink)]">
                     {c.nameEn}
                   </h2>
+                  {c.nameRw && c.nameRw !== c.nameEn ? (
+                    <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">{c.nameRw}</p>
+                  ) : null}
                   <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
                     {c.stats.products} Products
                     {!c.isActive ? " · Hidden" : ""}
@@ -253,7 +256,7 @@ export function AdminCategoriesClient() {
             </div>
             <form onSubmit={save} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Name</span>
+                <span className="mb-1 block font-medium">English Name</span>
                 <input
                   className="admin-input"
                   value={form.nameEn}
@@ -271,11 +274,12 @@ export function AdminCategoriesClient() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Name (Kinyarwanda)</span>
+                <span className="mb-1 block font-medium">Kinyarwanda Name</span>
                 <input
                   className="admin-input"
                   value={form.nameRw}
                   onChange={(e) => setForm((f) => ({ ...f, nameRw: e.target.value }))}
+                  placeholder="e.g. Imbuto"
                 />
               </label>
               <label className="block text-sm">
