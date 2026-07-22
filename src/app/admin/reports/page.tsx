@@ -7,7 +7,7 @@ import { AdminReportsClient } from "@/components/admin/AdminReportsClient";
 export default async function AdminReportsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/reports")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/reports", session.user.allowedModules)) redirect("/admin");
 
   return <AdminReportsClient />;
 }

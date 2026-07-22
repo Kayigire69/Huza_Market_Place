@@ -7,7 +7,7 @@ import { AdminSettingsClient } from "@/components/admin/AdminSettingsClient";
 export default async function AdminSettingsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/settings")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/settings", session.user.allowedModules)) redirect("/admin");
 
   return <AdminSettingsClient isSuperAdmin={isSuperAdmin(session.user.role)} />;
 }

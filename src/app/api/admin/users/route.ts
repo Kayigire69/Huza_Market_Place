@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { canManageStaff, isSuperAdmin } from "@/lib/rbac";
 import { BCRYPT_ROUNDS } from "@/lib/security-access";
+import { sanitizeAllowedModules } from "@/lib/admin-nav";
 
 /** Roles Super Admin may create for employees (not Super Admin by default). */
 const EMPLOYEE_ROLES: Role[] = [
@@ -43,6 +44,7 @@ export async function GET() {
       email: true,
       phone: true,
       role: true,
+      allowedModules: true,
       isActive: true,
       isPrimarySuperAdmin: true,
       totpEnabled: true,
@@ -67,13 +69,13 @@ export async function POST(req: Request) {
   let role = String(body.role || "ADMIN") as Role;
   const password = String(body.password || "");
   const promoteSuperAdmin = Boolean(body.promoteSuperAdmin);
+  const requestedModules = Array.isArray(body.allowedModules) ? body.allowedModules : null;
 
   if (!fullName || phone.length < 8) {
     return NextResponse.json({ error: "Full name and phone are required" }, { status: 400 });
   }
 
   if (promoteSuperAdmin) {
-    // Deliberate second Super Admin. Only an existing Super Admin can do this
     role = Role.SUPER_ADMIN;
   } else if (!EMPLOYEE_ROLES.includes(role)) {
     return NextResponse.json(
@@ -95,12 +97,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Phone or email already registered" }, { status: 409 });
   }
 
+  const allowedModules =
+    role === "SUPER_ADMIN" ? [] : sanitizeAllowedModules(role, requestedModules);
+
   const user = await prisma.user.create({
     data: {
       fullName,
       email,
       phone,
       role,
+      allowedModules,
       passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS),
       isActive: true,
       mustChangePassword: true,
@@ -112,6 +118,7 @@ export async function POST(req: Request) {
       email: true,
       phone: true,
       role: true,
+      allowedModules: true,
       isActive: true,
       isPrimarySuperAdmin: true,
       createdAt: true,
@@ -122,12 +129,15 @@ export async function POST(req: Request) {
     action: role === "SUPER_ADMIN" ? "staff.create_super_admin" : "staff.create",
     entity: "User",
     entityId: user.id,
-    details: `Created ${user.role} for ${user.fullName} (${user.email || user.phone})`,
+    details: `Created ${user.role} for ${user.fullName} (${user.email || user.phone})${
+      allowedModules.length ? ` modules=${allowedModules.join(",")}` : ""
+    }`,
     after: {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
       role: user.role,
+      allowedModules: user.allowedModules,
     },
   });
 
@@ -154,6 +164,7 @@ export async function PATCH(req: Request) {
       email: true,
       phone: true,
       role: true,
+      allowedModules: true,
       isActive: true,
       isPrimarySuperAdmin: true,
     },
@@ -162,8 +173,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Staff user not found" }, { status: 404 });
   }
 
-  // Protect primary Super Admin and any Super Admin from normal Admin paths
-  // (this route is already Super-Admin-only, but still block dangerous self/primary ops)
   if (before.isPrimarySuperAdmin) {
     if (body.isActive === false) {
       return NextResponse.json(
@@ -284,9 +293,19 @@ export async function PATCH(req: Request) {
       ? (body.role as Role)
       : undefined;
 
-  // Only Super Admin can promote to Super Admin (deliberate checkbox on create; here require explicit)
   if (nextRole === "SUPER_ADMIN" && !isSuperAdmin(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const roleForModules = nextRole || before.role;
+  let nextModules: string[] | undefined;
+  if (Array.isArray(body.allowedModules)) {
+    nextModules =
+      roleForModules === "SUPER_ADMIN"
+        ? []
+        : sanitizeAllowedModules(roleForModules, body.allowedModules);
+  } else if (nextRole && nextRole !== before.role) {
+    nextModules = [];
   }
 
   const user = await prisma.user.update({
@@ -294,6 +313,7 @@ export async function PATCH(req: Request) {
     data: {
       ...(body.isActive !== undefined ? { isActive: Boolean(body.isActive) } : {}),
       ...(nextRole ? { role: nextRole } : {}),
+      ...(nextModules !== undefined ? { allowedModules: nextModules } : {}),
     },
     select: {
       id: true,
@@ -301,6 +321,7 @@ export async function PATCH(req: Request) {
       email: true,
       phone: true,
       role: true,
+      allowedModules: true,
       isActive: true,
       isPrimarySuperAdmin: true,
       mustChangePassword: true,
@@ -313,7 +334,9 @@ export async function PATCH(req: Request) {
     action: "staff.update",
     entity: "User",
     entityId: user.id,
-    details: `Updated ${user.fullName}: active=${user.isActive} role=${user.role}`,
+    details: `Updated ${user.fullName}: active=${user.isActive} role=${user.role} modules=${
+      user.allowedModules.length ? user.allowedModules.join(",") : "role-default"
+    }`,
     before,
     after: user,
   });

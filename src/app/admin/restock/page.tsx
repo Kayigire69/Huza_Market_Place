@@ -7,7 +7,7 @@ import { AdminRestockClient } from "@/components/admin/AdminRestockClient";
 export default async function AdminRestockPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/restock")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/restock", session.user.allowedModules)) redirect("/admin");
 
   return <AdminRestockClient />;
 }

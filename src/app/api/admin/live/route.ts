@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePortalSession } from "@/lib/rbac-server";
+import { requireAdminSession, requirePortalSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import {
   getAdminDashboardAnalytics,
@@ -7,15 +7,22 @@ import {
 } from "@/services/admin-analytics.service";
 import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
 
-/** Live admin feed. Use ?full=1 for dashboard charts; default is lite for chrome. */
+/**
+ * Live admin feed.
+ * - Default (lite): any portal staff — chrome counts + own notifications
+ * - ?full=1: requires dashboard module (or Super Admin) — analytics payload
+ */
 export async function GET(req: Request) {
-  const session = await requirePortalSession();
+  const { searchParams } = new URL(req.url);
+  const full = searchParams.get("full") === "1";
+
+  const session = full
+    ? await requireAdminSession({ modules: ["dashboard"] })
+    : await requirePortalSession();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const full = searchParams.get("full") === "1";
   const userId = session.user.id;
 
   const notifications = await prisma.notification.findMany({

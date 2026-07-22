@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAdminSession, requirePortalSession } from "@/lib/rbac-server";
+import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import {
@@ -13,19 +13,16 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { canEditSystemSettings } from "@/lib/rbac";
 import { ADMIN_ROLE_MODULES } from "@/lib/admin-nav";
 
-async function requirePortalAdmin() {
-  return requirePortalSession();
-}
-
 async function requireSuperAdmin() {
   const session = await requireAdminSession({ modules: ["settings"] });
   if (!session?.user || !canEditSystemSettings(session.user.role)) return null;
   return session;
 }
 
+/** Settings bundle is Super Admin only (reads used to leak to any portal role). */
 export async function GET() {
-  const session = await requirePortalAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireSuperAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden. Super Admin only" }, { status: 403 });
 
   const [settings, zones, hours, emergency, staffCount] = await Promise.all([
     getAdminSettingsBundle(),

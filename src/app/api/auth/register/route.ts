@@ -12,6 +12,7 @@ import {
 import bcrypt from "bcryptjs";
 import { BCRYPT_ROUNDS } from "@/lib/security-access";
 import { pickFarmerDossier } from "@/lib/farmer-dossier";
+import { notifyAdmins } from "@/lib/notify-admins";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -255,6 +256,14 @@ export async function POST(req: Request) {
           },
         },
       });
+
+      void notifyAdmins({
+        type: "NEW_SUPPLIER",
+        title: "New farmer application",
+        body: `${data.fullName} · ${phone} · ${
+          String(dossier.businessName || data.businessName || "").trim() || "Farm"
+        } · pending approval`,
+      }).catch(() => undefined);
 
       return NextResponse.json({
         id: user.id,

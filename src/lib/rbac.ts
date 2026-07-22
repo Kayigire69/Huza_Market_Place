@@ -64,12 +64,16 @@ export function canEditSystemSettings(role?: string | null): boolean {
 }
 
 /** Sidebar + middleware: can this role open this admin URL? */
-export function canAccessAdminPath(role: string | null | undefined, pathname: string): boolean {
+export function canAccessAdminPath(
+  role: string | null | undefined,
+  pathname: string,
+  allowedModules?: string[] | null
+): boolean {
   if (!isAdminPortalRole(role)) return false;
   if (isSuperAdminOnlyPath(pathname) && !isSuperAdmin(role)) return false;
   const mod = moduleForAdminPath(pathname);
   if (!mod) return isSuperAdmin(role);
-  return roleCanAccessModule(role, mod);
+  return roleCanAccessModule(role, mod, allowedModules);
 }
 
 export { firstAllowedAdminPath };

@@ -132,17 +132,35 @@ export async function PATCH(req: Request) {
   const notifyUserId = order.userId || before.userId;
   const isPickupReady =
     status === "READY_FOR_PICKUP" && before.fulfillmentMethod === "PICKUP";
+  const isOrderReady =
+    status === "PACKED" ||
+    status === "READY_FOR_DISPATCH" ||
+    status === "READY_FOR_PICKUP";
 
   if (notifyUserId) {
     await prisma.notification.create({
       data: {
         userId: notifyUserId,
-        type: "DELIVERY_UPDATE",
+        type: isPickupReady
+          ? "DELIVERY_UPDATE"
+          : status === "PACKED"
+            ? "ORDER_PACKED"
+            : "DELIVERY_UPDATE",
         channel: "IN_APP",
-        title: isPickupReady ? "Order ready for collection" : "Order update",
+        title: isPickupReady
+          ? "Pickup ready"
+          : isOrderReady
+            ? "Order ready"
+            : "Order update",
         body: isPickupReady
           ? `Order ${order.orderNumber} is ready for pickup at Youth Huza. Bring your order number.`
-          : `Order ${order.orderNumber} is now ${String(status).replace(/_/g, " ")}.`,
+          : isOrderReady
+            ? `Order ${order.orderNumber} is ready. ${
+                before.fulfillmentMethod === "PICKUP"
+                  ? "You can collect soon — we will confirm pickup details."
+                  : "We are preparing dispatch to your address."
+              }`
+            : `Order ${order.orderNumber} is now ${String(status).replace(/_/g, " ")}.`,
       },
     });
   }

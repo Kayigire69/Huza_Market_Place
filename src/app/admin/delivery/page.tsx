@@ -7,7 +7,7 @@ import { AdminDeliveriesClient } from "@/components/admin/AdminDeliveriesClient"
 export default async function AdminDeliveryPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/delivery")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/delivery", session.user.allowedModules)) redirect("/admin");
 
   return <AdminDeliveriesClient />;
 }

@@ -27,7 +27,7 @@ import {
 } from "@/lib/admin-nav";
 import {
   isAdminAlertSoundEnabled,
-  isOrderAlertType,
+  isSoundAlertType,
   playAdminOrderAlertSound,
   requestAdminNotificationPermission,
   setAdminAlertSoundEnabled,
@@ -64,6 +64,7 @@ export function AdminShell({
   const pathname = usePathname();
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const allowedModules = session?.user?.allowedModules;
   const isSuper = role === "SUPER_ADMIN";
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -126,7 +127,7 @@ export function AdminShell({
             (n) =>
               !knownAlertIds.current!.has(n.id) &&
               !n.isRead &&
-              isOrderAlertType(n.type)
+              isSoundAlertType(n.type, "admin")
           );
           for (const n of next) knownAlertIds.current.add(n.id);
           if (freshOrders.length > 0 && isAdminAlertSoundEnabled()) {
@@ -199,7 +200,10 @@ export function AdminShell({
       .join("");
   }, [name]);
 
-  const sections = useMemo(() => navSectionsForRole(role), [role]);
+  const sections = useMemo(
+    () => navSectionsForRole(role, allowedModules),
+    [role, allowedModules]
+  );
 
   const isActive = useCallback(
     (href: string, exact?: boolean) => {
@@ -218,8 +222,8 @@ export function AdminShell({
   }, [sections, isActive]);
 
   const canSee = useCallback(
-    (mod: AdminModule) => roleCanAccessModule(role, mod),
-    [role]
+    (mod: AdminModule) => roleCanAccessModule(role, mod, allowedModules),
+    [role, allowedModules]
   );
 
   const alertItems = useMemo(() => {

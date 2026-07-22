@@ -422,11 +422,18 @@ export async function PATCH(req: Request) {
       userId: supplier.userId,
       type: "SUPPLIER_STATUS",
       channel: "IN_APP",
-      title: `Farmer ${action}`,
+      title:
+        action === "approve" || action === "reactivate"
+          ? "Application approved"
+          : action === "reject"
+            ? "Application rejected"
+            : `Farmer ${action}`,
       body:
         action === "reject"
           ? `Your application was rejected: ${reason || "See admin notes"}`
-          : `Your farmer account is now ${status}.`,
+          : action === "approve" || action === "reactivate"
+            ? "Your farmer account is approved. You can submit produce to Youth Huza."
+            : `Your farmer account is now ${status}.`,
     },
   });
 

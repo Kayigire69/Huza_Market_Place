@@ -172,6 +172,7 @@ export function AdminDashboardClient({
 }) {
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const allowedModules = session?.user?.allowedModules;
   const [data, setData] = useState(initial);
 
   useEffect(() => {
@@ -284,7 +285,7 @@ export function AdminDashboardClient({
       module: AdminModule;
     }[];
 
-    return rows.filter((r) => roleCanAccessModule(role, r.module));
+    return rows.filter((r) => roleCanAccessModule(role, r.module, allowedModules));
   }, [c, pendingFarmers, role]);
 
   const activity =
@@ -343,7 +344,7 @@ export function AdminDashboardClient({
         module: "farmers" as AdminModule,
       },
     ] satisfies Kpi[]
-  ).filter((k) => !k.module || roleCanAccessModule(role, k.module));
+  ).filter((k) => !k.module || roleCanAccessModule(role, k.module, allowedModules));
 
   const quick = [
     { href: "/admin/orders", label: "View Orders", icon: ShoppingBag, module: "orders" as const },
@@ -358,7 +359,7 @@ export function AdminDashboardClient({
       module: "purchase_orders" as const,
     },
     { href: "/admin/support", label: "Support Inbox", icon: LifeBuoy, module: "support" as const },
-  ].filter((q) => roleCanAccessModule(role, q.module));
+  ].filter((q) => roleCanAccessModule(role, q.module, allowedModules));
 
   const farmOpsStrip = [
     {
@@ -389,7 +390,7 @@ export function AdminDashboardClient({
       module: "photography" as AdminModule,
       icon: Camera,
     },
-  ].filter((r) => roleCanAccessModule(role, r.module));
+  ].filter((r) => roleCanAccessModule(role, r.module, allowedModules));
 
   return (
     <div className="space-y-6">

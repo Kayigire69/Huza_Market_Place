@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminWebsiteContentPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/website-content")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/website-content", session.user.allowedModules)) redirect("/admin");
 
   return (
     <div>

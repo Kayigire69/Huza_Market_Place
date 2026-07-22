@@ -7,7 +7,7 @@ import { AdminMarketProcurementClient } from "@/components/admin/AdminMarketProc
 export default async function AdminMarketProcurementPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/procurement/market")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/procurement/market", session.user.allowedModules)) redirect("/admin");
 
   return <AdminMarketProcurementClient />;
 }

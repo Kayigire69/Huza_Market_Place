@@ -27,6 +27,7 @@ export async function requirePortalSession(): Promise<Session | null> {
  * API guard: session must be an admin portal role, and optionally
  * must have access to at least one of the listed modules.
  * Super Admin always passes module checks.
+ * Honors per-user allowedModules when set by Super Admin.
  */
 export async function requireAdminSession(
   options?: { modules?: AdminModule[] }
@@ -35,7 +36,8 @@ export async function requireAdminSession(
   if (!session) return null;
   if (isSuperAdmin(session.user.role)) return session;
   if (options?.modules?.length) {
-    const ok = options.modules.some((m) => roleCanAccessModule(session.user.role, m));
+    const mods = session.user.allowedModules;
+    const ok = options.modules.some((m) => roleCanAccessModule(session.user.role, m, mods));
     if (!ok) return null;
   }
   return session;

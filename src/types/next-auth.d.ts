@@ -8,6 +8,8 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: string;
+      /** Empty/undefined = role defaults; non-empty = Super Admin subset */
+      allowedModules?: string[];
       supplierId?: string | null;
       supplierStatus?: string | null;
       mustChangePassword?: boolean;
@@ -21,6 +23,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     role?: string;
+    allowedModules?: string[];
     supplierId?: string | null;
     supplierStatus?: string | null;
     mustChangePassword?: boolean;

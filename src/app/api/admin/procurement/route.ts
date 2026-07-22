@@ -9,6 +9,7 @@ import {
   PurchaseOrderStatus,
   UnitType,
 } from "@prisma/client";
+import { notifyProcurementStaff } from "@/lib/notify-procurement";
 
 function poNumber() {
   const n = Date.now().toString(36).toUpperCase();
@@ -380,6 +381,11 @@ export async function PATCH(req: Request) {
             : `PO ${purchaseOrder.poNumber}: Huza ordered ${qty} ${offer.unit.toLowerCase()} of ${offer.title} at ${unitPrice} RWF/${offer.unit.toLowerCase()}. Please deliver for inspection.`,
       },
     });
+
+    void notifyProcurementStaff({
+      title: "Procurement assigned",
+      body: `PO ${purchaseOrder.poNumber}: ${dealLabel} · ${offer.title} · ${qty} ${offer.unit} · ${offer.supplier.businessName || "Farmer"}`,
+    }).catch(() => undefined);
 
     await auditAdminAction(req, session, {
       action: "offer.purchase",
@@ -760,7 +766,7 @@ async function handlePoAction(
   await prisma.notification.create({
     data: {
       userId: po.supplier.userId,
-      type: "SUPPLIER_STATUS",
+      type: body.poAction === "pay" ? "PAYMENT_PROCESSED" : "SUPPLIER_STATUS",
       channel: "IN_APP",
       title: notifyTitle,
       body: notifyBody,

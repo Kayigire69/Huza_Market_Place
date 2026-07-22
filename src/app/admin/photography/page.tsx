@@ -7,7 +7,7 @@ import { AdminPhotographyClient } from "@/components/admin/AdminPhotographyClien
 export default async function AdminPhotographyPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/photography")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/photography", session.user.allowedModules)) redirect("/admin");
 
   return <AdminPhotographyClient />;
 }

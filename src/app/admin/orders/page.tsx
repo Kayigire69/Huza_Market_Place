@@ -8,7 +8,7 @@ import { AdminOrdersClient } from "@/components/admin/AdminOrdersClient";
 export default async function AdminOrdersPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/orders")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/orders", session.user.allowedModules)) redirect("/admin");
 
   return (
     <Suspense fallback={<p className="text-sm text-[var(--admin-muted)]">Loading orders…</p>}>

@@ -7,7 +7,7 @@ import { AdminApprovalsClient } from "@/components/admin/AdminApprovalsClient";
 export default async function AdminApprovalsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/approvals")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/approvals", session.user.allowedModules)) redirect("/admin");
 
   return <AdminApprovalsClient />;
 }

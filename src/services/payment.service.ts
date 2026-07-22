@@ -106,8 +106,8 @@ export const paymentService = {
           userId: payment.order.userId,
           type: "PAYMENT_CONFIRMATION",
           channel: "IN_APP",
-          title: "Payment confirmed",
-          body: `Payment of ${payment.amount} RWF for ${payment.order.orderNumber} confirmed. Paid to Youth Huza.`,
+          title: "Order received",
+          body: `Payment of ${payment.amount} RWF for ${payment.order.orderNumber} confirmed. Youth Huza is preparing your order.`,
         },
       });
     }

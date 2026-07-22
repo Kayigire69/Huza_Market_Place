@@ -133,7 +133,11 @@ export default function ConfirmationClient({
 
         <div className="mt-8 flex flex-col gap-3">
           <Link
-            href={`/track?orderNumber=${encodeURIComponent(data.orderNumber)}&phone=${encodeURIComponent(data.payerPhone || "")}`}
+            href={`/track?orderNumber=${encodeURIComponent(data.orderNumber)}&phone=${encodeURIComponent(data.payerPhone || "")}${
+              data.docAccessToken
+                ? `&token=${encodeURIComponent(data.docAccessToken)}`
+                : ""
+            }`}
             className="block"
           >
             <Button size="lg" className="w-full">

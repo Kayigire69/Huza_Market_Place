@@ -7,7 +7,7 @@ import { AdminCategoriesClient } from "@/components/admin/AdminCategoriesClient"
 export default async function AdminCategoriesPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/categories")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/categories", session.user.allowedModules)) redirect("/admin");
 
   return <AdminCategoriesClient />;
 }

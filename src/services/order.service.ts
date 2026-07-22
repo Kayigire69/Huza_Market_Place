@@ -489,10 +489,7 @@ export const orderService = {
           userId,
           type: "ORDER_CONFIRMATION",
           channel: "IN_APP",
-          title:
-            paymentResult.mode === "manual"
-              ? "Send MoMo payment to Youth Huza"
-              : "Approve payment on your phone",
+          title: "Order received",
           body: notifyBody,
         },
       });

@@ -7,7 +7,7 @@ import { AdminProcurementClient } from "@/components/admin/AdminProcurementClien
 export default async function FarmerPaymentsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/procurement/payments")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/procurement/payments", session.user.allowedModules)) redirect("/admin");
 
   return <AdminProcurementClient view="payments" />;
 }

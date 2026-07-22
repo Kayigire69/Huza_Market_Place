@@ -5,24 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
 import { PurchaseOrderStatus } from "@prisma/client";
 import { findSupplierForUser } from "@/lib/supplier-context";
-
-async function notifyProcurement(title: string, body: string) {
-  const staff = await prisma.user.findMany({
-    where: { role: { in: ["PROCUREMENT", "ADMIN", "SUPER_ADMIN"] } },
-    select: { id: true },
-    take: 20,
-  });
-  if (staff.length === 0) return;
-  await prisma.notification.createMany({
-    data: staff.map((u) => ({
-      userId: u.id,
-      type: "SUPPLIER_STATUS" as const,
-      channel: "IN_APP" as const,
-      title,
-      body: body.slice(0, 200),
-    })),
-  });
-}
+import { notifyProcurementStaff } from "@/lib/notify-procurement";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -89,10 +72,10 @@ export async function PATCH(req: Request) {
       },
     });
 
-    await notifyProcurement(
-      `PO ${po.poNumber} accepted`,
-      `${supplier.businessName} accepted purchase order ${po.poNumber} (${po.productName}).`
-    );
+    await notifyProcurementStaff({
+      title: "Procurement assigned",
+      body: `${supplier.businessName} accepted PO ${po.poNumber} (${po.productName}). Follow up on delivery/inspection.`,
+    });
 
     await writeAuditLog({
       actorId: session.user.id,
@@ -106,7 +89,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json(updated);
   }
 
-  // schedule
   const deliveryDate = body.deliveryDate ? String(body.deliveryDate) : "";
   const deliveryNote = body.notes ? String(body.notes).trim() : "";
   if (!deliveryDate && !deliveryNote) {
@@ -148,10 +130,10 @@ export async function PATCH(req: Request) {
     },
   });
 
-  await notifyProcurement(
-    `Delivery scheduled · ${po.poNumber}`,
-    `${supplier.businessName}: ${scheduleLine}`
-  );
+  await notifyProcurementStaff({
+    title: "Procurement assigned",
+    body: `${supplier.businessName}: delivery update on ${po.poNumber} — ${scheduleLine}`,
+  });
 
   await writeAuditLog({
     actorId: session.user.id,
