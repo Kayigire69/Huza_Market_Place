@@ -48,10 +48,39 @@ function resolveMigrateUrl() {
 }
 
 const migrateUrl = resolveMigrateUrl();
-const result = spawnSync("npx", ["prisma", "migrate", "deploy"], {
-  stdio: "inherit",
-  env: { ...process.env, DATABASE_URL: migrateUrl },
-  shell: true,
-});
 
-process.exit(result.status ?? 1);
+const MAX_ATTEMPTS = 4;
+const RETRY_MS = 12_000;
+
+function sleep(ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    /* block until retry window elapses */
+  }
+}
+
+let lastStatus = 1;
+for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  if (attempt > 1) {
+    console.log(`[migrate] Retry ${attempt}/${MAX_ATTEMPTS} in ${RETRY_MS / 1000}s…`);
+    sleep(RETRY_MS);
+  } else {
+    console.log(`[migrate] Attempt ${attempt}/${MAX_ATTEMPTS}`);
+  }
+
+  const result = spawnSync("npx", ["prisma", "migrate", "deploy"], {
+    stdio: "inherit",
+    env: { ...process.env, DATABASE_URL: migrateUrl },
+    shell: true,
+  });
+
+  lastStatus = result.status ?? 1;
+  if (lastStatus === 0) {
+    process.exit(0);
+  }
+}
+
+console.error(
+  "[migrate] Failed after retries. If logs show P1002 (advisory lock), restart the app or set DIRECT_URL on App Platform."
+);
+process.exit(lastStatus);

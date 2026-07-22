@@ -13,6 +13,9 @@ export type ShopHeroSlide = {
   enabled: boolean;
   sortOrder: number;
   emoji: string;
+  /** Small label on the slide image (e.g. Fresh Juices) */
+  badgeLabelEn: string;
+  badgeLabelRw: string;
   headingEn: string;
   supportEn: string;
   primaryCtaEn: string;
@@ -25,7 +28,7 @@ export type ShopHeroSlide = {
   secondaryHref: string;
 };
 
-const DEFAULT_COPY = {
+const SHARED_COPY = {
   headingEn: "Fresh Products Delivered to Your Door",
   supportEn:
     "Fresh fruits, vegetables, dairy, and more. Quality checked and delivered across Rwanda.",
@@ -48,7 +51,9 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     enabled: true,
     sortOrder: 0,
     emoji: "🍎",
-    ...DEFAULT_COPY,
+    badgeLabelEn: "Fresh Fruits & Vegetables",
+    badgeLabelRw: "Imbuto n'imboga bishya",
+    ...SHARED_COPY,
   },
   {
     id: "juices",
@@ -57,7 +62,9 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     enabled: true,
     sortOrder: 1,
     emoji: "🥤",
-    ...DEFAULT_COPY,
+    badgeLabelEn: "Fresh Juices",
+    badgeLabelRw: "Imvubo nshya",
+    ...SHARED_COPY,
   },
   {
     id: "salads",
@@ -66,7 +73,9 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     enabled: true,
     sortOrder: 2,
     emoji: "🥗",
-    ...DEFAULT_COPY,
+    badgeLabelEn: "Fruit Salads",
+    badgeLabelRw: "Insalade z'imbuto",
+    ...SHARED_COPY,
   },
   {
     id: "seedlings",
@@ -75,7 +84,9 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     enabled: true,
     sortOrder: 3,
     emoji: "🌱",
-    ...DEFAULT_COPY,
+    badgeLabelEn: "Fruit Seedlings",
+    badgeLabelRw: "Ibiti by'imbuto byo gutera",
+    ...SHARED_COPY,
   },
   {
     id: "plants",
@@ -84,7 +95,9 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     enabled: true,
     sortOrder: 4,
     emoji: "🪴",
-    ...DEFAULT_COPY,
+    badgeLabelEn: "Ornamental Plants",
+    badgeLabelRw: "Ibihingwa byo gushyiraho",
+    ...SHARED_COPY,
   },
 ];
 
@@ -99,28 +112,47 @@ function asBool(v: unknown, fallback = true): boolean {
   return fallback;
 }
 
+function defaultSlideFor(id: string, index: number): ShopHeroSlide | undefined {
+  return DEFAULT_SHOP_HERO_SLIDES.find((s) => s.id === id) || DEFAULT_SHOP_HERO_SLIDES[index];
+}
+
 export function normalizeShopHeroSlide(
   raw: Record<string, unknown>,
   index: number
 ): ShopHeroSlide {
   const id = asString(raw.id, `slide-${index + 1}`);
+  const fallback = defaultSlideFor(id, index);
   return {
     id,
-    imageUrl: asString(raw.imageUrl || raw.src, DEFAULT_SHOP_HERO_SLIDES[0]?.imageUrl || ""),
-    href: asString(raw.href, "/products"),
+    imageUrl: asString(raw.imageUrl || raw.src, fallback?.imageUrl || ""),
+    href: asString(raw.href, fallback?.href || "/products"),
     enabled: asBool(raw.enabled, true),
     sortOrder: Number.isFinite(Number(raw.sortOrder)) ? Number(raw.sortOrder) : index,
-    emoji: asString(raw.emoji, "🌿"),
-    headingEn: asString(raw.headingEn, DEFAULT_COPY.headingEn),
-    supportEn: asString(raw.supportEn, DEFAULT_COPY.supportEn),
-    primaryCtaEn: asString(raw.primaryCtaEn, DEFAULT_COPY.primaryCtaEn),
-    secondaryCtaEn: asString(raw.secondaryCtaEn, DEFAULT_COPY.secondaryCtaEn),
-    headingRw: asString(raw.headingRw, DEFAULT_COPY.headingRw),
-    supportRw: asString(raw.supportRw, DEFAULT_COPY.supportRw),
-    primaryCtaRw: asString(raw.primaryCtaRw, DEFAULT_COPY.primaryCtaRw),
-    secondaryCtaRw: asString(raw.secondaryCtaRw, DEFAULT_COPY.secondaryCtaRw),
-    primaryHref: asString(raw.primaryHref, DEFAULT_COPY.primaryHref),
-    secondaryHref: asString(raw.secondaryHref, DEFAULT_COPY.secondaryHref),
+    emoji: asString(raw.emoji, fallback?.emoji || "🌿"),
+    badgeLabelEn: asString(
+      raw.badgeLabelEn || raw.labelEn,
+      fallback?.badgeLabelEn || "Fresh produce"
+    ),
+    badgeLabelRw: asString(raw.badgeLabelRw || raw.labelRw, fallback?.badgeLabelRw || ""),
+    headingEn: asString(raw.headingEn, fallback?.headingEn || SHARED_COPY.headingEn),
+    supportEn: asString(raw.supportEn, fallback?.supportEn || SHARED_COPY.supportEn),
+    primaryCtaEn: asString(raw.primaryCtaEn, fallback?.primaryCtaEn || SHARED_COPY.primaryCtaEn),
+    secondaryCtaEn: asString(
+      raw.secondaryCtaEn,
+      fallback?.secondaryCtaEn || SHARED_COPY.secondaryCtaEn
+    ),
+    headingRw: asString(raw.headingRw, fallback?.headingRw || SHARED_COPY.headingRw),
+    supportRw: asString(raw.supportRw, fallback?.supportRw || SHARED_COPY.supportRw),
+    primaryCtaRw: asString(raw.primaryCtaRw, fallback?.primaryCtaRw || SHARED_COPY.primaryCtaRw),
+    secondaryCtaRw: asString(
+      raw.secondaryCtaRw,
+      fallback?.secondaryCtaRw || SHARED_COPY.secondaryCtaRw
+    ),
+    primaryHref: asString(raw.primaryHref, fallback?.primaryHref || SHARED_COPY.primaryHref),
+    secondaryHref: asString(
+      raw.secondaryHref,
+      fallback?.secondaryHref || SHARED_COPY.secondaryHref
+    ),
   };
 }
 
@@ -155,6 +187,13 @@ export function enabledShopHeroSlides(slides: ShopHeroSlide[]): ShopHeroSlide[] 
   return slides.filter((s) => s.enabled && s.imageUrl).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+export function shopHeroBadgeLabel(slide: ShopHeroSlide, locale: string): string {
+  const rw = locale === "rw";
+  return rw
+    ? slide.badgeLabelRw || slide.badgeLabelEn
+    : slide.badgeLabelEn || slide.badgeLabelRw;
+}
+
 export function shopHeroCopy(
   slide: ShopHeroSlide,
   locale: string
@@ -165,6 +204,7 @@ export function shopHeroCopy(
   secondaryCta: string;
   primaryHref: string;
   secondaryHref: string;
+  badgeLabel: string;
 } {
   const rw = locale === "rw";
   return {
@@ -174,6 +214,7 @@ export function shopHeroCopy(
     secondaryCta: rw ? slide.secondaryCtaRw || slide.secondaryCtaEn : slide.secondaryCtaEn,
     primaryHref: slide.primaryHref || "/products",
     secondaryHref: slide.secondaryHref || "/categories",
+    badgeLabel: shopHeroBadgeLabel(slide, locale),
   };
 }
 
@@ -186,7 +227,9 @@ export function newShopHeroSlide(partial?: Partial<ShopHeroSlide>): ShopHeroSlid
       enabled: true,
       sortOrder: 999,
       emoji: "🌿",
-      ...DEFAULT_COPY,
+      badgeLabelEn: "Fresh produce",
+      badgeLabelRw: "Ibicuruzwa bishya",
+      ...SHARED_COPY,
       ...partial,
     },
     999

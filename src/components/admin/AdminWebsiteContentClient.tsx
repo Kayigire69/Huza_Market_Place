@@ -201,7 +201,7 @@ export function AdminWebsiteContentClient() {
                   className="w-full text-left text-sm font-medium"
                   onClick={() => setSelectedId(slide.id)}
                 >
-                  {index + 1}. {slide.headingEn || "Untitled"}{" "}
+                  {index + 1}. {slide.badgeLabelEn || slide.headingEn || "Untitled"}{" "}
                   {!slide.enabled ? (
                     <span className="text-xs font-normal text-amber-700">(off)</span>
                   ) : null}
@@ -329,6 +329,40 @@ export function AdminWebsiteContentClient() {
                 </div>
               </div>
 
+              <div className="rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)]/50 p-3">
+                <p className="mb-2 text-xs font-semibold uppercase text-[var(--admin-muted)]">
+                  Slide badge (on image)
+                </p>
+                <p className="mb-3 text-xs text-[var(--admin-muted)]">
+                  Product or category name shown on the top-left of this slide image — not the main
+                  CTA button.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="mb-1 block font-medium">Badge label (English)</span>
+                    <input
+                      className="admin-input"
+                      value={selected.badgeLabelEn}
+                      onChange={(e) =>
+                        updateSlide(selected.id, { badgeLabelEn: e.target.value })
+                      }
+                      placeholder="e.g. Fresh Juices"
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block font-medium">Badge label (Kinyarwanda)</span>
+                    <input
+                      className="admin-input"
+                      value={selected.badgeLabelRw}
+                      onChange={(e) =>
+                        updateSlide(selected.id, { badgeLabelRw: e.target.value })
+                      }
+                      placeholder="e.g. Imvubo nshya"
+                    />
+                  </label>
+                </div>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <fieldset className="space-y-2 rounded-lg border border-[var(--admin-line)] p-3">
                   <legend className="px-1 text-sm font-semibold">English</legend>
@@ -437,7 +471,11 @@ export function AdminWebsiteContentClient() {
                 {preview ? (
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="text-lg font-bold text-[var(--huza-green-dark)]">
+                      <p className="mb-1 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--huza-green-dark)] shadow-sm">
+                        <span aria-hidden>{selected.emoji}</span>
+                        {preview.badgeLabel}
+                      </p>
+                      <p className="mt-2 text-lg font-bold text-[var(--huza-green-dark)]">
                         {preview.heading}
                       </p>
                       <p className="mt-1 text-sm text-[var(--admin-muted)]">{preview.support}</p>

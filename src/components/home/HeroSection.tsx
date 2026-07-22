@@ -158,7 +158,7 @@ export function HeroSection() {
                 >
                   <Image
                     src={banner.imageUrl}
-                    alt={shopHeroCopy(banner, locale).heading}
+                    alt={shopHeroCopy(banner, locale).badgeLabel}
                     fill
                     priority={i === 0}
                     sizes="(max-width: 768px) 100vw, 42vw"
@@ -170,7 +170,7 @@ export function HeroSection() {
 
               <span className="pointer-events-none absolute left-3 top-3 z-[2] inline-flex max-w-[70%] items-center gap-1.5 truncate rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-semibold text-[var(--huza-green-dark)] shadow-sm sm:left-4 sm:top-4 sm:text-xs">
                 <span aria-hidden>{active.emoji || "🌿"}</span>
-                <span className="truncate">{copy.primaryCta}</span>
+                <span className="truncate">{copy.badgeLabel}</span>
               </span>
 
               {slides.length > 1 ? (
@@ -185,7 +185,7 @@ export function HeroSection() {
                       type="button"
                       role="tab"
                       aria-selected={i === bannerIndex}
-                      aria-label={`Slide ${i + 1}`}
+                      aria-label={shopHeroCopy(banner, locale).badgeLabel}
                       onClick={() => go(i)}
                       className={cn(
                         "size-2.5 rounded-full border border-white/70 shadow-sm transition-colors",
