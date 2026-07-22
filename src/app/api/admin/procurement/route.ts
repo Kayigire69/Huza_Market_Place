@@ -216,7 +216,11 @@ export async function PATCH(req: Request) {
 
   const offer = await prisma.supplierOffer.findUnique({
     where: { id: offerId },
-    include: { supplier: true },
+    include: {
+      supplier: {
+        include: { user: { select: { fullName: true } } },
+      },
+    },
   });
   if (!offer) return NextResponse.json({ error: "Offer not found" }, { status: 404 });
 
@@ -268,6 +272,20 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Commission rate required" }, { status: 400 });
     }
 
+    const { productProcurementData, purchaseMethodFromDealType } = await import(
+      "@/lib/inventory-meta"
+    );
+    const method = purchaseMethodFromDealType(deal);
+    const provenance = productProcurementData({
+      inventorySource: "FARMER",
+      purchaseMethod: method,
+      ownershipMode: deal === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
+      farmName: offer.supplier.businessName,
+      farmerName: offer.supplier.user?.fullName || offer.supplier.businessName,
+      purchaseDate: new Date(),
+      purchasedById: session.user.id,
+    });
+
     const product = await prisma.product.create({
       data: {
         supplierId: offer.supplierId,
@@ -286,9 +304,7 @@ export async function PATCH(req: Request) {
           `${offer.title} bishya bigurishwa na Youth Huza kuri HUZA FRESH.`,
         price: sellPrice,
         purchasePrice: deal === ProcurementDealType.OUTRIGHT_BUY ? unitPrice : null,
-        ownershipMode: deal === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
-        inventorySource: "FARMER",
-        purchaseMethod: deal === ProcurementDealType.COMMISSION ? "COMMISSION" : "DIRECT",
+        ...provenance,
         unit: offer.unit as UnitType,
         stockQty: 0,
         isNewArrival: true,
@@ -334,8 +350,8 @@ export async function PATCH(req: Request) {
 
     const dealLabel =
       deal === ProcurementDealType.COMMISSION
-        ? `Commission sale (${rate}%)`
-        : `Outright buy at ${unitPrice} RWF`;
+        ? `Commission Sale (${rate}%)`
+        : `Direct Purchase at ${unitPrice} RWF`;
 
     const updated = await prisma.supplierOffer.update({
       where: { id: offerId },
@@ -479,9 +495,8 @@ async function handlePoAction(
       const { normalizeOfficialImageUrls, publishOfficialProductImages } = await import(
         "@/lib/official-product-images"
       );
-      const { normalizeQualityGrade, purchaseMethodFromDealType } = await import(
-        "@/lib/inventory-meta"
-      );
+      const { normalizeQualityGrade, purchaseMethodFromDealType, productProcurementData } =
+        await import("@/lib/inventory-meta");
       const grade =
         normalizeQualityGrade(body.qualityGrade) ||
         normalizeQualityGrade(po.qualityGrade);
@@ -531,6 +546,15 @@ async function handlePoAction(
           });
         }
 
+        const method = purchaseMethodFromDealType(po.dealType);
+        const supplierUser = await prisma.supplier.findUnique({
+          where: { id: po.supplierId },
+          select: {
+            businessName: true,
+            user: { select: { fullName: true } },
+          },
+        });
+
         await prisma.product.update({
           where: { id: po.productId },
           data: {
@@ -539,11 +563,20 @@ async function handlePoAction(
             reviewStatus: "APPROVED",
             reviewNote: "Passed QC. Published to HUZA FRESH shop",
             reviewedAt: now,
-            ownershipMode:
-              po.dealType === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
-            inventorySource: "FARMER",
-            purchaseMethod: purchaseMethodFromDealType(po.dealType),
             qualityGrade: grade,
+            ...productProcurementData({
+              inventorySource: "FARMER",
+              purchaseMethod: method,
+              ownershipMode:
+                po.dealType === ProcurementDealType.COMMISSION ? "COMMISSION" : "OWNED",
+              farmName: supplierUser?.businessName || po.supplier?.businessName,
+              farmerName:
+                supplierUser?.user?.fullName ||
+                supplierUser?.businessName ||
+                po.supplier?.businessName,
+              purchaseDate: po.orderedAt || po.receivedAt || now,
+              purchasedById: po.createdById || session.user.id,
+            }),
           },
         });
         const { cacheDel, CacheKeys } = await import("@/lib/redis");

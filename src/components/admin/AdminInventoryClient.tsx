@@ -3,8 +3,14 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { CATEGORY_EMOJI } from "@/lib/admin-nav";
 import { formatUnit } from "@/lib/utils";
-import { Search, X } from "lucide-react";
+import type { CategoryRow } from "@/components/admin/AdminCategoriesClient";
+import {
+  inventorySourceLabel,
+  purchaseMethodLabel,
+} from "@/lib/inventory-meta";
+import { ArrowLeft, Search, X } from "lucide-react";
 
 type StockProduct = {
   id: string;
@@ -16,9 +22,15 @@ type StockProduct = {
   isActive: boolean;
   inventorySource?: string | null;
   purchaseMethod?: string | null;
+  ownershipMode?: string | null;
   qualityGrade?: string | null;
   inventoryStatus?: string | null;
-  category?: { nameEn: string } | null;
+  procurementMarketName?: string | null;
+  procurementFarmName?: string | null;
+  procurementFarmerName?: string | null;
+  procurementPurchaseDate?: string | null;
+  purchasedByName?: string | null;
+  category?: { id?: string; nameEn: string; slug?: string } | null;
 };
 
 type Movement = {
@@ -40,7 +52,7 @@ type ExpiryBatch = {
     id: string;
     nameEn: string;
     unit: string;
-    category?: { nameEn: string; slug: string } | null;
+    category?: { id?: string; nameEn: string; slug: string } | null;
   } | null;
 };
 
@@ -53,6 +65,10 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "expiring", label: "Expiring Soon" },
   { key: "recent", label: "Recent Stock Changes" },
 ];
+
+function emojiFor(slug: string) {
+  return CATEGORY_EMOJI[slug] || "📦";
+}
 
 function available(p: StockProduct) {
   return Math.max(0, p.stockQty - (p.reservedQty || 0));
@@ -69,6 +85,12 @@ function stockStatus(p: StockProduct) {
 export function AdminInventoryClient() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as TabKey) || "all";
+  const initialCategoryId = searchParams.get("categoryId") || "";
+
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [selected, setSelected] = useState<CategoryRow | null>(null);
+  const [loadingCats, setLoadingCats] = useState(true);
+
   const [tab, setTab] = useState<TabKey>(
     TABS.some((t) => t.key === initialTab) ? initialTab : "all"
   );
@@ -80,7 +102,7 @@ export function AdminInventoryClient() {
   const [products, setProducts] = useState<StockProduct[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [batches, setBatches] = useState<ExpiryBatch[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [editing, setEditing] = useState<StockProduct | null>(null);
   const [qty, setQty] = useState("");
@@ -90,7 +112,31 @@ export function AdminInventoryClient() {
   const [historyFor, setHistoryFor] = useState<StockProduct | null>(null);
   const [history, setHistory] = useState<Movement[]>([]);
 
+  const loadCategories = useCallback(async () => {
+    setLoadingCats(true);
+    try {
+      const res = await fetch("/api/admin/categories");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load categories");
+      const cats = (data.categories || []) as CategoryRow[];
+      setCategories(cats);
+      if (initialCategoryId) {
+        const match = cats.find((c) => c.id === initialCategoryId);
+        if (match) setSelected(match);
+      }
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Failed to load categories");
+    } finally {
+      setLoadingCats(false);
+    }
+  }, [initialCategoryId]);
+
+  useEffect(() => {
+    void loadCategories();
+  }, [loadCategories]);
+
   const load = useCallback(async () => {
+    if (!selected) return;
     setLoading(true);
     try {
       if (tab === "recent") {
@@ -99,12 +145,20 @@ export function AdminInventoryClient() {
         if (res.ok) setMovements(data.movements || []);
         else setMsg(data.error || "Failed to load");
       } else if (tab === "expiring") {
-        const res = await fetch("/api/admin/inventory?mode=expiring");
+        const params = new URLSearchParams({
+          mode: "expiring",
+          categoryId: selected.id,
+        });
+        const res = await fetch(`/api/admin/inventory?${params}`);
         const data = await res.json();
         if (res.ok) setBatches(data.batches || []);
         else setMsg(data.error || "Failed to load");
       } else {
-        const params = new URLSearchParams({ mode: "stock", filter: tab });
+        const params = new URLSearchParams({
+          mode: "stock",
+          filter: tab,
+          categoryId: selected.id,
+        });
         if (q.trim()) params.set("q", q.trim());
         if (source) params.set("source", source);
         if (method) params.set("method", method);
@@ -120,12 +174,13 @@ export function AdminInventoryClient() {
     } finally {
       setLoading(false);
     }
-  }, [tab, q, source, method, grade, opsStatus]);
+  }, [selected, tab, q, source, method, grade, opsStatus]);
 
   useEffect(() => {
+    if (!selected) return;
     const t = setTimeout(() => void load(), tab === "recent" ? 0 : 200);
     return () => clearTimeout(t);
-  }, [load, tab]);
+  }, [load, selected, tab]);
 
   const submitStock = async (e: FormEvent) => {
     e.preventDefault();
@@ -149,6 +204,7 @@ export function AdminInventoryClient() {
       setQty("");
       setReason("");
       await load();
+      await loadCategories();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Stock update failed");
     } finally {
@@ -163,10 +219,98 @@ export function AdminInventoryClient() {
     if (res.ok) setHistory(data.movements || []);
   };
 
+  const clearFilters = () => {
+    setQ("");
+    setSource("");
+    setMethod("");
+    setGrade("");
+    setOpsStatus("");
+  };
+
+  /* ---------- Category picker ---------- */
+  if (!selected) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="admin-panel-title">Inventory</h1>
+          <p className="mt-1 text-sm text-[var(--admin-muted)]">
+            Choose a category to manage stock.
+          </p>
+        </div>
+
+        {msg ? (
+          <p className="rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)] px-3 py-2 text-sm">
+            {msg}
+          </p>
+        ) : null}
+
+        <div>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+            Categories
+          </h2>
+          {loadingCats ? (
+            <p className="text-sm text-[var(--admin-muted)]">Loading…</p>
+          ) : categories.length === 0 ? (
+            <div className="admin-panel p-8 text-center text-sm text-[var(--admin-muted)]">
+              No categories yet. Create one under Catalog → Categories first.
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="admin-cat-card admin-cat-card--click text-left"
+                  onClick={() => {
+                    setSelected(c);
+                    clearFilters();
+                    setTab("all");
+                    setMsg("");
+                  }}
+                >
+                  <p className="text-2xl leading-none">{emojiFor(c.slug)}</p>
+                  <h3 className="mt-2 text-base font-semibold">
+                    {c.nameEn}{" "}
+                    <span className="font-normal text-[var(--admin-muted)]">
+                      ({c.stats.products})
+                    </span>
+                  </h3>
+                  <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                    Low {c.stats.lowStock} · Out {c.stats.outOfStock}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="admin-panel-title">Inventory</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <button
+            type="button"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-[var(--admin-muted)] hover:text-[var(--admin-ink)]"
+            onClick={() => {
+              setSelected(null);
+              setProducts([]);
+              clearFilters();
+            }}
+          >
+            <ArrowLeft className="size-3.5" />
+            All categories
+          </button>
+          <h1 className="admin-panel-title">
+            {emojiFor(selected.slug)} {selected.nameEn}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--admin-muted)]">
+            Inventory · {selected.stats.products} product
+            {selected.stats.products === 1 ? "" : "s"}
+          </p>
+        </div>
       </div>
 
       {msg ? (
@@ -194,7 +338,7 @@ export function AdminInventoryClient() {
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--admin-muted)]" />
             <input
               className="admin-input pl-9"
-              placeholder="Search products…"
+              placeholder={`Search in ${selected.nameEn}…`}
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -206,19 +350,19 @@ export function AdminInventoryClient() {
             aria-label="Source"
           >
             <option value="">All sources</option>
-            <option value="FARMER">Farmer</option>
+            <option value="FARMER">Farm</option>
             <option value="MARKET">Market</option>
           </select>
           <select
             className="admin-input w-auto"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            aria-label="Purchase method"
+            aria-label="Procurement method"
           >
             <option value="">All methods</option>
-            <option value="DIRECT">Direct</option>
-            <option value="COMMISSION">Commission</option>
-            <option value="MARKET">Market</option>
+            <option value="DIRECT">Direct Purchase</option>
+            <option value="COMMISSION">Commission Sale</option>
+            <option value="MARKET">Local Market Purchase</option>
           </select>
           <select
             className="admin-input w-auto"
@@ -235,9 +379,9 @@ export function AdminInventoryClient() {
             className="admin-input w-auto"
             value={opsStatus}
             onChange={(e) => setOpsStatus(e.target.value)}
-            aria-label="Ops status"
+            aria-label="Availability"
           >
-            <option value="">All statuses</option>
+            <option value="">All availability</option>
             <option value="Available">Available</option>
             <option value="Reserved">Reserved</option>
             <option value="Sold Out">Sold Out</option>
@@ -252,7 +396,7 @@ export function AdminInventoryClient() {
         ) : tab === "expiring" ? (
           batches.length === 0 ? (
             <p className="p-6 text-sm text-[var(--admin-muted)]">
-              No batches expiring in the next 7 days. (Especially useful for juices &amp; salads.)
+              No batches in this category expiring in the next 7 days.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -272,18 +416,15 @@ export function AdminInventoryClient() {
                       <td>
                         <p className="font-medium">{b.product?.nameEn || "—"}</p>
                         <p className="text-xs text-[var(--admin-muted)]">
-                          {b.product?.category?.nameEn || "—"}
+                          {b.product?.category?.nameEn || selected.nameEn}
                         </p>
                       </td>
                       <td className="font-mono text-xs">{b.batchNumber}</td>
                       <td className="tabular-nums">
-                        {b.quantity}{" "}
-                        {b.product ? formatUnit(b.product.unit) : ""}
+                        {b.quantity} {b.product ? formatUnit(b.product.unit) : ""}
                       </td>
                       <td className="whitespace-nowrap text-xs">
-                        {b.expiryDate
-                          ? new Date(b.expiryDate).toLocaleDateString()
-                          : "—"}
+                        {b.expiryDate ? new Date(b.expiryDate).toLocaleDateString() : "—"}
                       </td>
                       <td>
                         <span
@@ -355,19 +496,23 @@ export function AdminInventoryClient() {
             </div>
           )
         ) : products.length === 0 ? (
-          <p className="p-6 text-sm text-[var(--admin-muted)]">No products in this view.</p>
+          <p className="p-6 text-sm text-[var(--admin-muted)]">
+            No products in this category for the current filters.
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Source</th>
-                  <th>Method</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Quantity</th>
+                  <th>Unit</th>
                   <th>Grade</th>
-                  <th>Current Stock</th>
-                  <th>Ops status</th>
-                  <th>Stock</th>
+                  <th>Source</th>
+                  <th>Procurement Method</th>
+                  <th>Trace</th>
+                  <th>Status</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
@@ -375,22 +520,48 @@ export function AdminInventoryClient() {
                 {products.map((p) => {
                   const st = stockStatus(p);
                   const ops = p.inventoryStatus || "—";
+                  const sourceLabel = inventorySourceLabel(p.inventorySource);
+                  const methodLabel = purchaseMethodLabel(
+                    p.purchaseMethod,
+                    p.ownershipMode,
+                    p.inventorySource
+                  );
+                  const trace =
+                    sourceLabel === "Market" || p.inventorySource === "MARKET"
+                      ? [
+                          p.procurementMarketName || "Local Market",
+                          p.purchasedByName ? `By ${p.purchasedByName}` : null,
+                          p.procurementPurchaseDate
+                            ? new Date(p.procurementPurchaseDate).toLocaleDateString()
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : [
+                          p.procurementFarmerName
+                            ? `Farmer: ${p.procurementFarmerName}`
+                            : null,
+                          p.procurementFarmName ? `Farm: ${p.procurementFarmName}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "Farm";
                   return (
                     <tr key={p.id}>
                       <td>
                         <p className="font-medium">{p.nameEn}</p>
-                        <p className="text-xs text-[var(--admin-muted)]">
-                          {p.category?.nameEn || "—"}
-                        </p>
+                        <p className="text-[10px] text-[var(--admin-muted)]">{st.label}</p>
                       </td>
-                      <td className="text-xs">{p.inventorySource || "—"}</td>
-                      <td className="text-xs">{p.purchaseMethod || "—"}</td>
+                      <td className="text-xs">{p.category?.nameEn || selected.nameEn}</td>
+                      <td className="tabular-nums font-semibold">{available(p)}</td>
+                      <td className="text-xs">{formatUnit(p.unit)}</td>
                       <td className="text-xs tabular-nums">
-                        {p.qualityGrade ? `G${p.qualityGrade}` : "—"}
+                        {p.qualityGrade ? `Grade ${p.qualityGrade}` : "—"}
                       </td>
-                      <td className="tabular-nums font-semibold">
-                        {available(p)} {formatUnit(p.unit)}
+                      <td className="text-xs">
+                        {sourceLabel === "Farm" ? "Farm" : "Local Market"}
                       </td>
+                      <td className="text-xs">{methodLabel}</td>
+                      <td className="max-w-[220px] text-xs text-[var(--admin-muted)]">{trace}</td>
                       <td>
                         <span
                           className={
@@ -403,9 +574,6 @@ export function AdminInventoryClient() {
                         >
                           {ops}
                         </span>
-                      </td>
-                      <td>
-                        <span className={st.className}>{st.label}</span>
                       </td>
                       <td className="space-x-1 text-right">
                         <Button
@@ -449,7 +617,13 @@ export function AdminInventoryClient() {
             </div>
             <form onSubmit={submitStock} className="flex flex-1 flex-col gap-4 p-5">
               <p className="text-sm text-[var(--admin-muted)]">
-                Current: {available(editing)} {formatUnit(editing.unit)}
+                Current: {available(editing)} {formatUnit(editing.unit)} ·{" "}
+                {inventorySourceLabel(editing.inventorySource)} ·{" "}
+                {purchaseMethodLabel(
+                  editing.purchaseMethod,
+                  editing.ownershipMode,
+                  editing.inventorySource
+                )}
               </p>
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">Action</span>
@@ -517,8 +691,9 @@ export function AdminInventoryClient() {
                     <p className="font-semibold">
                       {m.type} · {m.quantity}
                     </p>
+                    <p className="text-xs text-[var(--admin-muted)]">{m.reason || "—"}</p>
                     <p className="text-xs text-[var(--admin-muted)]">
-                      {m.reason || "—"} · {new Date(m.createdAt).toLocaleString()}
+                      {new Date(m.createdAt).toLocaleString()}
                     </p>
                   </li>
                 ))

@@ -23,6 +23,9 @@ type MarketPurchase = {
   status: string;
   productId: string | null;
   notes: string | null;
+  purchasedByName?: string | null;
+  source?: string;
+  procurementMethod?: string;
 };
 
 const emptyForm = {
@@ -275,10 +278,11 @@ export function AdminMarketProcurementClient() {
                     </span>
                   </h2>
                   <p className="text-sm text-[var(--admin-muted)]">
-                    {p.marketName} · {p.vendorName} ·{" "}
-                    {new Date(p.purchaseDate).toLocaleDateString()} · {p.quantity}{" "}
+                    Local Market · {p.marketName} · {p.vendorName} ·{" "}
+                    {new Date(p.purchaseDate).toLocaleDateString()}
+                    {p.purchasedByName ? ` · Bought by ${p.purchasedByName}` : ""} · {p.quantity}{" "}
                     {formatUnit(p.unit)} @ {formatRwf(p.unitPrice)} = {formatRwf(p.totalAmount)}
-                    {p.qualityGrade ? ` · Grade ${p.qualityGrade}` : ""}
+                    {p.qualityGrade ? ` · Grade ${p.qualityGrade}` : ""} · Local Market Purchase
                   </p>
                 </div>
                 <span

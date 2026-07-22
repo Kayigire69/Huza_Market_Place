@@ -210,6 +210,7 @@ model User {
   reviewReplies Review[] @relation("ReviewReplies")
   passwordResetTokens PasswordResetToken[]
   restockRequests     RestockRequest[]
+  productsPurchased   Product[] @relation("ProductPurchasedBy")
 }
 
 model PasswordResetToken {
@@ -424,6 +425,14 @@ model Product {
   purchaseMethod  String?
   /// QC grade 1 | 2 | 3 (internal; maps from A/B/C where used)
   qualityGrade    String?
+  /// Denormalized procurement history (inherited into inventory)
+  procurementMarketName String?
+  procurementFarmName   String?
+  procurementFarmerName String?
+  procurementPurchaseDate DateTime?
+  /// Staff who purchased (market buy) or created the farm PO
+  purchasedById String?
+  purchasedBy   User? @relation("ProductPurchasedBy", fields: [purchasedById], references: [id], onDelete: SetNull)
   unit          UnitType @default(KG)
   stockQty      Int      @default(0)
   /// Held for pending (unpaid) orders — available = stockQty - reservedQty
