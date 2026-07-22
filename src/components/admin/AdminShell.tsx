@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   ChevronDown,
@@ -14,6 +14,8 @@ import {
   Moon,
   Search,
   Sun,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
@@ -23,6 +25,15 @@ import {
   roleCanAccessModule,
   type AdminModule,
 } from "@/lib/admin-nav";
+import {
+  isAdminAlertSoundEnabled,
+  isOrderAlertType,
+  playAdminOrderAlertSound,
+  requestAdminNotificationPermission,
+  setAdminAlertSoundEnabled,
+  showAdminOrderBrowserNotification,
+  unlockAdminAlertAudio,
+} from "@/lib/admin-alert-sound";
 
 type LiveCounts = {
   pendingPayment: number;
@@ -32,6 +43,15 @@ type LiveCounts = {
   pendingSuppliers?: number;
   pendingDeliveries?: number;
   delayedOrders?: number;
+};
+
+type AdminNotification = {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: string;
+  type?: string;
+  isRead?: boolean;
 };
 
 export function AdminShell({
@@ -52,16 +72,18 @@ export function AdminShell({
   const [cmdOpen, setCmdOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(true);
-  const [notifications, setNotifications] = useState<
-    { id: string; title: string; body: string; createdAt: string; type?: string; isRead?: boolean }[]
-  >([]);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [counts, setCounts] = useState<LiveCounts | null>(null);
+  const [soundOn, setSoundOn] = useState(true);
+  const knownAlertIds = useRef<Set<string> | null>(null);
+  const audioUnlocked = useRef(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("huza-admin-theme");
     if (saved === "dark") setDark(true);
     const col = localStorage.getItem("huza-admin-sidebar");
     if (col === "collapsed") setCollapsed(true);
+    setSoundOn(isAdminAlertSoundEnabled());
   }, []);
 
   useEffect(() => {
@@ -73,6 +95,21 @@ export function AdminShell({
   }, [collapsed]);
 
   useEffect(() => {
+    const unlock = () => {
+      if (audioUnlocked.current) return;
+      audioUnlocked.current = true;
+      unlockAdminAlertAudio();
+      requestAdminNotificationPermission();
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
@@ -80,14 +117,33 @@ export function AdminShell({
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
-        setNotifications(data.notifications || []);
+        const next = (data.notifications || []) as AdminNotification[];
+
+        if (knownAlertIds.current == null) {
+          knownAlertIds.current = new Set(next.map((n) => n.id));
+        } else {
+          const freshOrders = next.filter(
+            (n) =>
+              !knownAlertIds.current!.has(n.id) &&
+              !n.isRead &&
+              isOrderAlertType(n.type)
+          );
+          for (const n of next) knownAlertIds.current.add(n.id);
+          if (freshOrders.length > 0 && isAdminAlertSoundEnabled()) {
+            void playAdminOrderAlertSound();
+            const first = freshOrders[0];
+            showAdminOrderBrowserNotification(first.title, first.body);
+          }
+        }
+
+        setNotifications(next);
         setCounts(data.counts || null);
       } catch {
         /* ignore */
       }
     };
     void load();
-    const id = setInterval(load, 20_000);
+    const id = setInterval(load, 12_000);
     return () => {
       cancelled = true;
       clearInterval(id);
@@ -125,6 +181,14 @@ export function AdminShell({
       /* ignore */
     }
   }, []);
+
+  const toggleSound = () => {
+    unlockAdminAlertAudio();
+    const next = !soundOn;
+    setSoundOn(next);
+    setAdminAlertSoundEnabled(next);
+    if (next) void playAdminOrderAlertSound();
+  };
 
   const initials = useMemo(() => {
     const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -350,6 +414,7 @@ export function AdminShell({
                   type="button"
                   className="admin-icon-btn relative"
                   onClick={() => {
+                    unlockAdminAlertAudio();
                     setBellOpen((v) => !v);
                     setProfileOpen(false);
                     if (!bellOpen && unread > 0) void markNotificationsRead();
@@ -369,16 +434,38 @@ export function AdminShell({
                       <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
                         Important alerts
                       </p>
-                      {notifications.some((n) => !n.isRead) ? (
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="text-[10px] font-semibold text-[var(--huza-green-dark)]"
-                          onClick={() => void markNotificationsRead()}
+                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--admin-muted)] hover:text-[var(--admin-ink)]"
+                          onClick={toggleSound}
+                          title={
+                            soundOn
+                              ? "Mute new-order sound"
+                              : "Unmute new-order sound"
+                          }
                         >
-                          Mark all read
+                          {soundOn ? (
+                            <Volume2 className="size-3.5" />
+                          ) : (
+                            <VolumeX className="size-3.5" />
+                          )}
+                          {soundOn ? "Sound on" : "Sound off"}
                         </button>
-                      ) : null}
+                        {notifications.some((n) => !n.isRead) ? (
+                          <button
+                            type="button"
+                            className="text-[10px] font-semibold text-[var(--huza-green-dark)]"
+                            onClick={() => void markNotificationsRead()}
+                          >
+                            Mark all read
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
+                    <p className="mb-2 text-[10px] text-[var(--admin-muted)]">
+                      New customer orders play a short chime while Admin is open.
+                    </p>
                     <div className="max-h-72 space-y-2 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <p className="text-sm text-[var(--admin-muted)]">No alerts right now.</p>
