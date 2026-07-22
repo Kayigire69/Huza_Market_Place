@@ -1,3 +1,5 @@
+import { remapCategoryNameRw } from "@/lib/shop-nav-shortcuts";
+
 export type Locale = "en" | "fr" | "rw" | "sw";
 
 export const locales: Locale[] = ["en", "fr", "rw", "sw"];
@@ -1188,7 +1190,7 @@ const rw: Dict = {
   bannerJuices: "Umutobe w'Imbuto",
   bannerSalads: "Salade y'Imbuto",
   bannerSeedlings: "Ibiti by'imbuto byo gutera",
-  bannerOrnamental: "Ingemwe z'ibiti",
+  bannerOrnamental: "Ibimera byo Kurimbisha",
   navOffers: "Ibiciro byihariye",
   navFreshToday: "Bishya uyu munsi",
   searchPlaceholder: "Shakisha imbuto, imboga, amata...",
@@ -2154,11 +2156,14 @@ export function productDescription(
 }
 
 export function categoryName(
-  category: { nameEn: string; nameFr: string; nameRw: string },
+  category: { nameEn: string; nameFr: string; nameRw: string; slug?: string },
   locale: Locale
 ): string {
   if (locale === "fr") return category.nameFr;
-  if (locale === "rw") return category.nameRw;
+  if (locale === "rw") {
+    if (category.slug) return remapCategoryNameRw(category.slug, category.nameRw);
+    return category.nameRw;
+  }
   return category.nameEn;
 }
 

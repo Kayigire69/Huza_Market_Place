@@ -16,6 +16,10 @@ import {
   shopHeroCopy,
   type ShopHeroSlide,
 } from "@/lib/shop-hero";
+import {
+  DEFAULT_SHOP_NAV_SHORTCUTS,
+  type ShopNavShortcut,
+} from "@/lib/shop-nav-shortcuts";
 
 type CategoryRow = {
   id: string;
@@ -38,6 +42,7 @@ async function uploadImage(file: File): Promise<string> {
 
 export function AdminWebsiteContentClient() {
   const [slides, setSlides] = useState<ShopHeroSlide[]>([]);
+  const [navShortcuts, setNavShortcuts] = useState<ShopNavShortcut[]>(DEFAULT_SHOP_NAV_SHORTCUTS);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -53,6 +58,11 @@ export function AdminWebsiteContentClient() {
       if (!res.ok) throw new Error(data.error || "Failed to load");
       const next = (data.slides || []) as ShopHeroSlide[];
       setSlides(next);
+      setNavShortcuts(
+        Array.isArray(data.navShortcuts) && data.navShortcuts.length
+          ? (data.navShortcuts as ShopNavShortcut[])
+          : DEFAULT_SHOP_NAV_SHORTCUTS
+      );
       setCategories(data.categories || []);
       setSelectedId((prev) => prev || next[0]?.id || null);
     } catch (err) {
@@ -133,6 +143,45 @@ export function AdminWebsiteContentClient() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const saveNavShortcuts = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setMsg("");
+    try {
+      const res = await fetch("/api/admin/website-content", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_nav_shortcuts", navShortcuts }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      if (Array.isArray(data.navShortcuts)) setNavShortcuts(data.navShortcuts);
+      setMsg("Category shortcuts published");
+      await load();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const updateShortcut = (id: string, patch: Partial<ShopNavShortcut>) => {
+    setNavShortcuts((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  };
+
+  const moveShortcut = (id: string, dir: -1 | 1) => {
+    setNavShortcuts((prev) => {
+      const idx = prev.findIndex((s) => s.id === id);
+      if (idx < 0) return prev;
+      const nextIdx = idx + dir;
+      if (nextIdx < 0 || nextIdx >= prev.length) return prev;
+      const copy = [...prev];
+      const [item] = copy.splice(idx, 1);
+      copy.splice(nextIdx, 0, item);
+      return copy.map((s, i) => ({ ...s, sortOrder: i }));
+    });
   };
 
   const saveCategories = async (e: FormEvent) => {
@@ -514,9 +563,101 @@ export function AdminWebsiteContentClient() {
       </section>
 
       <section className="rounded-xl border border-[var(--admin-line)] bg-white p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-[var(--admin-ink)]">Category names</h2>
+        <h2 className="text-lg font-semibold text-[var(--admin-ink)]">Category shortcuts</h2>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
-          English and Kinyarwanda names shown on the Customer Website by language.
+          Mobile rail (under search) and desktop Categories menu. Edit English and Kinyarwanda
+          names, icon, order, and visibility. Saving also updates category names on the Customer
+          Website.
+        </p>
+        <form onSubmit={saveNavShortcuts} className="mt-4 space-y-3">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-[var(--admin-line)] text-xs uppercase text-[var(--admin-muted)]">
+                  <th className="py-2 pr-2">Order</th>
+                  <th className="py-2 pr-2">Icon</th>
+                  <th className="py-2 pr-2">English name</th>
+                  <th className="py-2 pr-2">Kinyarwanda name</th>
+                  <th className="py-2 pr-2">Visible</th>
+                  <th className="py-2">Slug</th>
+                </tr>
+              </thead>
+              <tbody>
+                {navShortcuts.map((s) => (
+                  <tr key={s.id} className="border-b border-[var(--admin-line)]/70">
+                    <td className="py-2 pr-2">
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="rounded border border-[var(--admin-line)] p-1 hover:bg-[var(--admin-soft)]"
+                          onClick={() => moveShortcut(s.id, -1)}
+                          aria-label="Move up"
+                          disabled={busy}
+                        >
+                          <ArrowUp className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded border border-[var(--admin-line)] p-1 hover:bg-[var(--admin-soft)]"
+                          onClick={() => moveShortcut(s.id, 1)}
+                          aria-label="Move down"
+                          disabled={busy}
+                        >
+                          <ArrowDown className="size-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        className="admin-input w-16 text-center text-lg"
+                        value={s.emoji}
+                        maxLength={8}
+                        onChange={(e) => updateShortcut(s.id, { emoji: e.target.value })}
+                        aria-label={`Icon for ${s.nameEn}`}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        className="admin-input"
+                        value={s.nameEn}
+                        onChange={(e) => updateShortcut(s.id, { nameEn: e.target.value })}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        className="admin-input"
+                        value={s.nameRw}
+                        onChange={(e) => updateShortcut(s.id, { nameRw: e.target.value })}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <label className="inline-flex items-center gap-2 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={s.visible}
+                          onChange={(e) => updateShortcut(s.id, { visible: e.target.checked })}
+                        />
+                        <Eye className="size-3.5 text-[var(--admin-muted)]" />
+                        Show
+                      </label>
+                    </td>
+                    <td className="py-2 text-xs text-[var(--admin-muted)]">{s.slug}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Button type="submit" disabled={busy}>
+            {busy ? "Saving…" : "Publish category shortcuts"}
+          </Button>
+        </form>
+      </section>
+
+      <section className="rounded-xl border border-[var(--admin-line)] bg-white p-4 sm:p-5">
+        <h2 className="text-lg font-semibold text-[var(--admin-ink)]">All category names</h2>
+        <p className="mt-1 text-sm text-[var(--admin-muted)]">
+          Full catalog category list (including any not shown as shortcuts). Prefer editing
+          shortcuts above when possible.
         </p>
         <form onSubmit={saveCategories} className="mt-4 space-y-3">
           <div className="overflow-x-auto">

@@ -16,7 +16,11 @@ import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
 import { locales, localeFlags, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { NAV_CATEGORIES } from "@/lib/nav-categories";
+import {
+  DEFAULT_SHOP_NAV_SHORTCUTS,
+  shopNavShortcutLabel,
+  type ShopNavShortcut,
+} from "@/lib/shop-nav-shortcuts";
 import { SmartSearch } from "@/components/layout/SmartSearch";
 import { HuzaFreshLogo } from "@/components/brand/HuzaFreshLogo";
 
@@ -64,6 +68,9 @@ export function Header() {
   const [catsOpen, setCatsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [wishCount, setWishCount] = useState(0);
+  const [navShortcuts, setNavShortcuts] = useState<ShopNavShortcut[]>(
+    () => DEFAULT_SHOP_NAV_SHORTCUTS.filter((s) => s.visible)
+  );
   const catsRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
 
@@ -76,6 +83,20 @@ export function Header() {
     setCatsOpen(false);
     setAccountOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/public/nav-shortcuts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !Array.isArray(data?.items)) return;
+        setNavShortcuts(data.items as ShopNavShortcut[]);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -104,12 +125,7 @@ export function Header() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  const catLabel = (c: (typeof NAV_CATEGORIES)[number]) => {
-    if (locale === "fr") return c.nameFr;
-    if (locale === "rw") return c.nameRw;
-    if (locale === "sw") return c.nameSw;
-    return c.nameEn;
-  };
+  const catLabel = (c: ShopNavShortcut) => shopNavShortcutLabel(c, locale);
 
   return (
     <header className="relative z-50 bg-white">
@@ -309,9 +325,9 @@ export function Header() {
 
             {catsOpen && (
               <div className="absolute left-0 z-50 mt-2 w-64 overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white py-1 shadow-lg">
-                {NAV_CATEGORIES.map((c) => (
+                {navShortcuts.map((c) => (
                   <Link
-                    key={c.slug}
+                    key={c.id || c.slug}
                     href={`/products?category=${c.slug}`}
                     className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
                     onClick={() => setCatsOpen(false)}
@@ -371,9 +387,9 @@ export function Header() {
               {t("youthHuzaHome")}
             </span>
           </Link>
-          {NAV_CATEGORIES.map((c) => (
+          {navShortcuts.map((c) => (
             <Link
-              key={c.slug}
+              key={c.id || c.slug}
               href={`/products?category=${c.slug}`}
               className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl px-1 py-1 text-center active:bg-[var(--huza-mint)]"
             >
