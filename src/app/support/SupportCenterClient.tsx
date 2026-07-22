@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { whatsappPresetUrl } from "@/lib/brand-contact";
 
 const TICKET_TYPES = [
   { value: "GENERAL", label: "General question" },
@@ -22,6 +23,7 @@ export function SupportCenterClient({
   const [ok, setOk] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const waHref = whatsappPresetUrl("orderSupport");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,9 +71,22 @@ export function SupportCenterClient({
         >
           <p className="font-semibold text-[var(--huza-green-dark)]">Email</p>
           <p className="text-sm text-[var(--huza-muted)] mt-1">
-            Write to Youth Huza at info@youthhuza.rw (WhatsApp available after the number is set).
+            Write to Youth Huza at info@youthhuza.rw.
           </p>
         </a>
+        {waHref ? (
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-2xl border border-[var(--huza-line)] bg-white p-5 hover:border-[var(--huza-green)] transition sm:col-span-2"
+          >
+            <p className="font-semibold text-[var(--huza-green-dark)]">WhatsApp</p>
+            <p className="mt-1 text-sm text-[var(--huza-muted)]">
+              Chat with Youth Huza for order help — +250 788 241 665
+            </p>
+          </a>
+        ) : null}
       </div>
 
       <section className="rounded-2xl border border-[var(--huza-line)] bg-white p-6">

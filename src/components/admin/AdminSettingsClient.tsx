@@ -163,9 +163,6 @@ export function AdminSettingsClient({ isSuperAdmin }: { isSuperAdmin: boolean })
                 ["brand_name", "Brand name"],
                 ["company_name", "Legal / company name"],
                 ["company_tagline", "Tagline"],
-                ["phone", "Phone"],
-                ["email", "Email"],
-                ["whatsapp_url", "WhatsApp URL"],
               ] as [string, string][]
             ).map(([key, label]) => (
               <label key={key} className="block text-sm sm:col-span-1">
@@ -178,15 +175,56 @@ export function AdminSettingsClient({ isSuperAdmin }: { isSuperAdmin: boolean })
                 />
               </label>
             ))}
-            <label className="block text-sm sm:col-span-2">
-              <span className="mb-1 block text-[var(--admin-muted)]">Address</span>
-              <input
-                className="admin-input"
-                value={settings.company_address || ""}
-                disabled={!canEdit || busy}
-                onChange={(e) => setField("company_address", e.target.value)}
-              />
-            </label>
+          </div>
+
+          <div className="border-t border-[var(--admin-line)] pt-4">
+            <h3 className="font-semibold">Contact information</h3>
+            <p className="mt-1 text-xs text-[var(--admin-muted)]">
+              Used on Customer Website, Farmers Portal, and checkout. Default WhatsApp:
+              https://wa.me/250788241665
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-muted)]">Phone number</span>
+                <input
+                  className="admin-input"
+                  value={settings.phone || ""}
+                  disabled={!canEdit || busy}
+                  onChange={(e) => setField("phone", e.target.value)}
+                  placeholder="+250 788 241 665"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-[var(--admin-muted)]">Email address</span>
+                <input
+                  className="admin-input"
+                  value={settings.email || ""}
+                  disabled={!canEdit || busy}
+                  onChange={(e) => setField("email", e.target.value)}
+                  placeholder="info@youthhuza.rw"
+                />
+              </label>
+              <label className="block text-sm sm:col-span-2">
+                <span className="mb-1 block text-[var(--admin-muted)]">WhatsApp URL (Click-to-Chat)</span>
+                <input
+                  className="admin-input"
+                  value={settings.whatsapp_url || ""}
+                  disabled={!canEdit || busy}
+                  onChange={(e) => setField("whatsapp_url", e.target.value)}
+                  placeholder="https://wa.me/250788241665"
+                />
+              </label>
+              <label className="block text-sm sm:col-span-2">
+                <span className="mb-1 block text-[var(--admin-muted)]">Office address</span>
+                <input
+                  className="admin-input"
+                  value={settings.company_address || ""}
+                  disabled={!canEdit || busy}
+                  onChange={(e) => setField("company_address", e.target.value)}
+                  placeholder="Kigali, Rwanda"
+                />
+              </label>
+            </div>
           </div>
           <p className="text-xs text-[var(--admin-muted)]">Currency: RWF · Timezone: Africa/Kigali</p>
           {canEdit ? (

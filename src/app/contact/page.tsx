@@ -3,29 +3,40 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useToastStore } from "@/components/ui/Toast";
+import {
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE_DISPLAY,
+  whatsappPresetUrl,
+} from "@/lib/brand-contact";
 
 export default function ContactPage() {
   const showToast = useToastStore((s) => s.show);
   const [ok, setOk] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(SUPPORT_PHONE_DISPLAY);
+  const [email, setEmail] = useState(SUPPORT_EMAIL);
+  const [address, setAddress] = useState("Kigali, Rwanda");
   const [whatsappUrl, setWhatsappUrl] = useState("");
 
   useEffect(() => {
     void fetch("/api/public/settings")
       .then((r) => r.json())
       .then((data) => {
-        if (typeof data.phone === "string") setPhone(data.phone.trim());
+        if (typeof data.phone === "string" && data.phone.trim()) setPhone(data.phone.trim());
+        if (typeof data.email === "string" && data.email.trim()) setEmail(data.email.trim());
+        if (typeof data.company_address === "string" && data.company_address.trim()) {
+          setAddress(data.company_address.trim());
+        }
         if (typeof data.whatsapp_url === "string") setWhatsappUrl(data.whatsapp_url.trim());
       })
       .catch(() => {
-        /* keep empty. Same placeholder as before */
+        /* keep defaults */
       });
   }, []);
 
-  const waDigits = whatsappUrl.replace(/.*wa\.me\//, "").replace(/\D/g, "");
-  const contactLine = phone || (waDigits ? `+${waDigits}` : "");
+  const waHref = whatsappPresetUrl("customer", whatsappUrl || undefined);
+  const contactLine = phone || SUPPORT_PHONE_DISPLAY;
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,35 +65,41 @@ export default function ContactPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <h1 className="section-title">Contact Us</h1>
-      <div className="mb-8 mt-8 space-y-2 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm">
+      <div className="mb-8 mt-8 space-y-3 rounded-2xl border border-[var(--huza-line)] bg-white p-5 text-sm">
         <p>
-          <strong>Email:</strong> info@youthhuza.rw
+          <strong>Email:</strong> {email}
         </p>
         <p>
           <strong>Phone / WhatsApp:</strong>{" "}
-          {contactLine ? (
-            whatsappUrl ? (
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-[var(--huza-green)]"
-              >
-                {contactLine}
-              </a>
-            ) : (
-              contactLine
-            )
+          {waHref ? (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-[var(--huza-green)]"
+            >
+              {contactLine}
+            </a>
           ) : (
-            "Add your business number in Admin → Settings when ready"
+            contactLine
           )}
         </p>
         <p>
-          <strong>Address:</strong> Kigali, Rwanda
+          <strong>Address:</strong> {address}
         </p>
         <p>
           <strong>Hours:</strong> Daily 6:00 AM to 9:00 PM
         </p>
+        {waHref ? (
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-[#25D366] px-5 text-sm font-semibold text-white transition hover:bg-[#1ebe57]"
+          >
+            Chat on WhatsApp
+          </a>
+        ) : null}
       </div>
       <form
         onSubmit={onSubmit}

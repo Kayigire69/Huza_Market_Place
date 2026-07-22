@@ -27,6 +27,8 @@ export const farmerAuthEn: FarmerI18nDict = {
   backToFarmerHome: "← Home",
   farmerRegisterHint:
     "Short signup: identity, phone, location, main crops, and terms. Login later with phone + last 4 of National ID. Farm details can be completed in Settings (or by a Huza agent) while you wait for approval.",
+  whatsappNeedHelpTitle: "Need Help?",
+  whatsappNeedHelpBody: "Contact Youth Huza on WhatsApp",
   farmDetailsBtn: "Farm details",
   farmDetailsRequired: "Farm details (required)",
   farmDetailsOptional: "Farm details (optional)",
@@ -76,6 +78,8 @@ export const farmerAuthFr: FarmerI18nDict = {
   backToFarmerHome: "← Accueil",
   farmerRegisterHint:
     "Inscription courte : identité, téléphone, lieu, cultures principales et conditions. Connexion plus tard avec téléphone + 4 derniers chiffres. Les détails de ferme se complètent dans Paramètres (ou par un agent Huza) en attendant l'approbation.",
+  whatsappNeedHelpTitle: "Besoin d'aide ?",
+  whatsappNeedHelpBody: "Contactez Youth Huza sur WhatsApp",
   farmDetailsBtn: "Détails de la ferme",
   farmDetailsRequired: "Détails de la ferme (obligatoire)",
   farmDetailsOptional: "Détails de la ferme (facultatif)",
@@ -125,6 +129,8 @@ export const farmerAuthRw: FarmerI18nDict = {
   backToFarmerHome: "← Ahabanza",
   farmerRegisterHint:
     "Kwiyandikisha guto: amazina, telefoni, aho uherereye, ibihingwa by'ingenzi, n'amasezerano. Nyuma winjira ukoresheje telefoni + imibare 4 ya nyuma. Amakuru y'umurima ashobora kuzuzwa muri Igenamiterere (cyangwa n'umukozi wa Huza) mu gihe utegereje.",
+  whatsappNeedHelpTitle: "Ukeneye ubufasha?",
+  whatsappNeedHelpBody: "Vugana na Youth Huza kuri WhatsApp",
   farmDetailsBtn: "Amakuru y'umurima",
   farmDetailsRequired: "Amakuru y'umurima (ngombwa)",
   farmDetailsOptional: "Amakuru y'umurima (si ngombwa)",
@@ -174,6 +180,8 @@ export const farmerAuthSw: FarmerI18nDict = {
   backToFarmerHome: "← Nyumbani",
   farmerRegisterHint:
     "Usajili mfupi: utambulisho, simu, eneo, mazao makuu, na masharti. Baadaye ingia kwa simu + tarakimu 4 za mwisho. Maelezo ya shamba yanaweza kukamilishwa katika Mipangilio (au na wakala wa Huza) unaposubiri idhini.",
+  whatsappNeedHelpTitle: "Unahitaji msaada?",
+  whatsappNeedHelpBody: "Wasiliana na Youth Huza kupitia WhatsApp",
   farmDetailsBtn: "Maelezo ya shamba",
   farmDetailsRequired: "Maelezo ya shamba (lazima)",
   farmDetailsOptional: "Maelezo ya shamba (si lazima)",

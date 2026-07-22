@@ -23,7 +23,7 @@ import { useLocale } from "@/lib/locale-context";
 import {
   DEFAULT_WHATSAPP_URL,
   SUPPORT_PHONE_DISPLAY,
-  resolveWhatsAppUrl,
+  whatsappPresetUrl,
 } from "@/lib/brand-contact";
 import { cn } from "@/lib/utils";
 
@@ -146,7 +146,7 @@ function HeroCarousel({ t }: { t: (k: string) => string }) {
 
 export function FarmerLandingPage() {
   const { t } = useLocale();
-  const whatsapp = resolveWhatsAppUrl(DEFAULT_WHATSAPP_URL);
+  const whatsapp = whatsappPresetUrl("farmer", DEFAULT_WHATSAPP_URL);
   const phoneHref = SUPPORT_PHONE_DISPLAY.replace(/\D/g, "");
 
   return (

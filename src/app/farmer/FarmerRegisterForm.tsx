@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 import { RWANDA_PROVINCES } from "@/lib/farmer-dossier";
 import { provinceLabelKey } from "@/lib/i18n";
+import { FarmerWhatsAppHelp } from "@/components/portals/FarmerWhatsAppHelp";
 
 /** Always Conventional Farming for startup-phase registration (no UI choice). */
 const FARMING_TYPE = "STANDARD" as const;
@@ -267,6 +268,9 @@ export function FarmerRegisterForm() {
             {" · "}
             <Link href="/farmer">{t("home")}</Link>
           </p>
+          <div className="mt-4">
+            <FarmerWhatsAppHelp />
+          </div>
         </div>
       </form>
     </div>
