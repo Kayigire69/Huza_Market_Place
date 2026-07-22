@@ -90,6 +90,7 @@ export function AdminProductsClient() {
   const [bulkPrice, setBulkPrice] = useState("");
   const [form, setForm] = useState({
     nameEn: "",
+    nameRw: "",
     categoryId: "",
     price: "",
     stockQty: "",
@@ -159,6 +160,7 @@ export function AdminProductsClient() {
     if (!selected) return;
     setForm({
       nameEn: "",
+      nameRw: "",
       categoryId: selected.id,
       price: "",
       stockQty: "0",
@@ -177,6 +179,7 @@ export function AdminProductsClient() {
   const openEdit = (p: ProductRow) => {
     setForm({
       nameEn: p.nameEn,
+      nameRw: p.nameRw || "",
       categoryId: p.categoryId || p.category?.id || selected?.id || "",
       price: String(p.price),
       stockQty: String(p.stockQty),
@@ -202,6 +205,7 @@ export function AdminProductsClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             nameEn: form.nameEn.trim(),
+            nameRw: form.nameRw.trim() || form.nameEn.trim(),
             categoryId: form.categoryId,
             price: Number(form.price),
             stockQty: Number(form.stockQty),
@@ -228,6 +232,7 @@ export function AdminProductsClient() {
             id: drawer.id,
             action: "update_details",
             nameEn: form.nameEn.trim(),
+            nameRw: form.nameRw.trim() || form.nameEn.trim(),
             categoryId: form.categoryId,
             price: Number(form.price),
             stockQty: Number(form.stockQty),
@@ -671,6 +676,9 @@ export function AdminProductsClient() {
                       </td>
                       <td className="font-medium">
                         {p.nameEn}
+                        {p.nameRw && p.nameRw !== p.nameEn ? (
+                          <p className="text-xs font-normal text-[var(--admin-muted)]">{p.nameRw}</p>
+                        ) : null}
                         <span className="mt-0.5 flex flex-wrap gap-1">
                           {p.isFeatured ? (
                             <span className="text-[10px] font-semibold text-[var(--huza-green-dark)]">
@@ -800,12 +808,22 @@ export function AdminProductsClient() {
               )}
 
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">Name</span>
+                <span className="mb-1 block font-medium">English name</span>
                 <input
                   className="admin-input"
                   required
                   value={form.nameEn}
                   onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))}
+                  placeholder="e.g. Sweet Bananas"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium">Kinyarwanda name</span>
+                <input
+                  className="admin-input"
+                  value={form.nameRw}
+                  onChange={(e) => setForm((f) => ({ ...f, nameRw: e.target.value }))}
+                  placeholder="e.g. Ibitoki boryoha"
                 />
               </label>
               <label className="block text-sm">
