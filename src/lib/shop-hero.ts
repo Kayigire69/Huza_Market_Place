@@ -96,7 +96,7 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     sortOrder: 4,
     emoji: "🪴",
     badgeLabelEn: "Ornamental Plants",
-    badgeLabelRw: "Ingemwe z'ibiti",
+    badgeLabelRw: "Ibimera byo Kurimbisha",
     ...SHARED_COPY,
   },
 ];
@@ -126,8 +126,10 @@ const LEGACY_BADGE_RW_FIXES: Record<string, Record<string, string>> = {
     "Insalade z'imbuto": "Salade y'Imbuto",
   },
   plants: {
-    "Ibihingwa byo gushyiraho": "Ingemwe z'ibiti",
-    "Ibiti by'imbuto byo gutera": "Ingemwe z'ibiti",
+    "Ibihingwa byo gushyiraho": "Ibimera byo Kurimbisha",
+    "Ibiti by'imbuto byo gutera": "Ibimera byo Kurimbisha",
+    "Ingemwe z'ibiti": "Ibimera byo Kurimbisha",
+    "Ibimera byo gutunganya": "Ibimera byo Kurimbisha",
   },
 };
 
