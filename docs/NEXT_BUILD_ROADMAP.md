@@ -3,7 +3,7 @@
 Ordered plan for what to build next. Focus: **ops reliability → customer trust → farmer consistency → payment APIs**.  
 Defer card/COD, admin i18n, and redesigns until these are solid.
 
-Last updated: **2026-07-21**
+Last updated: **2026-07-22**
 
 ---
 
@@ -13,18 +13,19 @@ Last updated: **2026-07-21**
 2. Each item has **Goal**, **Build**, **Done when**.
 3. Do not expand scope into redesigns or unrelated portals.
 
-Related docs: [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md) · [system-workflows/](./system-workflows/)
+Related docs: [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md) · [system-workflows/](./system-workflows/) · [ops/](./ops/)
 
 ---
 
 ## Phase 1 — Day-to-day selling (ops + light engineering)
 
-### 1.1 Manual MoMo staff playbook
+### 1.1 Manual MoMo staff playbook — **done**
 | | |
 |--|--|
 | **Goal** | Every unpaid order is confirmed or released within the 15‑minute window. |
 | **Build** | Short internal doc (can live under `docs/ops/`): who watches Admin → Payments, how to confirm, what to tell the customer on WhatsApp if late, what happens when the window expires. |
 | **Done when** | New staff can confirm a test order without asking engineering. |
+| **Doc** | [ops/manual-momo-playbook.md](./ops/manual-momo-playbook.md) |
 
 ### 1.2 Inventory thresholds
 | | |
@@ -126,7 +127,7 @@ Related docs: [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md) · [system-work
 
 | Sprint | Focus | Items |
 |--------|--------|--------|
-| **A** | Ops | 1.1, 1.2, 1.3 |
+| **A** | Ops | ~~1.1~~ (done), 1.2, 1.3 |
 | **B** | Customer copy + i18n | 2.1, 2.2 |
 | **C** | Customer messaging | 2.3 |
 | **D** | Farmer polish | 3.1, 3.2, 3.3 |
