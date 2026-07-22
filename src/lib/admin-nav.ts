@@ -322,8 +322,47 @@ export function modulesForRole(role?: string | null): AdminModule[] {
   return ADMIN_ROLE_MODULES[role] || (role === "ADMIN" ? ADMIN_ROLE_MODULES.ADMIN : ["dashboard"]);
 }
 
-export function roleCanAccessModule(role: string | null | undefined, mod: AdminModule): boolean {
-  return modulesForRole(role).includes(mod);
+/** Keep only known modules that sit within the role ceiling (never expands privileges). */
+export function sanitizeAllowedModules(
+  role: string | null | undefined,
+  requested: string[] | null | undefined
+): AdminModule[] {
+  if (!requested?.length || role === "SUPER_ADMIN") return [];
+  const ceiling = new Set(modulesForRole(role));
+  const out: AdminModule[] = [];
+  const seen = new Set<string>();
+  for (const raw of requested) {
+    const m = String(raw || "").trim() as AdminModule;
+    if (!m || seen.has(m) || !ceiling.has(m) || m === "settings") continue;
+    seen.add(m);
+    out.push(m);
+  }
+  return out;
+}
+
+/**
+ * Effective modules for a staff user.
+ * - Super Admin → all modules
+ * - Empty/null override → full role pack
+ * - Non-empty override → subset of role pack (as assigned by Super Admin)
+ */
+export function effectiveModules(
+  role?: string | null,
+  allowedModules?: string[] | null
+): AdminModule[] {
+  if (role === "SUPER_ADMIN") return ALL_MODULES;
+  const roleMods = modulesForRole(role);
+  if (!allowedModules?.length) return roleMods;
+  const sanitized = sanitizeAllowedModules(role, allowedModules);
+  return sanitized.length ? sanitized : roleMods;
+}
+
+export function roleCanAccessModule(
+  role: string | null | undefined,
+  mod: AdminModule,
+  allowedModules?: string[] | null
+): boolean {
+  return effectiveModules(role, allowedModules).includes(mod);
 }
 
 export function moduleForAdminPath(pathname: string): AdminModule | null {
@@ -366,8 +405,11 @@ export function moduleForAdminPath(pathname: string): AdminModule | null {
   return null;
 }
 
-export function firstAllowedAdminPath(role?: string | null): string {
-  const mods = modulesForRole(role);
+export function firstAllowedAdminPath(
+  role?: string | null,
+  allowedModules?: string[] | null
+): string {
+  const mods = effectiveModules(role, allowedModules);
   for (const section of ADMIN_NAV_SECTIONS) {
     for (const item of section.items) {
       if (item.future) continue;
@@ -377,8 +419,11 @@ export function firstAllowedAdminPath(role?: string | null): string {
   return "/admin";
 }
 
-export function navSectionsForRole(role?: string | null): AdminNavSection[] {
-  const mods = new Set(modulesForRole(role));
+export function navSectionsForRole(
+  role?: string | null,
+  allowedModules?: string[] | null
+): AdminNavSection[] {
+  const mods = new Set(effectiveModules(role, allowedModules));
   const isSuper = role === "SUPER_ADMIN";
   return ADMIN_NAV_SECTIONS.map((section) => ({
     ...section,

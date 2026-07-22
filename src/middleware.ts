@@ -45,6 +45,9 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
     const role = token?.role as string | undefined;
+    const allowedModules = Array.isArray(token?.allowedModules)
+      ? (token.allowedModules as string[])
+      : [];
 
     // Temp passwords must be changed before staff portal access (not Farmers Portal NID auth).
     if (
@@ -85,13 +88,13 @@ export default withAuth(
       }
 
       // Role-aware admin modules (Inventory / Support / Finance / etc.)
-      if (pathname.startsWith("/admin") && !canAccessAdminPath(role, pathname)) {
-        return NextResponse.redirect(new URL(firstAllowedAdminPath(role), req.url));
+      if (pathname.startsWith("/admin") && !canAccessAdminPath(role, pathname, allowedModules)) {
+        return NextResponse.redirect(new URL(firstAllowedAdminPath(role, allowedModules), req.url));
       }
 
       // Extra belt: Staff / Audit / Settings. Super Admin only
       if (pathname.startsWith("/admin") && isSuperAdminOnlyPath(pathname) && !isSuperAdmin(role)) {
-        return NextResponse.redirect(new URL(firstAllowedAdminPath(role), req.url));
+        return NextResponse.redirect(new URL(firstAllowedAdminPath(role, allowedModules), req.url));
       }
 
       return NextResponse.next();

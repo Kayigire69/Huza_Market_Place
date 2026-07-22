@@ -51,25 +51,23 @@ function TrackForm() {
   const sp = useSearchParams();
   const [orderNumber, setOrderNumber] = useState(sp.get("orderNumber") ?? "");
   const [phone, setPhone] = useState(sp.get("phone") ?? "");
+  const [token, setToken] = useState(sp.get("token") ?? "");
   const [data, setData] = useState<TrackData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const on = sp.get("orderNumber");
-    const ph = sp.get("phone");
-    if (on) setOrderNumber(on);
-    if (ph) setPhone(ph);
-  }, [sp]);
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const fetchTrack = async (opts: {
+    orderNumber: string;
+    phone?: string;
+    token?: string;
+  }) => {
     setLoading(true);
     setError("");
     setData(null);
-    const res = await fetch(
-      `/api/orders/track?orderNumber=${encodeURIComponent(orderNumber.trim())}&phone=${encodeURIComponent(phone.trim())}`
-    );
+    const qs = new URLSearchParams({ orderNumber: opts.orderNumber.trim() });
+    if (opts.token?.trim()) qs.set("token", opts.token.trim());
+    if (opts.phone?.trim()) qs.set("phone", opts.phone.trim());
+    const res = await fetch(`/api/orders/track?${qs.toString()}`);
     const json = await res.json();
     setLoading(false);
     if (!res.ok) {
@@ -77,6 +75,28 @@ function TrackForm() {
       return;
     }
     setData(json);
+  };
+
+  useEffect(() => {
+    const on = sp.get("orderNumber");
+    const ph = sp.get("phone");
+    const tok = sp.get("token");
+    if (on) setOrderNumber(on);
+    if (ph) setPhone(ph);
+    if (tok) setToken(tok);
+    if (on && (tok || ph)) {
+      void fetchTrack({ orderNumber: on, phone: ph || undefined, token: tok || undefined });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- auto-load once from URL
+  }, [sp]);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    await fetchTrack({
+      orderNumber,
+      phone: phone || undefined,
+      token: token || undefined,
+    });
   };
 
   const stepIndex = data ? resolveStepIndex(data.status) : 0;
@@ -106,8 +126,13 @@ function TrackForm() {
             placeholder="078xxxxxxx"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            required
+            required={!token}
           />
+          {token ? (
+            <p className="mt-1 text-xs text-[var(--huza-muted)]">
+              Tracking link verified — phone optional.
+            </p>
+          ) : null}
         </div>
         {error && <p className="text-sm text-red-700">{error}</p>}
         <Button type="submit" disabled={loading}>

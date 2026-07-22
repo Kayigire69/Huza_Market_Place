@@ -206,8 +206,11 @@ async function handleAction(
           userId: order.userId,
           type: action === "pack" ? "ORDER_PACKED" : "DELIVERY_UPDATE",
           channel: "IN_APP",
-          title: action === "pack" ? "Order packed" : "Ready for dispatch",
-          body: `Order ${order.orderNumber} is now ${status}.`,
+          title: "Order ready",
+          body:
+            action === "pack"
+              ? `Order ${order.orderNumber} is packed and ready.`
+              : `Order ${order.orderNumber} is ready for dispatch.`,
         },
       });
     }

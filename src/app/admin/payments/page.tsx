@@ -8,7 +8,7 @@ import { AdminPaymentsClient } from "@/components/admin/AdminPaymentsClient";
 export default async function AdminPaymentsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/payments")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/payments", session.user.allowedModules)) redirect("/admin");
 
   return (
     <Suspense fallback={<p className="text-sm text-[var(--admin-muted)]">Loading payments…</p>}>

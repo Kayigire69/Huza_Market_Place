@@ -7,7 +7,7 @@ import { AdminProcurementClient } from "@/components/admin/AdminProcurementClien
 export default async function PurchaseRequestsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/procurement/requests")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/procurement/requests", session.user.allowedModules)) redirect("/admin");
 
   return <AdminProcurementClient view="requests" />;
 }

@@ -7,7 +7,7 @@ import { AdminProcurementClient } from "@/components/admin/AdminProcurementClien
 export default async function ProcurementHistoryPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/procurement/history")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/procurement/history", session.user.allowedModules)) redirect("/admin");
 
   return <AdminProcurementClient view="history" />;
 }

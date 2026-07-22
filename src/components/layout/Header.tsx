@@ -23,6 +23,7 @@ import {
 } from "@/lib/shop-nav-shortcuts";
 import { SmartSearch } from "@/components/layout/SmartSearch";
 import { HuzaFreshLogo } from "@/components/brand/HuzaFreshLogo";
+import { useNotificationChime } from "@/hooks/useNotificationChime";
 
 /** Orange accent. Cart / wishlist badges only (Phase 1). */
 const BADGE = "bg-[#F97316] text-white";
@@ -73,6 +74,11 @@ export function Header() {
   );
   const catsRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+
+  const isCustomer =
+    Boolean(session?.user?.id) &&
+    (!session?.user?.role || session.user.role === "CUSTOMER");
+  useNotificationChime({ portal: "customer", enabled: isCustomer });
 
   const firstName =
     session?.user?.name?.trim().split(/\s+/)[0] ||

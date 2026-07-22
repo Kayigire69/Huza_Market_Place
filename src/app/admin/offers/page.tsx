@@ -7,7 +7,7 @@ import { AdminPromotionsClient } from "@/components/admin/AdminPromotionsClient"
 export default async function AdminOffersPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/offers")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/offers", session.user.allowedModules)) redirect("/admin");
 
   return <AdminPromotionsClient />;
 }

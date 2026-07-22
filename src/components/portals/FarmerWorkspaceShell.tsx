@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, Volume2, VolumeX, X } from "lucide-react";
 import { signOut } from "next-auth/react";
 import {
   farmerMobileQuickLinks,
@@ -12,6 +12,13 @@ import {
   isFarmerNavActive,
 } from "@/lib/farmer-nav";
 import { useLocale } from "@/lib/locale-context";
+import { useNotificationChime } from "@/hooks/useNotificationChime";
+import {
+  isAlertSoundEnabled,
+  playAlertSound,
+  setAlertSoundEnabled,
+  unlockAlertAudio,
+} from "@/lib/admin-alert-sound";
 
 type Props = {
   children: React.ReactNode;
@@ -38,6 +45,11 @@ export function FarmerWorkspaceShell({
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [soundOn, setSoundOn] = useState(() =>
+    typeof window === "undefined" ? true : isAlertSoundEnabled("farmer")
+  );
+
+  useNotificationChime({ portal: "farmer", enabled: true });
 
   const sections = useMemo(
     () => farmerNavForAccount(accountApproved),
@@ -60,6 +72,14 @@ export function FarmerWorkspaceShell({
     setLoggingOut(true);
     setOpen(false);
     await signOut({ callbackUrl: "/farmer/login" });
+  };
+
+  const toggleSound = () => {
+    unlockAlertAudio();
+    const next = !soundOn;
+    setSoundOn(next);
+    setAlertSoundEnabled(next, "farmer");
+    if (next) void playAlertSound("farmer");
   };
 
   const Nav = (
@@ -100,6 +120,15 @@ export function FarmerWorkspaceShell({
             <p className="text-sm font-bold text-white">{pendingReviews}</p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={toggleSound}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 px-2.5 py-2 text-[11px] font-medium text-white/90 hover:bg-white/15"
+          title={soundOn ? "Mute alert sound" : "Unmute alert sound"}
+        >
+          {soundOn ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />}
+          {soundOn ? "Alerts on" : "Alerts muted"}
+        </button>
       </div>
 
       <div className="flex-1 space-y-5 overflow-y-auto px-3 py-4">

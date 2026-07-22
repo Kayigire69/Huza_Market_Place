@@ -558,7 +558,11 @@ export default function CheckoutClient({
                 marks payment received.
               </p>
               <Link
-                href={`/track?order=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(form.phone)}`}
+                href={`/track?orderNumber=${encodeURIComponent(payment.orderNumber)}&phone=${encodeURIComponent(form.phone)}${
+                  payment.docAccessToken
+                    ? `&token=${encodeURIComponent(payment.docAccessToken)}`
+                    : ""
+                }`}
                 className="inline-flex text-sm font-semibold text-[var(--huza-green-dark)] underline"
               >
                 Track order

@@ -7,7 +7,7 @@ import { AdminProcurementClient } from "@/components/admin/AdminProcurementClien
 export default async function GoodsReceivedPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/procurement/received")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/procurement/received", session.user.allowedModules)) redirect("/admin");
 
   return <AdminProcurementClient view="received" />;
 }

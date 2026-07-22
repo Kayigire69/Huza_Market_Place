@@ -7,7 +7,7 @@ import { AdminAgronomyClient } from "@/components/admin/AdminAgronomyClient";
 export default async function AdminAgronomyPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/auth/login");
-  if (!canAccessAdminPath(session.user.role, "/admin/agronomy")) redirect("/admin");
+  if (!canAccessAdminPath(session.user.role, "/admin/agronomy", session.user.allowedModules)) redirect("/admin");
 
   return <AdminAgronomyClient />;
 }

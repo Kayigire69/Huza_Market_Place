@@ -88,6 +88,7 @@ export const authOptions: NextAuthOptions = {
           name: user.fullName,
           email: user.email ?? user.phone,
           role: user.role,
+          allowedModules: user.allowedModules || [],
           supplierId: user.supplier?.id ?? null,
           supplierStatus: user.supplier?.status ?? null,
           mustChangePassword: user.mustChangePassword,
@@ -166,6 +167,7 @@ export const authOptions: NextAuthOptions = {
         const u = user as {
           id: string;
           role: string;
+          allowedModules?: string[];
           supplierId?: string | null;
           supplierStatus?: string | null;
           mustChangePassword?: boolean;
@@ -177,6 +179,7 @@ export const authOptions: NextAuthOptions = {
         token.id = u.id;
         token.sub = u.id;
         token.role = u.role;
+        token.allowedModules = Array.isArray(u.allowedModules) ? u.allowedModules : [];
         token.supplierId = u.supplierId;
         token.supplierStatus = u.supplierStatus;
         token.mustChangePassword = Boolean(u.mustChangePassword);
@@ -222,6 +225,7 @@ export const authOptions: NextAuthOptions = {
           return { ...token, role: undefined, error: "inactive" };
         }
         token.role = dbUser.role;
+        token.allowedModules = dbUser.allowedModules || [];
         token.supplierId = dbUser.supplier?.id ?? null;
         token.supplierStatus = dbUser.supplier?.status ?? null;
         if (token.authKind !== "farmer_nid" && dbUser.role !== "SUPPLIER") {
@@ -237,11 +241,20 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update" && session && uid) {
         const dbUser = await prisma.user.findUnique({
           where: { id: uid },
-          select: { mustChangePassword: true, totpEnabled: true, isActive: true, deletedAt: true },
+          select: {
+            mustChangePassword: true,
+            totpEnabled: true,
+            isActive: true,
+            deletedAt: true,
+            role: true,
+            allowedModules: true,
+          },
         });
         if (!dbUser || !dbUser.isActive || dbUser.deletedAt) {
           return { ...token, role: undefined, error: "inactive" };
         }
+        token.role = dbUser.role;
+        token.allowedModules = dbUser.allowedModules || [];
         if (token.authKind !== "farmer_nid" && token.role !== "SUPPLIER") {
           token.mustChangePassword = Boolean(dbUser.mustChangePassword);
         } else {
@@ -260,6 +273,11 @@ export const authOptions: NextAuthOptions = {
         const uid = (token.id as string) || (token.sub as string);
         (session.user as { id?: string }).id = uid;
         (session.user as { role?: string }).role = token.role as string;
+        (session.user as { allowedModules?: string[] }).allowedModules = Array.isArray(
+          token.allowedModules
+        )
+          ? token.allowedModules
+          : [];
         (session.user as { supplierId?: string | null }).supplierId =
           (token.supplierId as string | null) ?? null;
         (session.user as { supplierStatus?: string | null }).supplierStatus =

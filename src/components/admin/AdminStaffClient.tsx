@@ -1,9 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { ADMIN_ROLE_MODULES, adminRoleLabel } from "@/lib/admin-nav";
+import {
+  ADMIN_ROLE_MODULES,
+  adminRoleLabel,
+  effectiveModules,
+  modulesForRole,
+  type AdminModule,
+} from "@/lib/admin-nav";
 import { KeyRound, Search, Shield, Trash2 } from "lucide-react";
 
 type StaffUser = {
@@ -12,6 +18,7 @@ type StaffUser = {
   email: string | null;
   phone: string;
   role: string;
+  allowedModules?: string[];
   isActive: boolean;
   isPrimarySuperAdmin?: boolean;
   totpEnabled?: boolean;
@@ -30,6 +37,80 @@ const ROLE_OPTIONS = [
   "DELIVERY",
 ] as const;
 
+const MODULE_LABELS: Record<string, string> = {
+  dashboard: "Dashboard",
+  orders: "Orders",
+  customers: "Customers",
+  payments: "Payments",
+  support: "Support",
+  categories: "Categories",
+  products: "Products",
+  promotions: "Promotions",
+  website_content: "Website content",
+  inventory: "Inventory",
+  deliveries: "Deliveries",
+  farmers: "Farmers",
+  approvals: "Approvals",
+  agronomy: "Agronomy",
+  crop_monitoring: "Crop monitoring",
+  photography: "Photography",
+  purchase_requests: "Purchase requests",
+  purchase_orders: "Purchase orders",
+  goods_received: "Goods received",
+  commission_sales: "Commission sales",
+  farmer_payments: "Farmer payments",
+  procurement_history: "Procurement history",
+  market_procurement: "Market procurement",
+  reports: "Reports",
+};
+
+function ModuleChecklist({
+  role,
+  value,
+  onChange,
+  disabled,
+}: {
+  role: string;
+  value: string[];
+  onChange: (next: string[]) => void;
+  disabled?: boolean;
+}) {
+  const ceiling = useMemo(() => modulesForRole(role).filter((m) => m !== "settings"), [role]);
+  const selected = value.length ? value : ceiling;
+
+  if (role === "SUPER_ADMIN") {
+    return <p className="text-xs text-[var(--admin-muted)]">Super Admin has all modules.</p>;
+  }
+
+  return (
+    <div className="grid gap-1 sm:grid-cols-2">
+      {ceiling.map((m) => {
+        const checked = selected.includes(m);
+        return (
+          <label key={m} className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              disabled={disabled}
+              checked={checked}
+              onChange={() => {
+                const base = value.length ? [...value] : [...ceiling];
+                const next = checked ? base.filter((x) => x !== m) : [...base, m];
+                // Empty means "use role defaults" only when all selected
+                if (next.length === ceiling.length) onChange([]);
+                else onChange(next);
+              }}
+            />
+            <span>{MODULE_LABELS[m] || m}</span>
+          </label>
+        );
+      })}
+      <p className="sm:col-span-2 text-[10px] text-[var(--admin-muted)]">
+        Uncheck modules to limit this employee. Leave all checked for the full role pack.
+      </p>
+    </div>
+  );
+}
+
 export function AdminStaffClient() {
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [q, setQ] = useState("");
@@ -37,6 +118,10 @@ export function AdminStaffClient() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editModules, setEditModules] = useState<string[]>([]);
+  const [createRole, setCreateRole] = useState<string>("SUPPORT");
+  const [createModules, setCreateModules] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,12 +169,15 @@ export function AdminStaffClient() {
           role: form.get("role"),
           password: form.get("password"),
           promoteSuperAdmin: form.get("promoteSuperAdmin") === "1",
+          allowedModules: createModules,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not create staff account");
       setMsg(`Created ${data.fullName}. They must change password on first login.`);
       e.currentTarget.reset();
+      setCreateRole("SUPPORT");
+      setCreateModules([]);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
@@ -155,11 +243,28 @@ export function AdminStaffClient() {
     );
   };
 
+  const openModules = (u: StaffUser) => {
+    setEditingId(u.id);
+    setEditModules(u.allowedModules?.length ? [...u.allowedModules] : []);
+  };
+
+  const saveModules = async (u: StaffUser) => {
+    await patch(
+      u.id,
+      { allowedModules: editModules },
+      `Modules updated for ${u.fullName}`
+    );
+    setEditingId(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="admin-panel-title">Staff accounts</h1>
+          <p className="mt-1 text-sm text-[var(--admin-muted)]">
+            Assign a role, then limit modules per person when needed.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/cleanup">
@@ -208,117 +313,165 @@ export function AdminStaffClient() {
                 <tr>
                   <th>Name</th>
                   <th>Login</th>
-                  <th>Role</th>
+                  <th>Role & modules</th>
                   <th>Status</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
-                  <tr key={u.id}>
-                    <td>
-                      <p className="font-medium">{u.fullName}</p>
-                      {u.isPrimarySuperAdmin ? (
-                        <span className="text-[10px] text-amber-700">Primary Super Admin</span>
-                      ) : null}
-                      {u.mustChangePassword ? (
-                        <span className="ml-1 text-[10px] text-amber-700">· must change pwd</span>
-                      ) : null}
-                      {u.totpEnabled ? (
-                        <span className="ml-1 text-[10px] text-emerald-700">· 2FA</span>
-                      ) : null}
-                    </td>
-                    <td>
-                      <p className="text-sm">{u.email || "—"}</p>
-                      <p className="text-xs text-[var(--admin-muted)]">{u.phone}</p>
-                    </td>
-                    <td>
-                      <select
-                        className="admin-input py-1 text-xs"
-                        value={u.role}
-                        disabled={busy || u.isPrimarySuperAdmin}
-                        onChange={(e) =>
-                          void patch(
-                            u.id,
-                            { role: e.target.value },
-                            `${u.fullName} → ${e.target.value}`
-                          )
-                        }
-                      >
-                        {u.role === "SUPER_ADMIN" ? (
-                          <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                {filtered.map((u) => {
+                  const effective = effectiveModules(u.role, u.allowedModules) as AdminModule[];
+                  return (
+                    <tr key={u.id}>
+                      <td>
+                        <p className="font-medium">{u.fullName}</p>
+                        {u.isPrimarySuperAdmin ? (
+                          <span className="text-[10px] text-amber-700">Primary Super Admin</span>
                         ) : null}
-                        {ROLE_OPTIONS.map((r) => (
-                          <option key={r} value={r}>
-                            {adminRoleLabel(r)} ({r})
-                          </option>
-                        ))}
-                        {u.role === "SUPER_ADMIN" ? null : (
-                          <option value="SUPER_ADMIN">Super Admin</option>
-                        )}
-                      </select>
-                      <p className="mt-0.5 max-w-[180px] text-[10px] text-[var(--admin-muted)]">
-                        {(ADMIN_ROLE_MODULES[u.role] || []).slice(0, 4).join(", ")}
-                        {(ADMIN_ROLE_MODULES[u.role] || []).length > 4 ? "…" : ""}
-                      </p>
-                    </td>
-                    <td>
-                      <span
-                        className={
-                          u.isActive
-                            ? "admin-status admin-status-ok"
-                            : "admin-status admin-status-muted"
-                        }
-                      >
-                        {u.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      <div className="flex flex-wrap justify-end gap-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() => void resetPassword(u)}
+                        {u.mustChangePassword ? (
+                          <span className="ml-1 text-[10px] text-amber-700">· must change pwd</span>
+                        ) : null}
+                        {u.totpEnabled ? (
+                          <span className="ml-1 text-[10px] text-emerald-700">· 2FA</span>
+                        ) : null}
+                      </td>
+                      <td>
+                        <p className="text-sm">{u.email || "—"}</p>
+                        <p className="text-xs text-[var(--admin-muted)]">{u.phone}</p>
+                      </td>
+                      <td>
+                        <select
+                          className="admin-input py-1 text-xs"
+                          value={u.role}
+                          disabled={busy || u.isPrimarySuperAdmin}
+                          onChange={(e) =>
+                            void patch(
+                              u.id,
+                              { role: e.target.value },
+                              `${u.fullName} → ${e.target.value}`
+                            )
+                          }
                         >
-                          <KeyRound className="mr-1 size-3.5" />
-                          Reset pwd
-                        </Button>
-                        {!u.isPrimarySuperAdmin ? (
+                          {u.role === "SUPER_ADMIN" ? (
+                            <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                          ) : null}
+                          {ROLE_OPTIONS.map((r) => (
+                            <option key={r} value={r}>
+                              {adminRoleLabel(r)} ({r})
+                            </option>
+                          ))}
+                          {u.role === "SUPER_ADMIN" ? null : (
+                            <option value="SUPER_ADMIN">Super Admin</option>
+                          )}
+                        </select>
+                        <p className="mt-0.5 max-w-[220px] text-[10px] text-[var(--admin-muted)]">
+                          {u.allowedModules?.length
+                            ? `${u.allowedModules.length} modules assigned`
+                            : `Role default (${(ADMIN_ROLE_MODULES[u.role] || []).length})`}
+                          : {effective.slice(0, 3).map((m) => MODULE_LABELS[m] || m).join(", ")}
+                          {effective.length > 3 ? "…" : ""}
+                        </p>
+                        {u.role !== "SUPER_ADMIN" ? (
+                          <div className="mt-1">
+                            {editingId === u.id ? (
+                              <div className="rounded border border-[var(--admin-line)] bg-[var(--admin-soft)] p-2">
+                                <ModuleChecklist
+                                  role={u.role}
+                                  value={editModules}
+                                  onChange={setEditModules}
+                                  disabled={busy}
+                                />
+                                <div className="mt-2 flex gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={busy}
+                                    onClick={() => void saveModules(u)}
+                                  >
+                                    Save modules
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingId(null)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                disabled={busy}
+                                onClick={() => openModules(u)}
+                              >
+                                Edit modules
+                              </Button>
+                            )}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td>
+                        <span
+                          className={
+                            u.isActive
+                              ? "admin-status admin-status-ok"
+                              : "admin-status admin-status-muted"
+                          }
+                        >
+                          {u.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="text-right">
+                        <div className="flex flex-wrap justify-end gap-1">
                           <Button
                             type="button"
                             size="sm"
                             variant="ghost"
                             disabled={busy}
-                            onClick={() =>
-                              void patch(
-                                u.id,
-                                { isActive: !u.isActive },
-                                `${u.fullName} ${u.isActive ? "deactivated" : "activated"}`
-                              )
-                            }
+                            onClick={() => void resetPassword(u)}
                           >
-                            {u.isActive ? "Deactivate" : "Activate"}
+                            <KeyRound className="mr-1 size-3.5" />
+                            Reset pwd
                           </Button>
-                        ) : null}
-                        {!u.isPrimarySuperAdmin && u.role !== "SUPER_ADMIN" ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            disabled={busy}
-                            className="text-red-700 hover:text-red-800"
-                            onClick={() => void permanentDelete(u)}
-                          >
-                            <Trash2 className="mr-1 size-3.5" />
-                            Delete
-                          </Button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {!u.isPrimarySuperAdmin ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={busy}
+                              onClick={() =>
+                                void patch(
+                                  u.id,
+                                  { isActive: !u.isActive },
+                                  `${u.fullName} ${u.isActive ? "deactivated" : "activated"}`
+                                )
+                              }
+                            >
+                              {u.isActive ? "Deactivate" : "Activate"}
+                            </Button>
+                          ) : null}
+                          {!u.isPrimarySuperAdmin && u.role !== "SUPER_ADMIN" ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={busy}
+                              className="text-red-700 hover:text-red-800"
+                              onClick={() => void permanentDelete(u)}
+                            >
+                              <Trash2 className="mr-1 size-3.5" />
+                              Delete
+                            </Button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -341,7 +494,15 @@ export function AdminStaffClient() {
         </label>
         <label className="block text-sm">
           <span className="mb-1 block text-[var(--admin-muted)]">Role</span>
-          <select name="role" className="admin-input" defaultValue="SUPPORT">
+          <select
+            name="role"
+            className="admin-input"
+            value={createRole}
+            onChange={(e) => {
+              setCreateRole(e.target.value);
+              setCreateModules([]);
+            }}
+          >
             {ROLE_OPTIONS.map((r) => (
               <option key={r} value={r}>
                 {adminRoleLabel(r)}
@@ -349,6 +510,15 @@ export function AdminStaffClient() {
             ))}
           </select>
         </label>
+        <div className="sm:col-span-2 rounded-lg border border-[var(--admin-line)] p-3">
+          <p className="mb-2 text-sm font-medium">Modules for this employee</p>
+          <ModuleChecklist
+            role={createRole}
+            value={createModules}
+            onChange={setCreateModules}
+            disabled={busy}
+          />
+        </div>
         <label className="block text-sm sm:col-span-2">
           <span className="mb-1 block text-[var(--admin-muted)]">Temporary password</span>
           <input

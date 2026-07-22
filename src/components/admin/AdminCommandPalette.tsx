@@ -65,6 +65,7 @@ export function AdminCommandPalette({
   const router = useRouter();
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const allowedModules = session?.user?.allowedModules;
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
@@ -91,7 +92,7 @@ export function AdminCommandPalette({
         if (res.ok) {
           const data = await res.json();
           const results = (data.results || []) as SearchHit[];
-          setHits(results.filter((h) => canAccessAdminPath(role, h.href)));
+          setHits(results.filter((h) => canAccessAdminPath(role, h.href, allowedModules)));
         }
       } catch {
         setHits([]);
@@ -100,11 +101,11 @@ export function AdminCommandPalette({
       }
     }, 180);
     return () => clearTimeout(t);
-  }, [q, open]);
+  }, [q, open, role, allowedModules]);
 
   const commands = useMemo(() => {
     const allowed = NAV_COMMANDS.filter(
-      (c) => !c.href || canAccessAdminPath(role, c.href)
+      (c) => !c.href || canAccessAdminPath(role, c.href, allowedModules)
     );
     const needle = q.trim().toLowerCase();
     if (!needle) return allowed;
@@ -113,7 +114,7 @@ export function AdminCommandPalette({
         c.label.toLowerCase().includes(needle) ||
         (c.hint && c.hint.toLowerCase().includes(needle))
     );
-  }, [q, role]);
+  }, [q, role, allowedModules]);
 
   const rows = useMemo(() => {
     const list: { kind: "hit" | "cmd"; key: string; label: string; sub?: string; href?: string }[] =
