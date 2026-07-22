@@ -63,7 +63,7 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     sortOrder: 1,
     emoji: "🥤",
     badgeLabelEn: "Fresh Juices",
-    badgeLabelRw: "Imvubo nshya",
+    badgeLabelRw: "Umutobe w'Imbuto",
     ...SHARED_COPY,
   },
   {
@@ -74,7 +74,7 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     sortOrder: 2,
     emoji: "🥗",
     badgeLabelEn: "Fruit Salads",
-    badgeLabelRw: "Insalade z'imbuto",
+    badgeLabelRw: "Salade y'Imbuto",
     ...SHARED_COPY,
   },
   {
@@ -96,7 +96,7 @@ export const DEFAULT_SHOP_HERO_SLIDES: ShopHeroSlide[] = [
     sortOrder: 4,
     emoji: "🪴",
     badgeLabelEn: "Ornamental Plants",
-    badgeLabelRw: "Ibihingwa byo gushyiraho",
+    badgeLabelRw: "Ingemwe z'ibiti",
     ...SHARED_COPY,
   },
 ];
@@ -116,13 +116,35 @@ function defaultSlideFor(id: string, index: number): ShopHeroSlide | undefined {
   return DEFAULT_SHOP_HERO_SLIDES.find((s) => s.id === id) || DEFAULT_SHOP_HERO_SLIDES[index];
 }
 
+/** Correct known bad Kinyarwanda badge labels saved before the 2026 copy fix. */
+const LEGACY_BADGE_RW_FIXES: Record<string, Record<string, string>> = {
+  juices: {
+    Imvubo: "Umutobe w'Imbuto",
+    "Imvubo nshya": "Umutobe w'Imbuto",
+  },
+  salads: {
+    "Insalade z'imbuto": "Salade y'Imbuto",
+  },
+  plants: {
+    "Ibihingwa byo gushyiraho": "Ingemwe z'ibiti",
+    "Ibiti by'imbuto byo gutera": "Ingemwe z'ibiti",
+  },
+};
+
+function applyLegacyBadgeRwFix(slide: ShopHeroSlide): ShopHeroSlide {
+  const fixes = LEGACY_BADGE_RW_FIXES[slide.id];
+  if (!fixes) return slide;
+  const next = fixes[slide.badgeLabelRw];
+  return next ? { ...slide, badgeLabelRw: next } : slide;
+}
+
 export function normalizeShopHeroSlide(
   raw: Record<string, unknown>,
   index: number
 ): ShopHeroSlide {
   const id = asString(raw.id, `slide-${index + 1}`);
   const fallback = defaultSlideFor(id, index);
-  return {
+  const slide: ShopHeroSlide = {
     id,
     imageUrl: asString(raw.imageUrl || raw.src, fallback?.imageUrl || ""),
     href: asString(raw.href, fallback?.href || "/products"),
@@ -154,6 +176,7 @@ export function normalizeShopHeroSlide(
       fallback?.secondaryHref || SHARED_COPY.secondaryHref
     ),
   };
+  return applyLegacyBadgeRwFix(slide);
 }
 
 export function parseShopHeroSlides(raw: string | null | undefined): ShopHeroSlide[] {
