@@ -122,8 +122,6 @@ export async function POST(req: Request) {
     details: category.nameEn,
   });
   await cacheDel(CacheKeys.homeCatalog);
-  await cacheDel("huza:categories:list");
-  await cacheDel("huza:categories:list:v2");
   return NextResponse.json(category, { status: 201 });
 }
 
@@ -153,8 +151,6 @@ export async function PATCH(req: Request) {
       details: existing.nameEn,
     });
     await cacheDel(CacheKeys.homeCatalog);
-    await cacheDel("huza:categories:list");
-    await cacheDel("huza:categories:list:v2");
     return NextResponse.json({ ok: true });
   }
 
@@ -183,7 +179,5 @@ export async function PATCH(req: Request) {
     details: category.nameEn,
   });
   await cacheDel(CacheKeys.homeCatalog);
-  await cacheDel("huza:categories:list");
-  await cacheDel("huza:categories:list:v2");
   return NextResponse.json(category);
 }

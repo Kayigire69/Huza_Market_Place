@@ -17,6 +17,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:sync-seedlings": "tsx scripts/sync-seedlings.ts",
+    "db:restore-catalog": "tsx scripts/restore-storefront-catalog.ts",
     "db:studio": "prisma studio",
     "db:backup": "bash scripts/backup-db.sh",
     "postinstall": "prisma generate"

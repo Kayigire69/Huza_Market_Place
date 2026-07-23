@@ -14,7 +14,6 @@ type Category = {
   nameFr: string;
   nameRw: string;
   imageUrl?: string | null;
-  productCoverUrl?: string | null;
   _count: { products: number };
 };
 
@@ -31,7 +30,7 @@ export function CategoriesClient({ categories }: { categories: Category[] }) {
         >
           <div className="relative aspect-[16/10]">
             <Image
-              src={resolveCategoryImage(c.slug, c.imageUrl, c.productCoverUrl)}
+              src={resolveCategoryImage(c.slug, c.imageUrl)}
               alt={categoryName(c, locale)}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

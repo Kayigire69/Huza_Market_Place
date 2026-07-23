@@ -108,7 +108,7 @@ export async function cacheDel(key: string): Promise<void> {
 }
 
 export const CacheKeys = {
-  homeCatalog: "huza:home:catalog:v3",
+  homeCatalog: "huza:home:catalog:v2",
   bestSellers: "huza:home:bestsellers",
   productsList: (key: string) => `huza:products:${key}`,
   searchSuggest: (q: string) => `huza:search:suggest:${q}`,
