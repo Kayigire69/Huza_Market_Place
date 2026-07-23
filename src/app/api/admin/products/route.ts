@@ -285,8 +285,41 @@ export async function POST(req: Request) {
     entityId: product.id,
     details: `${product.nameEn} · ${category.nameEn}`,
   });
+
+  const imageUrls = Array.isArray(body.imageUrls)
+    ? (body.imageUrls as unknown[]).map(String).map((u) => u.trim()).filter(Boolean)
+    : [];
+  if (imageUrls.length > 0) {
+    const { publishOfficialProductImages } = await import("@/lib/official-product-images");
+    try {
+      await publishOfficialProductImages({
+        productId: product.id,
+        imageUrls,
+        productName: product.nameEn,
+      });
+    } catch (err) {
+      return NextResponse.json(
+        {
+          error:
+            err instanceof Error
+              ? `Product created but images failed: ${err.message}`
+              : "Product created but images failed",
+          id: product.id,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   await cacheDel(CacheKeys.homeCatalog);
-  return NextResponse.json(product, { status: 201 });
+  const withImages = await prisma.product.findUnique({
+    where: { id: product.id },
+    include: {
+      category: { select: { id: true, nameEn: true, slug: true } },
+      images: { orderBy: [{ kind: "asc" }, { sortOrder: "asc" }] },
+    },
+  });
+  return NextResponse.json(withImages ?? product, { status: 201 });
 }
 
 export async function PATCH(req: Request) {
