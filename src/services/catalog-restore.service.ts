@@ -58,7 +58,7 @@ async function ensureCategories(prisma: PrismaClient) {
   for (const c of CATALOG_CATEGORIES) {
     const existing = await prisma.category.findFirst({
       where: { slug: c.slug, deletedAt: null },
-      orderBy: { createdAt: "asc" },
+      orderBy: { sortOrder: "asc" },
     });
     if (existing) {
       await prisma.category.update({
@@ -78,7 +78,7 @@ async function ensureCategories(prisma: PrismaClient) {
 
     const soft = await prisma.category.findFirst({
       where: { slug: c.slug },
-      orderBy: { createdAt: "asc" },
+      orderBy: { sortOrder: "asc" },
     });
     if (soft) {
       await prisma.category.update({
