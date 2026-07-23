@@ -355,9 +355,10 @@ export async function listCleanupCustomers(q?: string) {
   });
 }
 
-export async function listCleanupFarmers(q?: string) {
+export async function listCleanupFarmers(q?: string, opts?: { includeRemoved?: boolean }) {
   return prisma.supplier.findMany({
     where: {
+      ...(opts?.includeRemoved ? {} : { status: { not: "REMOVED" } }),
       ...(q?.trim()
         ? {
             OR: [

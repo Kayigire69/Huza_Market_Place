@@ -34,13 +34,17 @@ export function HeroSection() {
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch("/api/public/hero");
+        const res = await fetch("/api/public/hero", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        const next = enabledShopHeroSlides(
-          Array.isArray(data.slides) ? data.slides : DEFAULT_SHOP_HERO_SLIDES
-        );
-        if (!cancelled && next.length > 0) {
+        if (cancelled) return;
+        const next = Array.isArray(data.slides) ? (data.slides as ShopHeroSlide[]) : [];
+        // CMS configured → always apply (even if empty / all disabled).
+        // Unconfigured → keep built-in defaults already in state.
+        if (data.source === "cms" || data.configured) {
+          setSlides(next);
+          setBannerIndex(0);
+        } else if (next.length > 0) {
           setSlides(next);
           setBannerIndex(0);
         }

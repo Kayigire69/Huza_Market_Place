@@ -47,6 +47,7 @@ export function AdminWebsiteContentClient() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewLocale, setPreviewLocale] = useState<"en" | "rw">("en");
 
@@ -66,7 +67,7 @@ export function AdminWebsiteContentClient() {
       setCategories(data.categories || []);
       setSelectedId((prev) => prev || next[0]?.id || null);
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Failed to load");
+      setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
       setLoading(false);
     }
@@ -113,12 +114,13 @@ export function AdminWebsiteContentClient() {
     if (!file) return;
     setBusy(true);
     setMsg("");
+    setError("");
     try {
       const url = await uploadImage(file);
       updateSlide(id, { imageUrl: url });
-      setMsg("Image uploaded");
+      setMsg("Image uploaded — click Publish hero banner to show it on the shop.");
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setBusy(false);
     }
@@ -128,7 +130,19 @@ export function AdminWebsiteContentClient() {
     e.preventDefault();
     setBusy(true);
     setMsg("");
+    setError("");
     try {
+      const enabledMissingImage = slides.filter(
+        (s) => s.enabled && !String(s.imageUrl || "").trim()
+      );
+      if (enabledMissingImage.length) {
+        throw new Error(
+          "Every enabled slide needs an image. Upload a photo or turn those slides off."
+        );
+      }
+      if (!slides.some((s) => s.enabled && s.imageUrl)) {
+        throw new Error("Enable at least one slide with an image before publishing.");
+      }
       const res = await fetch("/api/admin/website-content", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -137,9 +151,9 @@ export function AdminWebsiteContentClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Save failed");
       setSlides(data.slides || slides);
-      setMsg("Hero banner published");
+      setMsg("Hero banner published. Shop updates within a few seconds — refresh /shop if needed.");
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Save failed");
+      setError(err instanceof Error ? err.message : "Save failed");
     } finally {
       setBusy(false);
     }
@@ -149,6 +163,7 @@ export function AdminWebsiteContentClient() {
     e.preventDefault();
     setBusy(true);
     setMsg("");
+    setError("");
     try {
       const res = await fetch("/api/admin/website-content", {
         method: "PATCH",
@@ -161,7 +176,7 @@ export function AdminWebsiteContentClient() {
       setMsg("Category shortcuts published");
       await load();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Save failed");
+      setError(err instanceof Error ? err.message : "Save failed");
     } finally {
       setBusy(false);
     }
@@ -188,6 +203,7 @@ export function AdminWebsiteContentClient() {
     e.preventDefault();
     setBusy(true);
     setMsg("");
+    setError("");
     try {
       const res = await fetch("/api/admin/website-content", {
         method: "PATCH",
@@ -199,7 +215,7 @@ export function AdminWebsiteContentClient() {
       setMsg("Category names saved");
       await load();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Save failed");
+      setError(err instanceof Error ? err.message : "Save failed");
     } finally {
       setBusy(false);
     }
@@ -213,8 +229,13 @@ export function AdminWebsiteContentClient() {
 
   return (
     <div className="space-y-8">
+      {error ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {error}
+        </p>
+      ) : null}
       {msg ? (
-        <p className="rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)] px-3 py-2 text-sm">
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
           {msg}
         </p>
       ) : null}
@@ -224,8 +245,8 @@ export function AdminWebsiteContentClient() {
           <div>
             <h2 className="text-lg font-semibold text-[var(--admin-ink)]">Hero Banner</h2>
             <p className="mt-1 text-sm text-[var(--admin-muted)]">
-              Upload slides, set English and Kinyarwanda copy, reorder, enable or disable, then
-              publish.
+              Upload a photo on each enabled slide, then click Publish. Disabled slides without
+              photos are ignored. Upload alone does not update the shop until you publish.
             </p>
           </div>
           <Button type="button" size="sm" variant="ghost" onClick={addSlide} disabled={busy}>

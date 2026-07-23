@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CATEGORY_EMOJI } from "@/lib/admin-nav";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ImagePlus } from "lucide-react";
 
 export type CategoryRow = {
   id: string;
@@ -27,19 +28,23 @@ function emojiFor(slug: string) {
   return CATEGORY_EMOJI[slug] || CATEGORY_EMOJI[slug.replace(/-/g, "")] || "📦";
 }
 
+const emptyForm = {
+  nameEn: "",
+  nameFr: "",
+  nameRw: "",
+  description: "",
+  imageUrl: "",
+  isActive: true,
+};
+
 export function AdminCategoriesClient() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [drawer, setDrawer] = useState<"create" | CategoryRow | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({
-    nameEn: "",
-    nameFr: "",
-    nameRw: "",
-    description: "",
-    isActive: true,
-  });
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState(emptyForm);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,7 +65,7 @@ export function AdminCategoriesClient() {
   }, [load]);
 
   const openCreate = () => {
-    setForm({ nameEn: "", nameFr: "", nameRw: "", description: "", isActive: true });
+    setForm(emptyForm);
     setDrawer("create");
   };
 
@@ -70,9 +75,32 @@ export function AdminCategoriesClient() {
       nameFr: c.nameFr,
       nameRw: c.nameRw,
       description: c.description || "",
+      imageUrl: c.imageUrl || "",
       isActive: c.isActive,
     });
     setDrawer(c);
+  };
+
+  const uploadImage = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setUploading(true);
+    setMsg("");
+    try {
+      const fd = new FormData();
+      fd.append("folder", "storefront");
+      fd.append("files", files[0]);
+      const res = await fetch("/api/uploads", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      const url = (data.urls?.[0] as string) || "";
+      if (!url) throw new Error("No image URL returned");
+      setForm((f) => ({ ...f, imageUrl: url }));
+      setMsg("Category image uploaded — save to apply");
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const save = async (e: FormEvent) => {
@@ -83,17 +111,19 @@ export function AdminCategoriesClient() {
     }
     setBusy(true);
     try {
+      const payload = {
+        nameEn: form.nameEn.trim(),
+        nameFr: form.nameFr.trim() || form.nameEn.trim(),
+        nameRw: form.nameRw.trim() || form.nameEn.trim(),
+        description: form.description.trim() || null,
+        imageUrl: form.imageUrl.trim() || null,
+        isActive: form.isActive,
+      };
       if (drawer === "create") {
         const res = await fetch("/api/admin/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nameEn: form.nameEn.trim(),
-            nameFr: form.nameFr.trim() || form.nameEn.trim(),
-            nameRw: form.nameRw.trim() || form.nameEn.trim(),
-            description: form.description.trim() || null,
-            isActive: form.isActive,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Create failed");
@@ -102,14 +132,7 @@ export function AdminCategoriesClient() {
         const res = await fetch("/api/admin/categories", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: drawer.id,
-            nameEn: form.nameEn.trim(),
-            nameFr: form.nameFr.trim() || form.nameEn.trim(),
-            nameRw: form.nameRw.trim() || form.nameEn.trim(),
-            description: form.description.trim() || null,
-            isActive: form.isActive,
-          }),
+          body: JSON.stringify({ id: drawer.id, ...payload }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Update failed");
@@ -149,6 +172,10 @@ export function AdminCategoriesClient() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="admin-panel-title">Categories</h1>
+          <p className="mt-1 text-sm text-[var(--admin-muted)]">
+            Upload a category photo for the shop. If none is set, the site uses a product photo from
+            that category.
+          </p>
         </div>
         <Button type="button" onClick={openCreate}>
           <Plus className="size-4" />
@@ -174,11 +201,19 @@ export function AdminCategoriesClient() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((c) => (
-            <article key={c.id} className="admin-cat-card">
+            <article key={c.id} className="admin-cat-card overflow-hidden">
+              <div className="relative mb-3 aspect-[16/9] overflow-hidden rounded-lg bg-[var(--admin-soft)]">
+                {c.imageUrl ? (
+                  <Image src={c.imageUrl} alt={c.nameEn} fill className="object-cover" sizes="320px" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-4xl">
+                    {emojiFor(c.slug)}
+                  </div>
+                )}
+              </div>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-2xl leading-none">{emojiFor(c.slug)}</p>
-                  <h2 className="mt-2 truncate text-base font-semibold text-[var(--admin-ink)]">
+                  <h2 className="truncate text-base font-semibold text-[var(--admin-ink)]">
                     {c.nameEn}
                   </h2>
                   {c.nameRw && c.nameRw !== c.nameEn ? (
@@ -187,6 +222,7 @@ export function AdminCategoriesClient() {
                   <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
                     {c.stats.products} Products
                     {!c.isActive ? " · Hidden" : ""}
+                    {!c.imageUrl ? " · No category photo" : ""}
                   </p>
                 </div>
                 <div className="flex gap-1">
@@ -255,6 +291,47 @@ export function AdminCategoriesClient() {
               </button>
             </div>
             <form onSubmit={save} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
+              <div className="block text-sm">
+                <span className="mb-1 block font-medium">Category photo (shop card)</span>
+                <div className="relative mb-2 aspect-[16/9] overflow-hidden rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)]">
+                  {form.imageUrl ? (
+                    <Image
+                      src={form.imageUrl}
+                      alt="Category"
+                      fill
+                      className="object-cover"
+                      sizes="360px"
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-1 text-[var(--admin-muted)]">
+                      <ImagePlus className="size-8 opacity-50" />
+                      <span className="text-xs">No photo yet</span>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={busy || uploading}
+                  onChange={(e) => {
+                    void uploadImage(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                {form.imageUrl ? (
+                  <button
+                    type="button"
+                    className="mt-2 text-xs text-red-700 underline"
+                    onClick={() => setForm((f) => ({ ...f, imageUrl: "" }))}
+                  >
+                    Remove photo
+                  </button>
+                ) : (
+                  <p className="mt-1 text-[11px] text-[var(--admin-muted)]">
+                    Optional. Without a photo, the shop uses a product image from this category.
+                  </p>
+                )}
+              </div>
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">English Name</span>
                 <input
@@ -299,8 +376,8 @@ export function AdminCategoriesClient() {
                 Active (visible in shop)
               </label>
               <div className="mt-auto flex gap-2 border-t border-[var(--admin-line)] pt-4">
-                <Button type="submit" disabled={busy} className="flex-1">
-                  Save
+                <Button type="submit" disabled={busy || uploading} className="flex-1">
+                  {busy ? "Saving…" : uploading ? "Uploading…" : "Save"}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setDrawer(null)}>
                   Cancel

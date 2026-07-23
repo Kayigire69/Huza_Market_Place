@@ -97,8 +97,13 @@ export function resolveProductImage(
   return mapped ?? "/logo.svg";
 }
 
-export function resolveCategoryImage(slug: string, imageUrl?: string | null): string {
+export function resolveCategoryImage(
+  slug: string,
+  imageUrl?: string | null,
+  productCoverUrl?: string | null
+): string {
   if (imageUrl && isPhotoUrl(imageUrl)) return imageUrl;
+  if (productCoverUrl && isPhotoUrl(productCoverUrl)) return productCoverUrl;
   const mapped = CATEGORY_IMAGE_BY_SLUG[slug];
   if (mapped) return mapped;
   return imageUrl || "/logo.svg";

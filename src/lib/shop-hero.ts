@@ -185,9 +185,11 @@ export function parseShopHeroSlides(raw: string | null | undefined): ShopHeroSli
   if (!raw?.trim()) return DEFAULT_SHOP_HERO_SLIDES.map((s) => ({ ...s }));
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    if (!Array.isArray(parsed)) {
       return DEFAULT_SHOP_HERO_SLIDES.map((s) => ({ ...s }));
     }
+    // Explicit empty CMS save must stay empty (do not resurrect defaults).
+    if (parsed.length === 0) return [];
     return parsed
       .map((item, i) =>
         normalizeShopHeroSlide(
