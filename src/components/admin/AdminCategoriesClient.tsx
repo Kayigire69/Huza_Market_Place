@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { CATEGORY_EMOJI } from "@/lib/admin-nav";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
@@ -199,7 +198,8 @@ export function AdminCategoriesClient() {
             <article key={c.id} className="admin-cat-card">
               <div className="relative mb-3 aspect-[16/10] overflow-hidden rounded-lg bg-[var(--admin-soft)]">
                 {c.imageUrl ? (
-                  <Image src={c.imageUrl} alt={c.nameEn} fill className="object-cover" sizes="320px" />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.imageUrl} alt={c.nameEn} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-3xl">
                     {emojiFor(c.slug)}
@@ -286,27 +286,41 @@ export function AdminCategoriesClient() {
               </button>
             </div>
             <form onSubmit={save} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
-              <div className="block text-sm">
-                <span className="mb-1 block font-medium">Category photo (shop card)</span>
-                <div className="relative mb-2 aspect-[16/10] overflow-hidden rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)]">
+              <div>
+                <p className="mb-2 text-sm font-medium">Images</p>
+                <p className="mb-2 text-xs text-[var(--admin-muted)]">
+                  Category photo for shop cards. Upload while adding or editing, then save.
+                </p>
+                <div className="flex flex-wrap gap-2">
                   {form.imageUrl ? (
-                    <Image
-                      src={form.imageUrl}
-                      alt="Category"
-                      fill
-                      className="object-cover"
-                      sizes="360px"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-[var(--admin-muted)]">
-                      No photo yet
+                    <div className="relative rounded-lg border-2 border-[var(--huza-green)] bg-[var(--admin-soft)] p-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={form.imageUrl}
+                        alt="Category"
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                      <span className="mt-1 block text-center text-[9px] font-bold text-[var(--huza-green-dark)]">
+                        Cover
+                      </span>
+                      <button
+                        type="button"
+                        className="absolute -right-1 -top-1 rounded-full bg-white p-0.5 shadow"
+                        title="Remove"
+                        disabled={busy || uploading}
+                        onClick={() => setForm((f) => ({ ...f, imageUrl: "" }))}
+                      >
+                        <Trash2 className="size-3 text-rose-600" />
+                      </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
-                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--admin-ink)]">
-                  <span className="rounded-md border border-[var(--admin-line)] bg-white px-3 py-1.5">
-                    {uploading ? "Uploading…" : form.imageUrl ? "Replace photo" : "Upload photo"}
-                  </span>
+                <label className="mt-3 inline-block text-xs font-semibold text-[var(--huza-green-dark)]">
+                  {uploading
+                    ? "Uploading…"
+                    : form.imageUrl
+                      ? "+ Replace image"
+                      : "+ Upload images"}
                   <input
                     type="file"
                     accept="image/*"
@@ -318,15 +332,6 @@ export function AdminCategoriesClient() {
                     }}
                   />
                 </label>
-                {form.imageUrl ? (
-                  <button
-                    type="button"
-                    className="ml-3 text-xs text-[var(--admin-muted)] underline"
-                    onClick={() => setForm((f) => ({ ...f, imageUrl: "" }))}
-                  >
-                    Remove photo
-                  </button>
-                ) : null}
               </div>
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">English Name</span>

@@ -103,6 +103,8 @@ export function AdminProductsClient() {
     isOrganic: false,
   });
   const [editImages, setEditImages] = useState<ProductImage[]>([]);
+  /** URLs staged while creating a product (before it has an id). */
+  const [pendingImageUrls, setPendingImageUrls] = useState<string[]>([]);
   const [dragId, setDragId] = useState<string | null>(null);
 
   const loadCategories = useCallback(async () => {
@@ -173,6 +175,7 @@ export function AdminProductsClient() {
       isOrganic: false,
     });
     setEditImages([]);
+    setPendingImageUrls([]);
     setDrawer("create");
   };
 
@@ -192,6 +195,7 @@ export function AdminProductsClient() {
       isOrganic: Boolean(p.isOrganic),
     });
     setEditImages([...(p.images || [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
+    setPendingImageUrls([]);
     setDrawer(p);
   };
 
@@ -216,11 +220,13 @@ export function AdminProductsClient() {
             isBestSeller: form.isBestSeller,
             isNewArrival: form.isNewArrival,
             isOrganic: form.isOrganic,
+            imageUrls: pendingImageUrls,
           }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Create failed");
         setMsg(`Added ${data.nameEn}`);
+        setPendingImageUrls([]);
         setDrawer(null);
         await loadProducts();
         await loadCategories();
@@ -260,8 +266,9 @@ export function AdminProductsClient() {
   };
 
   const uploadImages = async (files: FileList | null) => {
-    if (!files?.length || !drawer || drawer === "create") return;
-    if (editImages.length >= 5) {
+    if (!files?.length || !drawer) return;
+    const currentCount = drawer === "create" ? pendingImageUrls.length : editImages.length;
+    if (currentCount >= 5) {
       setMsg("Maximum 5 images per product");
       return;
     }
@@ -269,19 +276,28 @@ export function AdminProductsClient() {
     try {
       const formData = new FormData();
       Array.from(files)
-        .slice(0, 5 - editImages.length)
+        .slice(0, 5 - currentCount)
         .forEach((f) => formData.append("files", f));
       formData.append("folder", "storefront");
       const up = await fetch("/api/uploads", { method: "POST", body: formData });
       const upData = await up.json();
       if (!up.ok) throw new Error(upData.error || "Upload failed");
+      const urls: string[] = Array.isArray(upData.urls) ? upData.urls : [];
+      if (urls.length === 0) throw new Error("No image URL returned");
+
+      if (drawer === "create") {
+        setPendingImageUrls((prev) => [...prev, ...urls].slice(0, 5));
+        setMsg("Images uploaded — save product to publish");
+        return;
+      }
+
       const res = await fetch("/api/admin/products", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: drawer.id,
           action: "append_storefront_images",
-          imageUrls: upData.urls,
+          imageUrls: urls,
         }),
       });
       const data = await res.json();
@@ -733,79 +749,106 @@ export function AdminProductsClient() {
               </button>
             </div>
             <form onSubmit={saveProduct} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
-              {drawer !== "create" ? (
-                <div>
-                  <p className="mb-2 text-sm font-medium">Images</p>
-                  <p className="mb-2 text-xs text-[var(--admin-muted)]">
-                    Up to 5 images. Drag to reorder. Cover shows on product cards.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {editImages.map((img) => (
-                      <div
-                        key={img.id}
-                        draggable
-                        onDragStart={() => setDragId(img.id)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={() => void onDropReorder(img.id)}
-                        className={`relative rounded-lg border-2 ${
-                          img.isCover
-                            ? "border-[var(--huza-green)]"
-                            : "border-[var(--admin-line)]"
-                        } bg-[var(--admin-soft)] p-1`}
-                      >
-                        <div className="absolute left-0.5 top-0.5 rounded bg-black/40 p-0.5 text-white">
-                          <GripVertical className="size-3" />
-                        </div>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={img.url} alt="" className="h-16 w-16 rounded object-cover" />
-                        {img.isCover ? (
-                          <span className="mt-1 block text-center text-[9px] font-bold text-[var(--huza-green-dark)]">
-                            Cover
-                          </span>
-                        ) : (
+              <div>
+                <p className="mb-2 text-sm font-medium">Images</p>
+                <p className="mb-2 text-xs text-[var(--admin-muted)]">
+                  Up to 5 images.{" "}
+                  {drawer === "create"
+                    ? "Upload now, then save the product."
+                    : "Drag to reorder. Cover shows on product cards."}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {drawer === "create"
+                    ? pendingImageUrls.map((url, idx) => (
+                        <div
+                          key={`${url}-${idx}`}
+                          className={`relative rounded-lg border-2 ${
+                            idx === 0
+                              ? "border-[var(--huza-green)]"
+                              : "border-[var(--admin-line)]"
+                          } bg-[var(--admin-soft)] p-1`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="" className="h-16 w-16 rounded object-cover" />
+                          {idx === 0 ? (
+                            <span className="mt-1 block text-center text-[9px] font-bold text-[var(--huza-green-dark)]">
+                              Cover
+                            </span>
+                          ) : null}
                           <button
                             type="button"
-                            className="mt-1 block w-full text-[10px] font-semibold text-[var(--huza-green-dark)]"
+                            className="absolute -right-1 -top-1 rounded-full bg-white p-0.5 shadow"
+                            title="Remove"
                             disabled={busy}
-                            onClick={() => void setCover(img.id)}
+                            onClick={() =>
+                              setPendingImageUrls((prev) => prev.filter((_, i) => i !== idx))
+                            }
                           >
-                            Set cover
+                            <Trash2 className="size-3 text-rose-600" />
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="absolute -right-1 -top-1 rounded-full bg-white p-0.5 shadow"
-                          title="Delete"
-                          disabled={busy}
-                          onClick={() => void deleteImage(img.id)}
+                        </div>
+                      ))
+                    : editImages.map((img) => (
+                        <div
+                          key={img.id}
+                          draggable
+                          onDragStart={() => setDragId(img.id)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => void onDropReorder(img.id)}
+                          className={`relative rounded-lg border-2 ${
+                            img.isCover
+                              ? "border-[var(--huza-green)]"
+                              : "border-[var(--admin-line)]"
+                          } bg-[var(--admin-soft)] p-1`}
                         >
-                          <Trash2 className="size-3 text-rose-600" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  {editImages.length < 5 ? (
-                    <label className="mt-3 inline-block text-xs font-semibold text-[var(--huza-green-dark)]">
-                      + Upload images
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="sr-only"
-                        disabled={busy}
-                        onChange={(e) => {
-                          void uploadImages(e.target.files);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                  ) : null}
+                          <div className="absolute left-0.5 top-0.5 rounded bg-black/40 p-0.5 text-white">
+                            <GripVertical className="size-3" />
+                          </div>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img.url} alt="" className="h-16 w-16 rounded object-cover" />
+                          {img.isCover ? (
+                            <span className="mt-1 block text-center text-[9px] font-bold text-[var(--huza-green-dark)]">
+                              Cover
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="mt-1 block w-full text-[10px] font-semibold text-[var(--huza-green-dark)]"
+                              disabled={busy}
+                              onClick={() => void setCover(img.id)}
+                            >
+                              Set cover
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="absolute -right-1 -top-1 rounded-full bg-white p-0.5 shadow"
+                            title="Delete"
+                            disabled={busy}
+                            onClick={() => void deleteImage(img.id)}
+                          >
+                            <Trash2 className="size-3 text-rose-600" />
+                          </button>
+                        </div>
+                      ))}
                 </div>
-              ) : (
-                <p className="text-xs text-[var(--admin-muted)]">
-                  Save the product first, then reopen Edit to upload images.
-                </p>
-              )}
+                {(drawer === "create" ? pendingImageUrls.length : editImages.length) < 5 ? (
+                  <label className="mt-3 inline-block text-xs font-semibold text-[var(--huza-green-dark)]">
+                    + Upload images
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      disabled={busy}
+                      onChange={(e) => {
+                        void uploadImages(e.target.files);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                ) : null}
+              </div>
 
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">English name</span>
