@@ -1,5 +1,6 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import {
   canAccessAdminPath,
   firstAllowedAdminPath,
@@ -40,7 +41,29 @@ function isPublicFarmerEntry(pathname: string) {
   );
 }
 
-export default withAuth(
+function needsPortalAuth(pathname: string) {
+  if (pathname === "/auth/change-password") return true;
+  if (pathname === "/supplier" || pathname.startsWith("/supplier/")) return true;
+  if (isStaffPath(pathname)) return true;
+  if (isFarmerPath(pathname)) return true;
+  return false;
+}
+
+/**
+ * Bots probe React2Shell / Server Actions with garbage IDs like "x" or "test".
+ * Real Next.js action IDs are long hashes; reject short probes before they hit the runtime.
+ */
+function blockMalformedServerAction(req: NextRequest): NextResponse | null {
+  if (req.method !== "POST") return null;
+  const action = req.headers.get("next-action");
+  if (action == null) return null;
+  if (action.length < 16) {
+    return new NextResponse(null, { status: 400 });
+  }
+  return null;
+}
+
+const portalAuth = withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
@@ -137,16 +160,27 @@ export default withAuth(
   }
 );
 
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
+  const blocked = blockMalformedServerAction(req);
+  if (blocked) return blocked;
+
+  if (!needsPortalAuth(req.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
+  // withAuth widens the request type; portalAuth only runs for matched portal paths.
+  return (portalAuth as unknown as (
+    request: NextRequest,
+    event: NextFetchEvent
+  ) => ReturnType<typeof portalAuth>)(req, event);
+}
+
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/warehouse/:path*",
-    "/procurement/:path*",
-    "/delivery-portal/:path*",
-    "/farmer",
-    "/farmer/:path*",
-    "/supplier",
-    "/supplier/:path*",
-    "/auth/change-password",
+    /*
+     * Run on app routes (not static assets) so malformed next-action probes
+     * on "/" are rejected before Next.js tries to resolve them.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|uploads/|qr/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|json)$).*)",
   ],
 };
