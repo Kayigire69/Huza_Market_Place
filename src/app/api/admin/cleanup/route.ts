@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { canManageStaff } from "@/lib/rbac";
+import { isSuperAdmin } from "@/lib/rbac";
 import { auditAdminAction } from "@/lib/audit";
 import {
   deleteAllNotifications,
@@ -11,17 +11,33 @@ import {
   getCleanupSummary,
   hardDeleteCustomer,
   hardDeleteFarmer,
-  listCleanupCustomers,
   listCleanupFarmers,
-  listCleanupOrders,
   purgeSoftDeletedProducts,
   softDeleteProductsByIds,
   softRemoveFarmer,
 } from "@/services/cleanup.service";
+import {
+  archiveCustomer,
+  archiveDuplicateInventory,
+  archiveTestInventory,
+  deleteOldNotifications,
+  deleteReadNotifications,
+  deleteTestNotifications,
+  getTestDataCounts,
+  listArchivedRecords,
+  listCleanupCustomersActive,
+  listCleanupOrdersFiltered,
+  previewCleanupWizard,
+  restoreCustomer,
+  restoreFarmer,
+  restoreProduct,
+  runCleanupWizard,
+  type WizardSelection,
+} from "@/services/cleanup-maintenance.service";
 
 async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !canManageStaff(session.user.role)) return null;
+  if (!session?.user || !isSuperAdmin(session.user.role)) return null;
   if (session.user.mustChangePassword) return null;
   return session;
 }
@@ -45,7 +61,7 @@ export async function GET(req: Request) {
   const q = url.searchParams.get("q") || "";
 
   if (view === "customers") {
-    return NextResponse.json({ customers: await listCleanupCustomers(q) });
+    return NextResponse.json({ customers: await listCleanupCustomersActive(q) });
   }
   if (view === "farmers") {
     const includeRemoved = url.searchParams.get("includeRemoved") === "1";
@@ -54,10 +70,32 @@ export async function GET(req: Request) {
     });
   }
   if (view === "orders") {
-    return NextResponse.json({ orders: await listCleanupOrders() });
+    return NextResponse.json({
+      orders: await listCleanupOrdersFiltered({ q, onlySafe: true }),
+    });
+  }
+  if (view === "archived") {
+    return NextResponse.json(await listArchivedRecords());
+  }
+  if (view === "test_counts") {
+    return NextResponse.json({ counts: await getTestDataCounts() });
+  }
+  if (view === "wizard_preview") {
+    const sel: WizardSelection = {
+      testCustomers: url.searchParams.get("testCustomers") === "1",
+      testFarmers: url.searchParams.get("testFarmers") === "1",
+      testOrders: url.searchParams.get("testOrders") === "1",
+      testInventory: url.searchParams.get("testInventory") === "1",
+      readNotifications: url.searchParams.get("readNotifications") === "1",
+    };
+    return NextResponse.json({ preview: await previewCleanupWizard(sel) });
   }
 
-  return NextResponse.json({ summary: await getCleanupSummary() });
+  const [summary, testCounts] = await Promise.all([
+    getCleanupSummary(),
+    getTestDataCounts(),
+  ]);
+  return NextResponse.json({ summary, testCounts });
 }
 
 export async function POST(req: Request) {
@@ -70,6 +108,75 @@ export async function POST(req: Request) {
   const action = String(body.action || "");
 
   try {
+    if (action === "wizard_preview") {
+      const sel = (body.selection || {}) as WizardSelection;
+      return NextResponse.json({ preview: await previewCleanupWizard(sel) });
+    }
+
+    if (action === "wizard_run") {
+      const err = requireConfirm(body);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      const sel = (body.selection || {}) as WizardSelection;
+      const result = await runCleanupWizard(sel);
+      await auditAdminAction(req, session, {
+        action: "cleanup.wizard_run",
+        entity: "System",
+        details: `Wizard cleanup completed`,
+        after: result.results,
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
+
+    if (action === "archive_customer") {
+      const err = requireConfirm(body, "ARCHIVE");
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      const id = String(body.id || "");
+      const result = await archiveCustomer(id);
+      await auditAdminAction(req, session, {
+        action: "cleanup.archive_customer",
+        entity: "User",
+        entityId: id,
+        details: `Archived customer ${result.fullName}`,
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
+
+    if (action === "restore_customer") {
+      const id = String(body.id || "");
+      const result = await restoreCustomer(id);
+      await auditAdminAction(req, session, {
+        action: "cleanup.restore_customer",
+        entity: "User",
+        entityId: id,
+        details: `Restored customer ${result.fullName}`,
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
+
+    if (action === "restore_farmer") {
+      const id = String(body.id || "");
+      const result = await restoreFarmer(id);
+      await auditAdminAction(req, session, {
+        action: "cleanup.restore_farmer",
+        entity: "Supplier",
+        entityId: id,
+        details: `Restored farmer ${result.businessName}`,
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
+
+    if (action === "restore_product") {
+      const id = String(body.id || "");
+      const result = await restoreProduct(id);
+      await auditAdminAction(req, session, {
+        action: "cleanup.restore_product",
+        entity: "Product",
+        entityId: id,
+        details: `Restored product ${result.nameEn}`,
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
+
     if (action === "delete_customer") {
       const err = requireConfirm(body);
       if (err) return NextResponse.json({ error: err }, { status: 400 });
@@ -121,7 +228,7 @@ export async function POST(req: Request) {
           action: "cleanup.soft_remove_farmer",
           entity: "Supplier",
           entityId: id,
-          details: `Soft-removed farmer ${result.businessName}`,
+          details: `Archived farmer ${result.businessName}`,
         });
         return NextResponse.json({ ok: true, mode: "soft", ...result });
       }
@@ -137,13 +244,7 @@ export async function POST(req: Request) {
       } catch (e) {
         const message = e instanceof Error ? e.message : "Delete failed";
         if (message.includes("sales history")) {
-          return NextResponse.json(
-            {
-              error: message,
-              suggestion: "soft",
-            },
-            { status: 409 }
-          );
+          return NextResponse.json({ error: message, suggestion: "soft" }, { status: 409 });
         }
         throw e;
       }
@@ -159,7 +260,7 @@ export async function POST(req: Request) {
       await auditAdminAction(req, session, {
         action: "cleanup.delete_orders",
         entity: "Order",
-        details: `Deleted ${count} order(s) (payments cascade)`,
+        details: `Deleted ${count} order(s)`,
         after: { count, ids },
       });
       return NextResponse.json({ ok: true, deleted: count });
@@ -177,6 +278,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, deleted: count });
     }
 
+    if (action === "delete_read_notifications") {
+      const err = requireConfirm(body);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      const count = await deleteReadNotifications();
+      await auditAdminAction(req, session, {
+        action: "cleanup.delete_read_notifications",
+        entity: "Notification",
+        details: `Deleted ${count} read notification(s)`,
+      });
+      return NextResponse.json({ ok: true, deleted: count });
+    }
+
+    if (action === "delete_old_notifications") {
+      const err = requireConfirm(body);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      const days = Number(body.days) || 30;
+      const count = await deleteOldNotifications(days);
+      await auditAdminAction(req, session, {
+        action: "cleanup.delete_old_notifications",
+        entity: "Notification",
+        details: `Deleted ${count} notification(s) older than ${days} days`,
+      });
+      return NextResponse.json({ ok: true, deleted: count });
+    }
+
+    if (action === "delete_test_notifications") {
+      const err = requireConfirm(body);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      const count = await deleteTestNotifications();
+      await auditAdminAction(req, session, {
+        action: "cleanup.delete_test_notifications",
+        entity: "Notification",
+        details: `Deleted ${count} test-user notification(s)`,
+      });
+      return NextResponse.json({ ok: true, deleted: count });
+    }
+
     if (action === "delete_inventory_movements") {
       const err = requireConfirm(body);
       if (err) return NextResponse.json({ error: err }, { status: 400 });
@@ -184,9 +322,33 @@ export async function POST(req: Request) {
       await auditAdminAction(req, session, {
         action: "cleanup.delete_inventory_movements",
         entity: "StockMovement",
-        details: `Deleted ${count} stock movement(s) for soft-deleted products`,
+        details: `Deleted ${count} stock movement(s) for archived products`,
       });
       return NextResponse.json({ ok: true, deleted: count });
+    }
+
+    if (action === "archive_duplicate_inventory") {
+      const err = requireConfirm(body, "ARCHIVE");
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      const count = await archiveDuplicateInventory();
+      await auditAdminAction(req, session, {
+        action: "cleanup.archive_duplicate_inventory",
+        entity: "Product",
+        details: `Archived ${count} duplicate product(s)`,
+      });
+      return NextResponse.json({ ok: true, archived: count });
+    }
+
+    if (action === "archive_test_inventory") {
+      const err = requireConfirm(body, "ARCHIVE");
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      const count = await archiveTestInventory();
+      await auditAdminAction(req, session, {
+        action: "cleanup.archive_test_inventory",
+        entity: "Product",
+        details: `Archived ${count} test/demo product(s)`,
+      });
+      return NextResponse.json({ ok: true, archived: count });
     }
 
     if (action === "soft_delete_products") {
@@ -200,7 +362,7 @@ export async function POST(req: Request) {
       await auditAdminAction(req, session, {
         action: "cleanup.soft_delete_products",
         entity: "Product",
-        details: `Soft-deleted ${count} product(s)`,
+        details: `Archived ${count} product(s)`,
       });
       return NextResponse.json({ ok: true, deleted: count });
     }
