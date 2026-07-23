@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { CATEGORY_EMOJI } from "@/lib/admin-nav";
-import { Plus, Pencil, Trash2, X, ImagePlus } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 
 export type CategoryRow = {
   id: string;
@@ -24,10 +24,6 @@ export type CategoryRow = {
   };
 };
 
-function emojiFor(slug: string) {
-  return CATEGORY_EMOJI[slug] || CATEGORY_EMOJI[slug.replace(/-/g, "")] || "📦";
-}
-
 const emptyForm = {
   nameEn: "",
   nameFr: "",
@@ -36,6 +32,10 @@ const emptyForm = {
   imageUrl: "",
   isActive: true,
 };
+
+function emojiFor(slug: string) {
+  return CATEGORY_EMOJI[slug] || CATEGORY_EMOJI[slug.replace(/-/g, "")] || "📦";
+}
 
 export function AdminCategoriesClient() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -84,15 +84,14 @@ export function AdminCategoriesClient() {
   const uploadImage = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploading(true);
-    setMsg("");
     try {
       const fd = new FormData();
-      fd.append("folder", "storefront");
       fd.append("files", files[0]);
+      fd.append("folder", "storefront");
       const res = await fetch("/api/uploads", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
-      const url = (data.urls?.[0] as string) || "";
+      const url = Array.isArray(data.urls) ? data.urls[0] : null;
       if (!url) throw new Error("No image URL returned");
       setForm((f) => ({ ...f, imageUrl: url }));
       setMsg("Category image uploaded — save to apply");
@@ -172,10 +171,6 @@ export function AdminCategoriesClient() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="admin-panel-title">Categories</h1>
-          <p className="mt-1 text-sm text-[var(--admin-muted)]">
-            Upload a category photo for the shop. If none is set, the site uses a product photo from
-            that category.
-          </p>
         </div>
         <Button type="button" onClick={openCreate}>
           <Plus className="size-4" />
@@ -201,12 +196,12 @@ export function AdminCategoriesClient() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((c) => (
-            <article key={c.id} className="admin-cat-card overflow-hidden">
-              <div className="relative mb-3 aspect-[16/9] overflow-hidden rounded-lg bg-[var(--admin-soft)]">
+            <article key={c.id} className="admin-cat-card">
+              <div className="relative mb-3 aspect-[16/10] overflow-hidden rounded-lg bg-[var(--admin-soft)]">
                 {c.imageUrl ? (
                   <Image src={c.imageUrl} alt={c.nameEn} fill className="object-cover" sizes="320px" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-4xl">
+                  <div className="flex h-full items-center justify-center text-3xl">
                     {emojiFor(c.slug)}
                   </div>
                 )}
@@ -293,7 +288,7 @@ export function AdminCategoriesClient() {
             <form onSubmit={save} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
               <div className="block text-sm">
                 <span className="mb-1 block font-medium">Category photo (shop card)</span>
-                <div className="relative mb-2 aspect-[16/9] overflow-hidden rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)]">
+                <div className="relative mb-2 aspect-[16/10] overflow-hidden rounded-lg border border-[var(--admin-line)] bg-[var(--admin-soft)]">
                   {form.imageUrl ? (
                     <Image
                       src={form.imageUrl}
@@ -303,34 +298,35 @@ export function AdminCategoriesClient() {
                       sizes="360px"
                     />
                   ) : (
-                    <div className="flex h-full flex-col items-center justify-center gap-1 text-[var(--admin-muted)]">
-                      <ImagePlus className="size-8 opacity-50" />
-                      <span className="text-xs">No photo yet</span>
+                    <div className="flex h-full items-center justify-center text-sm text-[var(--admin-muted)]">
+                      No photo yet
                     </div>
                   )}
                 </div>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={busy || uploading}
-                  onChange={(e) => {
-                    void uploadImage(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--admin-ink)]">
+                  <span className="rounded-md border border-[var(--admin-line)] bg-white px-3 py-1.5">
+                    {uploading ? "Uploading…" : form.imageUrl ? "Replace photo" : "Upload photo"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    disabled={busy || uploading}
+                    onChange={(e) => {
+                      void uploadImage(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
                 {form.imageUrl ? (
                   <button
                     type="button"
-                    className="mt-2 text-xs text-red-700 underline"
+                    className="ml-3 text-xs text-[var(--admin-muted)] underline"
                     onClick={() => setForm((f) => ({ ...f, imageUrl: "" }))}
                   >
                     Remove photo
                   </button>
-                ) : (
-                  <p className="mt-1 text-[11px] text-[var(--admin-muted)]">
-                    Optional. Without a photo, the shop uses a product image from this category.
-                  </p>
-                )}
+                ) : null}
               </div>
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">English Name</span>

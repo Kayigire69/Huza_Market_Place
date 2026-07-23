@@ -333,6 +333,43 @@ export function AdminCleanupClient() {
             size="sm"
             variant="ghost"
             disabled={busy}
+            onClick={() => {
+              const typed = window.prompt(
+                "Restore soft-deleted / hidden catalog products to the shop, Products, and Inventory?\n\nType RESTORE to confirm."
+              );
+              if (typed !== "RESTORE") return;
+              void (async () => {
+                setBusy(true);
+                setError("");
+                setMsg("");
+                try {
+                  const res = await fetch("/api/admin/catalog/restore", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ confirm: "RESTORE" }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || "Restore failed");
+                  const r = data.result;
+                  setMsg(
+                    `Catalog restored. Shop-visible products: ${r?.before?.shopVisible ?? "?"} → ${r?.after?.shopVisible ?? "?"}. Undeleted ${r?.undeleted ?? 0}, images added ${r?.imagesAdded ?? 0}.`
+                  );
+                  await refresh();
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Restore failed");
+                } finally {
+                  setBusy(false);
+                }
+              })();
+            }}
+          >
+            Restore products to storefront
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={busy}
             className="text-red-700"
             onClick={() => {
               if (!confirmDelete("Delete stock movements for soft-deleted products?")) return;

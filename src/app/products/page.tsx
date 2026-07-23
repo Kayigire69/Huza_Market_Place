@@ -61,6 +61,7 @@ async function ProductsResults({ searchParams }: { searchParams: SearchParams })
 
   const where: Prisma.ProductWhereInput = {
     isActive: true,
+    deletedAt: null,
     images: { some: { kind: "STOREFRONT" } },
     ...(q
       ? {
@@ -105,7 +106,10 @@ async function ProductsResults({ searchParams }: { searchParams: SearchParams })
       prisma.product.count({ where }),
     ]);
     payload = { products, categories, total };
-    await cacheSet(listKey, payload, 30);
+    // Never freeze an empty catalog in Redis (same rule as home catalog).
+    if (total > 0) {
+      await cacheSet(listKey, payload, 30);
+    }
   }
 
   const { products, categories, total } = payload;
