@@ -57,6 +57,7 @@ export const CATEGORY_IMAGE_BY_SLUG: Record<string, string> = {
   "ornamental-plants": "/images/catalog/hibiscus.jpg",
   "fruit-salads": "/images/catalog/fruit-salad-cup.jpg",
   "fresh-juices": "/images/catalog/passion-juice.jpg",
+  smoothies: "/images/catalog/passion-juice.jpg",
 };
 
 function isPhotoUrl(url: string): boolean {
@@ -72,6 +73,12 @@ function isPhotoUrl(url: string): boolean {
     lower.endsWith(".webp") ||
     lower.endsWith(".avif")
   );
+}
+
+function isCategoryImageUrl(url: string): boolean {
+  if (isPhotoUrl(url)) return true;
+  // Seeded categories may store SVG paths in imageUrl; allow those for category cards.
+  return /\.svg($|\?)/i.test(url) && url !== "/logo.svg";
 }
 
 /** Prefer DB/upload photos; mapped catalog photos next; SVG only if nothing else. */
@@ -98,7 +105,7 @@ export function resolveProductImage(
 }
 
 export function resolveCategoryImage(slug: string, imageUrl?: string | null): string {
-  if (imageUrl && isPhotoUrl(imageUrl)) return imageUrl;
+  if (imageUrl && isCategoryImageUrl(imageUrl)) return imageUrl;
   const mapped = CATEGORY_IMAGE_BY_SLUG[slug];
   if (mapped) return mapped;
   return imageUrl || "/logo.svg";
