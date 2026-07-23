@@ -1,5 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
 
+const globalForReconnect = globalThis as unknown as {
+  prismaReconnect: Promise<void> | undefined;
+};
+
 /** Neon pooler / idle timeouts often surface as closed connections. */
 export function isStaleConnectionError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -17,28 +21,44 @@ export function isStaleConnectionError(error: unknown): boolean {
         ? error.message
         : String(error);
 
-  return /closed|connection.*terminated|can't reach database|server has closed/i.test(
+  return /closed|connection.*terminated|can't reach database|server has closed|kind:\s*Closed/i.test(
     message
   );
 }
 
+/**
+ * Single-flight reconnect so concurrent requests after an idle disconnect
+ * do not all race $disconnect/$connect on the shared client.
+ */
 export async function reconnectPrisma(client: PrismaClient): Promise<void> {
-  try {
-    await client.$disconnect();
-  } catch {
-    // Ignore disconnect errors on an already-dead socket.
+  if (globalForReconnect.prismaReconnect) {
+    return globalForReconnect.prismaReconnect;
   }
 
-  let lastError: unknown;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  globalForReconnect.prismaReconnect = (async () => {
     try {
-      await client.$connect();
-      return;
-    } catch (err) {
-      lastError = err;
-      await new Promise((r) => setTimeout(r, attempt * 500));
-    }
-  }
+      try {
+        await client.$disconnect();
+      } catch {
+        // Ignore disconnect errors on an already-dead socket.
+      }
 
-  throw lastError;
+      let lastError: unknown;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await client.$connect();
+          return;
+        } catch (err) {
+          lastError = err;
+          await new Promise((r) => setTimeout(r, attempt * 500));
+        }
+      }
+
+      throw lastError;
+    } finally {
+      globalForReconnect.prismaReconnect = undefined;
+    }
+  })();
+
+  return globalForReconnect.prismaReconnect;
 }

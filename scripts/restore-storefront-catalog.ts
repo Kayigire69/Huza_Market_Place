@@ -1,15 +1,15 @@
 /**
- * Safe restore of storefront catalog products.
- * Usage: npx tsx scripts/restore-storefront-catalog.ts
+ * Add official catalog products as new/active storefront listings.
+ * Usage: npm run db:restore-catalog
  */
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { restoreStorefrontCatalog } from "../src/services/catalog-restore.service";
+import { publishOfficialCatalogProducts } from "../src/services/catalog-restore.service";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const result = await restoreStorefrontCatalog(prisma);
+  const result = await publishOfficialCatalogProducts(prisma);
   console.log(JSON.stringify(result, null, 2));
 }
 

@@ -335,9 +335,9 @@ export function AdminCleanupClient() {
             disabled={busy}
             onClick={() => {
               const typed = window.prompt(
-                "Restore soft-deleted / hidden catalog products to the shop, Products, and Inventory?\n\nType RESTORE to confirm."
+                "Add the official catalog products to the shop, Products, and Inventory as new/active listings?\n\nType ADD to confirm."
               );
-              if (typed !== "RESTORE") return;
+              if (typed !== "ADD") return;
               void (async () => {
                 setBusy(true);
                 setError("");
@@ -346,24 +346,24 @@ export function AdminCleanupClient() {
                   const res = await fetch("/api/admin/catalog/restore", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ confirm: "RESTORE" }),
+                    body: JSON.stringify({ confirm: "ADD" }),
                   });
                   const data = await res.json();
-                  if (!res.ok) throw new Error(data.error || "Restore failed");
+                  if (!res.ok) throw new Error(data.error || "Publish failed");
                   const r = data.result;
                   setMsg(
-                    `Catalog restored. Shop-visible products: ${r?.before?.shopVisible ?? "?"} → ${r?.after?.shopVisible ?? "?"}. Undeleted ${r?.undeleted ?? 0}, images added ${r?.imagesAdded ?? 0}.`
+                    `Catalog added. Created ${r?.created ?? 0}, updated ${r?.updated ?? 0}. Shop-visible: ${r?.beforeShopVisible ?? "?"} → ${r?.afterShopVisible ?? "?"}.`
                   );
                   await refresh();
                 } catch (err) {
-                  setError(err instanceof Error ? err.message : "Restore failed");
+                  setError(err instanceof Error ? err.message : "Publish failed");
                 } finally {
                   setBusy(false);
                 }
               })();
             }}
           >
-            Restore products to storefront
+            Add catalog products to storefront
           </Button>
           <Button
             type="button"

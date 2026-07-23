@@ -4,9 +4,17 @@ import { fileURLToPath } from "url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
+const deploymentId =
+  process.env.DIGITALOCEAN_DEPLOYMENT_ID?.trim() ||
+  process.env.COMMIT_HASH?.trim() ||
+  process.env.GITHUB_SHA?.trim() ||
+  undefined;
+
 const nextConfig: NextConfig = {
   // Pin workspace root — parent folder had a stray lockfile that confused Next.js
   outputFileTracingRoot: projectRoot,
+  // Soft skew protection when the host injects a deploy/commit id
+  ...(deploymentId ? { deploymentId } : {}),
   // pdfkit ships AFM font files; bundling into .next breaks Helvetica paths
   serverExternalPackages: ["pdfkit"],
   // App Platform omits most devDependencies; typecheck still runs.
@@ -31,9 +39,10 @@ const nextConfig: NextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   experimental: {
+    // Keep client router cache short so post-deploy tabs pick up new assets faster
     staleTimes: {
-      dynamic: 60,
-      static: 300,
+      dynamic: 30,
+      static: 180,
     },
   },
   async headers() {

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { canManageStaff } from "@/lib/rbac";
 import { auditAdminAction } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import { restoreStorefrontCatalog } from "@/services/catalog-restore.service";
+import { publishOfficialCatalogProducts } from "@/services/catalog-restore.service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ async function requireSuperAdmin() {
   return session;
 }
 
-/** Super Admin only — restore soft-deleted/hidden products onto the shop. */
+/** Super Admin — add official catalog products to the shop as new/active listings. */
 export async function POST(req: Request) {
   const session = await requireSuperAdmin();
   if (!session) {
@@ -24,23 +24,23 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => ({}));
-  if (String(body.confirm || "").trim() !== "RESTORE") {
+  if (String(body.confirm || "").trim() !== "ADD") {
     return NextResponse.json(
-      { error: 'Type confirm: "RESTORE" to run catalog restore' },
+      { error: 'Type confirm: "ADD" to publish catalog products' },
       { status: 400 }
     );
   }
 
   try {
-    const result = await restoreStorefrontCatalog(prisma);
+    const result = await publishOfficialCatalogProducts(prisma);
     await auditAdminAction(req, session, {
-      action: "catalog.restore_storefront",
+      action: "catalog.publish_official",
       entity: "Product",
-      details: `shopVisible ${result.before.shopVisible} → ${result.after.shopVisible}`,
+      details: `created ${result.created}, updated ${result.updated}, shop ${result.beforeShopVisible} → ${result.afterShopVisible}`,
     });
     return NextResponse.json({ ok: true, result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Restore failed";
+    const message = err instanceof Error ? err.message : "Publish failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

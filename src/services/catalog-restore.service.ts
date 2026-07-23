@@ -1,53 +1,36 @@
 /**
- * Restore soft-deleted / hidden products and ensure STOREFRONT images so they
- * appear on the shop, Admin Products, and Inventory — without wiping orders.
+ * Add the official HUZA catalog products to the shop as active listings.
+ * Creates new rows when missing; updates existing non-deleted matches.
+ * Does not bulk-undelete unrelated soft-deleted products.
  */
-import { Prisma, PrismaClient, UnitType } from "@prisma/client";
+import { PrismaClient, UnitType } from "@prisma/client";
 import { CATALOG_CATEGORIES, CATALOG_PRODUCTS } from "../../prisma/catalog-data";
 import { PRODUCT_IMAGE_BY_NAME_EN } from "@/lib/catalog-images";
 import { cacheDel, CacheKeys } from "@/lib/redis";
 
 const DELIVERY_DISTRICTS = ["Gasabo", "Kicukiro", "Nyarugenge", "Kamonyi", "Bugesera"];
 
-export type CatalogRestoreResult = {
-  before: {
-    total: number;
-    softDeleted: number;
-    inactive: number;
-    shopVisible: number;
-  };
-  after: {
-    total: number;
-    softDeleted: number;
-    inactive: number;
-    shopVisible: number;
-  };
-  undeleted: number;
-  reactivated: number;
+export type CatalogPublishResult = {
+  beforeShopVisible: number;
+  afterShopVisible: number;
+  created: number;
+  updated: number;
   imagesAdded: number;
-  catalogCreated: number;
-  catalogUpdated: number;
+  products: string[];
 };
 
 function imageFor(nameEn: string, fallback?: string | null): string {
   return PRODUCT_IMAGE_BY_NAME_EN[nameEn] || fallback || "/images/catalog/bananas.jpg";
 }
 
-async function counts(prisma: PrismaClient) {
-  return {
-    total: await prisma.product.count(),
-    softDeleted: await prisma.product.count({ where: { deletedAt: { not: null } } }),
-    inactive: await prisma.product.count({
-      where: { deletedAt: null, isActive: false },
-    }),
-    shopVisible: await prisma.product.count({
-      where: {
-        deletedAt: null,
-        isActive: true,
-        images: { some: { kind: "STOREFRONT" } },
-      },
-    }),
-  };
+async function shopVisibleCount(prisma: PrismaClient) {
+  return prisma.product.count({
+    where: {
+      deletedAt: null,
+      isActive: true,
+      images: { some: { kind: "STOREFRONT" } },
+    },
+  });
 }
 
 async function resolveCompanySupplierId(prisma: PrismaClient): Promise<string> {
@@ -74,14 +57,13 @@ async function ensureCategories(prisma: PrismaClient) {
   const bySlug = new Map<string, string>();
   for (const c of CATALOG_CATEGORIES) {
     const existing = await prisma.category.findFirst({
-      where: { slug: c.slug },
+      where: { slug: c.slug, deletedAt: null },
       orderBy: { createdAt: "asc" },
     });
     if (existing) {
       await prisma.category.update({
         where: { id: existing.id },
         data: {
-          deletedAt: null,
           isActive: true,
           nameEn: c.nameEn,
           nameFr: c.nameFr,
@@ -91,20 +73,42 @@ async function ensureCategories(prisma: PrismaClient) {
         },
       });
       bySlug.set(c.slug, existing.id);
-    } else {
-      const created = await prisma.category.create({
+      continue;
+    }
+
+    const soft = await prisma.category.findFirst({
+      where: { slug: c.slug },
+      orderBy: { createdAt: "asc" },
+    });
+    if (soft) {
+      await prisma.category.update({
+        where: { id: soft.id },
         data: {
-          slug: c.slug,
+          deletedAt: null,
+          isActive: true,
           nameEn: c.nameEn,
           nameFr: c.nameFr,
           nameRw: c.nameRw,
           sortOrder: c.sortOrder,
-          imageUrl: c.image,
-          isActive: true,
+          imageUrl: soft.imageUrl || c.image,
         },
       });
-      bySlug.set(c.slug, created.id);
+      bySlug.set(c.slug, soft.id);
+      continue;
     }
+
+    const created = await prisma.category.create({
+      data: {
+        slug: c.slug,
+        nameEn: c.nameEn,
+        nameFr: c.nameFr,
+        nameRw: c.nameRw,
+        sortOrder: c.sortOrder,
+        imageUrl: c.image,
+        isActive: true,
+      },
+    });
+    bySlug.set(c.slug, created.id);
   }
   return bySlug;
 }
@@ -113,27 +117,29 @@ async function ensureStorefrontImage(
   prisma: PrismaClient,
   productId: string,
   nameEn: string,
-  preferredUrl?: string | null
+  preferredUrl: string
 ): Promise<boolean> {
   const storefront = await prisma.productImage.findFirst({
     where: { productId, kind: "STOREFRONT" },
     orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
   });
-  if (storefront?.url) return false;
-
-  const inspection = await prisma.productImage.findFirst({
-    where: { productId, kind: "INSPECTION" },
-    orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-  });
-  const anyImage = await prisma.productImage.findFirst({
-    where: { productId },
-    orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-  });
+  if (storefront?.url) {
+    // Prefer real catalog photos over leftover SVGs when we know a JPG map.
+    const mapped = PRODUCT_IMAGE_BY_NAME_EN[nameEn];
+    if (mapped && storefront.url.endsWith(".svg") && mapped !== storefront.url) {
+      await prisma.productImage.update({
+        where: { id: storefront.id },
+        data: { url: mapped, alt: nameEn, isCover: true },
+      });
+      return true;
+    }
+    return false;
+  }
 
   await prisma.productImage.create({
     data: {
       productId,
-      url: imageFor(nameEn, preferredUrl || inspection?.url || anyImage?.url),
+      url: preferredUrl,
       alt: nameEn,
       sortOrder: 0,
       kind: "STOREFRONT",
@@ -143,96 +149,75 @@ async function ensureStorefrontImage(
   return true;
 }
 
-export async function restoreStorefrontCatalog(
+/**
+ * Publish every official catalog product onto the storefront as a new/active listing.
+ */
+export async function publishOfficialCatalogProducts(
   prisma: PrismaClient
-): Promise<CatalogRestoreResult> {
-  const before = await counts(prisma);
+): Promise<CatalogPublishResult> {
+  const beforeShopVisible = await shopVisibleCount(prisma);
   const categories = await ensureCategories(prisma);
   const supplierId = await resolveCompanySupplierId(prisma);
-  const catalogNames = CATALOG_PRODUCTS.map((p) => p.nameEn);
 
-  // Bring soft-deleted rows back into Admin Products / Inventory (not shop yet).
-  const undeleted = await prisma.product.updateMany({
-    where: { deletedAt: { not: null } },
-    data: { deletedAt: null },
-  });
-
-  // Shop-visible: previously approved, or official catalog names.
-  const reactivated = await prisma.product.updateMany({
-    where: {
-      deletedAt: null,
-      OR: [{ reviewStatus: "APPROVED" }, { nameEn: { in: catalogNames } }],
-    },
-    data: {
-      isActive: true,
-      reviewStatus: "APPROVED",
-      reviewedAt: new Date(),
-    },
-  });
-
-  const products = await prisma.product.findMany({
-    where: { deletedAt: null },
-    select: { id: true, nameEn: true },
-  });
-
+  let created = 0;
+  let updated = 0;
   let imagesAdded = 0;
-  for (const p of products) {
-    if (await ensureStorefrontImage(prisma, p.id, p.nameEn)) imagesAdded += 1;
-  }
-
-  let catalogCreated = 0;
-  let catalogUpdated = 0;
+  const products: string[] = [];
 
   for (const seed of CATALOG_PRODUCTS) {
     const categoryId = categories.get(seed.category);
-    if (!categoryId) continue;
+    if (!categoryId) {
+      throw new Error(`Category missing for ${seed.nameEn}: ${seed.category}`);
+    }
 
+    const coverUrl = imageFor(seed.nameEn, seed.image);
+
+    // Prefer an active row; otherwise create a brand-new product (ignore soft-deleted).
     const existing = await prisma.product.findFirst({
       where: {
-        OR: [{ nameEn: seed.nameEn }, { keywords: { contains: seed.slug } }],
+        deletedAt: null,
         categoryId,
+        nameEn: seed.nameEn,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { updatedAt: "desc" },
     });
 
-    const sharedData: Prisma.ProductUpdateInput = {
-      supplier: { connect: { id: supplierId } },
-      category: { connect: { id: categoryId } },
-      nameEn: seed.nameEn,
-      nameFr: seed.nameFr,
-      nameRw: seed.nameRw,
-      descriptionEn: seed.descriptionEn,
-      descriptionFr: seed.descriptionFr,
-      descriptionRw: seed.descriptionRw,
-      price: seed.price,
-      purchasePrice: Math.round(seed.price * 0.65),
-      unit: UnitType[seed.unit],
-      isOrganic: Boolean(seed.isOrganic),
-      isFeatured: Boolean(seed.isFeatured),
-      isBestSeller: Boolean(seed.isBestSeller),
-      isNewArrival: Boolean(seed.isNewArrival),
-      originDistrict: seed.originDistrict,
-      location: seed.originDistrict,
-      keywords: `${seed.keywords} ${seed.slug}`.trim(),
-      reviewStatus: "APPROVED",
-      reviewedAt: new Date(),
-      isActive: true,
-      deletedAt: null,
-      availableDistricts: DELIVERY_DISTRICTS,
-      nutritionalInfo:
-        "Per 100g (approx): Energy, vitamins, and minerals vary by produce. Store cool and consume fresh.",
-    };
-
     let productId: string;
+
     if (existing) {
       await prisma.product.update({
         where: { id: existing.id },
-        data: sharedData,
+        data: {
+          supplierId,
+          categoryId,
+          nameEn: seed.nameEn,
+          nameFr: seed.nameFr,
+          nameRw: seed.nameRw,
+          descriptionEn: seed.descriptionEn,
+          descriptionFr: seed.descriptionFr,
+          descriptionRw: seed.descriptionRw,
+          price: seed.price,
+          purchasePrice: existing.purchasePrice ?? Math.round(seed.price * 0.65),
+          unit: UnitType[seed.unit],
+          stockQty: existing.stockQty > 0 ? existing.stockQty : seed.stockQty,
+          isOrganic: Boolean(seed.isOrganic),
+          isFeatured: Boolean(seed.isFeatured),
+          isBestSeller: Boolean(seed.isBestSeller),
+          isNewArrival: Boolean(seed.isNewArrival),
+          originDistrict: seed.originDistrict,
+          location: seed.originDistrict,
+          keywords: `${seed.keywords} ${seed.slug}`.trim(),
+          reviewStatus: "APPROVED",
+          reviewedAt: new Date(),
+          isActive: true,
+          deletedAt: null,
+          availableDistricts: DELIVERY_DISTRICTS,
+        },
       });
       productId = existing.id;
-      catalogUpdated += 1;
+      updated += 1;
     } else {
-      const createdRow = await prisma.product.create({
+      const row = await prisma.product.create({
         data: {
           supplierId,
           categoryId,
@@ -263,38 +248,54 @@ export async function restoreStorefrontCatalog(
           stockLogs: {
             create: {
               change: seed.stockQty,
-              reason: "Storefront catalog restore",
+              reason: "Official catalog publish",
             },
           },
         },
       });
-      productId = createdRow.id;
-      catalogCreated += 1;
+      productId = row.id;
+      created += 1;
     }
 
-    if (
-      await ensureStorefrontImage(
-        prisma,
-        productId,
-        seed.nameEn,
-        imageFor(seed.nameEn, seed.image)
-      )
-    ) {
+    if (await ensureStorefrontImage(prisma, productId, seed.nameEn, coverUrl)) {
       imagesAdded += 1;
     }
+    products.push(seed.nameEn);
   }
 
   await cacheDel(CacheKeys.homeCatalog);
   await cacheDel(CacheKeys.bestSellers);
 
-  const after = await counts(prisma);
   return {
-    before,
-    after,
-    undeleted: undeleted.count,
-    reactivated: reactivated.count,
+    beforeShopVisible,
+    afterShopVisible: await shopVisibleCount(prisma),
+    created,
+    updated,
     imagesAdded,
-    catalogCreated,
-    catalogUpdated,
+    products,
+  };
+}
+
+/** @deprecated Use publishOfficialCatalogProducts */
+export async function restoreStorefrontCatalog(prisma: PrismaClient) {
+  const result = await publishOfficialCatalogProducts(prisma);
+  return {
+    before: {
+      total: 0,
+      softDeleted: 0,
+      inactive: 0,
+      shopVisible: result.beforeShopVisible,
+    },
+    after: {
+      total: result.products.length,
+      softDeleted: 0,
+      inactive: 0,
+      shopVisible: result.afterShopVisible,
+    },
+    undeleted: 0,
+    reactivated: result.updated,
+    imagesAdded: result.imagesAdded,
+    catalogCreated: result.created,
+    catalogUpdated: result.updated,
   };
 }
