@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Portal alert chime (Web Audio — no asset file).
  * Browsers often block audio until the user clicks once in the tab.
  *
@@ -156,10 +156,11 @@ export function showBrowserAlertNotification(title: string, body: string, tag = 
   if (typeof window === "undefined" || typeof Notification === "undefined") return;
   if (Notification.permission !== "granted") return;
   try {
+    // Keep the browser toast quiet — we already play our own alert chime.
     const n = new Notification(title, {
       body,
       tag,
-      silent: false,
+      silent: true,
     });
     n.onclick = () => {
       window.focus();
