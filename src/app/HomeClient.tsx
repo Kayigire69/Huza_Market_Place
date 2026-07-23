@@ -28,6 +28,7 @@ type Category = {
   nameFr: string;
   nameRw: string;
   imageUrl?: string | null;
+  productCoverUrl?: string | null;
 };
 
 type Promo = {
@@ -217,7 +218,7 @@ export function HomePage({
                 className="group relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[var(--huza-mint)] shadow-[0_4px_16px_rgba(11,92,52,0.08)] ring-1 ring-[var(--huza-line)] transition hover:ring-[var(--huza-green)] sm:aspect-[5/4]"
               >
                 <Image
-                  src={resolveCategoryImage(c.slug, c.imageUrl)}
+                  src={resolveCategoryImage(c.slug, c.imageUrl, c.productCoverUrl)}
                   alt={name}
                   fill
                   sizes="(max-width: 640px) 50vw, 33vw"

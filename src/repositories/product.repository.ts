@@ -184,7 +184,12 @@ export const productRepository = {
 
     // Sequential queries. Same results as Promise.all, but one pool connection at a time
     // (avoids P2024 when Neon connection_limit is small and home + APIs run together).
-    const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
+    const rawCategories = await prisma.category.findMany({
+      where: { isActive: true, deletedAt: null },
+      orderBy: { sortOrder: "asc" },
+    });
+    const { attachCategoryProductCovers } = await import("@/lib/category-display");
+    const categories = await attachCategoryProductCovers(rawCategories);
     const bestSellers = await prisma.product.findMany({
       where: { ...active, isBestSeller: true },
       select: productCardSelect,

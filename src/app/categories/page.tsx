@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { CategoriesClient } from "./CategoriesClient";
 import { cacheGet, cacheSet } from "@/lib/redis";
+import { attachCategoryProductCovers } from "@/lib/category-display";
 
 export const dynamic = "force-dynamic";
 
@@ -11,20 +12,23 @@ export const metadata: Metadata = {
   description: "Browse HUZA FRESH by category. Fruits, vegetables, salads, juices, and more.",
 };
 
-const CACHE_KEY = "huza:categories:list";
+const CACHE_KEY = "huza:categories:list:v2";
 
 export default async function CategoriesPage() {
   type Row = Awaited<ReturnType<typeof prisma.category.findMany>>[number] & {
     _count: { products: number };
+    productCoverUrl?: string | null;
   };
 
   let categories = await cacheGet<Row[]>(CACHE_KEY);
   if (!categories || categories.length === 0) {
     try {
-      categories = await prisma.category.findMany({
+      const raw = await prisma.category.findMany({
+        where: { isActive: true, deletedAt: null },
         orderBy: { sortOrder: "asc" },
-        include: { _count: { select: { products: true } } },
+        include: { _count: { select: { products: { where: { deletedAt: null } } } } },
       });
+      categories = await attachCategoryProductCovers(raw);
       if (categories.length > 0) {
         await cacheSet(CACHE_KEY, categories, 120);
       }
@@ -42,7 +46,7 @@ export default async function CategoriesPage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <h1 className="section-title">Categories</h1>
       <div className="mt-8">
-      <CategoriesClient categories={categories} />
+        <CategoriesClient categories={categories} />
       </div>
       <p className="mt-8 text-sm">
         <Link href="/products" className="text-[var(--huza-green)] font-semibold">

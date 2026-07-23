@@ -66,6 +66,7 @@ export function AdminCleanupClient() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [customerQ, setCustomerQ] = useState("");
   const [farmerQ, setFarmerQ] = useState("");
+  const [showRemovedFarmers, setShowRemovedFarmers] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [msg, setMsg] = useState("");
@@ -81,9 +82,14 @@ export function AdminCleanupClient() {
   }, []);
 
   const loadLists = useCallback(async () => {
+    const farmerQs = new URLSearchParams({
+      view: "farmers",
+      q: farmerQ,
+      ...(showRemovedFarmers ? { includeRemoved: "1" } : {}),
+    });
     const [cRes, fRes, oRes] = await Promise.all([
       fetch(`/api/admin/cleanup?view=customers&q=${encodeURIComponent(customerQ)}`),
-      fetch(`/api/admin/cleanup?view=farmers&q=${encodeURIComponent(farmerQ)}`),
+      fetch(`/api/admin/cleanup?${farmerQs.toString()}`),
       fetch("/api/admin/cleanup?view=orders"),
     ]);
     const [cData, fData, oData] = await Promise.all([cRes.json(), fRes.json(), oRes.json()]);
@@ -93,7 +99,7 @@ export function AdminCleanupClient() {
     setCustomers(cData.customers || []);
     setFarmers(fData.farmers || []);
     setOrders(oData.orders || []);
-  }, [customerQ, farmerQ]);
+  }, [customerQ, farmerQ, showRemovedFarmers]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -135,14 +141,42 @@ export function AdminCleanupClient() {
             });
             const softData = await softRes.json();
             if (!softRes.ok) throw new Error(softData.error || "Soft remove failed");
-            setMsg("Farmer soft-removed");
+            setMsg("Farmer soft-removed (hidden from cleanup list). Sales history kept.");
             await refresh();
             return;
           }
         }
         throw new Error(data.error || "Action failed");
       }
-      setMsg(okMsg);
+
+      if (body.action === "delete_customers") {
+        const deleted = Number(data.deleted || 0);
+        const errors = Array.isArray(data.errors) ? (data.errors as string[]) : [];
+        if (errors.length) {
+          setError(
+            `Deleted ${deleted}. ${errors.length} failed: ${errors.slice(0, 3).join("; ")}${
+              errors.length > 3 ? "…" : ""
+            }`
+          );
+          if (deleted > 0) setMsg(`Partially completed (${deleted} deleted).`);
+        } else {
+          setMsg(`Deleted ${deleted} customer(s)`);
+        }
+      } else if (body.action === "purge_soft_deleted_products") {
+        const hard = Number(data.hardDeleted || 0);
+        const kept = Number(data.keptSoft || 0);
+        setMsg(
+          `Purged ${hard} product(s). Kept ${kept} soft-deleted product(s) that still have sales or goods-receipt history.`
+        );
+        if (hard === 0 && kept > 0) {
+          setError(
+            "Nothing permanently deleted — remaining soft-deleted products are tied to order history."
+          );
+        }
+      } else {
+        setMsg(okMsg);
+      }
+
       setSelectedCustomers(new Set());
       setSelectedOrders(new Set());
       await refresh();
@@ -370,7 +404,7 @@ export function AdminCleanupClient() {
                   ids: [...selectedCustomers],
                   confirm: "DELETE",
                 },
-                `Deleted ${selectedCustomers.size} customer(s)`
+                "Customers deleted"
               );
             }}
           >
@@ -446,20 +480,31 @@ export function AdminCleanupClient() {
           <div>
             <h2 className="font-semibold">Test farmers</h2>
             <p className="text-sm text-[var(--admin-muted)]">
-              Permanent delete when there is no sales history; otherwise soft-remove is offered.
+              Soft-remove when there is sales history (recommended). Permanent delete only works with
+              no order history. Soft-removed farmers are hidden here by default.
             </p>
           </div>
-          <form onSubmit={onSearchFarmers} className="flex gap-2">
-            <input
-              className="admin-input"
-              placeholder="Search farmers…"
-              value={farmerQ}
-              onChange={(e) => setFarmerQ(e.target.value)}
-            />
-            <Button type="submit" size="sm" variant="ghost" disabled={busy}>
-              Search
-            </Button>
-          </form>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex items-center gap-2 text-xs text-[var(--admin-muted)]">
+              <input
+                type="checkbox"
+                checked={showRemovedFarmers}
+                onChange={(e) => setShowRemovedFarmers(e.target.checked)}
+              />
+              Show soft-removed
+            </label>
+            <form onSubmit={onSearchFarmers} className="flex gap-2">
+              <input
+                className="admin-input"
+                placeholder="Search farmers…"
+                value={farmerQ}
+                onChange={(e) => setFarmerQ(e.target.value)}
+              />
+              <Button type="submit" size="sm" variant="ghost" disabled={busy}>
+                Search
+              </Button>
+            </form>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="admin-table">
@@ -474,38 +519,45 @@ export function AdminCleanupClient() {
             </thead>
             <tbody>
               {farmers.map((f) => (
-                <tr key={f.id}>
+                <tr key={f.id} className={f.status === "REMOVED" ? "opacity-60" : undefined}>
                   <td>
                     <p className="font-medium">{f.businessName}</p>
                     <p className="text-xs text-[var(--admin-muted)]">
                       {f.user.fullName} · {f.phone}
                     </p>
                   </td>
-                  <td>{f.status}</td>
+                  <td>
+                    {f.status}
+                    {f.status === "REMOVED" ? (
+                      <span className="ml-1 text-[10px] text-amber-700">(soft-removed)</span>
+                    ) : null}
+                  </td>
                   <td>{f._count.products}</td>
                   <td>{f._count.purchaseOrders}</td>
                   <td className="text-right">
                     <div className="flex flex-wrap justify-end gap-1">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => {
-                          if (!confirmDelete(`Soft-remove farmer ${f.businessName}?`)) return;
-                          void runAction(
-                            {
-                              action: "delete_farmer",
-                              id: f.id,
-                              soft: true,
-                              confirm: "DELETE",
-                            },
-                            `Soft-removed ${f.businessName}`
-                          );
-                        }}
-                      >
-                        Soft remove
-                      </Button>
+                      {f.status !== "REMOVED" ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => {
+                            if (!confirmDelete(`Soft-remove farmer ${f.businessName}?`)) return;
+                            void runAction(
+                              {
+                                action: "delete_farmer",
+                                id: f.id,
+                                soft: true,
+                                confirm: "DELETE",
+                              },
+                              `Soft-removed ${f.businessName}`
+                            );
+                          }}
+                        >
+                          Soft remove
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         size="sm"

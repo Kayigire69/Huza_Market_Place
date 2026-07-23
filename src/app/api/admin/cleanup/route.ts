@@ -48,7 +48,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ customers: await listCleanupCustomers(q) });
   }
   if (view === "farmers") {
-    return NextResponse.json({ farmers: await listCleanupFarmers(q) });
+    const includeRemoved = url.searchParams.get("includeRemoved") === "1";
+    return NextResponse.json({
+      farmers: await listCleanupFarmers(q, { includeRemoved }),
+    });
   }
   if (view === "orders") {
     return NextResponse.json({ orders: await listCleanupOrders() });

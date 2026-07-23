@@ -72,21 +72,38 @@ export async function PATCH(req: Request) {
     if (!slides) {
       return NextResponse.json({ error: "slides array required" }, { status: 400 });
     }
-    for (const slide of slides) {
+    const enabled = slides.filter((s) => s.enabled !== false);
+    for (const slide of enabled) {
       if (!String(slide.imageUrl || "").trim()) {
         return NextResponse.json(
-          { error: "Each slide needs an image. Upload or remove empty slides." },
+          {
+            error:
+              "Every enabled slide needs an image. Upload a photo, or turn the slide off before publishing.",
+          },
           { status: 400 }
         );
       }
     }
-    const json = serializeShopHeroSlides(slides);
+    if (enabled.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Enable at least one slide with an image before publishing. Disabled drafts without photos are OK.",
+        },
+        { status: 400 }
+      );
+    }
+    // Drop empty disabled drafts so they don't clutter CMS
+    const cleaned = slides.filter(
+      (s) => s.enabled !== false || String(s.imageUrl || "").trim()
+    );
+    const json = serializeShopHeroSlides(cleaned);
     await setSetting(SHOP_HERO_SETTING_KEY, json);
     await auditAdminAction(req, session, {
       action: "website.save_hero",
       entity: "WebsiteSetting",
       entityId: SHOP_HERO_SETTING_KEY,
-      details: `${slides.length} slides`,
+      details: `${cleaned.length} slides (${enabled.length} enabled)`,
     });
     return NextResponse.json({ ok: true, slides: parseShopHeroSlides(json) });
   }
