@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CATEGORY_EMOJI } from "@/lib/admin-nav";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, RotateCcw } from "lucide-react";
 
 export type CategoryRow = {
   id: string;
@@ -15,11 +15,13 @@ export type CategoryRow = {
   imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
+  deletedAt: string | null;
   stats: {
     products: number;
     lowStock: number;
     outOfStock: number;
     hidden: number;
+    archivedProducts: number;
   };
 };
 
@@ -165,6 +167,43 @@ export function AdminCategoriesClient() {
     }
   };
 
+  const restore = async (c: CategoryRow) => {
+    const archived = c.stats.archivedProducts || 0;
+    if (
+      !confirm(
+        archived > 0
+          ? `Restore category “${c.nameEn}” and ${archived} archived product(s)?`
+          : `Restore category “${c.nameEn}”?`
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: c.id, action: "restore" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Restore failed");
+      const n = Number(data.productsRestored) || 0;
+      setMsg(
+        n > 0
+          ? `Restored ${c.nameEn} and ${n} product${n === 1 ? "" : "s"}`
+          : `Restored ${c.nameEn}`
+      );
+      await load();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Restore failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const activeCategories = categories.filter((c) => !c.deletedAt);
+  const deletedCategories = categories.filter((c) => c.deletedAt);
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -185,7 +224,7 @@ export function AdminCategoriesClient() {
 
       {loading ? (
         <p className="text-sm text-[var(--admin-muted)]">Loading categories…</p>
-      ) : categories.length === 0 ? (
+      ) : activeCategories.length === 0 && deletedCategories.length === 0 ? (
         <div className="admin-panel p-8 text-center">
           <p className="text-sm text-[var(--admin-muted)]">No categories yet.</p>
           <Button type="button" className="mt-3" onClick={openCreate}>
@@ -193,80 +232,141 @@ export function AdminCategoriesClient() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {categories.map((c) => (
-            <article key={c.id} className="admin-cat-card">
-              <div className="relative mb-3 aspect-[16/10] overflow-hidden rounded-lg bg-[var(--admin-soft)]">
-                {c.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.imageUrl} alt={c.nameEn} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-3xl">
-                    {emojiFor(c.slug)}
+        <>
+          {activeCategories.length === 0 ? (
+            <div className="admin-panel p-6 text-center">
+              <p className="text-sm text-[var(--admin-muted)]">No active categories.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {activeCategories.map((c) => (
+                <article key={c.id} className="admin-cat-card">
+                  <div className="relative mb-3 aspect-[16/10] overflow-hidden rounded-lg bg-[var(--admin-soft)]">
+                    {c.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={c.imageUrl} alt={c.nameEn} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-3xl">
+                        {emojiFor(c.slug)}
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-base font-semibold text-[var(--admin-ink)]">
+                        {c.nameEn}
+                      </h2>
+                      {c.nameRw && c.nameRw !== c.nameEn ? (
+                        <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">{c.nameRw}</p>
+                      ) : null}
+                      <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
+                        {c.stats.products} Products
+                        {!c.isActive ? " · Hidden" : ""}
+                        {!c.imageUrl ? " · No category photo" : ""}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="admin-icon-btn"
+                        title="Edit"
+                        onClick={() => openEdit(c)}
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-icon-btn"
+                        title="Remove"
+                        disabled={busy}
+                        onClick={() => void remove(c)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--admin-line)] pt-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                        Low Stock
+                      </p>
+                      <p className="text-lg font-bold tabular-nums text-amber-700">{c.stats.lowStock}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                        Out of Stock
+                      </p>
+                      <p className="text-lg font-bold tabular-nums text-rose-700">
+                        {c.stats.outOfStock}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                        Hidden
+                      </p>
+                      <p className="text-lg font-bold tabular-nums text-[var(--admin-muted)]">
+                        {c.stats.hidden}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {deletedCategories.length > 0 ? (
+            <div className="space-y-3 pt-2">
+              <h2 className="text-sm font-semibold text-[var(--admin-ink)]">Removed categories</h2>
+              <p className="text-xs text-[var(--admin-muted)]">
+                Restore brings the category back and any archived products in it.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {deletedCategories.map((c) => (
+                  <article key={c.id} className="admin-cat-card opacity-90">
+                    <div className="relative mb-3 aspect-[16/10] overflow-hidden rounded-lg bg-[var(--admin-soft)]">
+                      {c.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={c.imageUrl}
+                          alt={c.nameEn}
+                          className="h-full w-full object-cover grayscale"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-3xl opacity-60">
+                          {emojiFor(c.slug)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h2 className="truncate text-base font-semibold text-[var(--admin-ink)]">
+                          {c.nameEn}
+                        </h2>
+                        <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
+                          Removed
+                          {c.stats.archivedProducts > 0
+                            ? ` · ${c.stats.archivedProducts} archived product${
+                                c.stats.archivedProducts === 1 ? "" : "s"
+                              }`
+                            : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="admin-icon-btn"
+                        title="Restore"
+                        disabled={busy}
+                        onClick={() => void restore(c)}
+                      >
+                        <RotateCcw className="size-3.5" />
+                      </button>
+                    </div>
+                  </article>
+                ))}
               </div>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h2 className="truncate text-base font-semibold text-[var(--admin-ink)]">
-                    {c.nameEn}
-                  </h2>
-                  {c.nameRw && c.nameRw !== c.nameEn ? (
-                    <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">{c.nameRw}</p>
-                  ) : null}
-                  <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
-                    {c.stats.products} Products
-                    {!c.isActive ? " · Hidden" : ""}
-                    {!c.imageUrl ? " · No category photo" : ""}
-                  </p>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    className="admin-icon-btn"
-                    title="Edit"
-                    onClick={() => openEdit(c)}
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    className="admin-icon-btn"
-                    title="Remove"
-                    disabled={busy}
-                    onClick={() => void remove(c)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--admin-line)] pt-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-                    Low Stock
-                  </p>
-                  <p className="text-lg font-bold tabular-nums text-amber-700">{c.stats.lowStock}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-                    Out of Stock
-                  </p>
-                  <p className="text-lg font-bold tabular-nums text-rose-700">
-                    {c.stats.outOfStock}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-                    Hidden
-                  </p>
-                  <p className="text-lg font-bold tabular-nums text-[var(--admin-muted)]">
-                    {c.stats.hidden}
-                  </p>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+            </div>
+          ) : null}
+        </>
       )}
 
       {drawer ? (
