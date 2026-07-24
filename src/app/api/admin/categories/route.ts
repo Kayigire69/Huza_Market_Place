@@ -17,26 +17,27 @@ function slugify(input: string) {
     .slice(0, 60);
 }
 
-/** GET. Categories with product stats for Catalog */
+/** GET. Categories with product stats for Catalog (includes soft-deleted for restore). */
 export async function GET() {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const [categories, productRows] = await Promise.all([
     prisma.category.findMany({
-      where: { deletedAt: null },
       orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
       include: {
         _count: {
-          select: { products: { where: { deletedAt: null } } },
+          select: {
+            products: { where: { deletedAt: null } },
+          },
         },
       },
     }),
     prisma.product.findMany({
-      where: { deletedAt: null },
       select: {
         categoryId: true,
         isActive: true,
+        deletedAt: true,
         stockQty: true,
         reservedQty: true,
         lowStockAt: true,
@@ -46,11 +47,21 @@ export async function GET() {
 
   const byCategory = new Map<
     string,
-    { lowStock: number; outOfStock: number; hidden: number }
+    { lowStock: number; outOfStock: number; hidden: number; archivedProducts: number }
   >();
   for (const p of productRows) {
     if (!p.categoryId) continue;
-    const cur = byCategory.get(p.categoryId) || { lowStock: 0, outOfStock: 0, hidden: 0 };
+    const cur = byCategory.get(p.categoryId) || {
+      lowStock: 0,
+      outOfStock: 0,
+      hidden: 0,
+      archivedProducts: 0,
+    };
+    if (p.deletedAt) {
+      cur.archivedProducts += 1;
+      byCategory.set(p.categoryId, cur);
+      continue;
+    }
     if (!p.isActive) cur.hidden += 1;
     const available = Math.max(0, p.stockQty - p.reservedQty);
     if (available <= 0) cur.outOfStock += 1;
@@ -59,7 +70,12 @@ export async function GET() {
   }
 
   const payload = categories.map((c) => {
-    const stats = byCategory.get(c.id) || { lowStock: 0, outOfStock: 0, hidden: 0 };
+    const stats = byCategory.get(c.id) || {
+      lowStock: 0,
+      outOfStock: 0,
+      hidden: 0,
+      archivedProducts: 0,
+    };
     return {
       id: c.id,
       slug: c.slug,
@@ -70,11 +86,13 @@ export async function GET() {
       imageUrl: c.imageUrl,
       sortOrder: c.sortOrder,
       isActive: c.isActive,
+      deletedAt: c.deletedAt ? c.deletedAt.toISOString() : null,
       stats: {
         products: c._count.products,
         lowStock: stats.lowStock,
         outOfStock: stats.outOfStock,
         hidden: stats.hidden,
+        archivedProducts: stats.archivedProducts,
       },
     };
   });
@@ -125,7 +143,7 @@ export async function POST(req: Request) {
   return NextResponse.json(category, { status: 201 });
 }
 
-/** PATCH. Update / soft-delete */
+/** PATCH. Update / soft-delete / restore */
 export async function PATCH(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -135,7 +153,41 @@ export async function PATCH(req: Request) {
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const existing = await prisma.category.findUnique({ where: { id } });
-  if (!existing || existing.deletedAt) {
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (body.action === "restore") {
+    if (!existing.deletedAt) {
+      return NextResponse.json({ error: "Category is not deleted" }, { status: 400 });
+    }
+    const [, products] = await prisma.$transaction([
+      prisma.category.update({
+        where: { id },
+        data: { deletedAt: null, isActive: true },
+      }),
+      prisma.product.updateMany({
+        where: { categoryId: id, deletedAt: { not: null } },
+        data: {
+          deletedAt: null,
+          isActive: true,
+          reviewStatus: "APPROVED",
+          reviewedAt: new Date(),
+        },
+      }),
+    ]);
+    await auditAdminAction(req, session, {
+      action: "category.restore",
+      entity: "Category",
+      entityId: id,
+      details: `${existing.nameEn} (+${products.count} products)`,
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    await cacheDel("huza:categories:list");
+    return NextResponse.json({ ok: true, productsRestored: products.count });
+  }
+
+  if (existing.deletedAt) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -151,6 +203,7 @@ export async function PATCH(req: Request) {
       details: existing.nameEn,
     });
     await cacheDel(CacheKeys.homeCatalog);
+    await cacheDel("huza:categories:list");
     return NextResponse.json({ ok: true });
   }
 
