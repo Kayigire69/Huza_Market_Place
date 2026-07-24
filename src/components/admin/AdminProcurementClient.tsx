@@ -58,7 +58,7 @@ const PIPELINE = [
   { step: "1", label: "Approve", href: "/admin/approvals" },
   { step: "2", label: "Purchase request", href: "/admin/procurement/requests" },
   { step: "3", label: "Purchase order", href: "/admin/procurement/orders" },
-  { step: "4", label: "Receive & inspect", href: "/admin/procurement/orders" },
+  { step: "4", label: "Receive & inspect", href: "/admin/procurement/received" },
   { step: "5", label: "Commission / pay", href: "/admin/procurement/commission" },
   { step: "6", label: "History", href: "/admin/procurement/history" },
 ];

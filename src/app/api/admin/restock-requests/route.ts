@@ -12,7 +12,8 @@ async function requireAdmin() {
 const STATUSES: RestockRequestStatus[] = ["OPEN", "SOURCING", "FULFILLED", "CLOSED"];
 
 export async function GET(req: Request) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const url = new URL(req.url);
   const status = url.searchParams.get("status") || "OPEN";
   const take = Math.min(Number(url.searchParams.get("take")) || 50, 100);
@@ -92,7 +93,8 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const body = await req.json().catch(() => ({}));
   const id = String((body as { id?: string }).id || "").trim();
   const status = String((body as { status?: string }).status || "").trim() as RestockRequestStatus;

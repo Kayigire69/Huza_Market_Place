@@ -40,6 +40,35 @@ async function handleAction(
     });
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
+    if (purchaseOrderId) {
+      const po = await prisma.purchaseOrder.findUnique({
+        where: { id: purchaseOrderId },
+        select: { id: true, status: true, poNumber: true },
+      });
+      if (!po) {
+        return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
+      }
+      if (
+        po.status === "RECEIVED" ||
+        po.status === "INSPECTED" ||
+        po.status === "ACCEPTED" ||
+        po.status === "PAID"
+      ) {
+        return NextResponse.json(
+          {
+            error: `PO ${po.poNumber} already ${po.status.toLowerCase()}; receive only once to avoid double stock`,
+          },
+          { status: 409 }
+        );
+      }
+      if (po.status === "CANCELLED" || po.status === "REJECTED") {
+        return NextResponse.json(
+          { error: `Cannot receive against a ${po.status.toLowerCase()} purchase order` },
+          { status: 400 }
+        );
+      }
+    }
+
     let locationId: string | null = null;
     if (locationCode) {
       const loc = await prisma.warehouseLocation.upsert({

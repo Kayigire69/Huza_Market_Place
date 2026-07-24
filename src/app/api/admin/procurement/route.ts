@@ -433,19 +433,42 @@ async function handlePoAction(
 
   switch (body.poAction) {
     case "receive": {
+      if (
+        po.status === PurchaseOrderStatus.CANCELLED ||
+        po.status === PurchaseOrderStatus.REJECTED ||
+        po.status === PurchaseOrderStatus.PAID
+      ) {
+        return NextResponse.json(
+          { error: `Cannot receive a ${po.status.toLowerCase()} purchase order` },
+          { status: 400 }
+        );
+      }
+      if (
+        po.status === PurchaseOrderStatus.RECEIVED ||
+        po.status === PurchaseOrderStatus.INSPECTED ||
+        po.status === PurchaseOrderStatus.ACCEPTED
+      ) {
+        return NextResponse.json(
+          { error: "Goods already received for this purchase order" },
+          { status: 409 }
+        );
+      }
+      if (
+        po.status !== PurchaseOrderStatus.ORDERED &&
+        po.status !== PurchaseOrderStatus.DRAFT
+      ) {
+        return NextResponse.json(
+          { error: "Receive is only allowed from ORDERED or DRAFT" },
+          { status: 400 }
+        );
+      }
+
       data = {
         status: PurchaseOrderStatus.RECEIVED,
         receivedAt: now,
         notes: body.notes || po.notes,
       };
-      if (
-        po.productId &&
-        po.quantity > 0 &&
-        po.status !== PurchaseOrderStatus.RECEIVED &&
-        po.status !== PurchaseOrderStatus.INSPECTED &&
-        po.status !== PurchaseOrderStatus.ACCEPTED &&
-        po.status !== PurchaseOrderStatus.PAID
-      ) {
+      if (po.productId && po.quantity > 0) {
         const { stockService } = await import("@/services/stock.service");
         await stockService.stockIn(
           po.productId,
@@ -498,6 +521,12 @@ async function handlePoAction(
       break;
     }
     case "inspect_accept": {
+      if (po.status !== PurchaseOrderStatus.RECEIVED) {
+        return NextResponse.json(
+          { error: "QC accept is only allowed after goods are received" },
+          { status: 400 }
+        );
+      }
       const { normalizeOfficialImageUrls, publishOfficialProductImages } = await import(
         "@/lib/official-product-images"
       );
@@ -705,7 +734,25 @@ async function handlePoAction(
       break;
     }
     case "pay": {
+      if (po.status === PurchaseOrderStatus.PAID) {
+        return NextResponse.json({ error: "Already paid" }, { status: 400 });
+      }
+      if (
+        po.status === PurchaseOrderStatus.CANCELLED ||
+        po.status === PurchaseOrderStatus.REJECTED
+      ) {
+        return NextResponse.json(
+          { error: `Cannot pay a ${po.status.toLowerCase()} purchase order` },
+          { status: 400 }
+        );
+      }
       if (po.dealType === ProcurementDealType.COMMISSION) {
+        if (po.status !== PurchaseOrderStatus.ACCEPTED) {
+          return NextResponse.json(
+            { error: "Settle commission first (status must be ACCEPTED), then pay" },
+            { status: 400 }
+          );
+        }
         const liveSales = await customerSalesForProduct(po.productId);
         const saleAmount = Math.max(
           0,
@@ -737,6 +784,15 @@ async function handlePoAction(
         notifyTitle = "Commission payment sent";
         notifyBody = `PO ${po.poNumber}: Paid. Sale ${saleAmount.toLocaleString()} RWF − commission ${commissionAmount.toLocaleString()} RWF (${rate}%) = ${farmerNetAmount.toLocaleString()} RWF to you. Ref ${data.paymentRef}.`;
       } else {
+        if (
+          po.status !== PurchaseOrderStatus.INSPECTED &&
+          po.status !== PurchaseOrderStatus.ACCEPTED
+        ) {
+          return NextResponse.json(
+            { error: "Pay only after QC pass (INSPECTED)" },
+            { status: 400 }
+          );
+        }
         data = {
           status: PurchaseOrderStatus.PAID,
           paidAt: now,
@@ -749,11 +805,67 @@ async function handlePoAction(
       }
       break;
     }
-    case "cancel":
+    case "cancel": {
+      if (po.status === PurchaseOrderStatus.PAID) {
+        return NextResponse.json(
+          { error: "Cannot cancel a paid purchase order" },
+          { status: 400 }
+        );
+      }
+      if (po.status === PurchaseOrderStatus.CANCELLED) {
+        return NextResponse.json({ error: "Already cancelled" }, { status: 400 });
+      }
+      if (po.status === PurchaseOrderStatus.REJECTED) {
+        return NextResponse.json(
+          { error: "Rejected purchase orders cannot be cancelled" },
+          { status: 400 }
+        );
+      }
+
+      // If stock was received, reverse it so inventory stays accurate.
+      if (
+        po.productId &&
+        (po.status === PurchaseOrderStatus.RECEIVED ||
+          po.status === PurchaseOrderStatus.INSPECTED ||
+          po.status === PurchaseOrderStatus.ACCEPTED)
+      ) {
+        const qty = Math.floor(po.quantity);
+        if (qty > 0) {
+          const { stockService } = await import("@/services/stock.service");
+          const current = await prisma.product.findUnique({
+            where: { id: po.productId },
+            select: { stockQty: true },
+          });
+          const reverseQty = Math.min(qty, Math.max(0, current?.stockQty ?? 0));
+          if (reverseQty > 0) {
+            await stockService.stockOut(
+              po.productId,
+              reverseQty,
+              `PO ${po.poNumber} cancelled. Reverse receive`,
+              session.user.id,
+              "ADJUST"
+            );
+          }
+        }
+        await prisma.stockBatch.updateMany({
+          where: {
+            productId: po.productId,
+            notes: { contains: `From PO ${po.poNumber}` },
+            quantity: { gt: 0 },
+          },
+          data: { quantity: 0 },
+        });
+        await prisma.product.update({
+          where: { id: po.productId },
+          data: { isActive: false },
+        });
+      }
+
       data = { status: PurchaseOrderStatus.CANCELLED, notes: body.notes || po.notes };
       notifyTitle = "Purchase order cancelled";
       notifyBody = `PO ${po.poNumber} was cancelled.`;
       break;
+    }
     default:
       return NextResponse.json({ error: "Invalid PO action" }, { status: 400 });
   }
