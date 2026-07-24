@@ -10,7 +10,7 @@ import {
   purchaseMethodFromOwnership,
   resolveConfirmedStockQty,
 } from "@/lib/inventory-meta";
-import { MARKET_DESK_NAME } from "@/lib/market-desk";
+import { MARKET_DESK_NAME, ensureYouthHuzaCatalogSupplier } from "@/lib/market-desk";
 
 const UNIT_TYPES: UnitType[] = ["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"];
 
@@ -227,16 +227,8 @@ export async function POST(req: Request) {
   });
   if (!category) return NextResponse.json({ error: "Category not found" }, { status: 404 });
 
-  // Admin-created catalog lines must belong to Youth Huza retail. Never a random farmer.
-  const supplier = await prisma.supplier.findFirst({
-    where: { status: "APPROVED", businessName: { contains: "Huza", mode: "insensitive" } },
-  });
-  if (!supplier) {
-    return NextResponse.json(
-      { error: "No Youth Huza supplier available to own this product" },
-      { status: 400 }
-    );
-  }
+  // Admin-created catalog lines belong to Youth Huza retail (never a random farmer).
+  const supplier = await ensureYouthHuzaCatalogSupplier();
 
   const stockQty = Math.max(0, Math.floor(Number(body.stockQty) || 0));
   const unit = parseUnitType(body.unit);
