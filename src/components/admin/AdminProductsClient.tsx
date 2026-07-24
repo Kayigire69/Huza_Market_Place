@@ -13,6 +13,7 @@ import {
   Search,
   Trash2,
   X,
+  RotateCcw,
 } from "lucide-react";
 
 type ProductImage = {
@@ -38,12 +39,21 @@ type ProductRow = {
   isNewArrival?: boolean;
   isOrganic?: boolean;
   lowStockAt?: number;
+  deletedAt?: string | null;
   categoryId?: string;
   category?: { id: string; nameEn: string; slug: string } | null;
   images?: ProductImage[];
 };
 
-type FilterKey = "all" | "active" | "out" | "low" | "hidden" | "featured" | "bestseller";
+type FilterKey =
+  | "all"
+  | "active"
+  | "out"
+  | "low"
+  | "hidden"
+  | "featured"
+  | "bestseller"
+  | "removed";
 type SortKey = "name" | "price" | "stock";
 
 function emojiFor(slug: string) {
@@ -55,6 +65,7 @@ function availableQty(p: ProductRow) {
 }
 
 function statusOf(p: ProductRow): { label: string; className: string } {
+  if (p.deletedAt) return { label: "Removed", className: "admin-status admin-status-muted" };
   if (!p.isActive) return { label: "Hidden", className: "admin-status admin-status-muted" };
   const avail = availableQty(p);
   if (avail <= 0) return { label: "Out of Stock", className: "admin-status admin-status-warn" };
@@ -71,6 +82,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "out", label: "Out of Stock" },
   { key: "low", label: "Low Stock" },
   { key: "hidden", label: "Hidden" },
+  { key: "removed", label: "Removed" },
 ];
 
 export function AdminProductsClient() {
@@ -386,6 +398,7 @@ export function AdminProductsClient() {
   const runBulk = async (bulkAction: string, price?: number) => {
     if (!selectedIds.size) return;
     if (bulkAction === "delete" && !confirm(`Delete ${selectedIds.size} product(s)?`)) return;
+    if (bulkAction === "restore" && !confirm(`Restore ${selectedIds.size} product(s)?`)) return;
     setBusy(true);
     try {
       const res = await fetch("/api/admin/products", {
@@ -400,12 +413,37 @@ export function AdminProductsClient() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Bulk action failed");
-      setMsg(`Updated ${data.count} product(s)`);
+      setMsg(
+        bulkAction === "restore"
+          ? `Restored ${data.count} product(s)`
+          : `Updated ${data.count} product(s)`
+      );
       setBulkPrice("");
       await loadProducts();
       await loadCategories();
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Bulk action failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const restoreProduct = async (p: ProductRow) => {
+    if (!confirm(`Restore “${p.nameEn}”?`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: p.id, action: "restore" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Restore failed");
+      setMsg(`Restored ${p.nameEn}`);
+      await loadProducts();
+      await loadCategories();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Restore failed");
     } finally {
       setBusy(false);
     }
@@ -445,8 +483,14 @@ export function AdminProductsClient() {
     if (s.includes("salad")) return "Salad";
     if (s.includes("seedling")) return "Seedling";
     if (s.includes("ornamental") || s.includes("plant")) return "Plant";
+    if (s.includes("smoothie")) return "Smoothie";
     return "Product";
   }, [selected]);
+
+  const activeCategories = useMemo(
+    () => categories.filter((c) => !c.deletedAt),
+    [categories]
+  );
 
   /* ---------- Category picker ---------- */
   if (!selected) {
@@ -474,13 +518,13 @@ export function AdminProductsClient() {
           </h2>
           {loadingCats ? (
             <p className="text-sm text-[var(--admin-muted)]">Loading…</p>
-          ) : categories.length === 0 ? (
+          ) : activeCategories.length === 0 ? (
             <div className="admin-panel p-8 text-center text-sm text-[var(--admin-muted)]">
               No categories yet. Create one under Catalog → Categories first.
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {categories.map((c) => (
+              {activeCategories.map((c) => (
                 <button
                   key={c.id}
                   type="button"
@@ -503,6 +547,9 @@ export function AdminProductsClient() {
                     <span>Low {c.stats.lowStock}</span>
                     <span>Out {c.stats.outOfStock}</span>
                     <span>Hidden {c.stats.hidden}</span>
+                    {(c.stats.archivedProducts ?? 0) > 0 ? (
+                      <span>Removed {c.stats.archivedProducts}</span>
+                    ) : null}
                   </div>
                 </button>
               ))}
@@ -588,51 +635,66 @@ export function AdminProductsClient() {
         <div className="admin-bulk-bar">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              className="admin-input w-28"
-              placeholder="New price"
-              value={bulkPrice}
-              onChange={(e) => setBulkPrice(e.target.value)}
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={busy || !bulkPrice}
-              onClick={() => void runBulk("price", Math.round(Number(bulkPrice)))}
-            >
-              Change Price
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => void runBulk("hide")}
-            >
-              Hide
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => void runBulk("show")}
-            >
-              Show
-            </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={exportSelected}>
-              Export
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => void runBulk("delete")}
-            >
-              Delete
-            </Button>
+            {filter === "removed" ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => void runBulk("restore")}
+              >
+                <RotateCcw className="size-3.5" />
+                Restore
+              </Button>
+            ) : (
+              <>
+                <input
+                  className="admin-input w-28"
+                  placeholder="New price"
+                  value={bulkPrice}
+                  onChange={(e) => setBulkPrice(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy || !bulkPrice}
+                  onClick={() => void runBulk("price", Math.round(Number(bulkPrice)))}
+                >
+                  Change Price
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void runBulk("hide")}
+                >
+                  Hide
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void runBulk("show")}
+                >
+                  Show
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={exportSelected}>
+                  Export
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void runBulk("delete")}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
           </div>
         </div>
       ) : null}
@@ -642,8 +704,11 @@ export function AdminProductsClient() {
           <p className="p-6 text-sm text-[var(--admin-muted)]">Loading products…</p>
         ) : products.length === 0 ? (
           <p className="p-6 text-sm text-[var(--admin-muted)]">
-            No products in this category
-            {debouncedQ || filter !== "all" ? " match your filters" : ""}.
+            {filter === "removed"
+              ? "No removed products in this category. If Smoothies were permanently purged earlier, they must be added again."
+              : `No products in this category${
+                  debouncedQ || filter !== "all" ? " match your filters" : ""
+                }.`}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -713,15 +778,28 @@ export function AdminProductsClient() {
                         {availableQty(p)} {formatUnit(p.unit)}
                       </td>
                       <td className="text-xs text-[var(--admin-muted)]">
-                        {p.isActive ? "Shop visible" : "Hidden"}
+                        {p.deletedAt ? "Removed" : p.isActive ? "Shop visible" : "Hidden"}
                       </td>
                       <td>
                         <span className={st.className}>{st.label}</span>
                       </td>
                       <td className="text-right">
-                        <Button type="button" size="sm" variant="ghost" onClick={() => openEdit(p)}>
-                          Edit
-                        </Button>
+                        {filter === "removed" || p.deletedAt ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() => void restoreProduct(p)}
+                          >
+                            <RotateCcw className="size-3.5" />
+                            Restore
+                          </Button>
+                        ) : (
+                          <Button type="button" size="sm" variant="ghost" onClick={() => openEdit(p)}>
+                            Edit
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );
