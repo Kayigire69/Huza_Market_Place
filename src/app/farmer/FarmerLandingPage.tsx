@@ -98,33 +98,57 @@ function HeroCarousel({ t }: { t: (k: string) => string }) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    const id = window.setInterval(() => {
+    let id = 0;
+    const tick = () => {
       setIndex((i) => (i + 1) % HERO_SLIDES.length);
-    }, 6000);
-    return () => window.clearInterval(id);
+    };
+    const start = () => {
+      window.clearInterval(id);
+      id = window.setInterval(tick, 6000);
+    };
+    const stop = () => window.clearInterval(id);
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
+
+  // Only paint current + previous slide (crossfade) instead of all 8 full-bleed images.
+  const prevIndex = (index - 1 + HERO_SLIDES.length) % HERO_SLIDES.length;
+  const visible = [prevIndex, index];
 
   return (
     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-white/70 shadow-[0_20px_50px_rgba(7,44,27,0.18)] sm:aspect-[5/4] lg:aspect-square">
-      {HERO_SLIDES.map((slide, i) => (
-        <div
-          key={slide.src}
-          className={cn(
-            "absolute inset-0 transition-opacity duration-1000 ease-in-out",
-            i === index ? "opacity-100" : "opacity-0"
-          )}
-          aria-hidden={i !== index}
-        >
-          <Image
-            src={slide.src}
-            alt={t(slide.altKey)}
-            fill
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 44vw"
-            priority={i === 0}
-          />
-        </div>
-      ))}
+      {visible.map((i) => {
+        const slide = HERO_SLIDES[i];
+        const active = i === index;
+        return (
+          <div
+            key={slide.src}
+            className={cn(
+              "absolute inset-0 transition-opacity duration-500 ease-out",
+              active ? "opacity-100" : "opacity-0"
+            )}
+            aria-hidden={!active}
+          >
+            <Image
+              src={slide.src}
+              alt={t(slide.altKey)}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 44vw"
+              priority={i === 0}
+              quality={72}
+            />
+          </div>
+        );
+      })}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(7,44,27,0.35)] via-transparent to-transparent" />
       <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
         {HERO_SLIDES.map((slide, i) => (
@@ -150,10 +174,10 @@ export function FarmerLandingPage() {
   const phoneHref = SUPPORT_PHONE_DISPLAY.replace(/\D/g, "");
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="farmer-landing">
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:space-y-10 sm:px-6 sm:py-8 lg:space-y-14 lg:py-10">
         {/* Hero */}
-        <section className="overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/95 shadow-[0_16px_40px_rgba(7,44,27,0.12)] backdrop-blur-sm">
+        <section className="overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_16px_40px_rgba(7,44,27,0.12)]">
           <div className="grid items-center gap-6 p-5 sm:gap-8 sm:p-8 lg:grid-cols-2 lg:gap-10 lg:p-10">
             <div className="text-center lg:text-left">
               <div className="mx-auto inline-flex rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-[var(--huza-line)] lg:mx-0">
@@ -197,7 +221,7 @@ export function FarmerLandingPage() {
         </section>
 
         {/* How Youth Huza works */}
-        <section className="rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-md backdrop-blur-sm sm:p-8">
+        <section className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-md sm:p-8">
           <h2 className="text-center font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-ink)] sm:text-3xl">
             {t("flHowTitle")}
           </h2>
@@ -234,7 +258,7 @@ export function FarmerLandingPage() {
         </section>
 
         {/* What you gain */}
-        <section className="rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-md backdrop-blur-sm sm:p-8">
+        <section className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-md sm:p-8">
           <h2 className="text-center font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-ink)] sm:text-3xl">
             {t("flGainsTitle")}
           </h2>
@@ -263,7 +287,7 @@ export function FarmerLandingPage() {
         </section>
 
         {/* Supported crops */}
-        <section className="rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-md backdrop-blur-sm sm:p-8">
+        <section className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-md sm:p-8">
           <h2 className="text-center font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-ink)] sm:text-3xl">
             {t("flCropsTitle")}
           </h2>
@@ -285,7 +309,7 @@ export function FarmerLandingPage() {
 
         {/* Agronomy + Training */}
         <section className="grid gap-4 lg:grid-cols-2 lg:gap-6">
-          <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-md backdrop-blur-sm sm:p-7">
+          <article className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-md sm:p-7">
             <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--huza-mint)] text-[var(--huza-green-dark)]">
               <Leaf className="size-6" aria-hidden />
             </div>
@@ -303,7 +327,7 @@ export function FarmerLandingPage() {
             </ul>
           </article>
 
-          <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-md backdrop-blur-sm sm:p-7">
+          <article className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-md sm:p-7">
             <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--huza-mint)] text-[var(--huza-green-dark)]">
               <BookOpen className="size-6" aria-hidden />
             </div>
@@ -323,7 +347,7 @@ export function FarmerLandingPage() {
         </section>
 
         {/* Trust */}
-        <section className="rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-md backdrop-blur-sm sm:p-8">
+        <section className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-md sm:p-8">
           <h2 className="text-center font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-ink)] sm:text-3xl">
             {t("flTrustTitle")}
           </h2>
@@ -344,7 +368,7 @@ export function FarmerLandingPage() {
         </section>
 
         {/* Contact */}
-        <section className="rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-md backdrop-blur-sm sm:p-8">
+        <section className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-md sm:p-8">
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--huza-ink)]">
             {t("flContactTitle")}
           </h2>

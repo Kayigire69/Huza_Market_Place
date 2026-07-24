@@ -35,7 +35,7 @@ export function FarmerPanel({
   return (
     <div
       id={id}
-      className={`rounded-2xl border border-[var(--huza-line)] bg-white/95 p-5 shadow-sm backdrop-blur-sm ${className}`}
+      className={`rounded-2xl border border-[var(--huza-line)] bg-white p-5 shadow-sm ${className}`}
     >
       {children}
     </div>

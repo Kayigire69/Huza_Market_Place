@@ -187,7 +187,7 @@ export function FarmerWorkspaceShell({
         {Nav}
       </aside>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--huza-line)] bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--huza-line)] bg-white px-2 py-2 lg:hidden">
         <div className="flex items-center justify-between gap-2 overflow-x-auto">
           <button
             type="button"
@@ -252,7 +252,7 @@ export function FarmerWorkspaceShell({
         </div>
       )}
 
-      <main className="farmer-workspace-main min-w-0 flex-1 px-4 pb-24 pt-4 sm:px-6 lg:rounded-2xl lg:border lg:border-white/70 lg:bg-white/90 lg:p-6 lg:pb-8 lg:shadow-sm lg:backdrop-blur-sm">
+      <main className="farmer-workspace-main min-w-0 flex-1 px-4 pb-24 pt-4 sm:px-6 lg:rounded-2xl lg:border lg:border-white/70 lg:bg-white lg:p-6 lg:pb-8 lg:shadow-sm">
         {children}
       </main>
     </div>
