@@ -257,6 +257,17 @@ h3,
     );
 }
 
+/* Keep crop atmosphere on its own compositor layer; size locked to viewport */
+.farmer-portal-atmosphere {
+  contain: paint;
+  transform: translateZ(0);
+}
+
+/* Prefer native scroll chaining on farmer pages (avoid nested sticky feel) */
+.farmer-landing {
+  -webkit-overflow-scrolling: touch;
+}
+
 .farmer-portal .section-title {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }

@@ -17,6 +17,7 @@ const CROP_BACKGROUNDS = [
 
 /**
  * Private Farmers Portal shell. Youth Huza branding only (not HUZA FRESH shop chrome).
+ * Atmosphere stays viewport-sized (fixed) so long pages do not paint a document-tall photo while scrolling.
  */
 export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
   const { t, locale, setLocale } = useLocale();
@@ -40,16 +41,17 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
         lockViewport ? "flex h-dvh flex-col overflow-hidden" : "flex min-h-dvh flex-col overflow-x-hidden"
       }`}
     >
-      {/* Clear crop atmosphere. Readable farm imagery behind the workspace */}
-      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+      {/* Viewport-only atmosphere — avoids document-tall image paint jank on mobile scroll */}
+      <div className="farmer-portal-atmosphere pointer-events-none fixed inset-0 -z-10 h-dvh w-full" aria-hidden>
         <div className="absolute inset-0">
           <Image
             src={CROP_BACKGROUNDS[0]}
             alt=""
             fill
-            className={`object-cover object-center ${isLanding || isRegister ? "scale-105 blur-[2.5px]" : ""}`}
+            className="object-cover object-center"
             sizes="100vw"
             priority
+            quality={70}
           />
         </div>
         <div
@@ -57,16 +59,17 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
             isLanding || isRegister ? "farmer-portal-wash-landing" : "farmer-portal-wash"
           }`}
         />
+        {/* Decorative floats: desktop only — large bitmaps under scroll hurt low-end phones */}
         {!isAuthScreen && !isLanding && (
           <>
-            <div className="absolute -right-4 top-20 h-72 w-72 overflow-hidden rounded-full border-4 border-white/40 shadow-lg opacity-55 sm:h-96 sm:w-96">
-              <Image src={CROP_BACKGROUNDS[1]} alt="" fill className="object-cover" sizes="384px" />
+            <div className="absolute -right-4 top-20 hidden h-72 w-72 overflow-hidden rounded-full border-4 border-white/40 opacity-55 shadow-lg lg:block lg:h-96 lg:w-96">
+              <Image src={CROP_BACKGROUNDS[1]} alt="" fill className="object-cover" sizes="384px" quality={60} />
             </div>
-            <div className="absolute -left-6 bottom-28 h-80 w-80 overflow-hidden rounded-[2rem] border-4 border-white/40 shadow-lg opacity-50 sm:h-[26rem] sm:w-[26rem]">
-              <Image src={CROP_BACKGROUNDS[2]} alt="" fill className="object-cover" sizes="416px" />
+            <div className="absolute -left-6 bottom-28 hidden h-80 w-80 overflow-hidden rounded-[2rem] border-4 border-white/40 opacity-50 shadow-lg lg:block lg:h-[26rem] lg:w-[26rem]">
+              <Image src={CROP_BACKGROUNDS[2]} alt="" fill className="object-cover" sizes="416px" quality={60} />
             </div>
-            <div className="absolute right-[10%] bottom-6 hidden h-56 w-80 overflow-hidden rounded-3xl border-4 border-white/40 shadow-lg opacity-45 lg:block">
-              <Image src={CROP_BACKGROUNDS[3]} alt="" fill className="object-cover" sizes="320px" />
+            <div className="absolute bottom-6 right-[10%] hidden h-56 w-80 overflow-hidden rounded-3xl border-4 border-white/40 opacity-45 shadow-lg lg:block">
+              <Image src={CROP_BACKGROUNDS[3]} alt="" fill className="object-cover" sizes="320px" quality={60} />
             </div>
           </>
         )}
@@ -149,7 +152,7 @@ export function FarmerPortalShell({ children }: { children: React.ReactNode }) {
 
       {!isLogin && (
         <footer
-          className={`relative z-10 shrink-0 border-t border-[var(--huza-line)]/60 bg-white/90 text-center text-xs text-[var(--huza-muted)] backdrop-blur-md ${
+          className={`relative z-10 shrink-0 border-t border-[var(--huza-line)]/60 bg-white text-center text-xs text-[var(--huza-muted)] ${
             isLanding || isRegister ? "px-4 py-5 sm:py-6" : "mt-16 py-6"
           }`}
         >
