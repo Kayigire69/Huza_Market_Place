@@ -59,8 +59,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "categoryId required" }, { status: 400 });
     }
 
-    const statusWhere =
-      filter === "active"
+    const removedOnly = filter === "removed";
+
+    const statusWhere = removedOnly
+      ? {}
+      : filter === "active"
         ? { isActive: true }
         : filter === "hidden"
           ? { isActive: false }
@@ -72,7 +75,7 @@ export async function GET(req: Request) {
 
     const products = await prisma.product.findMany({
       where: {
-        deletedAt: null,
+        deletedAt: removedOnly ? { not: null } : null,
         categoryId,
         ...statusWhere,
         ...(q
@@ -102,6 +105,7 @@ export async function GET(req: Request) {
         isNewArrival: true,
         isOrganic: true,
         reviewStatus: true,
+        deletedAt: true,
         categoryId: true,
         category: { select: { id: true, nameEn: true, slug: true } },
         images: {
@@ -121,7 +125,7 @@ export async function GET(req: Request) {
     });
 
     const filtered =
-      filter === "out" || filter === "low"
+      !removedOnly && (filter === "out" || filter === "low")
         ? products.filter((p) => {
             const available = Math.max(0, p.stockQty - p.reservedQty);
             if (filter === "out") return available <= 0;
@@ -129,7 +133,12 @@ export async function GET(req: Request) {
           })
         : products;
 
-    return NextResponse.json({ products: filtered });
+    return NextResponse.json({
+      products: filtered.map((p) => ({
+        ...p,
+        deletedAt: p.deletedAt ? p.deletedAt.toISOString() : null,
+      })),
+    });
   }
 
   if (mode === "catalog") {
@@ -357,6 +366,16 @@ export async function PATCH(req: Request) {
       await prisma.product.updateMany({
         where: { id: { in: ids } },
         data: { deletedAt: new Date(), isActive: false },
+      });
+    } else if (bulkAction === "restore") {
+      await prisma.product.updateMany({
+        where: { id: { in: ids }, deletedAt: { not: null } },
+        data: {
+          deletedAt: null,
+          isActive: true,
+          reviewStatus: "APPROVED",
+          reviewedAt: new Date(),
+        },
       });
     } else if (bulkAction === "price") {
       const price = Math.round(Number(body.price));
@@ -878,6 +897,29 @@ export async function PATCH(req: Request) {
     });
     await cacheDel(CacheKeys.homeCatalog);
     return NextResponse.json({ ok: true });
+  }
+
+  if (action === "restore") {
+    if (!existing.deletedAt) {
+      return NextResponse.json({ error: "Product is not deleted" }, { status: 400 });
+    }
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+        isActive: true,
+        reviewStatus: "APPROVED",
+        reviewedAt: new Date(),
+      },
+    });
+    await auditAdminAction(req, session, {
+      action: "product.restore",
+      entity: "Product",
+      entityId: id,
+      details: existing.nameEn,
+    });
+    await cacheDel(CacheKeys.homeCatalog);
+    return NextResponse.json({ ok: true, product });
   }
 
   // --- Flags ---
