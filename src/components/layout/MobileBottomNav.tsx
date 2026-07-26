@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Home, LayoutGrid, ShoppingCart, Package, User } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useLocale } from "@/lib/locale-context";
@@ -10,10 +11,12 @@ import { cn } from "@/lib/utils";
 
 export function MobileBottomNav() {
   const { t } = useLocale();
+  const { data: session, status } = useSession();
   const pathname = usePathname() || "/";
   const items = useCart((s) => s.items);
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
   const [hash, setHash] = useState("");
+  const signedIn = status === "authenticated" && Boolean(session?.user?.id);
 
   useEffect(() => {
     const sync = () => setHash(typeof window !== "undefined" ? window.location.hash : "");
@@ -47,14 +50,14 @@ export function MobileBottomNav() {
       badge: count,
     },
     {
-      href: "/account#orders",
+      href: signedIn ? "/account#orders" : "/auth/login?callbackUrl=/account%23orders",
       label: t("orders"),
       icon: Package,
       active: onTrack || (onAccount && hash === "#orders"),
     },
     {
-      href: "/account",
-      label: t("account"),
+      href: signedIn ? "/account" : "/auth/login",
+      label: signedIn ? t("account") : t("login"),
       icon: User,
       active: onAuth || (onAccount && hash !== "#orders"),
     },
@@ -69,7 +72,7 @@ export function MobileBottomNav() {
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
-            <li key={tab.href}>
+            <li key={`${tab.label}-${tab.href}`}>
               <Link
                 href={tab.href}
                 prefetch

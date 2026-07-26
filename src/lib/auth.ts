@@ -14,11 +14,13 @@ export { portalPathForRole } from "./auth-redirect";
 
 const isProd = process.env.NODE_ENV === "production";
 const DAY = 24 * 60 * 60;
+/** Customer / staff password sessions (not farmer NID). Absolute from login. */
+const PASSWORD_SESSION_SEC = 8 * 60 * 60;
 
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    // Upper bound. Farmer "remember device" uses up to 90 days
+    // Upper bound for farmers with "remember device". Customer JWT exp is enforced below.
     maxAge: FARMER_SESSION_DAYS_REMEMBER * DAY,
   },
   pages: {
@@ -193,8 +195,29 @@ export const authOptions: NextAuthOptions = {
         const maxAgeSec =
           u.authKind === "farmer_nid"
             ? (u.rememberDevice ? FARMER_SESSION_DAYS_REMEMBER : FARMER_SESSION_DAYS_DEFAULT) * DAY
-            : 8 * 60 * 60;
+            : PASSWORD_SESSION_SEC;
+        token.sessionMaxAgeSec = maxAgeSec;
         token.exp = Math.floor(Date.now() / 1000) + maxAgeSec;
+      } else {
+        // Re-assert absolute expiry so NextAuth does not quietly extend customer
+        // sessions out to the 90-day cookie/session upper bound used for farmers.
+        const iat = Number(token.iat) || 0;
+        let maxAgeSec = Number(token.sessionMaxAgeSec) || 0;
+        if (!maxAgeSec) {
+          maxAgeSec =
+            token.authKind === "farmer_nid" || token.role === "SUPPLIER"
+              ? (token.rememberDevice ? FARMER_SESSION_DAYS_REMEMBER : FARMER_SESSION_DAYS_DEFAULT) *
+                DAY
+              : PASSWORD_SESSION_SEC;
+          token.sessionMaxAgeSec = maxAgeSec;
+        }
+        if (iat > 0 && maxAgeSec > 0) {
+          const exp = iat + maxAgeSec;
+          if (Math.floor(Date.now() / 1000) >= exp) {
+            return { ...token, role: undefined, error: "inactive", exp: 0 };
+          }
+          token.exp = exp;
+        }
       }
 
       const uid = (token.id as string) || (token.sub as string);
