@@ -14,7 +14,7 @@ export type CatalogProductSeed = {
   descriptionFr: string;
   descriptionRw: string;
   price: number;
-  unit: "KG" | "PIECE" | "BUNCH" | "LITRE" | "PACK" | "DOZEN";
+  unit: "KG" | "PIECE" | "BUNCH" | "LITRE" | "PACK" | "DOZEN" | "GRAM" | "MILLILITRE" | "CRATE" | "TRAY" | "BASKET" | "BAG" | "BOX" | "CUP";
   stockQty: number;
   originDistrict: string;
   image: string;

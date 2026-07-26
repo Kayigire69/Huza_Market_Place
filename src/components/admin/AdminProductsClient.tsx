@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CATEGORY_EMOJI } from "@/lib/admin-nav";
 import { formatRwf, formatUnit } from "@/lib/utils";
+import { PRODUCT_UNIT_OPTIONS } from "@/lib/product-units";
 import type { CategoryRow } from "@/components/admin/AdminCategoriesClient";
 import {
   ArrowLeft,
@@ -992,12 +993,11 @@ export function AdminProductsClient() {
                   value={form.unit}
                   onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
                 >
-                  <option value="KG">kg</option>
-                  <option value="PIECE">piece</option>
-                  <option value="BUNCH">bunch</option>
-                  <option value="LITRE">litre</option>
-                  <option value="PACK">pack</option>
-                  <option value="DOZEN">dozen</option>
+                  {PRODUCT_UNIT_OPTIONS.map((u) => (
+                    <option key={u.value} value={u.value}>
+                      {u.label}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="block text-sm">

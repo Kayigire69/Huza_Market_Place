@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { UnitType } from "@prisma/client";
 import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
@@ -11,30 +10,7 @@ import {
   resolveConfirmedStockQty,
 } from "@/lib/inventory-meta";
 import { MARKET_DESK_NAME, ensureYouthHuzaCatalogSupplier } from "@/lib/market-desk";
-
-const UNIT_TYPES: UnitType[] = ["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"];
-
-function parseUnitType(raw: unknown): UnitType {
-  const s = String(raw || "KG")
-    .trim()
-    .toUpperCase()
-    .replace(/S$/, "");
-  const aliases: Record<string, UnitType> = {
-    KG: "KG",
-    KILO: "KG",
-    KILOGRAM: "KG",
-    PIECE: "PIECE",
-    PC: "PIECE",
-    BUNCH: "BUNCH",
-    LITRE: "LITRE",
-    LITER: "LITRE",
-    L: "LITRE",
-    PACK: "PACK",
-    DOZEN: "DOZEN",
-  };
-  const mapped = aliases[s] || (UNIT_TYPES.includes(s as UnitType) ? (s as UnitType) : null);
-  return mapped || "KG";
-}
+import { parseUnitType } from "@/lib/product-units";
 
 async function requireAdmin() {
   return requireAdminSession({

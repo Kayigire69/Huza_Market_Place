@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatRwf, formatUnit } from "@/lib/utils";
+import { PRODUCT_UNIT_OPTIONS } from "@/lib/product-units";
 
 type Category = { id: string; nameEn: string; slug: string };
 type Offer = {
@@ -301,9 +302,9 @@ export function SupplierPortalClient({
                 required
               />
               <select name="unit" className="input-field" defaultValue="KG">
-                {["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"].map((u) => (
-                  <option key={u} value={u}>
-                    {u}
+                {PRODUCT_UNIT_OPTIONS.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.label}
                   </option>
                 ))}
               </select>

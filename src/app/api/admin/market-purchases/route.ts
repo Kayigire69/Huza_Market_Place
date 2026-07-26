@@ -1,20 +1,11 @@
 import { NextResponse } from "next/server";
-import { MarketPurchaseStatus, UnitType } from "@prisma/client";
+import { MarketPurchaseStatus } from "@prisma/client";
 import { requireAdminSession } from "@/lib/rbac-server";
 import { prisma } from "@/lib/prisma";
 import { auditAdminAction } from "@/lib/audit";
 import { ensureMarketDeskSupplier, marketPurchaseNumber } from "@/lib/market-desk";
 import { normalizeQualityGrade, productProcurementData } from "@/lib/inventory-meta";
-
-const UNIT_TYPES: UnitType[] = ["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"];
-
-function parseUnit(raw: unknown): UnitType {
-  const s = String(raw || "KG")
-    .trim()
-    .toUpperCase()
-    .replace(/S$/, "");
-  return UNIT_TYPES.includes(s as UnitType) ? (s as UnitType) : "KG";
-}
+import { parseUnitType } from "@/lib/product-units";
 
 async function requireMarketAdmin() {
   return requireAdminSession({
@@ -115,7 +106,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid purchaseDate" }, { status: 400 });
   }
 
-  const unit = parseUnit(body.unit);
+  const unit = parseUnitType(body.unit);
   const retailPrice =
     body.retailPrice != null && body.retailPrice !== ""
       ? Math.round(Number(body.retailPrice))

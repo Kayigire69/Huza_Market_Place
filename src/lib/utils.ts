@@ -1,4 +1,6 @@
 /** Flat delivery fee for all HUZA destinations (Kigali, Kamonyi, Bugesera). */
+import { PRODUCT_UNIT_SHORT } from "@/lib/product-units";
+
 export const FLAT_DELIVERY_FEE_RWF = 5000;
 
 export const DELIVERY_FEES = {
@@ -38,15 +40,7 @@ export function formatRwf(amount: number): string {
 }
 
 export function formatUnit(unit: string): string {
-  const map: Record<string, string> = {
-    KG: "kg",
-    PIECE: "piece",
-    BUNCH: "bunch",
-    LITRE: "litre",
-    PACK: "pack",
-    DOZEN: "dozen",
-  };
-  return map[unit] ?? unit.toLowerCase();
+  return PRODUCT_UNIT_SHORT[unit as keyof typeof PRODUCT_UNIT_SHORT] ?? unit.toLowerCase();
 }
 
 export function generateOrderNumber(): string {

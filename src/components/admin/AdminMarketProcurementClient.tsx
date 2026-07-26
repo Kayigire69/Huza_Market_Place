@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { formatRwf, formatUnit } from "@/lib/utils";
+import { PRODUCT_UNIT_OPTIONS } from "@/lib/product-units";
 
 type MarketPurchase = {
   id: string;
@@ -198,9 +199,9 @@ export function AdminMarketProcurementClient() {
               value={form.unit}
               onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
             >
-              {["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"].map((u) => (
-                <option key={u} value={u}>
-                  {u}
+              {PRODUCT_UNIT_OPTIONS.map((u) => (
+                <option key={u.value} value={u.value}>
+                  {u.label}
                 </option>
               ))}
             </select>

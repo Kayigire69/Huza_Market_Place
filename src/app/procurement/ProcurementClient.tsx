@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/locale-context";
 import { formatRwf, formatUnit } from "@/lib/utils";
+import { PRODUCT_UNIT_OPTIONS } from "@/lib/product-units";
 
 type Offer = {
   id: string;
@@ -285,9 +286,9 @@ export function ProcurementClient({
           <div>
             <label className="label">Unit</label>
             <select name="unit" className="input-field" defaultValue="KG">
-              {["KG", "PIECE", "BUNCH", "LITRE", "PACK", "DOZEN"].map((u) => (
-                <option key={u} value={u}>
-                  {u}
+              {PRODUCT_UNIT_OPTIONS.map((u) => (
+                <option key={u.value} value={u.value}>
+                  {u.label}
                 </option>
               ))}
             </select>
