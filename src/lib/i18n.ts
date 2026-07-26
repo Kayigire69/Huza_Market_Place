@@ -1964,6 +1964,7 @@ const sw: Dict = {
   couldNotStartChat: "Imeshindwa kuanzisha gumzo",
   failedToSend: "Imeshindwa kutuma ujumbe",
   hello: "Habari",
+  viewProfile: "Angalia wasifu",
   farmerInformation: "Taarifa za mkulima",
   productsAndPhotos: "Bidhaa na picha",
   inventoryTab: "Hisa",

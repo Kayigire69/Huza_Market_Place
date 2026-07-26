@@ -53,6 +53,48 @@ function IconButton({
   );
 }
 
+function accountInitials(name?: string | null, email?: string | null): string {
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+  }
+  if (parts.length === 1 && parts[0]!.length > 0) {
+    return parts[0]!.slice(0, 2).toUpperCase();
+  }
+  const local = (email || "").split("@")[0] || "";
+  return (local.slice(0, 2) || "?").toUpperCase();
+}
+
+function AccountAvatar({
+  signedIn,
+  initials,
+}: {
+  signedIn: boolean;
+  initials: string;
+}) {
+  if (!signedIn) {
+    return (
+      <span className="inline-flex size-10 items-center justify-center">
+        <User className="size-5" aria-hidden />
+      </span>
+    );
+  }
+  return (
+    <span className="relative inline-flex size-10 items-center justify-center">
+      <span
+        className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--huza-mint)] text-[11px] font-bold tracking-wide text-[var(--huza-green-dark)] ring-1 ring-[var(--huza-green)]/35"
+        aria-hidden
+      >
+        {initials}
+      </span>
+      <span
+        className="absolute bottom-0.5 right-0.5 size-2.5 rounded-full bg-[var(--huza-green)] ring-2 ring-white"
+        aria-hidden
+      />
+    </span>
+  );
+}
+
 /**
  * Phase 1 Navigation (locked design). Scroll-stable sticky.
  *
@@ -68,27 +110,41 @@ export function Header() {
   const pathname = usePathname();
   const [catsOpen, setCatsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const [wishCount, setWishCount] = useState(0);
   const [navShortcuts, setNavShortcuts] = useState<ShopNavShortcut[]>(
     () => DEFAULT_SHOP_NAV_SHORTCUTS.filter((s) => s.visible)
   );
   const catsRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+  const accountHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCustomer =
     Boolean(session?.user?.id) &&
     (!session?.user?.role || session.user.role === "CUSTOMER");
   useNotificationChime({ portal: "customer", enabled: isCustomer });
 
+  const signedIn = Boolean(session?.user?.id);
   const firstName =
     session?.user?.name?.trim().split(/\s+/)[0] ||
     session?.user?.email?.split("@")[0] ||
     "";
+  const initials = accountInitials(session?.user?.name, session?.user?.email);
 
   useEffect(() => {
     setCatsOpen(false);
     setAccountOpen(false);
+    setAccountSheetOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!accountSheetOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [accountSheetOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -202,74 +258,93 @@ export function Header() {
               )}
             </IconButton>
 
-            <div className="relative" ref={accountRef}>
-              <button
-                type="button"
-                onClick={() => setAccountOpen((v) => !v)}
-                aria-label={t("account")}
-                aria-expanded={accountOpen}
-                className="inline-flex items-center gap-1 rounded-full px-1.5 py-1.5 text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)]"
-              >
-                <span className="inline-flex size-10 items-center justify-center">
-                  <User className="size-5" />
-                </span>
-                {session?.user && firstName ? (
-                  <span className="hidden max-w-[7rem] truncate text-left text-xs font-semibold lg:block">
-                    {t("hello")} {firstName}
+            <div
+              className="relative"
+              ref={accountRef}
+              onMouseEnter={() => {
+                if (!signedIn) return;
+                if (accountHoverTimer.current) clearTimeout(accountHoverTimer.current);
+                accountHoverTimer.current = setTimeout(() => setAccountOpen(true), 120);
+              }}
+              onMouseLeave={() => {
+                if (accountHoverTimer.current) clearTimeout(accountHoverTimer.current);
+                accountHoverTimer.current = setTimeout(() => setAccountOpen(false), 180);
+              }}
+            >
+              {signedIn ? (
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen((v) => !v)}
+                  aria-label={`${t("account")} — ${t("hello")} ${firstName}`}
+                  aria-expanded={accountOpen}
+                  aria-haspopup="menu"
+                  className="inline-flex items-center gap-1 rounded-full px-1.5 py-1.5 text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)]"
+                >
+                  <AccountAvatar signedIn initials={initials} />
+                  {firstName ? (
+                    <span className="hidden max-w-[7rem] truncate text-left text-xs font-semibold lg:block">
+                      {t("hello")} {firstName}
+                    </span>
+                  ) : null}
+                  <ChevronDown className="hidden size-3.5 text-[var(--huza-muted)] lg:block" />
+                </button>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  aria-label={t("login")}
+                  className="inline-flex items-center gap-1 rounded-full px-1.5 py-1.5 text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)]"
+                >
+                  <AccountAvatar signedIn={false} initials="" />
+                  <span className="hidden items-center gap-1 text-xs font-semibold lg:inline-flex">
+                    <LogIn className="size-3.5" aria-hidden />
+                    {t("login")}
                   </span>
-                ) : null}
-                <ChevronDown className="hidden size-3.5 text-[var(--huza-muted)] lg:block" />
-              </button>
+                </Link>
+              )}
 
-              {accountOpen && (
-                <div className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white py-1 shadow-lg">
-                  {session?.user ? (
-                    <>
-                      <p className="truncate border-b border-[var(--huza-line)] px-3 py-2 text-xs text-[var(--huza-muted)]">
-                        {t("hello")} {firstName}
-                      </p>
-                      <Link
-                        href="/account#orders"
-                        className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
-                        onClick={() => setAccountOpen(false)}
-                      >
-                        {t("orders")}
-                      </Link>
-                      <Link
-                        href="/account#addresses"
-                        className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
-                        onClick={() => setAccountOpen(false)}
-                      >
-                        {t("savedAddresses")}
-                      </Link>
-                      <Link
-                        href="/wishlist"
-                        className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
-                        onClick={() => setAccountOpen(false)}
-                      >
-                        {t("wishlist")}
-                      </Link>
-                      <button
-                        type="button"
-                        className="block w-full px-3 py-2.5 text-left text-sm hover:bg-[var(--huza-mint)]"
-                        onClick={() => {
-                          setAccountOpen(false);
-                          signOut({ callbackUrl: "/" });
-                        }}
-                      >
-                        {t("logout")}
-                      </button>
-                    </>
-                  ) : (
-                    <Link
-                      href="/auth/login"
-                      className="flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-[var(--huza-green-dark)] hover:bg-[var(--huza-mint)]"
-                      onClick={() => setAccountOpen(false)}
-                    >
-                      <LogIn className="size-4" />
-                      {t("login")}
-                    </Link>
-                  )}
+              {signedIn && accountOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 z-50 mt-1 w-52 overflow-hidden rounded-xl border border-[var(--huza-line)] bg-white py-1 shadow-lg"
+                >
+                  <p className="truncate border-b border-[var(--huza-line)] px-3 py-2 text-xs text-[var(--huza-muted)]">
+                    {t("hello")} {firstName}
+                  </p>
+                  <Link
+                    role="menuitem"
+                    href="/account"
+                    className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                    onClick={() => setAccountOpen(false)}
+                  >
+                    {t("account")}
+                  </Link>
+                  <Link
+                    role="menuitem"
+                    href="/account#orders"
+                    className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                    onClick={() => setAccountOpen(false)}
+                  >
+                    {t("orders")}
+                  </Link>
+                  <Link
+                    role="menuitem"
+                    href="/account#addresses"
+                    className="block px-3 py-2.5 text-sm hover:bg-[var(--huza-mint)]"
+                    onClick={() => setAccountOpen(false)}
+                  >
+                    {t("viewProfile")}
+                  </Link>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="block w-full px-3 py-2.5 text-left text-sm hover:bg-[var(--huza-mint)]"
+                    onClick={() => {
+                      setAccountOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                  >
+                    {t("logout")}
+                  </button>
                 </div>
               )}
             </div>
@@ -289,14 +364,79 @@ export function Header() {
                 </span>
               )}
             </IconButton>
-            <IconButton
-              href={session?.user ? "/account" : "/auth/login"}
-              label={session?.user ? t("account") : t("login")}
-            >
-              <User className="size-5" aria-hidden />
-            </IconButton>
+            {signedIn ? (
+              <button
+                type="button"
+                aria-label={`${t("account")} — ${t("hello")} ${firstName}`}
+                aria-expanded={accountSheetOpen}
+                onClick={() => setAccountSheetOpen(true)}
+                className="relative inline-flex size-10 items-center justify-center rounded-full text-[var(--huza-ink)] transition-colors hover:bg-[var(--huza-mint)] hover:text-[var(--huza-green-dark)]"
+              >
+                <AccountAvatar signedIn initials={initials} />
+              </button>
+            ) : (
+              <IconButton href="/auth/login" label={t("login")}>
+                <User className="size-5" aria-hidden />
+              </IconButton>
+            )}
           </div>
         </div>
+
+        {accountSheetOpen && signedIn ? (
+          <div className="fixed inset-0 z-[80] md:hidden" role="dialog" aria-modal="true" aria-label={t("account")}>
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/35"
+              aria-label="Close"
+              onClick={() => setAccountSheetOpen(false)}
+            />
+            <div className="absolute inset-x-0 bottom-0 rounded-t-2xl border border-[var(--huza-line)] bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-xl">
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--huza-line)]" aria-hidden />
+              <div className="mb-3 flex items-center gap-3 px-1">
+                <AccountAvatar signedIn initials={initials} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[var(--huza-ink)]">
+                    {t("hello")} {firstName}
+                  </p>
+                  <p className="text-xs text-[var(--huza-muted)]">{t("account")}</p>
+                </div>
+              </div>
+              <nav className="flex flex-col gap-0.5 pb-2">
+                <Link
+                  href="/account"
+                  className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-[var(--huza-mint)]"
+                  onClick={() => setAccountSheetOpen(false)}
+                >
+                  {t("account")}
+                </Link>
+                <Link
+                  href="/account#orders"
+                  className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-[var(--huza-mint)]"
+                  onClick={() => setAccountSheetOpen(false)}
+                >
+                  {t("orders")}
+                </Link>
+                <Link
+                  href="/account#addresses"
+                  className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-[var(--huza-mint)]"
+                  onClick={() => setAccountSheetOpen(false)}
+                >
+                  {t("viewProfile")}
+                </Link>
+                <button
+                  type="button"
+                  className="rounded-xl px-3 py-3 text-left text-sm font-medium hover:bg-[var(--huza-mint)]"
+                  onClick={() => {
+                    setAccountSheetOpen(false);
+                    signOut({ callbackUrl: "/" });
+                  }}
+                >
+                  {t("logout")}
+                </button>
+              </nav>
+            </div>
+          </div>
+        ) : null}
 
         {/* Mobile search. Fixed padding (part of sticky top) */}
         <div className="h-[60px] border-t border-[var(--huza-line)] px-3 py-2 md:hidden">
